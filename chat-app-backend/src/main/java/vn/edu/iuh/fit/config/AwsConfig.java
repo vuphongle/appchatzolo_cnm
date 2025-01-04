@@ -34,7 +34,7 @@ public class AwsConfig {
     @Bean
     public DynamoDbClient dynamoDbClient() {
         return DynamoDbClient.builder()
-                .region(Region.of("ap-southeast-2"))
+                .region(Region.of(region))
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
     }
