@@ -16,7 +16,7 @@ const LoginPage = () => {
                 password,
             });
             alert('Login successful!');
-            navigate('/chat');
+            navigate('/main');
         } catch (error) {
             console.error("Error logging in:", error.response || error);
             setErrorMessage(
@@ -59,6 +59,7 @@ const LoginPage = () => {
                 <div className="extra-options">
                     <a href="#forgot-password">Quên mật khẩu</a>
                     <a href="#qr-login">Đăng nhập qua mã QR</a>
+                    <a href="/register">Đăng ký tài khoản</a>
                 </div>
             </div>
         </div>

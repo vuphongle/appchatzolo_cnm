@@ -30,6 +30,7 @@ public class AuthController {
      */
     @PostMapping("/create-user")
     public ResponseEntity<?> createUser(@RequestBody Map<String, String> request) {
+        System.out.println("Received registerRequest: " + request);
         String phoneNumber = request.get("phoneNumber");
         String password = request.get("password");
 
