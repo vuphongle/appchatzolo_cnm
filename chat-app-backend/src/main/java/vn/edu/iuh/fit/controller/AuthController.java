@@ -121,16 +121,17 @@ public class AuthController {
 
 //package vn.edu.iuh.fit.controller;
 //
+//import io.github.cdimascio.dotenv.Dotenv;
 //import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.beans.factory.annotation.Value;
 //import org.springframework.http.ResponseEntity;
 //import org.springframework.web.bind.annotation.*;
-//        import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
+//import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 //import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
-//        import javax.crypto.Mac;
+//import javax.crypto.Mac;
 //import javax.crypto.spec.SecretKeySpec;
 //import java.util.Base64;
 //import java.util.Map;
+//
 //
 //@RestController
 //@RequestMapping("/api/auth")
@@ -139,14 +140,70 @@ public class AuthController {
 //    @Autowired
 //    private CognitoIdentityProviderClient cognitoClient;
 //
-//    @Value("${aws.cognito.userPoolId}")
-//    private String userPoolId;
+//    private final Dotenv dotenv = Dotenv.load();
 //
-//    @Value("${aws.cognito.clientId}")
-//    private String clientId;
+//    private final String userPoolId = dotenv.get("aws.cognito.userPoolId");
+//    private final String clientId = dotenv.get("aws.cognito.clientId");
+//    private final String clientSecret = dotenv.get("aws.cognito.clientSecret");
 //
-//    @Value("${aws.cognito.clientSecret}")
-//    private String clientSecret;
+//    @PostMapping("/register")
+//    public ResponseEntity<String> register(@RequestBody Map<String, String> registerRequest) {
+//        System.out.println("Received registerRequest: " + registerRequest);
+//        try {
+//            String username = registerRequest.get("phoneNumber");
+//            String password = registerRequest.get("password");
+//
+//            // Tính SECRET_HASH
+//            String secretHash = calculateSecretHash(clientId, clientSecret, username);
+//
+//            // Tạo tài khoản người dùng trong Cognito
+//            SignUpRequest signUpRequest = SignUpRequest.builder()
+//                    .clientId(clientId)
+//                    .username(username)
+//                    .password(password)
+//                    .userAttributes(
+//                            AttributeType.builder().name("phone_number").value(username).build()
+//                    )
+//                    .secretHash(secretHash) // Thêm SECRET_HASH
+//                    .build();
+//
+//            SignUpResponse signUpResponse = cognitoClient.signUp(signUpRequest);
+//
+//            if (signUpResponse.userConfirmed()) {
+//                return ResponseEntity.ok("User registered and confirmed successfully.");
+//            } else {
+//                return ResponseEntity.status(202).body("User registered but needs OTP verification.");
+//            }
+//        } catch (CognitoIdentityProviderException e) {
+//            return ResponseEntity.status(400).body("Registration failed: " + e.getMessage());
+//        }
+//    }
+//
+//
+//    /**
+//     * API: Xác thực OTP
+//     */
+//    @PostMapping("/verify-otp")
+//    public ResponseEntity<String> verifyOtp(@RequestBody Map<String, String> otpRequest) {
+//        try {
+//            String username = otpRequest.get("phoneNumber");
+//            String otpCode = otpRequest.get("otp");
+//
+//            // Xác thực mã OTP
+//            ConfirmSignUpRequest confirmSignUpRequest = ConfirmSignUpRequest.builder()
+//                    .clientId(clientId)
+//                    .username(username)
+//                    .confirmationCode(otpCode)
+//                    .build();
+//
+//            cognitoClient.confirmSignUp(confirmSignUpRequest);
+//
+//            return ResponseEntity.ok("OTP verified and user account confirmed successfully.");
+//        } catch (CognitoIdentityProviderException e) {
+//            return ResponseEntity.status(400).body("OTP verification failed: " + e.getMessage());
+//        }
+//    }
+//
 //
 //    /**
 //     * API: Đăng nhập User qua Cognito và gửi OTP
@@ -174,52 +231,14 @@ public class AuthController {
 //            InitiateAuthResponse authResponse = cognitoClient.initiateAuth(authRequest);
 //            String idToken = authResponse.authenticationResult().idToken();
 //
-//            // Gửi OTP tới số điện thoại của người dùng
-//            SendMFACodeRequest mfaRequest = SendMFACodeRequest.builder()
-//                    .userPoolId(userPoolId)
-//                    .username(username)
-//                    .clientId(clientId)
-//                    .build();
-//
-//            cognitoClient.adminInitiateAuth(mfaRequest); // Gửi mã xác thực đến số điện thoại người dùng
-//
-//            return ResponseEntity.ok(Map.of("idToken", idToken, "message", "OTP sent successfully"));
+//            return ResponseEntity.ok(Map.of("idToken", idToken));
 //
 //        } catch (NotAuthorizedException e) {
+//            System.err.println("Login failed: Invalid username or password. Details: " + e.getMessage());
 //            return ResponseEntity.status(401).body("Invalid username or password");
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //            return ResponseEntity.status(500).body("Error during authentication: " + e.getMessage());
-//        }
-//    }
-//
-//    /**
-//     * API: Xác thực OTP
-//     */
-//    @PostMapping("/verify-otp")
-//    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
-//        String username = request.get("username");
-//        String otp = request.get("otp");
-//
-//        try {
-//            // Gửi yêu cầu xác thực OTP
-//            RespondToAuthChallengeRequest challengeRequest = RespondToAuthChallengeRequest.builder()
-//                    .challengeName(ChallengeNameType.SMS_MFA)
-//                    .clientId(clientId)
-//                    .challengeResponses(Map.of(
-//                            "USERNAME", username,
-//                            "SMS_MFA_CODE", otp
-//                    ))
-//                    .session(request.get("session"))
-//                    .build();
-//
-//            cognitoClient.respondToAuthChallenge(challengeRequest);
-//
-//            return ResponseEntity.ok("OTP verification successful");
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return ResponseEntity.status(400).body("OTP verification failed: " + e.getMessage());
 //        }
 //    }
 //
