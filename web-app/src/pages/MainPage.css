@@ -1,0 +1,118 @@
+/* Main container */
+.main-container {
+    display: flex;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Sidebar */
+  .sidebar {
+    width: 300px;
+    background-color: #f1f5fc;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .sidebar-header {
+    font-size: 20px;
+    color: #0068ff;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .sidebar-search input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+  }
+  
+  .sidebar-categories button {
+    background-color: #0068ff;
+    color: white;
+    border: none;
+    padding: 10px;
+    margin-right: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .sidebar-categories button:hover {
+    background-color: #0051cc;
+  }
+  
+  .sidebar-messages ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .sidebar-messages li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+  
+  .sidebar-messages li:hover {
+    background-color: #e9effb;
+  }
+  
+  /* Main content */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
+  
+  .content-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .profile-section {
+    display: flex;
+    align-items: center;
+  }
+  
+  .profile-icon {
+    font-size: 24px;
+    cursor: pointer;
+  }
+  
+  .welcome-section {
+    text-align: center;
+    margin-top: 50px;
+  }
+  
+  .welcome-section h1 {
+    font-size: 28px;
+    color: #0068ff;
+    margin-bottom: 10px;
+  }
+  
+  .welcome-section p {
+    color: #4a4a4a;
+    margin-bottom: 30px;
+  }
+  
+  .action-buttons .btn-upload {
+    background-color: #0068ff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .action-buttons .btn-upload:hover {
+    background-color: #0051cc;
+  }
+  

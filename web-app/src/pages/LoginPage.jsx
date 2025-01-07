@@ -1,24 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/ApiService';
+import './LoginPage.css'; // Import CSS cho giao diện Zalo-style
 
 const LoginPage = () => {
     const navigate = useNavigate();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-
-    const handleCreateUser = async () => {
-        try {
-            await ApiService.post('/auth/create-user', {
-                phoneNumber,
-                password,
-            });
-            alert('User created successfully');
-        } catch (error) {
-            setErrorMessage(error.response?.data || 'Error creating user');
-        }
-    };
 
     const handleLogin = async () => {
         try {
@@ -27,7 +16,7 @@ const LoginPage = () => {
                 password,
             });
             alert('Login successful!');
-            navigate('/chat'); // Chuyển hướng sang ChatPage
+            navigate('/main');
         } catch (error) {
             console.error("Error logging in:", error.response || error);
             setErrorMessage(
@@ -37,49 +26,49 @@ const LoginPage = () => {
     };
 
     return (
-        <div>
-            <h1>Login</h1>
-            <div>
-                <label>
-                    Phone Number:
-                    <input
-                        type="text"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                    />
-                </label>
+        <div className="login-container">
+            <div className="login-box">
+                <h2>Zolo</h2>
+                <p>Đăng nhập tài khoản Zolo để kết nối với ứng dụng Zalo Web</p>
+                <form onSubmit={(e) => e.preventDefault()}>
+                    <div className="input-group">
+                        <label htmlFor="phone">📱 Số điện thoại</label>
+                        <input
+                            id="phone"
+                            type="text"
+                            placeholder="+84..."
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="password">🔒 Mật khẩu</label>
+                        <input
+                            id="password"
+                            type="password"
+                            placeholder="Nhập mật khẩu"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    {errorMessage && <p className="error-message">{errorMessage}</p>}
+                    <button className="btn-login" onClick={handleLogin}>Đăng nhập với mật khẩu</button>
+                </form>
+                <div className="extra-options">
+                    <a href="#forgot-password">Quên mật khẩu</a>
+                    <a href="#qr-login">Đăng nhập qua mã QR</a>
+                    <a href="/register">Đăng ký tài khoản</a>
+                </div>
             </div>
-            <div>
-                <label>
-                    Password:
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                </label>
-            </div>
-            <div>
-                <button onClick={handleCreateUser}>Create User</button>
-                <button onClick={handleLogin}>Login</button>
-            </div>
-
-            {/* ---- */}
-            <div>
-                <label style={{color:'red'}}>Note: Demo chưa tách page sign in và page login mà đang để chung</label>
-            </div>
-            <div>
-                <label style={{color:'green'}}>Note: Khi tạo User phải tuân thủ Policy của AWS cognito: username: +84....., Password: phải có chữ hoa, số và kí tự đặc biệt: @,/,...</label>
-            </div>
-            {/* ---- */}
-
-
-            {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
         </div>
     );
 };
 
 export default LoginPage;
+
+
 
 
 
