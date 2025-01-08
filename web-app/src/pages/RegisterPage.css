@@ -1,0 +1,86 @@
+.register-verify-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.error-message, .success-message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.success-message {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.form-group {
+    position: relative;
+}
+
+.phone-number-error, .password-error, .confirm-password-error {
+    font-size: 12px;
+    color: #d9534f;
+    position: absolute;
+    bottom: -18px;
+    left: 0;
+}
+
+.phone-number-error {
+    font-size: 12px;
+    color: #d9534f;
+}
+
+.password-error {
+    font-size: 12px;
+    color: #d9534f;
+}
+
+.confirm-password-error {
+    font-size: 12px;
+    color: #d9534f;
+}

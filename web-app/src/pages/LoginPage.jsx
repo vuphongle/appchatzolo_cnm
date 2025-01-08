@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ApiService from '../services/ApiService';
+import AuthService from '../services/AuthService';
 import './LoginPage.css'; // Import CSS cho giao diện Zalo-style
 
 const LoginPage = () => {
@@ -11,7 +11,7 @@ const LoginPage = () => {
 
     const handleLogin = async () => {
         try {
-            const response = await ApiService.post('/auth/login', {
+            const response = await AuthService.post('/login', {
                 username: phoneNumber,
                 password,
             });
@@ -59,7 +59,7 @@ const LoginPage = () => {
                 <div className="extra-options">
                     <a href="#forgot-password">Quên mật khẩu</a>
                     <a href="#qr-login">Đăng nhập qua mã QR</a>
-                    <a href="/register">Đăng ký tài khoản</a>
+                    <a href="/create-user">Đăng ký tài khoản</a>
                 </div>
             </div>
         </div>

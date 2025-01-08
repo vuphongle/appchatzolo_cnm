@@ -13,18 +13,10 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import io.github.cdimascio.dotenv.Dotenv;
+import software.amazon.awssdk.services.sns.SnsClient;
 
 @Configuration
 public class AwsConfig {
-//    @Value("${aws.accessKey}")
-//    private String accessKey;
-//
-//    @Value("${aws.secretKey}")
-//    private String secretKey;
-//
-//    @Value("${aws.region}")
-//    private String region;
-
     private final Dotenv dotenv = Dotenv.load();
 
     private final String accessKey = dotenv.get("aws.accessKey");
@@ -53,5 +45,10 @@ public class AwsConfig {
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)))
                 .build();
+    }
+
+    @Bean
+    public SnsClient snsClient() {
+        return SnsClient.create();
     }
 }
