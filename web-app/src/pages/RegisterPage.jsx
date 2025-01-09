@@ -1,146 +1,162 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
+import "./RegisterPage.css";
 
 const RegisterPage = () => {
     const [phoneNumber, setPhoneNumber] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [otp, setOtp] = useState("");
+    const [verificationCode, setVerificationCode] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
-    const [isOtpSent, setIsOtpSent] = useState(false); // Cờ để kiểm tra OTP đã được gửi chưa
-    const [phoneError, setPhoneError] = useState("");
-    const [passwordError, setPasswordError] = useState("");
-    const [confirmPasswordError, setConfirmPasswordError] = useState("");
+    const [isOtpSent, setIsOtpSent] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    // Kiểm tra số điện thoại hợp lệ
     const validatePhoneNumber = (phone) => {
-        const phoneRegex = /^[0-9]{10,11}$/;
+        const phoneRegex = /^\+84\d{9,10}$/;
         return phoneRegex.test(phone);
     };
 
-    // Kiểm tra mật khẩu hợp lệ
     const validatePassword = (pass) => {
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const passwordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         return passwordRegex.test(pass);
     };
 
-    // Xử lý gửi OTP
     const handleSendOtp = async () => {
         setErrorMessage("");
         setSuccessMessage("");
-        setPhoneError("");
-        setPasswordError("");
-        setConfirmPasswordError("");
-
-        if (!phoneNumber || !password || !confirmPassword) {
-            setErrorMessage("Số điện thoại và mật khẩu là bắt buộc.");
-            return;
-        }
 
         if (!validatePhoneNumber(phoneNumber)) {
-            setPhoneError("Số điện thoại không đúng định dạng.");
+            setErrorMessage("Số điện thoại không đúng định dạng +84...");
             return;
         }
 
         if (!validatePassword(password)) {
-            setPasswordError("Mật khẩu phải có chữ hoa, chữ thường, số và kí tự đặc biệt.");
+            setErrorMessage(
+                "Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+            );
             return;
         }
 
         if (password !== confirmPassword) {
-            setConfirmPasswordError("Mật khẩu xác nhận không khớp.");
+            setErrorMessage("Mật khẩu xác nhận không khớp.");
             return;
         }
 
+        setIsLoading(true);
         try {
-            await AuthService.post("/send-otp", { phoneNumber, password });
-            setSuccessMessage("OTP đã được gửi thành công. Vui lòng kiểm tra điện thoại của bạn.");
-            setIsOtpSent(true); // Đánh dấu là OTP đã được gửi
+            const response = await AuthService.post("/send-otp", { phoneNumber, password });
+            setSuccessMessage(response.data.message || "OTP đã được gửi thành công. Vui lòng kiểm tra điện thoại.");
+            setIsOtpSent(true);
         } catch (error) {
-            setErrorMessage(error.response?.data || "Lỗi khi gửi OTP.");
+            setErrorMessage(
+                error.response?.data || "Lỗi xảy ra khi gửi OTP. Vui lòng thử lại sau."
+            );
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Xử lý xác minh OTP và tạo người dùng
     const handleVerifyOtp = async () => {
         setErrorMessage("");
         setSuccessMessage("");
-        setPhoneError("");
-        setPasswordError("");
-        setConfirmPasswordError("");
 
-        if (!otp) {
-            setErrorMessage("OTP là bắt buộc.");
+        if (!verificationCode) {
+            setErrorMessage("Vui lòng nhập mã OTP.");
             return;
         }
 
+        setIsLoading(true);
         try {
-            await AuthService.post("/verify-otp-and-create-user", { phoneNumber, otp });
-            setSuccessMessage("Tạo người dùng thành công. Bạn có thể đăng nhập ngay.");
+            const response = await AuthService.post("/verify-phone-and-create-user", {
+                phoneNumber,
+                verificationCode,
+            });
+            setSuccessMessage(response.data.message || "Tài khoản đã được tạo thành công! Đang chuyển hướng...");
             setTimeout(() => {
-                navigate("/"); // Chuyển hướng đến trang đăng nhập sau khi thành công
+                navigate("/");
             }, 2000);
         } catch (error) {
-            setErrorMessage(error.response?.data || "Lỗi khi xác minh OTP.");
+            setErrorMessage(
+                error.response?.data?.error ||
+                    error.response?.data?.details ||
+                    "Mã OTP không đúng hoặc đã hết hạn."
+            );
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <div className="register-verify-container">
-            <h1>{isOtpSent ? "Xác minh OTP" : "Đăng ký"}</h1>
+            <h1>{isOtpSent ? "Xác minh OTP" : "Đăng ký Tài khoản"}</h1>
+
             {errorMessage && <div className="error-message">{errorMessage}</div>}
             {successMessage && <div className="success-message">{successMessage}</div>}
 
-            {/* Phần đăng ký */}
             {!isOtpSent && (
                 <div>
-                    <div className="input-group form-group">
+                    <div className="input-group">
+                        <label htmlFor="phone">📱 Số điện thoại</label>
                         <input
+                            id="phone"
                             type="text"
-                            placeholder="Số điện thoại"
+                            placeholder="Nhập số điện thoại (ví dụ: +84901234567)"
                             value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            onChange={(e) =>
+                                setPhoneNumber(
+                                    e.target.value.startsWith("+84")
+                                        ? e.target.value
+                                        : "+84" + e.target.value.replace(/^0/, "")
+                                )
+                            }
                         />
-                        {phoneError && <div className="phone-number-error">{phoneError}</div>}
                     </div>
 
-                    <div className="input-group form-group">
+                    <div className="input-group">
+                        <label htmlFor="password">🔒 Mật khẩu</label>
                         <input
+                            id="password"
                             type="password"
-                            placeholder="Mật khẩu"
+                            placeholder="Nhập mật khẩu"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
-                        {passwordError && <div className="password-error">{passwordError}</div>}
                     </div>
 
-                    <div className="input-group form-group">
+                    <div className="input-group">
+                        <label htmlFor="confirm-password">🔑 Xác nhận mật khẩu</label>
                         <input
+                            id="confirm-password"
                             type="password"
                             placeholder="Xác nhận mật khẩu"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                         />
-                        {confirmPasswordError && <div className="confirm-password-error">{confirmPasswordError}</div>}
                     </div>
 
-                    <button onClick={handleSendOtp}>Gửi OTP</button>
+                    <button onClick={handleSendOtp} disabled={isLoading}>
+                        {isLoading ? "Đang gửi..." : "Đăng ký"}
+                    </button>
                 </div>
             )}
 
-            {/* Phần xác minh OTP */}
             {isOtpSent && (
                 <div>
+                    <label htmlFor="otp">🔢 Nhập OTP</label>
                     <input
+                        id="otp"
                         type="text"
-                        placeholder="Nhập OTP"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="Nhập mã OTP từ SMS"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
                     />
-                    <button onClick={handleVerifyOtp}>Xác minh OTP</button>
+                    <button onClick={handleVerifyOtp} disabled={isLoading}>
+                        {isLoading ? "Đang xác minh..." : "Xác minh OTP"}
+                    </button>
                 </div>
             )}
         </div>

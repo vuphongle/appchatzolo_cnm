@@ -1,3 +1,13 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background-image: url('../image/Register_Background.jpg'); 
+    background-size: cover; /* hình ảnh phủ hết màn hình */
+    background-position: center; /* Căn giữa hình ảnh */
+    background-repeat: no-repeat; /* Không lặp lại hình ảnh */
+}
+
 .register-verify-container {
     max-width: 500px;
     margin: 0 auto;
@@ -16,6 +26,12 @@ h1 {
     margin-bottom: 15px;
 }
 
+label {
+    font-size: 20px;  /* Tăng kích thước chữ của label để dễ đọc */
+    display: block;
+    color: #333;
+}
+
 input {
     width: 100%;
     padding: 10px;
@@ -28,11 +44,11 @@ input {
 button {
     width: 100%;
     padding: 10px;
-    background-color: #4CAF50;
+    background-color: #0068ff;
     color: white;
     border: none;
     border-radius: 4px;
-    font-size: 16px;
+    font-size: 20px;
     cursor: pointer;
 }
 
@@ -62,25 +78,8 @@ button:hover {
     position: relative;
 }
 
-.phone-number-error, .password-error, .confirm-password-error {
-    font-size: 12px;
-    color: #d9534f;
-    position: absolute;
-    bottom: -18px;
-    left: 0;
-}
-
-.phone-number-error {
-    font-size: 12px;
-    color: #d9534f;
-}
-
-.password-error {
-    font-size: 12px;
-    color: #d9534f;
-}
-
-.confirm-password-error {
-    font-size: 12px;
-    color: #d9534f;
+.error {
+    font-size: 17px;  /* Giảm kích thước chữ của thông báo lỗi cho vừa với label */
+    color: #d9534f;  /* Đặt màu đỏ cho thông báo lỗi */
+    margin-top: 5px;
 }

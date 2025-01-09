@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 import software.amazon.awssdk.services.sns.SnsClient;
-import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.model.CreateSmsSandboxPhoneNumberRequest;
+import software.amazon.awssdk.services.sns.model.VerifySmsSandboxPhoneNumberRequest;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -33,14 +34,10 @@ public class AuthController {
     private final Map<String, String> otpStore = new ConcurrentHashMap<>(); // Lưu OTP tạm thời
     private final Map<String, String> tempUserStore = new ConcurrentHashMap<>(); // Lưu thông tin tạm thời (password)
 
-    /**
-     * API: Gửi OTP qua SMS
-     */
     @PostMapping("/send-otp")
-    public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> sendVerificationCode(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
         String password = request.get("password");
-        String otp = generateOtp(); // Tạo OTP ngẫu nhiên
 
         try {
             // Kiểm tra thông tin đầu vào
@@ -51,51 +48,55 @@ public class AuthController {
             // Lưu thông tin người dùng tạm thời
             tempUserStore.put(phoneNumber, password);
 
-            // Gửi OTP qua AWS SNS
-            PublishRequest publishRequest = PublishRequest.builder()
-                    .phoneNumber(phoneNumber)
-                    .message("Your OTP code is: " + otp)
-                    .build();
-            snsClient.publish(publishRequest);
+            // Thêm số điện thoại vào SNS Sandbox
+            try {
+                CreateSmsSandboxPhoneNumberRequest sandboxRequest = CreateSmsSandboxPhoneNumberRequest.builder()
+                        .phoneNumber(phoneNumber)
+                        .languageCode("en-US") // Ngôn ngữ tin nhắn
+                        .build();
+                snsClient.createSMSSandboxPhoneNumber(sandboxRequest);
+            } catch (software.amazon.awssdk.services.sns.model.SnsException e) {
+                // Nếu số đã tồn tại, bỏ qua lỗi
+                if (!e.awsErrorDetails().errorMessage().contains("already exists")) {
+                    throw e;
+                }
+            }
 
-            // Lưu OTP tạm thời
-            otpStore.put(phoneNumber, otp);
-
-            return ResponseEntity.ok(Map.of("message", "OTP sent successfully"));
+            return ResponseEntity.ok(Map.of("message", "Verification code sent. Please check your SMS to verify the phone number."));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Invalid input: " + e.getMessage());
         } catch (software.amazon.awssdk.services.sns.model.SnsException snsException) {
             return ResponseEntity.status(500).body("AWS SNS Error: " + snsException.awsErrorDetails().errorMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error sending OTP: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error sending verification code: " + e.getMessage());
         }
     }
 
-    /**
-     * API: Xác thực OTP và tạo User
-     */
-    @PostMapping("/verify-otp-and-create-user")
-    public ResponseEntity<?> verifyOtpAndCreateUser(@RequestBody Map<String, String> request) {
+    @PostMapping("/verify-phone-and-create-user")
+    public ResponseEntity<?> verifyPhoneAndCreateUser(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
-        String otp = request.get("otp");
-
-        // Kiểm tra OTP
-        if (!otp.equals(otpStore.get(phoneNumber))) {
-            return ResponseEntity.badRequest().body("Invalid OTP");
-        }
-
-        // Xóa OTP sau khi xác thực
-        otpStore.remove(phoneNumber);
-
-        // Lấy thông tin mật khẩu tạm thời
-        String password = tempUserStore.remove(phoneNumber);
-
-        if (password == null) {
-            return ResponseEntity.status(400).body("User data not found. Please restart the process.");
-        }
+        String verificationCode = request.get("verificationCode");
 
         try {
+            // Kiểm tra thông tin đầu vào
+            if (phoneNumber == null || verificationCode == null || phoneNumber.isEmpty() || verificationCode.isEmpty()) {
+                throw new IllegalArgumentException("Phone number and verification code must not be empty");
+            }
+
+            // Xác thực số điện thoại trong SNS Sandbox
+            VerifySmsSandboxPhoneNumberRequest verifyRequest = VerifySmsSandboxPhoneNumberRequest.builder()
+                    .phoneNumber(phoneNumber)
+                    .oneTimePassword(verificationCode)
+                    .build();
+            snsClient.verifySMSSandboxPhoneNumber(verifyRequest);
+
+            // Lấy mật khẩu tạm thời
+            String password = tempUserStore.get(phoneNumber);
+            if (password == null) {
+                throw new IllegalStateException("Temporary password not found for phone number: " + phoneNumber);
+            }
+
             // Tạo User với Cognito
             AdminCreateUserRequest createUserRequest = AdminCreateUserRequest.builder()
                     .userPoolId(userPoolId)
@@ -103,29 +104,39 @@ public class AuthController {
                     .temporaryPassword(password)
                     .userAttributes(
                             AttributeType.builder().name("phone_number").value(phoneNumber).build(),
-                            AttributeType.builder().name("phone_number_verified").value("true").build()  // Xác thực số điện thoại
+                            AttributeType.builder().name("phone_number_verified").value("true").build()
                     )
                     .messageAction("SUPPRESS")
                     .build();
 
             cognitoClient.adminCreateUser(createUserRequest);
 
-            //Đặt mật khẩu cố định
+            // Đặt mật khẩu cố định
             AdminSetUserPasswordRequest setPasswordRequest = AdminSetUserPasswordRequest.builder()
                     .userPoolId(userPoolId)
                     .username(phoneNumber)
                     .password(password)
                     .permanent(true)
                     .build();
-
             cognitoClient.adminSetUserPassword(setPasswordRequest);
+
+            // Xóa dữ liệu tạm
+            tempUserStore.remove(phoneNumber);
 
             return ResponseEntity.ok(Map.of("message", "User created successfully", "username", phoneNumber));
 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid input: " + e.getMessage());
+        } catch (software.amazon.awssdk.services.sns.model.SnsException snsException) {
+            return ResponseEntity.status(500).body(Map.of("error", "AWS SNS Error", "details", snsException.awsErrorDetails().errorMessage()));
         } catch (CognitoIdentityProviderException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Error creating user", "details", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Unexpected error", "details", e.getMessage()));
         }
     }
+
+
 
     /**
      * API: Đăng nhập User qua Cognito
@@ -175,9 +186,5 @@ public class AuthController {
         } catch (Exception e) {
             throw new RuntimeException("Error while calculating SECRET_HASH", e);
         }
-    }
-
-    private String generateOtp() {
-        return String.valueOf((int) (Math.random() * 900000) + 100000); // Tạo OTP 6 chữ số
     }
 }
