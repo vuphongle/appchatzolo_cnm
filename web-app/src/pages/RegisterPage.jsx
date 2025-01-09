@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
-import "./RegisterPage.css";
+import './RegisterPage.css'; // Import CSS
 
-const RegisterPage = () => {
+const RegistePage = () => {
     const [phoneNumber, setPhoneNumber] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -11,7 +11,9 @@ const RegisterPage = () => {
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [isOtpSent, setIsOtpSent] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [phoneError, setPhoneError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const [confirmPasswordError, setConfirmPasswordError] = useState("");
     const navigate = useNavigate();
 
     const validatePhoneNumber = (phone) => {
@@ -20,80 +22,77 @@ const RegisterPage = () => {
     };
 
     const validatePassword = (pass) => {
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         return passwordRegex.test(pass);
     };
 
     const handleSendOtp = async () => {
         setErrorMessage("");
         setSuccessMessage("");
+        setPhoneError("");
+        setPasswordError("");
+        setConfirmPasswordError("");
+
+        if (!phoneNumber || !password || !confirmPassword) {
+            setErrorMessage("Số điện thoại và mật khẩu là bắt buộc.");
+            return;
+        }
 
         if (!validatePhoneNumber(phoneNumber)) {
-            setErrorMessage("Số điện thoại không đúng định dạng +84...");
+            setPhoneError("Số điện thoại không đúng định dạng +84...");
             return;
         }
 
         if (!validatePassword(password)) {
-            setErrorMessage(
-                "Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
-            );
+            setPasswordError("Mật khẩu phải có chữ hoa, chữ thường, số và kí tự đặc biệt.");
             return;
         }
 
         if (password !== confirmPassword) {
-            setErrorMessage("Mật khẩu xác nhận không khớp.");
+            setConfirmPasswordError("Mật khẩu xác nhận không khớp.");
             return;
         }
 
-        setIsLoading(true);
         try {
-            const response = await AuthService.post("/send-otp", { phoneNumber, password });
-            setSuccessMessage(response.data.message || "OTP đã được gửi thành công. Vui lòng kiểm tra điện thoại.");
+            await AuthService.post("/send-otp", { phoneNumber, password });
+            setSuccessMessage("OTP đã được gửi thành công. Vui lòng kiểm tra điện thoại của bạn.");
             setIsOtpSent(true);
         } catch (error) {
-            setErrorMessage(
-                error.response?.data || "Lỗi xảy ra khi gửi OTP. Vui lòng thử lại sau."
-            );
-        } finally {
-            setIsLoading(false);
+            setErrorMessage(error.response?.data || "Lỗi khi gửi OTP.");
         }
     };
 
     const handleVerifyOtp = async () => {
         setErrorMessage("");
         setSuccessMessage("");
+        setPhoneError("");
+        setPasswordError("");
+        setConfirmPasswordError("");
 
         if (!verificationCode) {
-            setErrorMessage("Vui lòng nhập mã OTP.");
+            setErrorMessage("OTP là bắt buộc.");
             return;
         }
 
-        setIsLoading(true);
         try {
-            const response = await AuthService.post("/verify-phone-and-create-user", {
-                phoneNumber,
-                verificationCode,
-            });
-            setSuccessMessage(response.data.message || "Tài khoản đã được tạo thành công! Đang chuyển hướng...");
+            await AuthService.post("/verify-phone-and-create-user", { phoneNumber, verificationCode });
+            setSuccessMessage("Tạo người dùng thành công. Bạn có thể đăng nhập ngay.");
             setTimeout(() => {
                 navigate("/");
             }, 2000);
         } catch (error) {
-            setErrorMessage(
-                error.response?.data?.error ||
-                    error.response?.data?.details ||
-                    "Mã OTP không đúng hoặc đã hết hạn."
-            );
-        } finally {
-            setIsLoading(false);
+            // Kiểm tra lỗi và đưa ra thông báo lỗi chi tiết nếu có
+        if (error.response?.data) {
+            setErrorMessage(error.response?.data); // Thông báo lỗi từ server
+        } else {
+            setErrorMessage("Mã OTP không đúng hoặc hết hạn."); // Thông báo mặc định khi mã OTP không đúng
+        }
         }
     };
 
     return (
         <div className="register-verify-container">
             <h1>{isOtpSent ? "Xác minh OTP" : "Đăng ký Tài khoản"}</h1>
-
             {errorMessage && <div className="error-message">{errorMessage}</div>}
             {successMessage && <div className="success-message">{successMessage}</div>}
 
@@ -104,16 +103,11 @@ const RegisterPage = () => {
                         <input
                             id="phone"
                             type="text"
-                            placeholder="Nhập số điện thoại (ví dụ: +84901234567)"
+                            placeholder="Số điện thoại"
                             value={phoneNumber}
-                            onChange={(e) =>
-                                setPhoneNumber(
-                                    e.target.value.startsWith("+84")
-                                        ? e.target.value
-                                        : "+84" + e.target.value.replace(/^0/, "")
-                                )
-                            }
+                            onChange={(e) => setPhoneNumber(e.target.value)}
                         />
+                        {phoneError && <div className="error">{phoneError}</div>}
                     </div>
 
                     <div className="input-group">
@@ -121,10 +115,11 @@ const RegisterPage = () => {
                         <input
                             id="password"
                             type="password"
-                            placeholder="Nhập mật khẩu"
+                            placeholder="Mật khẩu"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
+                        {passwordError && <div className="error">{passwordError}</div>}
                     </div>
 
                     <div className="input-group">
@@ -136,31 +131,28 @@ const RegisterPage = () => {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                         />
+                        {confirmPasswordError && <div className="error">{confirmPasswordError}</div>}
                     </div>
 
-                    <button onClick={handleSendOtp} disabled={isLoading}>
-                        {isLoading ? "Đang gửi..." : "Đăng ký"}
-                    </button>
+                    <button onClick={handleSendOtp}>Đăng ký</button>
                 </div>
             )}
 
             {isOtpSent && (
                 <div>
-                    <label htmlFor="otp">🔢 Nhập OTP</label>
+                    <label htmlFor="verificationCode">🔢 Nhập OTP</label>
                     <input
-                        id="otp"
+                        id="verificationCode"
                         type="text"
-                        placeholder="Nhập mã OTP từ SMS"
+                        placeholder="Nhập OTP"
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
                     />
-                    <button onClick={handleVerifyOtp} disabled={isLoading}>
-                        {isLoading ? "Đang xác minh..." : "Xác minh OTP"}
-                    </button>
+                    <button onClick={handleVerifyOtp}>Xác minh OTP</button>
                 </div>
             )}
         </div>
     );
 };
 
-export default RegisterPage;
+export default RegistePage;

@@ -4,7 +4,6 @@ import LoginPage from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
 import MainPage from "./pages/MainPage";
 import RegisterPage from './pages/RegisterPage';
-import VerifyOTPPage from './pages/VerifyOTPPage';
 
 function App() {
     return (
@@ -13,7 +12,6 @@ function App() {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/main" element={<MainPage />} />
             <Route path="/create-user" element={<RegisterPage />} />
-            <Route path="/verify-otp" element={<VerifyOTPPage />} />
         </Routes>
     );
 }
