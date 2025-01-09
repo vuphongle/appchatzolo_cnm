@@ -4,6 +4,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @DynamoDbBean
@@ -12,10 +13,9 @@ public class User {
     private String name;
     private String avatar;
     private String phoneNumber;
-    private String date; // ISO format
-    private String passWord; // Hash
-    private List<String> friendIds; // Danh sách bạn bè (Denormalization)
-    private List<String> groupIds; // Danh sách nhóm tham gia (Denormalization)
+    private LocalDate dob;
+    private List<String> friendIds;
+    private List<String> groupIds;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -41,6 +41,15 @@ public class User {
         return avatar;
     }
 
+    @DynamoDbAttribute("dob")
+    public LocalDate getDob() {
+        return dob;
+    }
+
+    public void setDob(LocalDate dob) {
+        this.dob = dob;
+    }
+
     public void setAvatar(String avatar) {
         this.avatar = avatar;
     }
@@ -52,24 +61,6 @@ public class User {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
-    }
-
-    @DynamoDbAttribute("date")
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    @DynamoDbAttribute("passWord")
-    public String getPassWord() {
-        return passWord;
-    }
-
-    public void setPassWord(String passWord) {
-        this.passWord = passWord;
     }
 
     @DynamoDbAttribute("friendIds")
@@ -88,5 +79,18 @@ public class User {
 
     public void setGroupIds(List<String> groupIds) {
         this.groupIds = groupIds;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", avatar='" + avatar + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", dob=" + dob +
+                ", friendIds=" + friendIds +
+                ", groupIds=" + groupIds +
+                '}';
     }
 }

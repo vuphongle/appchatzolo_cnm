@@ -43,6 +43,10 @@ dependencies {
     // https://mvnrepository.com/artifact/io.github.cdimascio/java-dotenv
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
 
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
+
+
 }
 
 tasks.named('test') {
