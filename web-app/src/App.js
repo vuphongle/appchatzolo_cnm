@@ -5,7 +5,6 @@ import ChatPage from './pages/ChatPage';
 import MainPage from "./pages/MainPage";
 import RegisterPage from './pages/RegisterPage';
 
-
 function App() {
     return (
         <Routes>

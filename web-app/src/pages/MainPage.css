@@ -223,7 +223,7 @@ html, body {
 .action-button {
   position: relative; /* Để tooltip hiển thị theo vị trí nút */
   right: 10px;
-  margin: 5px;
+  margin-right: 5px;
   height: 30px;
   width: 30px;
   color: white;
