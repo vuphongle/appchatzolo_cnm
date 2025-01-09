@@ -37,7 +37,7 @@ const MainPage = () => {
     <div className="main-container">
       {/* Thanh bên trái */}
       <nav className="sidebar-nav">
-        <div className="nav-item avatar">
+        <div className="nav-item">
           <img
             src="https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg"
             alt="User Avatar"
@@ -76,10 +76,10 @@ const MainPage = () => {
             </button>
 
             <button className="action-button" title="Thêm bạn">
-                <img  style={{width:25, height:25, backgroundColor:'white'}} src="https://img.icons8.com/?size=100&id=23372&format=png&color=000000" alt="" />
+                <img className="action-button-img"  src="https://img.icons8.com/?size=100&id=23372&format=png&color=000000" alt="" />
             </button>
             <button className="action-button" title="Tạo nhóm">
-            <img  style={{width:25, height:25, backgroundColor:'white'}} src="https://img.icons8.com/?size=100&id=3734&format=png&color=000000" alt="" />
+            <img className="action-button-img"  src="https://img.icons8.com/?size=100&id=3734&format=png&color=000000" alt="" />
             </button>
         </div>
         <div className="sidebar-tabs">
@@ -109,7 +109,7 @@ const MainPage = () => {
           </div>
         </header>
         <section className="welcome-section">
-          <h1>Chào mừng đến với Zalo PC!</h1>
+          <h1>Chào mừng đến với Zolo PC!</h1>
           <p>
             Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người thân,
             bạn bè được tối ưu hóa cho máy tính của bạn.

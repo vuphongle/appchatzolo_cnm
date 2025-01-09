@@ -1,12 +1,12 @@
-body {
+/* body {
     margin: 0;
     padding: 0;
     height: 100vh;
     background-image: url('../image/Register_Background.jpg'); 
-    background-size: cover; /* hình ảnh phủ hết màn hình */
-    background-position: center; /* Căn giữa hình ảnh */
-    background-repeat: no-repeat; /* Không lặp lại hình ảnh */
-}
+    background-size: cover; 
+    background-position: center; 
+    background-repeat: no-repeat; 
+} */
 
 .register-verify-container {
     max-width: 500px;

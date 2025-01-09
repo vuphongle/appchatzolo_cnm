@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.CreateSmsSandboxPhoneNumberRequest;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.VerifySmsSandboxPhoneNumberRequest;
 
 import javax.crypto.Mac;
@@ -186,5 +187,9 @@ public class AuthController {
         } catch (Exception e) {
             throw new RuntimeException("Error while calculating SECRET_HASH", e);
         }
+    }
+
+    private String generateOtp() {
+        return String.valueOf((int) (Math.random() * 900000) + 100000); // Tạo OTP 6 chữ số
     }
 }
