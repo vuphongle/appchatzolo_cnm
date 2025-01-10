@@ -14,6 +14,7 @@ const RegistePage = () => {
     const [phoneError, setPhoneError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const validatePhoneNumber = (phone) => {
@@ -91,50 +92,53 @@ const RegistePage = () => {
     };
 
     return (
-        <div className="register-verify-container">
+        <div className="d-flex justify-content-center align-items-center flex-column vh-100" style={{ backgroundColor: "#f0f8ff" }}>
+          <div className="text-center mb-4">
+            <h1 className="text-primary fw-bold">Zolo</h1>
+            <p>Đăng ký tài khoản Zolo <br/>
+            để kết nối với ứng dụng Zolo Web</p>
+          </div>
+          <div className="card p-4" style={{ width: "500px",  borderRadius: "20px" }}>
             <h1>{isOtpSent ? "Xác minh OTP" : "Đăng ký Tài khoản"}</h1>
             {errorMessage && <div className="error-message">{errorMessage}</div>}
             {successMessage && <div className="success-message">{successMessage}</div>}
-
             {!isOtpSent && (
                 <div>
                     <div className="input-group">
-                        <label htmlFor="phone">📱 Số điện thoại</label>
                         <input
                             id="phone"
                             type="text"
-                            placeholder="Số điện thoại"
+                            placeholder="📱 Số điện thoại"
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                         />
                         {phoneError && <div className="error">{phoneError}</div>}
                     </div>
-
                     <div className="input-group">
-                        <label htmlFor="password">🔒 Mật khẩu</label>
                         <input
                             id="password"
                             type="password"
-                            placeholder="Mật khẩu"
+                            placeholder="🔒 Mật khẩu"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
                         {passwordError && <div className="error">{passwordError}</div>}
+                        
                     </div>
 
                     <div className="input-group">
-                        <label htmlFor="confirm-password">🔑 Xác nhận mật khẩu</label>
+                       
                         <input
                             id="confirm-password"
                             type="password"
-                            placeholder="Xác nhận mật khẩu"
+                            placeholder="🔑 Xác nhận mật khẩu"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                         />
                         {confirmPasswordError && <div className="error">{confirmPasswordError}</div>}
                     </div>
 
-                    <button onClick={handleSendOtp}>Đăng ký</button>
+                    <button className="btn btn-primary w-100 mb-3" onClick={handleSendOtp} >Đăng ký</button>
                 </div>
             )}
 
@@ -151,8 +155,15 @@ const RegistePage = () => {
                     <button onClick={handleVerifyOtp}>Xác minh OTP</button>
                 </div>
             )}
+        <hr />
+          <div className="text-center">
+            <span>Đã có tài khoản? </span>
+            <a href="/" className="text-primary text-decoration-none fw-bold">
+              Đăng nhập
+            </a>
+          </div>
         </div>
+    </div>
     );
 };
-
 export default RegistePage;
