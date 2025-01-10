@@ -25,6 +25,7 @@ dependencies {
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.29.43'
     implementation 'software.amazon.awssdk:cognitoidentityprovider:2.29.43'
     implementation 'software.amazon.awssdk:core:2.29.43'
+    implementation 'software.amazon.awssdk:sns:2.29.43'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -46,6 +47,8 @@ dependencies {
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
 
+    //QUản lý OTP (Lưu, lấy và xóa, quy định thời gian OTP)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 }
 
