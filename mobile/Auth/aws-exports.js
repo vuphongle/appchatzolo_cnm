@@ -1,12 +1,14 @@
+import { REGION, USER_POOL_ID, USER_POOL_WEB_CLIENT_ID, DOMAIN } from '@env';
+
 const awsConfig = {
     Auth: {
-        region: process.env.region,
-        userPoolId: process.env.userPoolId,
-        userPoolWebClientId: process.env.userPoolWebClientId,
+        region: REGION,
+        userPoolId: USER_POOL_ID,
+        userPoolWebClientId: USER_POOL_WEB_CLIENT_ID,
         mandatorySignIn: false,
         authenticationFlowType: 'USER_SRP_AUTH',
         oauth: {
-            domain: process.env.domain,
+            domain: DOMAIN,
             scope: ['phone', 'email', 'openid', 'profile'],
             redirectSignIn: 'myapp://callback',
             redirectSignOut: 'myapp://signout',

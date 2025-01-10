@@ -1,53 +1,51 @@
-    import React, { useState } from 'react';
-    import { SafeAreaView, StyleSheet, StatusBar } from 'react-native';
-    import { Amplify } from 'aws-amplify';
-    import awsConfig from './Auth/aws-exports';
-    import AuthScreen from './Auth/AuthScreen';
-    import ConfirmSignUpScreen from './Auth/ConfirmSignUpScreen';
-    import AsyncStorage from '@react-native-async-storage/async-storage';
-    import 'react-native-get-random-values';
+// App.js
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
-    Amplify.configure({
-        ...awsConfig,
+import { Amplify } from 'aws-amplify';
+import awsConfig from './Auth/aws-exports';
+import AuthScreen from './Auth/AuthScreen';
+import ConfirmSignUpScreen from './Auth/ConfirmSignUpScreen';
+import MainTabNavigator from './navigation/MainTabNavigator';
+import SearchHeader from './components/SearchHeader';
+import { SearchProvider } from './context/SearchContext';
 
-        Storage: {
-            // Cấu hình Storage nếu cần
-        },
-        // Thêm cấu hình nếu cần
-    });
+Amplify.configure({
+  ...awsConfig,
+});
 
-    const App = () => {
-        const [isConfirmed, setIsConfirmed] = useState(false);
-        const [registeredPhone, setRegisteredPhone] = useState('');
+const Stack = createStackNavigator();
 
-        const handleSignUp = (phone) => {
-            setRegisteredPhone(phone);
-        };
+const App = () => {
+  return (
+    <SearchProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="AuthScreen">
+          <Stack.Screen
+            name="AuthScreen"
+            component={AuthScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ConfirmSignUpScreen"
+            component={ConfirmSignUpScreen}
+            options={{ headerTitle: 'Xác nhận đăng ký' }}
+          />
+          <Stack.Screen
+            name="MainTabs"
+            component={MainTabNavigator}
+            options={{
+              headerTitle: () => <SearchHeader />,
+              headerStyle: {
+                backgroundColor: '#0699f9',
+              },
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SearchProvider>
+  );
+};
 
-        const handleConfirm = () => {
-            setIsConfirmed(true);
-        };
-
-        return (
-            <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="dark-content" />
-                {!isConfirmed ? (
-                    registeredPhone ? (
-                        <ConfirmSignUpScreen phoneNumber={registeredPhone} onConfirm={handleConfirm} />
-                    ) : (
-                        <AuthScreen onSignUp={handleSignUp} />
-                    )
-                ) : (
-                    <AuthScreen />
-                )}
-            </SafeAreaView>
-        );
-    };
-
-    const styles = StyleSheet.create({
-        container: {
-            flex: 1,
-        },
-    });
-
-    export default App;
+export default App;
