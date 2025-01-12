@@ -1,216 +1,115 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthService from '../services/AuthService';
-import './LoginPage.css'; // Import CSS cho giao diện Zalo-style
+import ApiService from '../services/AuthService';
+// import './LoginPage.css'; 
 
 const LoginPage = () => {
-    const navigate = useNavigate();
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [password, setPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [activeTab, setActiveTab] = useState('phone'); // Thêm state cho tab hiện tại
 
-    const handleLogin = async () => {
-        try {
-            const response = await AuthService.post('/login', {
-                username: phoneNumber,
-                password,
-            });
-            alert('Login successful!');
-            navigate('/main');
-        } catch (error) {
-            console.error("Error logging in:", error.response || error);
-            setErrorMessage(
-                error.response?.data?.error || 'Error logging in'
-            );
-        }
-    };
+  const handleLogin = async () => {
+    try {
+      const response = await ApiService.post('/auth/login', {
+        username: phoneNumber,
+        password,
+      });
+      navigate('/main');
+    } catch (error) {
+      console.error("Error logging in:", error.response || error);
+      setErrorMessage(
+        error.response?.data?.error || 'Error logging in'
+      );
+    }
+  };
 
-    return (
-        <div className="login-container">
-            <div className="login-box">
-                <h2>Zolo</h2>
-                <p>Đăng nhập tài khoản Zolo để kết nối với ứng dụng Zalo Web</p>
-                <form onSubmit={(e) => e.preventDefault()}>
-                    <div className="input-group">
-                        <label htmlFor="phone">📱 Số điện thoại</label>
-                        <input
-                            id="phone"
-                            type="text"
-                            placeholder="+84..."
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="input-group">
-                        <label htmlFor="password">🔒 Mật khẩu</label>
-                        <input
-                            id="password"
-                            type="password"
-                            placeholder="Nhập mật khẩu"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    {errorMessage && <p className="error-message">{errorMessage}</p>}
-                    <button className="btn-login" onClick={handleLogin}>Đăng nhập với mật khẩu</button>
-                </form>
-                <div className="extra-options">
-                    <a href="#forgot-password">Quên mật khẩu</a>
-                    <a href="#qr-login">Đăng nhập qua mã QR</a>
-                    <a href="/create-user">Đăng ký tài khoản</a>
-                </div>
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+
+  return (
+    <div className="d-flex justify-content-center align-items-center flex-column vh-100" style={{ backgroundColor: "#f0f8ff" }}>
+      <div className="text-center mb-4">
+        <h1 className="text-primary fw-bold">Zolo</h1>
+        <p>Đăng nhập tài khoản Zolo <br /> để kết nối với ứng dụng Zolo Web</p>
+      </div>
+
+      <div className="card p-4" style={{ width: "500px", borderRadius: "20px" }}>
+        <ul className="nav nav-pills nav-fill justify-content-center mb-3 d-flex">
+          <li className="nav-item w-50">
+            <button
+              className={`nav-link ${activeTab === 'phone' ? 'active' : ''}`}
+              onClick={() => handleTabChange('phone')}
+            >
+              Số Điện Thoại
+            </button>
+          </li>
+          <li className="nav-item w-50">
+            <button
+              className={`nav-link ${activeTab === 'qr' ? 'active' : ''}`}
+              onClick={() => handleTabChange('qr')}
+            >
+              Quét Mã QR
+            </button>
+          </li>
+        </ul>
+
+        <form onSubmit={(e) => e.preventDefault()}>
+          {activeTab === 'phone' && (
+            <>
+              <div className="mb-3">
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="📱 Số điện thoại"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      required
+                    />
+                  </div>
+              </div>
+              <div className="input-group mb-3">
+                  <input
+                    id="password"
+                    type='password'
+                    className="form-control"
+                    placeholder="🔒 Mật khẩu"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+              </div>
+              <button className="btn btn-primary w-100 mb-3" onClick={handleLogin}>Đăng Nhập Với Mật Khẩu</button>
+            </>
+          )}
+
+          {activeTab === 'qr' && (
+            <div className="mb-3 text-center">
+              <p>Quét mã QR để đăng nhập</p>
+              {/* Tạo một khu vực hoặc hình ảnh cho QR */}
+              <img src="../image/qr.png" alt="QR Code" style={{ width: '200px' }} />
             </div>
+          )}
+        </form>
+
+        <div className="text-center">
+          <a href="/" className="text-decoration-none">Quên mật khẩu?</a>
+          <br />
         </div>
-    );
+
+        <hr />
+
+        <div className="text-center">
+          <span>Chưa có tài khoản? </span>
+          <a href="/create-user" className="text-primary text-decoration-none fw-bold">Đăng Ký</a>
+        </div>
+      </div>
+    </div>
+  );
+  
 };
 
 export default LoginPage;
-
-
-
-
-
-// import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import ApiService from '../services/ApiService';
-
-// const SignInPage = () => {
-//     const navigate = useNavigate();
-//     const [phoneNumber, setPhoneNumber] = useState('');
-//     const [password, setPassword] = useState('');
-//     const [otp, setOtp] = useState('');
-//     const [step, setStep] = useState(1); // Step 1: Register, Step 2: Verify OTP, Step 3: Login
-//     const [errorMessage, setErrorMessage] = useState('');
-//     const [loading, setLoading] = useState(false);
-
-//     const handleRegister = async () => {
-//         setErrorMessage(''); // Reset lỗi trước khi thực hiện
-//         setLoading(true); // Hiển thị trạng thái loading
-    
-//         try {
-//             // Gọi API để đăng ký người dùng
-//             await ApiService.post('/auth/register', {
-//                 phoneNumber,
-//                 password,
-//             });
-    
-//             alert('User created successfully');
-//             setStep(2); // Chuyển sang bước tiếp theo (nếu cần)
-//         } catch (error) {
-//             // Hiển thị lỗi nếu API trả về lỗi
-//             setErrorMessage(error.response?.data || 'Error creating user');
-//         } finally {
-//             setLoading(false); // Kết thúc trạng thái loading
-//         }
-//     };
-    
-
-//     // Xác thực OTP
-//     const handleVerifyOtp = async () => {
-//         setErrorMessage('');
-//         setLoading(true);
-
-//         try {
-//             const response = await ApiService.post('/auth/verify-otp', {
-//                 phoneNumber,
-//                 otp,
-//             });
-//             alert(response);
-//             setStep(3); // Chuyển sang bước đăng nhập
-//         } catch (error) {
-//             setErrorMessage(error.response?.data || 'Error during OTP verification');
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     // Đăng nhập
-//     const handleLogin = async () => {
-//         setErrorMessage('');
-//         setLoading(true);
-
-//         try {
-//             const response = await ApiService.post('/auth/login', {
-//                 username: phoneNumber,
-//                 password,
-//             });
-//             alert('Login successful!');
-//             navigate('/dashboard'); // Điều hướng đến dashboard sau khi đăng nhập thành công
-//         } catch (error) {
-//             setErrorMessage(error.response?.data || 'Error during login');
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     return (
-//         <div>
-//             {step === 1 && (
-//                 <div>
-//                     <h2>Register</h2>
-//                     <input
-//                         type="text"
-//                         placeholder="Phone Number"
-//                         value={phoneNumber}
-//                         onChange={(e) => setPhoneNumber(e.target.value)}
-//                     />
-//                     <input
-//                         type="password"
-//                         placeholder="Password"
-//                         value={password}
-//                         onChange={(e) => setPassword(e.target.value)}
-//                     />
-//                     <button onClick={handleRegister} disabled={loading}>
-//                         {loading ? 'Registering...' : 'Register'}
-//                     </button>
-//                 </div>
-//             )}
-
-//             {step === 2 && (
-//                 <div>
-//                     <h2>Verify OTP</h2>
-//                     <input
-//                         type="text"
-//                         placeholder="Enter OTP"
-//                         value={otp}
-//                         onChange={(e) => setOtp(e.target.value)}
-//                     />
-//                     <button onClick={handleVerifyOtp} disabled={loading}>
-//                         {loading ? 'Verifying...' : 'Verify OTP'}
-//                     </button>
-//                 </div>
-//             )}
-
-//             {step === 3 && (
-//                 <div>
-//                     <h2>Login</h2>
-//                     <input
-//                         type="text"
-//                         placeholder="Phone Number"
-//                         value={phoneNumber}
-//                         onChange={(e) => setPhoneNumber(e.target.value)}
-//                     />
-//                     <input
-//                         type="password"
-//                         placeholder="Password"
-//                         value={password}
-//                         onChange={(e) => setPassword(e.target.value)}
-//                     />
-//                     <button onClick={handleLogin} disabled={loading}>
-//                         {loading ? 'Logging in...' : 'Login'}
-//                     </button>
-//                 </div>
-//             )}
-
-//             {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-//         </div>
-//     );
-// };
-
-// export default SignInPage;
-
-
-
-

@@ -1,10 +1,11 @@
 /* Container for the login page */
 .login-container {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f1f5fc;
+    background-color: #8fc5f0;
     font-family: Arial, sans-serif;
 }
 
@@ -12,7 +13,7 @@
 .login-box {
     background: white;
     padding: 30px 40px;
-    border-radius: 10px;
+    border-radius: 50px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
     width: 350px;
@@ -92,3 +93,5 @@
 .extra-options a:hover {
     text-decoration: underline;
 }
+
+
