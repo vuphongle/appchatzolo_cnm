@@ -5,44 +5,27 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @DynamoDbBean
 public class Message {
-    private String roomId;
-    private String timestamp; // ISO format
-    private String userId;
+    private String id;
     private String content;
-    private List<String> mediaURLs; // Danh sách URL media
+    private LocalDateTime sendDate;
+    private String senderID;
+    private String receiverID;
     private Boolean isRead;
+    private Media media;
 
     @DynamoDbPartitionKey
-    @DynamoDbAttribute("roomId")
-    public String getRoomId() {
-        return roomId;
+    @DynamoDbAttribute("id")
+    public String getId() {
+        return id;
     }
 
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
-    @DynamoDbSortKey
-    @DynamoDbAttribute("timestamp")
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    @DynamoDbAttribute("userId")
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     @DynamoDbAttribute("content")
@@ -54,21 +37,48 @@ public class Message {
         this.content = content;
     }
 
-    @DynamoDbAttribute("mediaURLs")
-    public List<String> getMediaURLs() {
-        return mediaURLs;
+    @DynamoDbAttribute("sendDate")
+    public LocalDateTime getSendDate() {
+        return sendDate;
     }
 
-    public void setMediaURLs(List<String> mediaURLs) {
-        this.mediaURLs = mediaURLs;
+    public void setSendDate(LocalDateTime sendDate) {
+        this.sendDate = sendDate;
+    }
+
+    @DynamoDbAttribute("senderID")
+    public String getSenderID() {
+        return senderID;
+    }
+
+    public void setSenderID(String senderID) {
+        this.senderID = senderID;
+    }
+
+    @DynamoDbAttribute("receiverID")
+    public String getReceiverID() {
+        return receiverID;
+    }
+
+    public void setReceiverID(String receiverID) {
+        this.receiverID = receiverID;
     }
 
     @DynamoDbAttribute("isRead")
-    public Boolean getIsRead() {
+    public Boolean getRead() {
         return isRead;
     }
 
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
+    public void setRead(Boolean read) {
+        isRead = read;
+    }
+
+    @DynamoDbAttribute("media")
+    public Media getMedia() {
+        return media;
+    }
+
+    public void setMedia(Media media) {
+        this.media = media;
     }
 }

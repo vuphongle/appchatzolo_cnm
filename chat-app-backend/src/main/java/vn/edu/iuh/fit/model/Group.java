@@ -11,8 +11,8 @@ public class Group {
     private String id;
     private String groupName;
     private String image;
-    private List<String> adminIds; // Danh sách admin (Denormalization)
-    private List<String> memberIds; // Danh sách thành viên (Denormalization)
+    private List<String> adminIds;
+    private List<String> memberIds;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")

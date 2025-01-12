@@ -21,9 +21,4 @@ public class MessageServiceImpl implements MessageService {
     public void sendMessage(Message message) {
         repository.save(message);
     }
-
-    @Override
-    public List<Message> getMessages(String roomId) {
-        return repository.findByRoomId(roomId);
-    }
 }

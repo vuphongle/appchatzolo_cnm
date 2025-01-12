@@ -26,12 +26,4 @@ public class MessageRepository {
         System.out.println("Saving message to DynamoDB: " + message);
         table.putItem(message);
     }
-
-    public List<Message> findByRoomId(String roomId) {
-        Key key = Key.builder().partitionValue(roomId).build();
-        return table.query(r -> r.queryConditional(QueryConditional.keyEqualTo(key)))
-                .items()
-                .stream()
-                .collect(Collectors.toList());
-    }
 }

@@ -12,9 +12,9 @@ public class Media {
     private String mediaType;
     private String mediaURL;
     private String fileName;
-    private Long fileSize; // Kích thước tệp tin (tính bằng bytes)
-    private String thumbnailURL; // URL thumbnail nếu có
-    private String uploaderId; // ID người tải lên
+    private Long fileSize;
+    private String thumbnailURL;
+    private String uploaderId;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("mediaID")

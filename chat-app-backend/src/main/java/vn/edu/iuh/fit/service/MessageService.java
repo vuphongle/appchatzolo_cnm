@@ -6,5 +6,4 @@ import java.util.List;
 
 public interface MessageService {
     void sendMessage(Message message);
-    List<Message> getMessages(String roomId);
 }
