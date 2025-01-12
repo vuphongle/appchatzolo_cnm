@@ -20,6 +20,7 @@
     "amazon-cognito-identity-js": "^6.3.14",
     "aws-amplify": "^5.3.27",
     "aws-amplify-react-native": "^7.0.8",
+    "aws-sdk": "^2.1692.0",
     "buffer": "^4.9.1",
     "process": "^0.11.0",
     "react": "18.3.1",

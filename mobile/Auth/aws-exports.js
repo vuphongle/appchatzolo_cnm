@@ -1,4 +1,8 @@
 import { REGION, USER_POOL_ID, USER_POOL_WEB_CLIENT_ID, DOMAIN } from '@env';
+console.log('REGION:', REGION);
+console.log('USER_POOL_ID:', USER_POOL_ID);
+console.log('USER_POOL_WEB_CLIENT_ID:', USER_POOL_WEB_CLIENT_ID);
+console.log('DOMAIN:', DOMAIN);
 
 const awsConfig = {
     Auth: {

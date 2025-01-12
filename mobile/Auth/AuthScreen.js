@@ -1,9 +1,40 @@
-// AuthScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Auth } from 'aws-amplify';
 import { useNavigation } from '@react-navigation/native';
+import AWS from 'aws-sdk';
+import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY} from '@env';
+
+AWS.config.update({
+    region: REGION,
+    credentials: new AWS.Credentials({
+        accessKeyId: ACCESS_KEY_ID,
+        secretAccessKey: SECRET_ACCESS_KEY
+    })
+});
+
+const sns = new AWS.SNS();
+
+const verifyPhoneNumber = async (phoneNumber) => {
+    try {
+        const result = await sns.createSMSSandboxPhoneNumber({
+            PhoneNumber: phoneNumber,
+            LanguageCode: 'en-US',
+        }).promise();
+        console.log('Số điện thoại đã được thêm vào sandbox:', result);
+        Alert.alert(
+            'Thành công',
+            'Số điện thoại đã được thêm vào sandbox. Vui lòng kiểm tra tin nhắn để xác minh.'
+        );
+    } catch (error) {
+        console.error('Lỗi thêm số điện thoại vào sandbox:', error);
+        Alert.alert(
+            'Lỗi',
+            error.message || 'Không thể thêm số điện thoại vào sandbox.'
+        );
+    }
+};
 
 const AuthScreen = () => {
     const navigation = useNavigation();
@@ -42,44 +73,39 @@ const AuthScreen = () => {
         }
 
         setIsLoading(true);
-        if (isRegister) {
-            try {
-                const result = await Auth.signUp({
-                    username: phoneNumber,
-                    password: password,
-                    attributes: {
-                        phone_number: phoneNumber,
-                        name: name,
-                        birthdate: birthDate.toISOString().split('T')[0],
-                    },
-                    autoSignIn: { enabled: true },
-                });
-                console.log('Sign up success', result);
-                Alert.alert('Thành công', 'Mã xác thực đã được gửi đến số điện thoại của bạn.');
+        try {
+                if (isRegister) {
+//                    const result = await Auth.signUp({
+//                        username: phoneNumber,
+//                        password: password,
+//                        attributes: {
+//                            phone_number: phoneNumber,
+//                            name: name,
+//                            birthdate: birthDate.toISOString().split('T')[0],
+//                        },
+//                        autoSignIn: { enabled: true },
+//                    });
+//                    console.log('Sign up success', result);
+                    await verifyPhoneNumber(phoneNumber);
+                    Alert.alert('Thành công', 'Mã xác thực đã được gửi đến số điện thoại của bạn.');
 
-                // Điều hướng đến ConfirmSignUpScreen và truyền các tham số cần thiết
-                navigation.navigate('ConfirmSignUpScreen', {
-                    phoneNumber: phoneNumber,
-                    name: name,
-                    dob: birthDate.toISOString().split('T')[0],
-                });
+                    navigation.navigate('ConfirmSignUpScreen', {
+                        phoneNumber: phoneNumber,
+                        name: name,
+                        dob: birthDate.toISOString().split('T')[0],
+                        password: password,
+                    });
+                } else {
+                    const user = await Auth.signIn(phoneNumber, password);
+                    console.log('User signed in successfully:', user);
+                    Alert.alert('Thành công', 'Đăng nhập thành công.');
+                    navigation.replace('MainTabs');
+                }
             } catch (error) {
-                console.log('Error signing up:', error);
-                Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi đăng ký.');
+                console.error('Error during authentication:', error);
+                Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra.');
             }
-        } else {
-            try {
-                console.log('Signing in...' + phoneNumber + ' ' + password);
-//                const user = await Auth.signIn(phoneNumber, password);
-//                console.log('User signed in successfully:', user);
-                Alert.alert('Thành công', 'Đăng nhập thành công.');
-                navigation.replace('MainTabs');
-            } catch (error) {
-                console.error('Error signing in:', error);
-                Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi đăng nhập.');
-            }
-        }
-        setIsLoading(false);
+            setIsLoading(false);
     };
 
     return (
