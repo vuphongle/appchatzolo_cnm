@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ApiService from '../services/AuthService';
+import AuthService from '../services/AuthService';
 // import './LoginPage.css'; 
 
 const LoginPage = () => {
@@ -12,7 +12,7 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await ApiService.post('/auth/login', {
+      const response = await AuthService.post('/login', {
         username: phoneNumber,
         password,
       });

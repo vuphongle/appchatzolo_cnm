@@ -12,7 +12,6 @@ function App() {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/main" element={<MainPage />} />
             <Route path="/create-user" element={<RegisterPage />} />
-          
         </Routes>
     );
 }
