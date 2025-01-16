@@ -6,7 +6,6 @@ import { IPV4 } from '@env';
 
 export const UserContext = createContext();
 
-// contexts/UserContext.js
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -26,12 +25,10 @@ export const UserProvider = ({ children }) => {
                 const userData = await response.json();
                 console.log('User data:', userData);
                 setUser(userData);
-                return userData; // Thêm dòng này để trả về dữ liệu người dùng
+                return userData;
             } else {
                 const error = await response.text();
-                console.error('Error fetching user:', error);
-                Alert.alert('Lỗi', `Không tìm thấy người dùng: ${phoneNumber}`);
-                return null; // Trả về null nếu không thành công
+                return null;
             }
         } catch (error) {
             console.error('Error during API call:', error);

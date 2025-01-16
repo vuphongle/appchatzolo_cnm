@@ -1,14 +1,15 @@
-// components/SearchBar.js
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const SearchBar = ({ placeholder, leftIcon , rightIcon, onRightIconPress, searchText, setSearchText }) => {
+const SearchBar = ({ placeholder, leftIcon, rightIcon, onLeftIconPress, onRightIconPress, searchText, setSearchText }) => {
     return (
         <View style={styles.searchBar}>
-            <TouchableOpacity>
-                <Icon name={leftIcon} size={24} color="#888" style={styles.searchIcon} />
-            </TouchableOpacity>
+            {leftIcon && (
+                <TouchableOpacity onPress={onLeftIconPress}>
+                    <Icon name={leftIcon} size={24} color="#888" style={styles.searchIcon} />
+                </TouchableOpacity>
+            )}
             <TextInput
                 style={styles.searchInput}
                 placeholder={placeholder || "Tìm kiếm"}
