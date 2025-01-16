@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import SearchBar from '../components/SearchBar';
 
 const DanhBaScreen = () => {
+const [searchText, setSearchText] = useState('');
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Màn hình Danh Bạ</Text>
+            {/* Search Bar */}
+            <SearchBar
+                placeholder="Tìm kiếm"
+                leftIcon="search"
+                rightIcon="notifications"
+                searchText={searchText}
+                setSearchText={setSearchText}
+            />
         </View>
     );
 };
@@ -12,8 +21,7 @@ const DanhBaScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: '#F0F8FF',
     },
     text: {
         fontSize: 18,
