@@ -6,10 +6,11 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Amplify } from 'aws-amplify';
 import awsConfig from './Auth/aws-exports';
 import AuthScreen from './Auth/AuthScreen';
+import SettingScreen from './screens/SettingScreen';
 import ConfirmSignUpScreen from './Auth/ConfirmSignUpScreen';
 import MainTabNavigator from './navigation/MainTabNavigator';
-import SearchHeader from './components/SearchHeader';
-import { SearchProvider } from './context/SearchContext';
+import { UserProvider } from './context/UserContext';
+
 
 Amplify.configure({
   ...awsConfig,
@@ -19,7 +20,7 @@ const Stack = createStackNavigator();
 
 const App = () => {
   return (
-    <SearchProvider>
+    <UserProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="AuthScreen">
           <Stack.Screen
@@ -35,16 +36,16 @@ const App = () => {
           <Stack.Screen
             name="MainTabs"
             component={MainTabNavigator}
-            options={{
-              headerTitle: () => <SearchHeader />,
-              headerStyle: {
-                backgroundColor: '#0699f9',
-              },
-            }}
+            options={{ headerShown: false}}
+          />
+          <Stack.Screen
+            name="SettingsScreen"
+            component={SettingScreen}
+            options={{ headerTitle: 'Cài đặt' }}
           />
         </Stack.Navigator>
       </NavigationContainer>
-    </SearchProvider>
+    </UserProvider>
   );
 };
 

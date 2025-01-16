@@ -43,4 +43,7 @@ public class UserRepository {
                 .orElse(null);
     }
 
+    public List<User> findAllUsers() {
+        return table.scan().items().stream().collect(Collectors.toList());
+    }
 }

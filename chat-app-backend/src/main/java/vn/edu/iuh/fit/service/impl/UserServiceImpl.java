@@ -6,6 +6,8 @@ import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.UserService;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -29,5 +31,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findUserByPhoneNumber(String phoneNumber) {
         return userRepository.findByPhoneNumber(phoneNumber);
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        return userRepository.findAllUsers();
     }
 }

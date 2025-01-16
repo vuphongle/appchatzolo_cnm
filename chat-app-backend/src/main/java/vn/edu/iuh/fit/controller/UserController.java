@@ -1,14 +1,14 @@
 package vn.edu.iuh.fit.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.service.UserService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -34,4 +34,27 @@ public class UserController {
         return ResponseEntity.ok("User created successfully!");
     }
 
+    @PostMapping("/findByPhoneNumber")
+    public ResponseEntity<?> findUserByPhoneNumber(@RequestBody Map<String, String> payload) {
+        String phoneNumber = payload.get("phoneNumber");
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Số điện thoại không được để trống");
+        }
+
+        User user = userService.findUserByPhoneNumber(phoneNumber);
+        if (user == null) {
+            System.out.println("Không tìm thấy người dùng với số điện thoại: " + phoneNumber);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng với số điện thoại: " + phoneNumber);
+        }
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.findAllUsers();
+        if (users.isEmpty()) {
+            return ResponseEntity.noContent().build(); // HTTP 204 nếu danh sách rỗng
+        }
+        return ResponseEntity.ok(users); // HTTP 200 và trả về danh sách người dùng
+    }
 }

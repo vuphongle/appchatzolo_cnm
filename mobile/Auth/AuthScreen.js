@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+// screens/AuthScreen.js
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Auth } from 'aws-amplify';
 import { useNavigation } from '@react-navigation/native';
 import AWS from 'aws-sdk';
-import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY} from '@env';
+import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, IPV4 } from '@env';
+import { UserContext } from '../context/UserContext';
 
 AWS.config.update({
     region: REGION,
@@ -36,8 +38,10 @@ const verifyPhoneNumber = async (phoneNumber) => {
     }
 };
 
+// Server -> get user (Đã chuyển vào UserContext)
 const AuthScreen = () => {
     const navigation = useNavigation();
+    const { setUser, fetchUserProfile } = useContext(UserContext);
     const [isRegister, setIsRegister] = useState(false);
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
@@ -74,38 +78,39 @@ const AuthScreen = () => {
 
         setIsLoading(true);
         try {
-                if (isRegister) {
-//                    const result = await Auth.signUp({
-//                        username: phoneNumber,
-//                        password: password,
-//                        attributes: {
-//                            phone_number: phoneNumber,
-//                            name: name,
-//                            birthdate: birthDate.toISOString().split('T')[0],
-//                        },
-//                        autoSignIn: { enabled: true },
-//                    });
-//                    console.log('Sign up success', result);
-                    await verifyPhoneNumber(phoneNumber);
-                    Alert.alert('Thành công', 'Mã xác thực đã được gửi đến số điện thoại của bạn.');
+            if (isRegister) {
+                // Thực hiện đăng ký (nếu cần)
+                // Ví dụ: sử dụng Auth.signUp nếu bạn sử dụng Cognito
+                // const result = await Auth.signUp({...});
+                // console.log('Sign up success', result);
 
-                    navigation.navigate('ConfirmSignUpScreen', {
-                        phoneNumber: phoneNumber,
-                        name: name,
-                        dob: birthDate.toISOString().split('T')[0],
-                        password: password,
-                    });
-                } else {
-                    const user = await Auth.signIn(phoneNumber, password);
-                    console.log('User signed in successfully:', user);
-                    Alert.alert('Thành công', 'Đăng nhập thành công.');
+                // Thực hiện xác thực số điện thoại
+                await verifyPhoneNumber(phoneNumber);
+                Alert.alert('Thành công', 'Mã xác thực đã được gửi đến số điện thoại của bạn.');
+
+                navigation.navigate('ConfirmSignUpScreen', {
+                    phoneNumber: phoneNumber,
+                    name: name,
+                    dob: birthDate.toISOString().split('T')[0],
+                    password: password,
+                });
+            } else {
+                const user = await Auth.signIn(phoneNumber, password);
+                console.log('User signed in successfully:', user);
+
+                const userProfile = await fetchUserProfile(phoneNumber);
+
+                if (userProfile) {
+                    setUser(userProfile);
                     navigation.replace('MainTabs');
                 }
-            } catch (error) {
-                console.error('Error during authentication:', error);
-                Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra.');
+                console.log('User profile:', userProfile);
             }
-            setIsLoading(false);
+        } catch (error) {
+            console.error('Error during authentication:', error);
+            Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra.');
+        }
+        setIsLoading(false);
     };
 
     return (
@@ -183,7 +188,6 @@ const AuthScreen = () => {
                                 }
                             }}
                         />
-
                     )}
                 </>
             )}
