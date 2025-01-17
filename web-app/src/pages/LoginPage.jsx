@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/AuthService';
 import { useAuth } from '../context/AuthContext';
+import AuthService from '../services/AuthService';
 // import './LoginPage.css'; 
 
 const LoginPage = () => {
