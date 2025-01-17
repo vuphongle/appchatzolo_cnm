@@ -19,11 +19,17 @@
 
 h1 {
     text-align: center;
-    margin-bottom: 20px;
 }
 
 .input-group {
-    margin-bottom: 15px;
+    margin-bottom: 5px;
+}
+
+.input-group-info {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 label {
@@ -48,6 +54,7 @@ button {
     color: white;
     border: none;
     border-radius: 4px;
+    margin-top: 5px;
     font-size: 20px;
     cursor: pointer;
 }

@@ -8,13 +8,19 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.CreateSmsSandboxPhoneNumberRequest;
-import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.GetUserRequest;
 import software.amazon.awssdk.services.sns.model.VerifySmsSandboxPhoneNumberRequest;
+import vn.edu.iuh.fit.model.User;
+import vn.edu.iuh.fit.service.UserService;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -26,6 +32,9 @@ public class AuthController {
 
     @Autowired
     private SnsClient snsClient;
+
+    @Autowired
+    private UserService userService;
 
     private final Dotenv dotenv = Dotenv.load();
     private final String userPoolId = dotenv.get("aws.cognito.userPoolId");
@@ -121,6 +130,16 @@ public class AuthController {
                     .build();
             cognitoClient.adminSetUserPassword(setPasswordRequest);
 
+            // Lưu thông tin người dùng vào DynamoDB qua UserRepository
+            String name = request.get("name");
+            String dobString = request.get("dob");
+//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//            LocalDate dob = LocalDate.parse(dobString, formatter);
+            // Gán ID cho người dùng
+            User user = new User(phoneNumber, name, dobString);
+            user.setId(UUID.randomUUID().toString());  // Gán ID cho User
+            userService.createUser(user);
+
             // Xóa dữ liệu tạm
             tempUserStore.remove(phoneNumber);
 
@@ -164,8 +183,32 @@ public class AuthController {
 
             InitiateAuthResponse authResponse = cognitoClient.initiateAuth(authRequest);
             String idToken = authResponse.authenticationResult().idToken();
+            String accessToken = authResponse.authenticationResult().accessToken();
 
-            return ResponseEntity.ok(Map.of("idToken", idToken));
+            // Truy vấn thông tin người dùng từ accessToken
+            GetUserRequest getUserRequest = GetUserRequest.builder()
+                    .accessToken(accessToken)  // Sử dụng accessToken thay vì idToken
+                    .build();
+
+            GetUserResponse getUserResponse = cognitoClient.getUser(getUserRequest);
+
+            // Lấy thông tin người dùng trong cognito
+            Map<String, String> userAttributes = new HashMap<>();
+            for (AttributeType attribute : getUserResponse.userAttributes()) {
+                userAttributes.put(attribute.name(), attribute.value());
+            }
+
+            // Sử dụng số điện thoại để tìm người dùng trong DynamoDB hoặc cơ sở dữ liệu khác
+            User my_user = userService.findUserByPhoneNumber(username); //username là phone number
+
+            // Trả về dữ liệu kết hợp từ Cognito và hệ thống của bạn
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("idToken", idToken);
+            responseData.put("userAttributes", userAttributes);
+            responseData.put("my_user", my_user);
+
+            // Trả về ResponseEntity với dữ liệu người dùng
+            return ResponseEntity.ok(responseData);
 
         } catch (NotAuthorizedException e) {
             System.err.println("Login failed: Invalid username or password. Details: " + e.getMessage());

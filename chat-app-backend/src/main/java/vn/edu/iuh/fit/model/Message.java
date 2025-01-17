@@ -17,6 +17,7 @@ public class Message {
     private String receiverID;
     private Boolean isRead;
     private Media media;
+    private String status;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -65,13 +66,17 @@ public class Message {
     }
 
     @DynamoDbAttribute("isRead")
-    public Boolean getRead() {
+    public Boolean getIsRead() {
         return isRead;
     }
 
-    public void setRead(Boolean read) {
-        isRead = read;
+    public void setIsRead(Boolean isRead) {
+        this.isRead = isRead;
     }
+
+
+
+
 
     @DynamoDbAttribute("media")
     public Media getMedia() {
@@ -80,5 +85,14 @@ public class Message {
 
     public void setMedia(Media media) {
         this.media = media;
+    }
+
+    @DynamoDbAttribute("status")
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

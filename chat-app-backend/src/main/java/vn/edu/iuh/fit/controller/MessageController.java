@@ -19,4 +19,10 @@ public class MessageController {
         this.service = service;
     }
 
+    @PostMapping("/addFriend")
+    public void sendMessage(@RequestBody Message message) {
+        System.out.println("Received message: " + message);
+        service.sendMessage(message);
+    }
+
 }

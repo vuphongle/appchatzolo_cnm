@@ -1,11 +1,9 @@
 package vn.edu.iuh.fit.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.service.UserService;
 
@@ -32,6 +30,21 @@ public class UserController {
 
         userService.createUser(user);
         return ResponseEntity.ok("User created successfully!");
+    }
+
+    @GetMapping("/searchFriend")
+    public ResponseEntity<?> searchUser(@RequestParam String phoneNumber) {
+        try {
+            User user = userService.findUserByPhoneNumber(phoneNumber); // Xử lý tìm kiếm
+            if (user != null) {
+                return ResponseEntity.ok(user);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  // In chi tiết lỗi ra log
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred");
+        }
     }
 
 }
