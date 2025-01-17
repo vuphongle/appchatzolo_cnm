@@ -9,7 +9,7 @@ const TinNhanScreen = () => {
     const [searchResult, setSearchResult] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    const { fetchUserProfile } = useContext(UserContext);
+    const { fetchUserProfile, user } = useContext(UserContext);
 
     // Sử dụng useEffect để tự động tìm kiếm khi người dùng nhập
     useEffect(() => {
@@ -20,9 +20,8 @@ const TinNhanScreen = () => {
 
         const timer = setTimeout(() => {
             handleSearch();
-        }, 500); // Trì hoãn 500ms trước khi tìm kiếm
+        }, 500);
 
-        // Hủy bỏ setTimeout khi `searchText` thay đổi
         return () => clearTimeout(timer);
     }, [searchText]);
 
@@ -31,7 +30,16 @@ const TinNhanScreen = () => {
 
         setLoading(true);
         const result = await fetchUserProfile(searchText.trim());
-        setSearchResult(result);
+
+        if (result) {
+            if (result.id === user?.id) {
+                setSearchResult({ ...result, isOwnProfile: true });
+            } else {
+                setSearchResult({ ...result, isOwnProfile: false });
+            }
+        } else {
+            setSearchResult(null);
+        }
         setLoading(false);
     };
 
@@ -39,6 +47,14 @@ const TinNhanScreen = () => {
         setIsSearching(false);
         setSearchText('');
         setSearchResult(null);
+    };
+
+    const handleAddFriend = () => {
+        console.log('Kết bạn với người dùng', searchResult.name);
+    };
+
+    const handleSearchBarFocus = () => {
+        setIsSearching(true); // Bật chế độ tìm kiếm khi bấm vào thanh tìm kiếm
     };
 
     return (
@@ -55,6 +71,7 @@ const TinNhanScreen = () => {
                             setSearchText(text);
                             setIsSearching(!!text);
                         }}
+                        onFocus={handleSearchBarFocus}
                     />
                 </>
             ) : (
@@ -84,6 +101,11 @@ const TinNhanScreen = () => {
                                     <Text style={styles.name}>{searchResult.name || 'Người dùng vô danh'}</Text>
                                     <Text style={styles.phone}>{searchResult.phoneNumber || 'Chưa có số điện thoại'}</Text>
                                 </View>
+                                {!searchResult.isOwnProfile && (
+                                    <TouchableOpacity onPress={handleAddFriend} style={styles.addFriendButton}>
+                                        <Text style={styles.addFriendButtonText}>Kết bạn</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         ) : (
                             <Text style={styles.noResult}>
@@ -144,10 +166,25 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
+        flex: 1,
     },
     phone: {
         fontSize: 16,
         color: '#555',
+    },
+    addFriendButton: {
+        backgroundColor: '#34C759',
+        paddingVertical: 5,
+        paddingHorizontal: 15,
+        borderRadius: 5,
+        position: 'absolute',
+        right: 10,
+        top: '50%',
+        transform: [{ translateY: -5 }],
+    },
+    addFriendButtonText: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
     },
     noResult: {
         fontSize: 16,

@@ -24,7 +24,6 @@ export const UserProvider = ({ children }) => {
             if (response.ok) {
                 const userData = await response.json();
                 console.log('User data:', userData);
-                setUser(userData);
                 return userData;
             } else {
                 const error = await response.text();
