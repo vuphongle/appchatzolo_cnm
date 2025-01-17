@@ -7,13 +7,10 @@
 
 html,
 body {
-    height: 100%;
-    /* Đảm bảo chiếm đủ chiều cao màn hình */
-    width: 100%;
-    overflow: auto;
-    /* Loại bỏ cuộn không mong muốn */
+  height: 100%; /* Đảm bảo chiếm đủ chiều cao màn hình */
+  width: 100%;
+  overflow: auto; /* Loại bỏ cuộn không mong muốn */
 }
-
 
 .main-container {
     display: flex;
@@ -32,7 +29,6 @@ body {
     gap: 20px;
 }
 
-
 .nav-item {
     width: 50px;
     height: 50px;
@@ -43,7 +39,6 @@ body {
     color: white;
     transition: background-color 0.3s;
 }
-
 
 .nav-item:hover {
     background-color: #0051cc;
@@ -60,8 +55,6 @@ body {
     object-fit: cover;
     resize: both;
 }
-
-
 
 .settings-menu {
     position: absolute;
@@ -112,11 +105,10 @@ body {
 }
 
 .sidebar-header {
-    display: flex;
-    margin: 5px;
-    align-items: center;
+  display: flex;
+  margin: 5px;
+  align-items: center;
 }
-
 
 .search-container {
     display: flex;
@@ -158,21 +150,19 @@ body {
 }
 
 .tab {
-    padding: 5px 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    background-color: white;
-    border: 1px solid #ddd;
-    color: black;
-    font-size: 16px;
-    transition: background-color 0.3s;
+  padding: 5px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: white;
+  border: 1px solid #ddd;
+  color: black;
+  font-size: 16px;
+  transition: background-color 0.3s;
 }
 
-
 .tab.active :hover {
-    background-color: #0068ff;
-    color: white;
-
+  background-color: #0068ff;
+  color: white;
 }
 
 /* Danh sách tin nhắn */
@@ -225,35 +215,26 @@ body {
     height: 100%;
 }
 
-
 /* nút thêm bạn và nhóm */
 /* Nút hành động */
 .action-button {
-    position: relative;
-    /* Để tooltip hiển thị theo vị trí nút */
-    right: 10px;
-    margin-right: 5px;
-    height: 30px;
-    width: 30px;
-    color: white;
-    border: none;
-    border-radius: 1px;
-    cursor: pointer;
-    font-size: 15px;
-    transition: background-color 0.3s;
-    display: flex;
-    /* Sử dụng Flexbox */
-    justify-content: center;
-    /* Căn giữa theo chiều ngang */
-    align-items: center;
-    background: none;
+  position: relative; /* Để tooltip hiển thị theo vị trí nút */
+  right: 10px;
+  margin-right: 5px;
+  height: 30px;
+  width: 30px;
+  color: white;
+  border: none;
+  border-radius: 1px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.3s;
+  display: flex; /* Sử dụng Flexbox */
+  justify-content: center; /* Căn giữa theo chiều ngang */
+  align-items: center;
+  background: none;
 }
 
-.action-button-img {
-    width: 30px;
-    height: 30px;
-
-}
 .modal {
     position: fixed;
     top: 0;
@@ -556,4 +537,111 @@ button:hover {
 /* Thêm màu nền khi hover (tùy chọn) */
 .nav-pills .nav-link:hover {
   background-color: #f0f0f0; /* Màu nền khi hover */
+}
+
+.action-button-img {
+  width: 30px;
+  height: 30px;
+}
+.-headercontent {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.content-header .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.chat-section {
+  padding: 20px;
+  color: #333;
+}
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.content-header {
+  padding: 10px;
+  background-color: #f1f5fc;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+}
+
+.profile .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.chat-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+}
+.chat-message {
+  background-color: #e6f7ff;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 60%;
+  align-self: flex-start;
+}
+.chat-input-container {
+  display: flex;
+  align-items: center; /* Căn giữa các phần tử theo chiều dọc */
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  background-color: #fff;
+}
+
+.chat-input {
+  flex: 1; /* Thanh nhập chiếm toàn bộ không gian còn lại */
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  outline: none;
+  margin-right: 10px; /* Tạo khoảng cách giữa thanh nhập và icon */
+}
+
+.chat-icons {
+  display: flex;
+  align-items: center; /* Căn giữa các icon theo chiều dọc */
+}
+
+.chat-icons button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 5px; /* Tạo khoảng cách giữa các icon */
+  transition: transform 0.2s ease;
+}
+
+.chat-icons button:hover {
+  transform: scale(1.2); /* Phóng to khi hover */
 }
