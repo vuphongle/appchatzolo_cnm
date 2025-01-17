@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, StyleSheet, ScrollView, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import SearchBar from '../components/SearchBar';
 import { UserContext } from '../context/UserContext';
@@ -10,6 +10,9 @@ const TinNhanScreen = () => {
     const [loading, setLoading] = useState(false);
 
     const { fetchUserProfile, user } = useContext(UserContext);
+
+    // Tạo ref cho ô tìm kiếm
+    const searchInputRef = useRef(null);
 
     // Sử dụng useEffect để tự động tìm kiếm khi người dùng nhập
     useEffect(() => {
@@ -54,7 +57,16 @@ const TinNhanScreen = () => {
     };
 
     const handleSearchBarFocus = () => {
-        setIsSearching(true); // Bật chế độ tìm kiếm khi bấm vào thanh tìm kiếm
+        console.log('Search bar focused before:', isSearching);
+        setIsSearching(true);
+        console.log('Search bar focused after:', isSearching);
+
+        // Đảm bảo focus lại vào ô tìm kiếm
+        setTimeout(() => {
+            if (searchInputRef.current) {
+                searchInputRef.current.focus();
+            }
+        }, 0);
     };
 
     return (
@@ -72,6 +84,7 @@ const TinNhanScreen = () => {
                             setIsSearching(!!text);
                         }}
                         onFocus={handleSearchBarFocus}
+                        inputRef={searchInputRef} // Truyền ref vào
                     />
                 </>
             ) : (
@@ -83,6 +96,7 @@ const TinNhanScreen = () => {
                             onLeftIconPress={handleClearSearch}
                             searchText={searchText}
                             setSearchText={setSearchText}
+                            inputRef={searchInputRef} // Truyền ref vào
                         />
                         <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
                             <Text style={styles.searchButtonText}>Tìm</Text>

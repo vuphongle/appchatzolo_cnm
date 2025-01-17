@@ -2,7 +2,17 @@ import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const SearchBar = ({ placeholder, leftIcon, rightIcon, onLeftIconPress, onRightIconPress, searchText, setSearchText }) => {
+const SearchBar = ({
+    placeholder,
+    leftIcon,
+    rightIcon,
+    onLeftIconPress,
+    onRightIconPress,
+    searchText,
+    setSearchText,
+    onFocus,
+    inputRef, // Nhận ref từ cha
+}) => {
     return (
         <View style={styles.searchBar}>
             {leftIcon && (
@@ -15,6 +25,8 @@ const SearchBar = ({ placeholder, leftIcon, rightIcon, onLeftIconPress, onRightI
                 placeholder={placeholder || "Tìm kiếm"}
                 value={searchText}
                 onChangeText={setSearchText}
+                onFocus={onFocus} // Gọi hàm khi focus
+                ref={inputRef} // Liên kết ref với TextInput
             />
             {rightIcon && (
                 <TouchableOpacity onPress={onRightIconPress}>
