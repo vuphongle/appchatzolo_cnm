@@ -1,0 +1,96 @@
+.friend-requests-container {
+    padding: 20px;
+    background-color: #f7f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.friend-request-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.request-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Khoảng cách giữa các item */
+}
+
+.request-item {
+    display: flex;
+    align-items: sp ace-between;
+    padding: 10px;
+    background-color: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    width: calc(33% - 10px); /* 3 item mỗi hàng */
+    box-sizing: border-box;
+    flex-direction: column;
+}
+
+.request-content {
+    background-color: #ebecf0;
+    border-radius: 6px;
+    padding: 10px;
+    height: 80px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.request-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.request-item span {
+    margin-right: 10px;
+}
+
+.list-request-buttons-recieve {
+    display: flex;
+    gap: 10px;
+}
+
+.list-request-buttons-recieve .request-button-ok {
+    padding: 0px 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #dbebff;
+    color: #225db5;
+    cursor: pointer;
+}
+
+.list-request-buttons-recieve .request-button-ok:hover {
+    background-color: #cfdff2;
+}
+
+.list-request-buttons-recieve .request-button{
+    margin-left: auto;
+    padding: 0px 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #e5e7eb;
+    color: black;
+    cursor: pointer;
+}
+
+.list-request-buttons-recieve .request-button:hover {
+    background-color: #c6cad2;
+}
+
+.list-request-buttons-sent .request-button {
+    margin-left: auto;
+    padding: 0px 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #e5e7eb;
+    color: black;
+    cursor: pointer;
+}
+
+.list-request-buttons-sent .request-button:hover {
+    background-color: #c6cad2;
+}

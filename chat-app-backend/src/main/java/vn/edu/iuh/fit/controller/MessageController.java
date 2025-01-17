@@ -19,10 +19,26 @@ public class MessageController {
         this.service = service;
     }
 
+    //Gửi lời mời kết bạn
     @PostMapping("/addFriend")
     public void sendMessage(@RequestBody Message message) {
         System.out.println("Received message: " + message);
         service.sendMessage(message);
     }
+
+    //Tìm danh sách lời mời kết bạn
+    @GetMapping("/invitations/received/{receiverId}")
+    public ResponseEntity<List<Message>> getReceivedInvitations(@PathVariable String receiverId) {
+        List<Message> invitations = service.getInvitationsByReceiverId(receiverId);
+        return ResponseEntity.ok(invitations);
+    }
+
+    //Tìm danh sách các lời mời đã gửi đi
+    @GetMapping("/invitations/sent/{senderId}")
+    public ResponseEntity<List<Message>> getSentInvitations(@PathVariable String senderId) {
+        List<Message> sentInvitations = service.getSentInvitationsBySenderId(senderId);
+        return ResponseEntity.ok(sentInvitations);
+    }
+
 
 }

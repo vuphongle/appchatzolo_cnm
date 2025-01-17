@@ -8,6 +8,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import vn.edu.iuh.fit.model.Message;
+import vn.edu.iuh.fit.model.User;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,4 +27,20 @@ public class MessageRepository {
         System.out.println("Saving message to DynamoDB: " + message);
         table.putItem(message);
     }
+
+
+    //Tìm danh sách lời mời kết bạn
+    public List<Message> findInvitationsByReceiverId(String senderID) {
+        return table.scan().items().stream()
+                .filter(message -> message.getReceiverID().equals(senderID) && message.getStatus().equals("Chờ đồng ý"))
+                .collect(Collectors.toList());
+    }
+
+    //Tìm danh sách các lời mời đã gửi đi
+    public List<Message> findSentInvitationsBySenderId(String receiverID) {
+        return table.scan().items().stream()
+                .filter(message -> message.getSenderID().equals(receiverID) && message.getStatus().equals("Chờ đồng ý"))
+                .collect(Collectors.toList());
+    }
+
 }

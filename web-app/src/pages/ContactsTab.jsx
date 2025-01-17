@@ -1,4 +1,9 @@
 import React from "react";
+import { useState, useEffect } from "react";
+import MessageService from "../services/MessageService";
+
+import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
+import FriendRequestsTab from "./ListFriend_RequestTab";
 
 const friendList = [
     { id: 1, name: "Anh Tú", avatar: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
@@ -78,6 +83,9 @@ const groupFriendsByLetter = (friends) => {
 function ContactsTab() {
     const groupedFriends = groupFriendsByLetter(friendList); // Nhóm bạn bè theo chữ cái đầu
 
+    const { MyUser } = useAuth(); // Lấy thông tin người dùng từ context
+    const userId = MyUser?.my_user?.id; // Lấy id người dùng
+
     return (
         <div>
             <div className="tab-content" id="v-pills-tabContent">
@@ -141,27 +149,29 @@ function ContactsTab() {
                 </div>
 
                 {/* Tab lời mời kết bạn */}
-                <div className="tab-pane fade" id="v-pills-friend" role="tabpanel" aria-labelledby="v-pills-messages-friend">...</div>
+                <div className="tab-pane fade" id="v-pills-friend" role="tabpanel" aria-labelledby="v-pills-messages-friend">
+                    <FriendRequestsTab userId={userId} /> {/* Gọi FriendRequestsTab */}
+                </div>
 
                 {/* Tab lời mời vào nhóm */}
                 <div className="tab-pane fade" id="v-pills-group" role="tabpanel" aria-labelledby="v-pills-group-tab">
-                    
-                <div className="header d-flex align-items-center">
+
+                    <div className="header d-flex align-items-center">
                         <i className="fas fa-users me-3"></i>
                         <h4 className="mb-0">Lời mời vào nhóm</h4>
                     </div>
-                        <hr />
-                        <div className="text-center py-5 ">
-                            <div className="icon-placeholder mb-3">
-                                <i className="fas fa-file-alt fa-3x text-muted"></i>
-                            </div>
-                            <h5 className="text-muted">Không có lời mời vào nhóm</h5>
-                            <p className="text-muted">
-                                Khi nào tôi nhận được lời mời?{' '}
-                                <a href="#" className="text-decoration-none">Tìm hiểu thêm</a>
-                            </p>
+                    <hr />
+                    <div className="text-center py-5 ">
+                        <div className="icon-placeholder mb-3">
+                            <i className="fas fa-file-alt fa-3x text-muted"></i>
                         </div>
-                    
+                        <h5 className="text-muted">Không có lời mời vào nhóm</h5>
+                        <p className="text-muted">
+                            Khi nào tôi nhận được lời mời?{' '}
+                            <a href="#" className="text-decoration-none">Tìm hiểu thêm</a>
+                        </p>
+                    </div>
+
                 </div>
             </div>
         </div>

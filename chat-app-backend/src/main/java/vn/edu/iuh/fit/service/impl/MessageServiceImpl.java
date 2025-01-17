@@ -21,4 +21,16 @@ public class MessageServiceImpl implements MessageService {
     public void sendMessage(Message message) {
         repository.save(message);
     }
+
+    //Tìm danh sách lời mời kết bạn
+    @Override
+    public List<Message> getInvitationsByReceiverId(String receiverID) {
+        return repository.findInvitationsByReceiverId(receiverID);
+    }
+
+    //Tìm danh sách các lời mời đã gửi đi
+    @Override
+    public List<Message> getSentInvitationsBySenderId(String senderID) {
+        return repository.findSentInvitationsBySenderId(senderID);
+    }
 }
