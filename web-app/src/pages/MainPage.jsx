@@ -481,9 +481,9 @@ const MainPage = () => {
 
                             <div className="action-buttons">
                                 {/* Kiểm tra nếu user đó có trong friendIds của my_user thì không hiển thị nút Kết bạn */}
-                                {!MyUser.my_user.friendIds.includes(user.id) && (
-                                    <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
-                                )}
+                                {/* {!MyUser.my_user.friendIds.includes(user.id) && ( */}
+                                <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
+                                {/* )} */}
                                 <button className="message-button">Nhắn tin</button>
                             </div>
 
