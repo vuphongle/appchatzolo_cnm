@@ -33,4 +33,21 @@ public class MessageServiceImpl implements MessageService {
     public List<Message> getSentInvitationsBySenderId(String senderID) {
         return repository.findSentInvitationsBySenderId(senderID);
     }
+
+    // Xóa, thu hồi lời mời kết bạn
+    @Override
+    public void deleteInvitation(String senderID, String receiverID) {
+        repository.deleteInvitation(senderID, receiverID);
+    }
+
+    // Hàm đồng ý kết bạn
+    public boolean acceptFriendRequest(String senderId, String receiverId) {
+        // Cập nhật trạng thái của lời mời trong bảng Message
+        repository.updateInvitationStatus(senderId, receiverId, "Đã kết bạn");
+
+        // Thêm ID của nhau vào danh sách bạn bè
+        repository.submitFriend(senderId, receiverId);
+
+        return true;
+    }
 }

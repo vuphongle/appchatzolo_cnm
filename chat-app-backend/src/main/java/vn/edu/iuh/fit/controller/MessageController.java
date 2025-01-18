@@ -40,5 +40,29 @@ public class MessageController {
         return ResponseEntity.ok(sentInvitations);
     }
 
+    // Xóa lời mời kết bạn (thu hồi hoặc từ chối)
+    @DeleteMapping("/invitations/{senderId}/{receiverId}")
+    public ResponseEntity<String> deleteInvitation(@PathVariable String senderId, @PathVariable String receiverId) {
+        service.deleteInvitation(senderId, receiverId);
+        return ResponseEntity.ok("Lời mời đã bị xóa thành công.");
+    }
 
+    // Xử lý đồng ý kết bạn
+    @PostMapping("/acceptFriendRequest/{senderId}/{receiverId}")
+    public ResponseEntity<String> acceptFriendRequest(
+            @PathVariable String senderId,
+            @PathVariable String receiverId) {
+        try {
+            // Gọi service để đồng ý kết bạn
+            boolean isAccepted = service.acceptFriendRequest(senderId, receiverId);
+
+            if (isAccepted) {
+                return ResponseEntity.ok("Lời mời kết bạn đã được chấp nhận!");
+            } else {
+                return ResponseEntity.status(400).body("Lỗi khi đồng ý kết bạn!");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Có lỗi xảy ra: " + e.getMessage());
+        }
+    }
 }

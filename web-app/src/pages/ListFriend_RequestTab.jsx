@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import MessageService from "../services/MessageService";
 import avatar_default from '../image/avatar_user.jpg';
 import './ListFriend_RequestTab.css';
-import { format } from 'date-fns';
 
 const FriendRequestsTab = ({ userId }) => {
     const [receivedRequests, setReceivedRequests] = useState([]);
@@ -16,18 +15,18 @@ const FriendRequestsTab = ({ userId }) => {
         if (!Array.isArray(timestampArray) || timestampArray.length !== 7) {
             return 'Ngày không hợp lệ';
         }
-    
+
         // Lấy các phần tử từ mảng timestamp
-        const [year, month, day, hour, minute, second, nano] = timestampArray;
-    
+        const [year, month, day, hour, minute, second] = timestampArray;
+
         // Lưu ý tháng trong JavaScript bắt đầu từ 0 (tháng 1 là 0, tháng 12 là 11)
-        const date = new Date(year, month - 1, day, hour, minute, second);
-    
+        const date = new Date(year, month - 1, day, hour + 7, minute, second);
+
         // Kiểm tra nếu ngày không hợp lệ
         if (isNaN(date)) {
             return 'Ngày không hợp lệ';
         }
-    
+
         // Định dạng ngày giờ (chỉ đến giây)
         return date.toLocaleString('vi-VN', {
             day: '2-digit',
@@ -39,6 +38,7 @@ const FriendRequestsTab = ({ userId }) => {
         });
     };
 
+    // Hiển thị danh sách lời mời đã nhận và đã gửi
     useEffect(() => {
         if (!userId) {
             setError('User ID is missing!');
@@ -72,6 +72,34 @@ const FriendRequestsTab = ({ userId }) => {
             });
     }, [userId]);
 
+    // Hàm xử lý xóa, thu hồi lời mời kết bạn
+    const handleDeleteInvitation = (senderID, receiverID) => {
+        MessageService.deleteInvitation(senderID, receiverID)
+            .then(() => {
+                // Cập nhật lại trạng thái sau khi xóa thành công
+                setReceivedRequests((prevRequests) => prevRequests.filter((request) => request.senderID !== senderID || request.receiverID !== receiverID));
+                setSentRequests((prevRequests) => prevRequests.filter((request) => request.senderID !== senderID || request.receiverID !== receiverID));
+                alert("Lời mời đã bị thu hồi hoặc từ chối.");
+            })
+            .catch((error) => {
+                console.error("Lỗi khi xóa lời mời:", error);
+                alert("Đã xảy ra lỗi khi xóa lời mời.");
+            });
+    };
+
+    // Hàm xử lý chấp nhận lời mời kết bạn
+    const handleAcceptRequest = (senderId, receiverId) => {
+        MessageService.post(`/acceptFriendRequest/${senderId}/${receiverId}`)
+            .then((response) => {
+                alert(response);
+            })
+            .catch((error) => {
+                console.error('Lỗi khi đồng ý kết bạn:', error.response || error);
+                alert(`Có lỗi xảy ra khi đồng ý kết bạn: ${error.response ? error.response.data : error.message}`);
+            });
+    };
+
+
     if (loading) {
         return <p>Đang tải dữ liệu...</p>;
     }
@@ -97,8 +125,8 @@ const FriendRequestsTab = ({ userId }) => {
                                 <span>{request.content}</span>
                             </div>
                             <div className="list-request-buttons-recieve">
-                                <button className="request-button-ok">Đồng ý</button>
-                                <button className="request-button">Từ chối</button>
+                                <button className="request-button-ok" onClick={() => handleAcceptRequest(request.senderID, userId)}>Đồng ý</button>
+                                <button className="request-button" onClick={() => handleDeleteInvitation(request.senderID, request.receiverID)} >Từ chối</button>
                             </div>
                         </div>
                     ))
@@ -122,7 +150,7 @@ const FriendRequestsTab = ({ userId }) => {
                                 <span>{sentRequest.content}</span>
                             </div>
                             <div className="list-request-buttons-sent">
-                                <button className="request-button">Thu hồi lời mời</button>
+                                <button className="request-button" onClick={() => handleDeleteInvitation(sentRequest.senderID, sentRequest.receiverID)}>Thu hồi lời mời</button>
                             </div>
                         </div>
                     ))

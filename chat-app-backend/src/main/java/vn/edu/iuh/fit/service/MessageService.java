@@ -8,4 +8,6 @@ public interface MessageService {
     void sendMessage(Message message);
     List<Message> getInvitationsByReceiverId(String receiverID);
     List<Message> getSentInvitationsBySenderId(String senderID);
+    void deleteInvitation(String senderID, String receiverID);
+    boolean acceptFriendRequest(String senderId, String receiverId);
 }

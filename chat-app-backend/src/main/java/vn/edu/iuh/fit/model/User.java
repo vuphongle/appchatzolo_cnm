@@ -23,16 +23,6 @@ public class User {
         return id;
     }
 
-    public User(String phoneNumber, String name, String dob) {
-        this.phoneNumber = phoneNumber;
-        this.name = name;
-        this.dob = dob;
-    }
-
-    public User() {
-        // Cần phải có constructor mặc định cho Spring/DynamoDB Enhanced SDK
-    }
-
     public void setId(String id) {
         this.id = id;
     }
@@ -89,6 +79,10 @@ public class User {
 
     public void setGroupIds(List<String> groupIds) {
         this.groupIds = groupIds;
+    }
+
+    public User() {
+        // Cần phải có constructor mặc định cho Spring/DynamoDB Enhanced SDK
     }
 
     @Override

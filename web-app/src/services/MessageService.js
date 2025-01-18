@@ -20,6 +20,11 @@ const MessageService = {
             throw error.response ? error.response.data : error;
         }
     },
+
+    // Phương thức xóa lời mời
+    deleteInvitation: (senderID, receiverID) => {
+        return axios.delete(`${API_BASE_URL}/invitations/${senderID}/${receiverID}`);
+    }
 };
 
 export default MessageService;

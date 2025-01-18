@@ -84,9 +84,16 @@ public class AuthController {
     }
 
     @PostMapping("/verify-phone-and-create-user")
-    public ResponseEntity<?> verifyPhoneAndCreateUser(@RequestBody Map<String, String> request) {
-        String phoneNumber = request.get("phoneNumber");
-        String verificationCode = request.get("verificationCode");
+    public ResponseEntity<?> verifyPhoneAndCreateUser(@RequestBody Map<String, Object> requestData) {
+        // Lấy thông tin từ requestData
+        String phoneNumber = (String) requestData.get("phoneNumber");
+        String verificationCode = (String) requestData.get("verificationCode");
+        Map<String, String> userMap = (Map<String, String>) requestData.get("user");
+
+        //Test truyền dữ liệu
+        System.out.println("verificationCode: " + verificationCode);
+        System.out.println("phoneNumber: " + phoneNumber);
+        System.out.println("userMap: " + userMap);
 
         try {
             // Kiểm tra thông tin đầu vào
@@ -130,14 +137,14 @@ public class AuthController {
                     .build();
             cognitoClient.adminSetUserPassword(setPasswordRequest);
 
-            // Lưu thông tin người dùng vào DynamoDB qua UserRepository
-            String name = request.get("name");
-            String dobString = request.get("dob");
-//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//            LocalDate dob = LocalDate.parse(dobString, formatter);
-            // Gán ID cho người dùng
-            User user = new User(phoneNumber, name, dobString);
-            user.setId(UUID.randomUUID().toString());  // Gán ID cho User
+            // Tạo User trong dynamodb
+            // Chuyển đổi userMap thành đối tượng User
+            User user = new User();
+            user.setId(userMap.get("id"));
+            user.setDob(userMap.get("dob"));
+            user.setName(userMap.get("name"));
+            user.setPhoneNumber(userMap.get("phoneNumber"));
+
             userService.createUser(user);
 
             // Xóa dữ liệu tạm

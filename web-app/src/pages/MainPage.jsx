@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./MainPage.css"; // CSS riêng cho giao diện
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
@@ -124,9 +124,11 @@ const MainPage = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [loading, setLoading] = useState(false); // Loading state
 
+    const [sentInvitations, setSentInvitations] = useState([]); // Danh sách lời mời đã gửi
+
     // Xử lý gửi tin nhắn kết bạn
     const [isFriendRequestModalOpen, setIsFriendRequestModalOpen] = useState(false);
-    const [messageContent, setMessageContent] = useState('');
+    const [messageContent, setMessageContent] = useState(`Xin chào, mình là ${MyUser.my_user.name}. Mình biết bạn qua số điện thoại. Kết bạn với mình nhé!`);
     const [isRequestSent, setIsRequestSent] = useState(false);
 
     // Hàm render nội dung theo tab
@@ -194,7 +196,7 @@ const MainPage = () => {
                                     </div>
                                 </header>
                                 <section className="welcome-section">
-                                    <h1>Chào mừng đến với Zolo PC!</h1>
+                                    <h1>Chào mừng {MyUser.my_user.name} đến với Zolo PC!</h1>
                                     <p>
                                         Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người
                                         thân, bạn bè được tối ưu hóa cho máy tính của bạn.
@@ -261,16 +263,22 @@ const MainPage = () => {
         };
 
         try {
+            // Xóa những lời mời cũ trước khi gửi lời mời mới
+            await MessageService.deleteInvitation(MyUser.my_user.id, user.id);
+
             // Gửi yêu cầu kết bạn qua MessageService
             const response = await MessageService.post('/addFriend', message);
 
             setIsRequestSent(true);
             setIsFriendRequestModalOpen(false);
+
+
             console.log('Message sent successfully');
         } catch (error) {
             console.error('Error sending message:', error);
         }
     };
+
 
     // Kiểm tra giá trị của MyUser tại đây
     console.log("MyUser:", MyUser);
@@ -472,7 +480,10 @@ const MainPage = () => {
                             </div>
 
                             <div className="action-buttons">
-                                <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
+                                {/* Kiểm tra nếu user đó có trong friendIds của my_user thì không hiển thị nút Kết bạn */}
+                                {!MyUser.my_user.friendIds.includes(user.id) && (
+                                    <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
+                                )}
                                 <button className="message-button">Nhắn tin</button>
                             </div>
 

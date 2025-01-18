@@ -33,7 +33,7 @@ const RegistePage = () => {
         const age = today.getFullYear() - dobDate.getFullYear();  // Tính tuổi
 
         // Nếu ngày sinh trong năm nay chưa qua, giảm tuổi xuống 1
-        if (today.getMonth() < dobDate.getMonth() || 
+        if (today.getMonth() < dobDate.getMonth() ||
             (today.getMonth() === dobDate.getMonth() && today.getDate() < dobDate.getDate())) {
             return age - 1;
         }
@@ -89,15 +89,28 @@ const RegistePage = () => {
             return;
         }
 
+        const user = {
+            id: new Date().getTime().toString(),
+            dob: dob,
+            name: name,
+            phoneNumber: phoneNumber,
+        };
+
         try {
-            await AuthService.post("/verify-phone-and-create-user", { phoneNumber, verificationCode, name, dob });
+            const requestData = {
+                phoneNumber: phoneNumber,
+                verificationCode: verificationCode,
+                user: user // Gửi cả đối tượng user đi
+            };
+
+            await AuthService.post("/verify-phone-and-create-user", requestData);
             setSuccessMessage("Tạo người dùng thành công. Bạn có thể đăng nhập ngay.");
             setTimeout(() => {
                 navigate("/");
             }, 2000);
         } catch (error) {
             if (error.response?.data) {
-                setErrorMessage(error.response?.data); 
+                setErrorMessage(error.response?.data);
             } else {
                 setErrorMessage("Mã OTP không đúng hoặc hết hạn.");
             }

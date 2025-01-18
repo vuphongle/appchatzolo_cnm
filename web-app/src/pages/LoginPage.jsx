@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/AuthService';
 import { useAuth } from '../context/AuthContext';
-import AuthService from '../services/AuthService';
 // import './LoginPage.css'; 
 
 const LoginPage = () => {
@@ -49,6 +48,10 @@ const LoginPage = () => {
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
+
+    if (errorMessage) {
+        return <p>{errorMessage}</p>;
+    }
 
     return (
         <div className="d-flex justify-content-center align-items-center flex-column vh-100" style={{ backgroundColor: "#f0f8ff" }}>
