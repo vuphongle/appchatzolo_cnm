@@ -6,76 +6,77 @@ import flag from "../image/icon_VN.png";
 import avatar_default from '../image/avatar_user.jpg';
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import ContactsTab from "./ContactsTab";
+import { useWebSocket } from "../context/WebSocket";
 
 // Dữ liệu danh sách tin nhắn
-const messages = [
-    {
-        id: 1,
-        groupName: "IUH - DHKTPM17A - CT7",
-        unreadCount: 86,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 2,
-        groupName: "Team Ổn CN Mới",
-        unreadCount: 6,
-        img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
-    },
-    {
-        id: 3,
-        groupName: "Team Ổn",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 4,
-        groupName: "Nhóm 4 PTUD JAVA",
-        unreadCount: 0,
-        img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
-    },
-    {
-        id: 5,
-        groupName: "Cloud của tôi",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 6,
-        groupName: "Cloud của tôi",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 7,
-        groupName: "Cloud của tôi",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 8,
-        groupName: "Cloud của tôi",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 9,
-        groupName: "Cloud của tôi",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 10,
-        groupName: "Cloud của tôi",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-    {
-        id: 11,
-        groupName: "Cloud của tôi",
-        unreadCount: 0,
-        img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-    },
-];
+// const messages = [
+//     {
+//         id: 1,
+//         groupName: "IUH - DHKTPM17A - CT7",
+//         unreadCount: 86,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 2,
+//         groupName: "Team Ổn CN Mới",
+//         unreadCount: 6,
+//         img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
+//     },
+//     {
+//         id: 3,
+//         groupName: "Team Ổn",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 4,
+//         groupName: "Nhóm 4 PTUD JAVA",
+//         unreadCount: 0,
+//         img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
+//     },
+//     {
+//         id: 5,
+//         groupName: "Cloud của tôi",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 6,
+//         groupName: "Cloud của tôi",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 7,
+//         groupName: "Cloud của tôi",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 8,
+//         groupName: "Cloud của tôi",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 9,
+//         groupName: "Cloud của tôi",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 10,
+//         groupName: "Cloud của tôi",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+//     {
+//         id: 11,
+//         groupName: "Cloud của tôi",
+//         unreadCount: 0,
+//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
+//     },
+// ];
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
@@ -93,6 +94,7 @@ const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
 const MainPage = () => {
     const { MyUser } = useAuth();
 
+    const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
     const [activeTab, setActiveTab] = useState("chat"); // State quản lý tab
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -101,16 +103,89 @@ const MainPage = () => {
     const [messageInput, setMessageInput] = useState(""); // Nội dung tin nhắn nhập vào
     const [chatMessages, setChatMessages] = useState([]); // Danh sách tin nhắn của chat
 
-    //nhấn enter gửi tin nhắn
-    const handleSendMessage = (e) => {
-        if (e.key === "Enter" && messageInput.trim() !== "") {
-            // Thêm tin nhắn mới vào danh sách chatMessages
-            setChatMessages((prevMessages) => [
-                ...prevMessages,
-                { id: prevMessages.length + 1, text: messageInput },
-            ]);
-            setMessageInput(""); // Reset ô nhập tin nhắn
+    // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
+    useEffect(() => {
+        if (selectedChat) {
+            MessageService.get(`/messages?senderID=${MyUser.my_user.id}&receiverID=${selectedChat.id}`)
+                .then(data => setChatMessages(data))
+                .catch(err => console.error("Error fetching messages:", err));
         }
+    }, [selectedChat]);
+
+
+    //lấy dữ liệu messages từ backend
+    const [messages, setMessages] = useState([]);
+
+    useEffect(() => {
+        // Gọi API để lấy dữ liệu tin nhắn từ backend
+        MessageService.get("/messages")
+            .then((data) => {
+                // Cập nhật dữ liệu tin nhắn
+                setMessages(data);
+            })
+            .catch((err) => {
+                console.error("Error fetching messages:", err);
+            });
+    }, []); // Chỉ chạy một lần khi component được mount
+
+
+    // Thêm useEffect để tải tin nhắn từ backend khi cuộc trò chuyện được chọn
+    useEffect(() => {
+        if (selectedChat) {
+            // Tải tin nhắn từ backend dựa vào ID của chat được chọn
+            MessageService.get(`/chat/${selectedChat.id}`)
+                .then((data) => setChatMessages(data)) // Cập nhật danh sách tin nhắn
+                .catch((err) => console.error("Error fetching messages:", err));
+        }
+    }, [selectedChat]);
+
+    // Lắng nghe tin nhắn mới từ WebSocket
+    useEffect(() => {
+        const unsubscribe = onMessage((incomingMessage) => {
+            // Chỉ thêm tin nhắn nếu nó thuộc cuộc trò chuyện đang chọn
+            if (incomingMessage.receiverID === selectedChat?.id) {
+                setChatMessages((prev) => [...prev, incomingMessage]);
+            }
+        });
+
+        return () => {
+            unsubscribe(); // Hủy đăng ký khi component unmount
+        };
+    }, [selectedChat, onMessage]);
+
+
+    const [friends, setFriends] = useState([]); // Danh sách bạn bè
+    // Lấy danh sách bạn bè từ backend
+    useEffect(() => {
+        if (MyUser?.my_user?.id) {
+            UserService.getFriends(MyUser.my_user.id)
+                .then((data) => {
+                    setFriends(data); // Cập nhật danh sách bạn bè
+                })
+                .catch((err) => {
+                    console.error("Error fetching friends:", err);
+                });
+        }
+    }, [MyUser]);
+
+
+
+    //nhấn enter gửi tin nhắn
+    const handleSendMessage = () => {
+        if (messageInput.trim() === "" || !selectedChat) return;
+
+        const message = {
+            id: new Date().getTime().toString(),
+            senderID: MyUser.my_user.id, // Thay bằng ID người dùng hiện tại
+            receiverID: selectedChat.id,
+            content: messageInput,
+            sendDate: new Date().toISOString(),
+            isRead: false
+        };
+
+        sendMessage(message); // Gửi qua WebSocket
+        setChatMessages((prev) => [...prev, message]); // Cập nhật UI
+        setMessageInput(""); // Xóa input
     };
 
     const toggleSettingsMenu = () => {
@@ -130,7 +205,13 @@ const MainPage = () => {
     const [isFriendRequestModalOpen, setIsFriendRequestModalOpen] = useState(false);
     const [messageContent, setMessageContent] = useState(`Xin chào, mình là ${MyUser.my_user.name}. Mình biết bạn qua số điện thoại. Kết bạn với mình nhé!`);
     const [isRequestSent, setIsRequestSent] = useState(false);
-
+    //Tích hợp danh sách bạn bè vào danh sách tin nhắn
+    const allMessagesAndFriends = [...messages, ...friends.map((friend) => ({
+        id: friend.id,
+        groupName: friend.name,
+        unreadCount: 0,
+        img: friend.avatar,
+    }))];
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (activeTab) {
@@ -146,28 +227,37 @@ const MainPage = () => {
                                     </div>
                                 </header>
                                 <section className="chat-section">
-                                    {/* Khu vực hiển thị tin nhắn */}
                                     <div className="chat-messages">
                                         {chatMessages.length > 0 ? (
                                             chatMessages.map((msg) => (
-                                                <div key={msg.id} className="chat-message">
-                                                    <p>{msg.text}</p>
+                                                <div
+                                                    key={msg.id}
+                                                    className={`chat-message ${msg.senderID === MyUser.my_user.id ? "sent" : "received"
+                                                        }`}
+                                                >
+                                                    <p>{msg.content}</p>
                                                 </div>
                                             ))
                                         ) : (
                                             <p>Bắt đầu trò chuyện với {selectedChat.groupName}</p>
                                         )}
                                     </div>
-                                    {/* Thanh nhập tin nhắn */}
                                     <div className="chat-input-container">
                                         <input
                                             type="text"
                                             className="chat-input"
                                             value={messageInput}
                                             onChange={(e) => setMessageInput(e.target.value)}
-                                            onKeyDown={handleSendMessage}
-                                            placeholder={`Nhập @, tin nhắn tới ${selectedChat.groupName}`}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    handleSendMessage();
+                                                }
+                                            }}
+                                            placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
                                         />
+                                        <button onClick={handleSendMessage} className="send-button">
+                                            Gửi
+                                        </button>
                                         <div className="chat-icons">
                                             <button title="Sticker">
                                                 <span>😊</span>
@@ -198,8 +288,8 @@ const MainPage = () => {
                                 <section className="welcome-section">
                                     <h1>Chào mừng {MyUser.my_user.name} đến với Zolo PC!</h1>
                                     <p>
-                                        Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người
-                                        thân, bạn bè được tối ưu hóa cho máy tính của bạn.
+                                        Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người thân,
+                                        bạn bè được tối ưu hóa cho máy tính của bạn.
                                     </p>
                                 </section>
                             </>
@@ -207,12 +297,36 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return <ContactsTab />;
-
+                return (
+                    <div>
+                        <h3>Danh sách bạn bè</h3>
+                        <ul>
+                            {friends.length > 0 ? (
+                                friends.map((friend) => (
+                                    <li
+                                        key={friend.id}
+                                        className="contact-item"
+                                        onClick={() => setSelectedChat(friend)}
+                                    >
+                                        <img
+                                            src={friend.avatar || avatar_default}
+                                            alt="Avatar"
+                                            className="avatar"
+                                        />
+                                        <span>{friend.name}</span>
+                                    </li>
+                                ))
+                            ) : (
+                                <p>Không có bạn bè nào</p>
+                            )}
+                        </ul>
+                    </div>
+                );
             default:
                 return null;
         }
     };
+
 
     const handleSearchFriend = async () => {
         if (phoneNumber === MyUser.my_user.phoneNumber) {
@@ -352,16 +466,21 @@ const MainPage = () => {
                         </div>
                         <div className="message-list">
                             <ul>
-                                {messages.map((message) => (
+                                {allMessagesAndFriends.map((item) => (
                                     <MessageItem
-                                        key={message.id}
-                                        groupName={message.groupName}
-                                        unreadCount={message.unreadCount}
-                                        img={message.img}
-                                        onClick={() => setSelectedChat(message)}
+                                        key={item.id}
+                                        groupName={item.groupName}
+                                        unreadCount={item.unreadCount}
+                                        img={item.img || "https://via.placeholder.com/40"}
+                                        onClick={() => setSelectedChat(item)}
                                     />
                                 ))}
                             </ul>
+
+
+
+
+
                         </div>
                     </>
                 )}

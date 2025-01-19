@@ -7,7 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.service.UserService;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user")
@@ -44,6 +47,35 @@ public class UserController {
         } catch (Exception e) {
             e.printStackTrace();  // In chi tiết lỗi ra log
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred");
+        }
+    }
+
+
+    // API Lấy danh sách bạn bè
+    @GetMapping("/{userId}/friends")
+    public ResponseEntity<?> getFriends(@PathVariable String userId) {
+        try {
+            User user = userService.findUserById_ttt(userId);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+
+            List<String> friendIds = user.getFriendIds();
+            if (friendIds == null || friendIds.isEmpty()) {
+                return ResponseEntity.ok("No friends found");
+            }
+
+            // Lấy chi tiết bạn bè
+            List<User> friends = friendIds.stream()
+                    .map(userService::findUserById_ttt)
+                    .filter(Objects::nonNull) // Loại bỏ các ID không hợp lệ
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(friends);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching friends: " + e.getMessage());
         }
     }
 

@@ -10,4 +10,6 @@ public interface MessageService {
     List<Message> getSentInvitationsBySenderId(String senderID);
     void deleteInvitation(String senderID, String receiverID);
     boolean acceptFriendRequest(String senderId, String receiverId);
+    List<Message> getMessagesBetweenUsers(String senderID, String receiverID);
+
 }

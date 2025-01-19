@@ -109,4 +109,14 @@ public class MessageRepository {
 
         System.out.println("Added friend relationship between: " + senderID + " and " + receiverID);
     }
+
+    // Lấy tất cả tin nhắn giữa người gửi và người nhận
+    public List<Message> findMessagesBetweenUsers(String senderID, String receiverID) {
+        return table.scan().items().stream()
+                .filter(message ->
+                        (message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID)) ||
+                                (message.getSenderID().equals(receiverID) && message.getReceiverID().equals(senderID)))
+                .collect(Collectors.toList());
+    }
+
 }

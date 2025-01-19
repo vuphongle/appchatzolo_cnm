@@ -50,4 +50,9 @@ public class MessageServiceImpl implements MessageService {
 
         return true;
     }
+
+    @Override
+    public List<Message> getMessagesBetweenUsers(String senderID, String receiverID) {
+        return repository.findMessagesBetweenUsers(senderID, receiverID);
+    }
 }

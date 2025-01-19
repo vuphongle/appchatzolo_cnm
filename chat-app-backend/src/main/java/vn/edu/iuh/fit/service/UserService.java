@@ -6,4 +6,5 @@ public interface UserService {
     void createUser(User user);
     User findUserById(String id);
     User findUserByPhoneNumber(String phoneNumber);
+    User findUserById_ttt(String id);
 }

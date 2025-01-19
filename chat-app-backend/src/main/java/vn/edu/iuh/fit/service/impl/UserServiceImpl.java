@@ -30,4 +30,10 @@ public class UserServiceImpl implements UserService {
     public User findUserByPhoneNumber(String phoneNumber) {
         return userRepository.findByPhoneNumber(phoneNumber);
     }
+
+    //tín làm find id userr để chat message
+    @Override
+    public User findUserById_ttt(String id) {
+        return userRepository.findById_ttt(id);
+    }
 }
