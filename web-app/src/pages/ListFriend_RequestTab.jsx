@@ -72,24 +72,24 @@ const FriendRequestsTab = ({ userId }) => {
             });
     }, [userId]);
 
-    const fetchRequests = () => {
-        // Gọi lại các API để tải lại danh sách lời mời
-        MessageService.get(`/invitations/received/${userId}`)
-            .then((data) => {
-                setReceivedRequests(data);
-            })
-            .catch((error) => {
-                setError('Lỗi khi lấy dữ liệu lời mời đã nhận');
-            });
+    // const fetchRequests = () => {
+    //     // Gọi lại các API để tải lại danh sách lời mời
+    //     MessageService.get(`/invitations/received/${userId}`)
+    //         .then((data) => {
+    //             setReceivedRequests(data);
+    //         })
+    //         .catch((error) => {
+    //             setError('Lỗi khi lấy dữ liệu lời mời đã nhận');
+    //         });
 
-        MessageService.get(`/invitations/sent/${userId}`)
-            .then((data) => {
-                setSentRequests(data);
-            })
-            .catch((error) => {
-                setError('Lỗi khi lấy lời mời đã gửi');
-            });
-    };
+    //     MessageService.get(`/invitations/sent/${userId}`)
+    //         .then((data) => {
+    //             setSentRequests(data);
+    //         })
+    //         .catch((error) => {
+    //             setError('Lỗi khi lấy lời mời đã gửi');
+    //         });
+    // };
 
     // Hàm xử lý xóa, thu hồi lời mời kết bạn
     const handleDeleteInvitation = (senderID, receiverID) => {
@@ -111,7 +111,7 @@ const FriendRequestsTab = ({ userId }) => {
         MessageService.post(`/acceptFriendRequest/${senderId}/${receiverId}`)
             .then((response) => {
                 alert(response);
-                fetchRequests();
+                //fetchRequests();
             })
             .catch((error) => {
                 console.error('Lỗi khi đồng ý kết bạn:', error.response || error);

@@ -297,31 +297,32 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return (
-                    <div>
-                        <h3>Danh sách bạn bè</h3>
-                        <ul>
-                            {friends.length > 0 ? (
-                                friends.map((friend) => (
-                                    <li
-                                        key={friend.id}
-                                        className="contact-item"
-                                        onClick={() => setSelectedChat(friend)}
-                                    >
-                                        <img
-                                            src={friend.avatar || avatar_default}
-                                            alt="Avatar"
-                                            className="avatar"
-                                        />
-                                        <span>{friend.name}</span>
-                                    </li>
-                                ))
-                            ) : (
-                                <p>Không có bạn bè nào</p>
-                            )}
-                        </ul>
-                    </div>
-                );
+                return <ContactsTab />
+            // return (
+            //     <div>
+            //         <h3>Danh sách bạn bè</h3>
+            //         <ul>
+            //             {friends.length > 0 ? (
+            //                 friends.map((friend) => (
+            //                     <li
+            //                         key={friend.id}
+            //                         className="contact-item"
+            //                         onClick={() => setSelectedChat(friend)}
+            //                     >
+            //                         <img
+            //                             src={friend.avatar || avatar_default}
+            //                             alt="Avatar"
+            //                             className="avatar"
+            //                         />
+            //                         <span>{friend.name}</span>
+            //                     </li>
+            //                 ))
+            //             ) : (
+            //                 <p>Không có bạn bè nào</p>
+            //             )}
+            //         </ul>
+            //     </div>
+            // );
             default:
                 return null;
         }
@@ -600,9 +601,9 @@ const MainPage = () => {
 
                             <div className="action-buttons">
                                 {/* Kiểm tra nếu user đó có trong friendIds của my_user thì không hiển thị nút Kết bạn */}
-                                {/* {!MyUser.my_user.friendIds.includes(user.id) && ( */}
-                                <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
-                                {/* )} */}
+                                {!MyUser.my_user.friendIds.includes(user.id) && (
+                                    <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
+                                )}
                                 <button className="message-button">Nhắn tin</button>
                             </div>
 

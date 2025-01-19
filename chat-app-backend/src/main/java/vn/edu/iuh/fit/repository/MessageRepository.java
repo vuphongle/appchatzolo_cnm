@@ -35,16 +35,29 @@ public class MessageRepository {
     //Tìm danh sách lời mời kết bạn
     public List<Message> findInvitationsByReceiverId(String senderID) {
         return table.scan().items().stream()
-                .filter(message -> message.getReceiverID().equals(senderID) && message.getStatus().equals("Chờ đồng ý"))
+                .filter(message ->
+                        message.getReceiverID() != null &&
+                                message.getStatus() != null &&
+                                message.getReceiverID().equals(senderID) &&
+                                message.getStatus().equals("Chờ đồng ý")
+                )
                 .collect(Collectors.toList());
     }
+
+
 
     //Tìm danh sách các lời mời đã gửi đi
     public List<Message> findSentInvitationsBySenderId(String receiverID) {
         return table.scan().items().stream()
-                .filter(message -> message.getSenderID().equals(receiverID) && message.getStatus().equals("Chờ đồng ý"))
+                .filter(message ->
+                        message.getSenderID() != null &&
+                                message.getStatus() != null &&
+                                message.getSenderID().equals(receiverID) &&
+                                message.getStatus().equals("Chờ đồng ý")
+                )
                 .collect(Collectors.toList());
     }
+
 
     // Xóa lời mời kết bạn theo senderID và receiverID
     public void deleteInvitation(String senderID, String receiverID) {
