@@ -13,7 +13,7 @@ public class User {
     private String name;
     private String avatar;
     private String phoneNumber;
-    private LocalDate dob;
+    private String dob;
     private List<String> friendIds;
     private List<String> groupIds;
 
@@ -42,11 +42,11 @@ public class User {
     }
 
     @DynamoDbAttribute("dob")
-    public LocalDate getDob() {
+    public String getDob() {
         return dob;
     }
 
-    public void setDob(LocalDate dob) {
+    public void setDob(String dob) {
         this.dob = dob;
     }
 
@@ -79,6 +79,10 @@ public class User {
 
     public void setGroupIds(List<String> groupIds) {
         this.groupIds = groupIds;
+    }
+
+    public User() {
+        // Cần phải có constructor mặc định cho Spring/DynamoDB Enhanced SDK
     }
 
     @Override

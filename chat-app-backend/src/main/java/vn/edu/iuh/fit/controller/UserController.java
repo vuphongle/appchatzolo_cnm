@@ -57,4 +57,19 @@ public class UserController {
         }
         return ResponseEntity.ok(users); // HTTP 200 và trả về danh sách người dùng
     }
+
+    @GetMapping("/searchFriend")
+    public ResponseEntity<?> searchUser(@RequestParam String phoneNumber) {
+        try {
+            User user = userService.findUserByPhoneNumber(phoneNumber); // Xử lý tìm kiếm
+            if (user != null) {
+                return ResponseEntity.ok(user);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  // In chi tiết lỗi ra log
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred");
+        }
+    }
 }

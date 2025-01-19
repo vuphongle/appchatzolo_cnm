@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/messages'; // Địa chỉ API
+const API_BASE_URL = 'http://localhost:8080/user'; // Địa chỉ API
 
-const MessageService = {
+const UserService = {
     post: async (url, data) => {
         try {
             const response = await axios.post(`${API_BASE_URL}${url}`, data);
@@ -20,11 +20,6 @@ const MessageService = {
             throw error.response ? error.response.data : error;
         }
     },
-
-    // Phương thức xóa lời mời
-    deleteInvitation: (senderID, receiverID) => {
-        return axios.delete(`${API_BASE_URL}/invitations/${senderID}/${receiverID}`);
-    }
 };
 
-export default MessageService;
+export default UserService;

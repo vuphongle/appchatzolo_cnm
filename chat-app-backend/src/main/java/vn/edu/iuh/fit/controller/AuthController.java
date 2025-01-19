@@ -8,13 +8,19 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.CreateSmsSandboxPhoneNumberRequest;
-import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.GetUserRequest;
 import software.amazon.awssdk.services.sns.model.VerifySmsSandboxPhoneNumberRequest;
+import vn.edu.iuh.fit.model.User;
+import vn.edu.iuh.fit.service.UserService;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -26,6 +32,9 @@ public class AuthController {
 
     @Autowired
     private SnsClient snsClient;
+
+    @Autowired
+    private UserService userService;
 
     private final Dotenv dotenv = Dotenv.load();
     private final String userPoolId = dotenv.get("aws.cognito.userPoolId");
@@ -75,9 +84,16 @@ public class AuthController {
     }
 
     @PostMapping("/verify-phone-and-create-user")
-    public ResponseEntity<?> verifyPhoneAndCreateUser(@RequestBody Map<String, String> request) {
-        String phoneNumber = request.get("phoneNumber");
-        String verificationCode = request.get("verificationCode");
+    public ResponseEntity<?> verifyPhoneAndCreateUser(@RequestBody Map<String, Object> requestData) {
+        // Lấy thông tin từ requestData
+        String phoneNumber = (String) requestData.get("phoneNumber");
+        String verificationCode = (String) requestData.get("verificationCode");
+        Map<String, String> userMap = (Map<String, String>) requestData.get("user");
+
+        //Test truyền dữ liệu
+        System.out.println("verificationCode: " + verificationCode);
+        System.out.println("phoneNumber: " + phoneNumber);
+        System.out.println("userMap: " + userMap);
 
         try {
             // Kiểm tra thông tin đầu vào
@@ -120,6 +136,16 @@ public class AuthController {
                     .permanent(true)
                     .build();
             cognitoClient.adminSetUserPassword(setPasswordRequest);
+
+            // Tạo User trong dynamodb
+            // Chuyển đổi userMap thành đối tượng User
+            User user = new User();
+            user.setId(userMap.get("id"));
+            user.setDob(userMap.get("dob"));
+            user.setName(userMap.get("name"));
+            user.setPhoneNumber(userMap.get("phoneNumber"));
+
+            userService.createUser(user);
 
             // Xóa dữ liệu tạm
             tempUserStore.remove(phoneNumber);
@@ -164,8 +190,32 @@ public class AuthController {
 
             InitiateAuthResponse authResponse = cognitoClient.initiateAuth(authRequest);
             String idToken = authResponse.authenticationResult().idToken();
+            String accessToken = authResponse.authenticationResult().accessToken();
 
-            return ResponseEntity.ok(Map.of("idToken", idToken));
+            // Truy vấn thông tin người dùng từ accessToken
+            GetUserRequest getUserRequest = GetUserRequest.builder()
+                    .accessToken(accessToken)  // Sử dụng accessToken thay vì idToken
+                    .build();
+
+            GetUserResponse getUserResponse = cognitoClient.getUser(getUserRequest);
+
+            // Lấy thông tin người dùng trong cognito
+            Map<String, String> userAttributes = new HashMap<>();
+            for (AttributeType attribute : getUserResponse.userAttributes()) {
+                userAttributes.put(attribute.name(), attribute.value());
+            }
+
+            // Sử dụng số điện thoại để tìm người dùng trong DynamoDB hoặc cơ sở dữ liệu khác
+            User my_user = userService.findUserByPhoneNumber(username); //username là phone number
+
+            // Trả về dữ liệu kết hợp từ Cognito và hệ thống của bạn
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("idToken", idToken);
+            responseData.put("userAttributes", userAttributes);
+            responseData.put("my_user", my_user);
+
+            // Trả về ResponseEntity với dữ liệu người dùng
+            return ResponseEntity.ok(responseData);
 
         } catch (NotAuthorizedException e) {
             System.err.println("Login failed: Invalid username or password. Details: " + e.getMessage());
