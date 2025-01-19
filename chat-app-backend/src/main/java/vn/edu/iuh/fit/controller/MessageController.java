@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.service.MessageService;
+import vn.edu.iuh.fit.service.impl.MessageServiceImpl;
 
 import java.util.List;
 
@@ -13,10 +14,12 @@ import java.util.List;
 public class MessageController {
 
     private final MessageService service;
+    private final MessageServiceImpl messageServiceImpl;
 
     @Autowired
-    public MessageController(MessageService service) {
+    public MessageController(MessageService service, MessageServiceImpl messageServiceImpl) {
         this.service = service;
+        this.messageServiceImpl = messageServiceImpl;
     }
 
     //Gửi lời mời kết bạn
@@ -65,4 +68,14 @@ public class MessageController {
             return ResponseEntity.status(500).body("Có lỗi xảy ra: " + e.getMessage());
         }
     }
+
+// lấy lịch sử tin nhắn giữa hai người.
+    @GetMapping("/messages")
+    public ResponseEntity<List<Message>> getMessages(
+            @RequestParam String senderID,
+            @RequestParam String receiverID) {
+        List<Message> messages = service.getMessagesBetweenUsers(senderID, receiverID);
+        return ResponseEntity.ok(messages);
+    }
+
 }

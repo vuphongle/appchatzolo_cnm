@@ -37,4 +37,9 @@ public class UserServiceImpl implements UserService {
     public List<User> findAllUsers() {
         return userRepository.findAllUsers();
     }
+
+    @Override
+    public User findUserById_ttt(String id) {
+        return userRepository.findById_ttt(id);
+    }
 }

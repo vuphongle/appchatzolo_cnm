@@ -50,6 +50,10 @@ dependencies {
     //QUản lý OTP (Lưu, lấy và xóa, quy định thời gian OTP)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    //qua lý thời gian gửi message
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2' // Đảm bảo phiên bản phù hợp với Jackson hiện tại
+
+
 }
 
 tasks.named('test') {

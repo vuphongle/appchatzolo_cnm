@@ -36,6 +36,12 @@ public class UserRepository {
                 .orElse(null);
     }
 
+    //tín làm find id userr để chat message
+    public User findById_ttt(String id) {
+        Key key = Key.builder().partitionValue(id).build();
+        return table.getItem(key); // Sử dụng getItem thay vì query
+    }
+
     public User findByPhoneNumber(String phoneNumber) {
         return table.scan().items().stream()
                 .filter(user -> user.getPhoneNumber().equals(phoneNumber))

@@ -13,11 +13,10 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Áp dụng cho tất cả endpoint
-                        .allowedOrigins("http://localhost:3000") // Cho phép React FE
+                        .allowedOrigins("*") // Cho phép tất cả nguồn gốc
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Các method được phép
                         .allowedHeaders("*"); // Tất cả header
             }
         };
     }
 }
-
