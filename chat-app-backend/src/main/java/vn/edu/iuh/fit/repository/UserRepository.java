@@ -36,7 +36,7 @@ public class UserRepository {
                 .orElse(null);
     }
 
-    //tín làm find id userr để chat message
+    //Find id userr để chat message
     public User findById_ttt(String id) {
         Key key = Key.builder().partitionValue(id).build();
         return table.getItem(key); // Sử dụng getItem thay vì query

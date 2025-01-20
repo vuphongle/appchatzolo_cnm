@@ -103,6 +103,9 @@ const MainPage = () => {
     const [messageInput, setMessageInput] = useState(""); // Nội dung tin nhắn nhập vào
     const [chatMessages, setChatMessages] = useState([]); // Danh sách tin nhắn của chat
 
+    const [sentRequests, setSentRequests] = useState([]); // Danh sách lời mời đã gửi
+    const [receivedRequests, setReceivedRequests] = useState([]); // Danh sách lời mời đã nhận
+
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
         if (selectedChat) {
@@ -199,19 +202,22 @@ const MainPage = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [loading, setLoading] = useState(false); // Loading state
 
-    const [sentInvitations, setSentInvitations] = useState([]); // Danh sách lời mời đã gửi
+    const [friendRequests, setFriendRequests] = useState([]);
 
     // Xử lý gửi tin nhắn kết bạn
     const [isFriendRequestModalOpen, setIsFriendRequestModalOpen] = useState(false);
     const [messageContent, setMessageContent] = useState(`Xin chào, mình là ${MyUser.my_user.name}. Mình biết bạn qua số điện thoại. Kết bạn với mình nhé!`);
     const [isRequestSent, setIsRequestSent] = useState(false);
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
-    const allMessagesAndFriends = [...messages, ...friends.map((friend) => ({
-        id: friend.id,
-        groupName: friend.name,
-        unreadCount: 0,
-        img: friend.avatar,
-    }))];
+    const allMessagesAndFriends = [
+        ...messages,
+        ...(Array.isArray(friends) ? friends.map((friend) => ({
+            id: friend.id,
+            groupName: friend.name,
+            unreadCount: 0,
+            img: friend.avatar,
+        })) : []), // Nếu friends không phải mảng, trả về mảng rỗng
+    ];
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (activeTab) {
@@ -297,7 +303,7 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return <ContactsTab />
+                return <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} />
             // return (
             //     <div>
             //         <h3>Danh sách bạn bè</h3>
@@ -387,12 +393,33 @@ const MainPage = () => {
             setIsRequestSent(true);
             setIsFriendRequestModalOpen(false);
 
+            // Cập nhật trực tiếp trong state để danh sách luôn mới
+            setFriendRequests((prevRequests) => [...prevRequests, message]);
 
             console.log('Message sent successfully');
         } catch (error) {
             console.error('Error sending message:', error);
         }
     };
+
+    // const fetchRequests = () => {
+    //     // Gọi lại các API để tải lại danh sách lời mời
+    //     MessageService.get(`/invitations/received/${user.id}`)
+    //         .then((data) => {
+    //             setReceivedRequests(data);
+    //         })
+    //         .catch((error) => {
+    //             setError('Lỗi khi lấy dữ liệu lời mời đã nhận');
+    //         });
+
+    //     MessageService.get(`/invitations/sent/${user.id}`)
+    //         .then((data) => {
+    //             setSentRequests(data);
+    //         })
+    //         .catch((error) => {
+    //             setError('Lỗi khi lấy lời mời đã gửi');
+    //         });
+    // };
 
 
     // Kiểm tra giá trị của MyUser tại đây
