@@ -14,16 +14,16 @@ import { UserContext } from '../context/UserContext';
 const Tab = createBottomTabNavigator();
 
 const MainTabNavigator = () => {
-    const { user } = useContext(UserContext);
+    // const { user } = useContext(UserContext);
 
-    if (!user) {
-        // Nếu người dùng chưa đăng nhập, hiển thị AuthScreen
-        return (
-            <Tab.Navigator screenOptions={{ headerShown: false }}>
-                <Tab.Screen name="Auth" component={AuthScreen} options={{ tabBarButton: () => null }} />
-            </Tab.Navigator>
-        );
-    }
+    // if (!user) {
+    //     // Nếu người dùng chưa đăng nhập, hiển thị AuthScreen
+    //     return (
+    //         <Tab.Navigator screenOptions={{ headerShown: false }}>
+    //             <Tab.Screen name="Auth" component={AuthScreen} options={{ tabBarButton: () => null }} />
+    //         </Tab.Navigator>
+    //     );
+    // }
 
     // Nếu người dùng đã đăng nhập, hiển thị các tab chính
     return (

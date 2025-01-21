@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, StyleSheet, ScrollView, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import SearchBar from '../components/SearchBar';
 import { UserContext } from '../context/UserContext';
-
+import ListFriend from '../components/Message/listFriend/ListFriend';
 const TinNhanScreen = () => {
     const [searchText, setSearchText] = useState('');
     const [isSearching, setIsSearching] = useState(false);
@@ -86,6 +86,7 @@ const TinNhanScreen = () => {
                         onFocus={handleSearchBarFocus}
                         inputRef={searchInputRef} // Truyền ref vào
                     />
+                    <ListFriend />
                 </>
             ) : (
                 <View style={styles.searchScreen}>

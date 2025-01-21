@@ -1,5 +1,5 @@
 // screens/AuthScreen.js
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Auth } from 'aws-amplify';
@@ -41,7 +41,7 @@ const verifyPhoneNumber = async (phoneNumber) => {
 // Server -> get user (Đã chuyển vào UserContext)
 const AuthScreen = () => {
     const navigation = useNavigation();
-    const { setUser, fetchUserProfile } = useContext(UserContext);
+    const { setUser, fetchUserProfile, user } = useContext(UserContext);
     const [isRegister, setIsRegister] = useState(false);
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
@@ -56,7 +56,11 @@ const AuthScreen = () => {
         setIsRegister(!isRegister);
         setStep(1);
     };
+    // useEffect(() => {
 
+    //     navigation.replace('MainTabs');
+
+    // }, [user, navigation]);
     const handleNextStep = () => {
         if (!name) {
             Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ tên và ngày sinh.');
