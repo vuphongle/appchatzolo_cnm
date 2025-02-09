@@ -62,7 +62,9 @@ function ListFriend() {
 
   const renderItem = ({ item }) => <ItemFriend {...item} />;
 
-  const renderHiddenItem = ({ item }) => (
+  const renderHiddenItem = ({ item }) => {
+    if (openRow !== item.id) return <View style={{ height: 0 }} />;
+return (
     <View style={styles.rowBack}>
       <View style={styles.actionLeft}></View>
       <View style={styles.actionRight}>
@@ -84,7 +86,8 @@ function ListFriend() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -95,6 +98,11 @@ function ListFriend() {
         renderHiddenItem={renderHiddenItem}
         rightOpenValue={-230}
         showsVerticalScrollIndicator={false}
+        closeOnRowPress={true}
+        disableRightSwipe={true}
+        previewOpenDelay={3000}
+        onRowOpen={(rowKey) => setOpenRow(rowKey)} 
+        onRowClose={() => setOpenRow(null)}
       />
     </View>
   );
