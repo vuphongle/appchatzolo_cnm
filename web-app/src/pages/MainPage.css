@@ -523,17 +523,6 @@ button:hover {
   background-color: #357c38;
 }
 
-/* Loại bỏ màu nền khi button được chọn (class active) */
-.nav-pills .nav-link.active {
-  background-color: transparent !important; /* Loại bỏ màu nền mặc định khi chọn */
-  color: black !important; /* Đảm bảo màu chữ vẫn đen */
-}
-
-/* Thêm màu nền khi hover (tùy chọn) */
-.nav-pills .nav-link:hover {
-  background-color: #f0f0f0; /* Màu nền khi hover */
-}
-
 .action-button-img {
   width: 30px;
   height: 30px;

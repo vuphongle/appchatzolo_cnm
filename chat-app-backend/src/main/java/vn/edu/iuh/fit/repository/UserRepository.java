@@ -52,4 +52,10 @@ public class UserRepository {
     public List<User> findAllUsers() {
         return table.scan().items().stream().collect(Collectors.toList());
     }
+
+    public List<User> findByNameContainingIgnoreCase(String name) {
+        return table.scan().items().stream()
+                .filter(user -> user.getName().toLowerCase().contains(name.toLowerCase()))
+                .collect(Collectors.toList());
+    }
 }

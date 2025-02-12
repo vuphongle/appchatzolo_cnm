@@ -488,64 +488,64 @@ const MainPage = () => {
                 {/* Sidebar tabs hiển thị trong tab "contacts" */}
                 {activeTab === "contacts" && (
                     <>
-                        <div className="container-fluid">
-                            <div className="d-flex align-items-start ">
-                                <div className="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                                    <button
-                                        className="nav-link active d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-friendlist-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-friendlist"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-friendlist"
-                                        aria-selected="true"
-                                    >
-                                        <i className="fas fa-user-friends me-2"></i>
-                                        Danh sách bạn bè
-                                    </button>
-                                    <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-grouplist-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-grouplist"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-grouplist"
-                                        aria-selected="false"
-                                    >
-                                        <i className="fas fa-users me-2"></i>
-                                        Danh sách nhóm
-                                    </button>
-                                    <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-friend-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-friend"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-friend"
-                                        aria-selected="false"
-                                    >
-                                        <i className="fas fa-user-plus me-2"></i>
-                                        Lời mời kết bạn
-                                    </button>
-                                    <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-group-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-group"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-group"
-                                        aria-selected="false"
-                                    >
-                                        <i className="fas fa-users me-2"></i>
-                                        Lời mời vào nhóm
-                                    </button>
-                                </div>
+                    <div className="container-fluid">
+                        <div className="d-flex align-items-start w-100">
+                            <div className="nav flex-column nav-pills me-3 w-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                <button
+                                    className="nav-link active d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-friendlist-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-friendlist"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-friendlist"
+                                    aria-selected="true"
+                                >
+                                    <i className="fas fa-user-friends me-2"></i>
+                                    Danh sách bạn bè
+                                </button>
+                                <button
+                                    className="nav-link d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-grouplist-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-grouplist"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-grouplist"
+                                    aria-selected="false"
+                                >
+                                    <i className="fas fa-users me-2"></i>
+                                    Danh sách nhóm
+                                </button>
+                                <button
+                                    className="nav-link d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-friend-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-friend"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-friend"
+                                    aria-selected="false"
+                                >
+                                    <i className="fas fa-user-plus me-2"></i>
+                                    Lời mời kết bạn
+                                </button>
+                                <button
+                                    className="nav-link d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-group-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-group"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-group"
+                                    aria-selected="false"
+                                >
+                                    <i className="fas fa-users me-2"></i>
+                                    Lời mời vào nhóm
+                                </button>
                             </div>
                         </div>
+                    </div>
                     </>
                 )}
             </aside>
