@@ -80,11 +80,11 @@ const groupFriendsByLetter = (friends) => {
     }, {});
 };
 
-function ContactsTab() {
+function ContactsTab({ userId, friendRequests }) {
     const groupedFriends = groupFriendsByLetter(friendList); // Nhóm bạn bè theo chữ cái đầu
 
-    const { MyUser } = useAuth(); // Lấy thông tin người dùng từ context
-    const userId = MyUser?.my_user?.id; // Lấy id người dùng
+    // const { MyUser } = useAuth(); // Lấy thông tin người dùng từ context
+    // const userId = MyUser?.my_user?.id; // Lấy id người dùng
 
     return (
         <div>
@@ -150,7 +150,7 @@ function ContactsTab() {
 
                 {/* Tab lời mời kết bạn */}
                 <div className="tab-pane fade" id="v-pills-friend" role="tabpanel" aria-labelledby="v-pills-messages-friend">
-                    <FriendRequestsTab userId={userId} /> {/* Gọi FriendRequestsTab */}
+                    <FriendRequestsTab key={userId} userId={userId} friendRequests={friendRequests} /> {/* Gọi FriendRequestsTab */}
                 </div>
 
                 {/* Tab lời mời vào nhóm */}

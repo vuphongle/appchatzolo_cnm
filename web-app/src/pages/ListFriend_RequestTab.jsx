@@ -2,32 +2,25 @@ import React, { useState, useEffect } from "react";
 import MessageService from "../services/MessageService";
 import avatar_default from '../image/avatar_user.jpg';
 import './ListFriend_RequestTab.css';
+import { useAuth } from "../context/AuthContext";
+import UserService from "../services/UserService";
 
-const FriendRequestsTab = ({ userId }) => {
+const FriendRequestsTab = ({ userId, friendRequests }) => {
+    const { MyUser, updateUserInfo } = useAuth();
     const [receivedRequests, setReceivedRequests] = useState([]);
     const [sentRequests, setSentRequests] = useState([]);
-    const [loading, setLoading] = useState(true);  // Thêm trạng thái loading
-    const [error, setError] = useState(null);      // Thêm trạng thái lỗi
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Hàm chuyển đổi timestamp thành ngày tháng, chỉ đến giây
     const formatDate = (timestampArray) => {
-        // Kiểm tra mảng đầu vào
-        if (!Array.isArray(timestampArray) || timestampArray.length !== 7) {
-            return 'Ngày không hợp lệ';
-        }
+        // Chuyển đổi thành đối tượng Date
+        let date = new Date(timestampArray);
 
-        // Lấy các phần tử từ mảng timestamp
-        const [year, month, day, hour, minute, second] = timestampArray;
+        // Cộng 7 giờ vào thời gian nhận từ DynamoDB để chuyển về múi giờ của bạn
+        date.setHours(date.getHours() + 7);
 
-        // Lưu ý tháng trong JavaScript bắt đầu từ 0 (tháng 1 là 0, tháng 12 là 11)
-        const date = new Date(year, month - 1, day, hour + 7, minute, second);
-
-        // Kiểm tra nếu ngày không hợp lệ
-        if (isNaN(date)) {
-            return 'Ngày không hợp lệ';
-        }
-
-        // Định dạng ngày giờ (chỉ đến giây)
+        // Trả về định dạng ngày giờ theo múi giờ của bạn
         return date.toLocaleString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
@@ -38,66 +31,40 @@ const FriendRequestsTab = ({ userId }) => {
         });
     };
 
-    // Hiển thị danh sách lời mời đã nhận và đã gửi
-    useEffect(() => {
-        if (!userId) {
-            setError('User ID is missing!');
-            setLoading(false);
-            return;
-        }
+    const fetchRequests = () => {
+        setLoading(true);
 
         // Lấy lời mời kết bạn đã nhận
         MessageService.get(`/invitations/received/${userId}`)
             .then((data) => {
-                console.log('Dữ liệu lời mời nhận được:', data);
                 setReceivedRequests(data);
             })
             .catch((error) => {
-                console.error('Lỗi khi lấy dữ liệu lời mời đã nhận:', error);
                 setError('Lỗi khi lấy dữ liệu lời mời đã nhận');
             });
 
         // Lấy lời mời kết bạn đã gửi
         MessageService.get(`/invitations/sent/${userId}`)
             .then((data) => {
-                console.log('Dữ liệu lời mời đã gửi:', data);
                 setSentRequests(data);
             })
             .catch((error) => {
-                console.error('Lỗi khi lấy lời mời đã gửi:', error);
                 setError('Lỗi khi lấy lời mời đã gửi');
             })
             .finally(() => {
                 setLoading(false);
             });
-    }, [userId]);
+    };
 
-    // const fetchRequests = () => {
-    //     // Gọi lại các API để tải lại danh sách lời mời
-    //     MessageService.get(`/invitations/received/${userId}`)
-    //         .then((data) => {
-    //             setReceivedRequests(data);
-    //         })
-    //         .catch((error) => {
-    //             setError('Lỗi khi lấy dữ liệu lời mời đã nhận');
-    //         });
-
-    //     MessageService.get(`/invitations/sent/${userId}`)
-    //         .then((data) => {
-    //             setSentRequests(data);
-    //         })
-    //         .catch((error) => {
-    //             setError('Lỗi khi lấy lời mời đã gửi');
-    //         });
-    // };
+    useEffect(() => {
+        fetchRequests();
+    }, [friendRequests]);
 
     // Hàm xử lý xóa, thu hồi lời mời kết bạn
     const handleDeleteInvitation = (senderID, receiverID) => {
         MessageService.deleteInvitation(senderID, receiverID)
             .then(() => {
-                // Cập nhật lại trạng thái sau khi xóa thành công
-                setReceivedRequests((prevRequests) => prevRequests.filter((request) => request.senderID !== senderID || request.receiverID !== receiverID));
-                setSentRequests((prevRequests) => prevRequests.filter((request) => request.senderID !== senderID || request.receiverID !== receiverID));
+                fetchRequests();  // Cập nhật lại danh sách sau khi xóa
                 alert("Lời mời đã bị thu hồi hoặc từ chối.");
             })
             .catch((error) => {
@@ -111,7 +78,18 @@ const FriendRequestsTab = ({ userId }) => {
         MessageService.post(`/acceptFriendRequest/${senderId}/${receiverId}`)
             .then((response) => {
                 alert(response);
-                //fetchRequests();
+                fetchRequests();  // Cập nhật lại danh sách sau khi chấp nhận
+
+                // Cập nhật Friendlist(số bạn bè) của người chấp nhận 
+                const updatedUserData_receiver = {
+                    ...MyUser, // Giữ lại các thuộc tính cũ của người dùng
+                    my_user: {
+                        ...MyUser.my_user,
+                        friendIds: [...MyUser.my_user.friendIds, senderId], // Thêm senderId vào mảng friendIds
+                    },
+                };
+                updateUserInfo(updatedUserData_receiver);
+
             })
             .catch((error) => {
                 console.error('Lỗi khi đồng ý kết bạn:', error.response || error);
@@ -119,7 +97,15 @@ const FriendRequestsTab = ({ userId }) => {
             });
     };
 
+    // useEffect(() => {
+    //     if (!friendRequests || !friendRequests.received || !friendRequests.sent) {
+    //         setLoading(false);
+    //     } else {
+    //         fetchRequests();
+    //     }
+    // }, [friendRequests]);
 
+    // Kiểm tra nếu đang tải dữ liệu hoặc có lỗi
     if (loading) {
         return <p>Đang tải dữ liệu...</p>;
     }
