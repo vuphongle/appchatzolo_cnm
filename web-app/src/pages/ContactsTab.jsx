@@ -58,7 +58,6 @@ const GroupItem = ({ img, groupName, member }) => (
     </button>
 );
 
-
 // Hàm nhóm bạn bè theo chữ cái đầu
 const groupFriendsByLetter = (friends) => {
     return friends.reduce((groups, friend) => {
@@ -71,17 +70,10 @@ const groupFriendsByLetter = (friends) => {
     }, {});
 };
 
-<<<<<<< HEAD
-function ContactsTab({ userId, friendRequests }) {
-    const groupedFriends = groupFriendsByLetter(friendList); // Nhóm bạn bè theo chữ cái đầu
-
-    // const { MyUser } = useAuth(); // Lấy thông tin người dùng từ context
-    // const userId = MyUser?.my_user?.id; // Lấy id người dùng
-=======
-function ContactsTab() {
+function ContactsTab({ friendRequests }) {
     const { MyUser } = useAuth(); // Lấy thông tin người dùng từ context
     const userId = MyUser?.my_user?.id; // Lấy id người dùng
-    const [friends, setFriends] = useState([]); 
+    const [friends, setFriends] = useState([]);
     const [searchTerm, setSearchTerm] = useState(""); // Giá trị nhập vào ô tìm kiếm
     const [searchResults, setSearchResults] = useState([]); // Kết quả tìm kiếm
     const [loading, setLoading] = useState(true);
@@ -110,25 +102,25 @@ function ContactsTab() {
             setSearchResults([]); // Nếu ô tìm kiếm trống, hiển thị danh sách bạn bè ban đầu
             return;
         }
-    
+
         UserService.searchUserByName(searchTerm)
             .then((data) => {
                 // Loại bỏ chính mình bằng cách so sánh ID người dùng
                 const filteredResults = data.filter(user => user.id !== userId);
-                setSearchResults(filteredResults); 
+                setSearchResults(filteredResults);
             })
             .catch((err) => {
                 console.error("Lỗi khi tìm kiếm:", err);
                 setSearchResults([]); // Nếu lỗi, đặt danh sách tìm kiếm về rỗng
             });
-    }, [searchTerm, userId]); 
-    
-    
+    }, [searchTerm, userId]);
+
+
     const groupedFriends = useMemo(() => {
-    const friendsToGroup = searchTerm.trim() ? searchResults : friends;
-    return groupFriendsByLetter(friendsToGroup);
-}, [friends, searchResults, searchTerm]);
->>>>>>> dat
+        const friendsToGroup = searchTerm.trim() ? searchResults : friends;
+        return groupFriendsByLetter(friendsToGroup);
+    }, [friends, searchResults, searchTerm]);
+
 
     return (
         <div>
@@ -143,12 +135,12 @@ function ContactsTab() {
                     <div className="vh-100">
                         <h6 >Bạn bè ({searchTerm.trim() ? searchResults.length : friends.length})</h6>
                         <div className="search-bar d-flex align-items-center mb-3">
-                            <input 
-                                type="text" 
-                                className="form-control me-2" 
+                            <input
+                                type="text"
+                                className="form-control me-2"
                                 placeholder="Tìm bạn"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)} 
+                                onChange={(e) => setSearchTerm(e.target.value)}
                             />
                             <select className="form-select">
                                 <option value="name-asc">Tên (A-Z)</option>
