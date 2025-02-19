@@ -595,14 +595,18 @@ button:hover {
 .chat-messages {
   flex: 1;
   padding: 20px;
-  overflow-y: auto;
+  overflow-y: auto; /* Thêm thanh cuộn khi nội dung dài */
+  max-height: 400px; /* Giới hạn chiều cao tối đa của phần tin nhắn */
   background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column; /* Sắp xếp tin nhắn theo chiều dọc */
 }
 .chat-message {
   padding: 10px;
   margin: 5px;
   border-radius: 5px;
   max-width: 70%;
+  word-wrap: break-word; /* Đảm bảo nội dung tin nhắn không bị tràn */
 }
 
 .chat-message.sent {

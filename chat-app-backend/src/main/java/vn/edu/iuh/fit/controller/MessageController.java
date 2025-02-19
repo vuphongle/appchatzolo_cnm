@@ -2,6 +2,7 @@ package vn.edu.iuh.fit.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.service.MessageService;
@@ -15,6 +16,7 @@ public class MessageController {
 
     private final MessageService service;
     private final MessageServiceImpl messageServiceImpl;
+
 
     @Autowired
     public MessageController(MessageService service, MessageServiceImpl messageServiceImpl) {

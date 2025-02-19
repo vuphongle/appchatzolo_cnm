@@ -7,76 +7,10 @@ import avatar_default from '../image/avatar_user.jpg';
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import ContactsTab from "./ContactsTab";
 import { useWebSocket } from "../context/WebSocket";
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
-// Dữ liệu danh sách tin nhắn
-// const messages = [
-//     {
-//         id: 1,
-//         groupName: "IUH - DHKTPM17A - CT7",
-//         unreadCount: 86,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 2,
-//         groupName: "Team Ổn CN Mới",
-//         unreadCount: 6,
-//         img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
-//     },
-//     {
-//         id: 3,
-//         groupName: "Team Ổn",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 4,
-//         groupName: "Nhóm 4 PTUD JAVA",
-//         unreadCount: 0,
-//         img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
-//     },
-//     {
-//         id: 5,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 6,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 7,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 8,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 9,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 10,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 11,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-// ];
+
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
@@ -103,55 +37,50 @@ const MainPage = () => {
     const [messageInput, setMessageInput] = useState(""); // Nội dung tin nhắn nhập vào
     const [chatMessages, setChatMessages] = useState([]); // Danh sách tin nhắn của chat
 
-    // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
+
+
+
+    // useEffect để tải tin nhắn theo thời gian thực khi chọn cuộc trò chuyện
     useEffect(() => {
         if (selectedChat) {
             MessageService.get(`/messages?senderID=${MyUser.my_user.id}&receiverID=${selectedChat.id}`)
-                .then(data => setChatMessages(data))
+                .then(data => {
+                    // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+                    const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
+                    setChatMessages(sortedMessages);
+                })
                 .catch(err => console.error("Error fetching messages:", err));
         }
-    }, [selectedChat]);
-
+    }, [selectedChat, MyUser.my_user.id]);
 
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
 
-    useEffect(() => {
-        // Gọi API để lấy dữ liệu tin nhắn từ backend
-        MessageService.get("/messages")
-            .then((data) => {
-                // Cập nhật dữ liệu tin nhắn
-                setMessages(data);
-            })
-            .catch((err) => {
-                console.error("Error fetching messages:", err);
-            });
-    }, []); // Chỉ chạy một lần khi component được mount
 
 
-    // Thêm useEffect để tải tin nhắn từ backend khi cuộc trò chuyện được chọn
-    useEffect(() => {
-        if (selectedChat) {
-            // Tải tin nhắn từ backend dựa vào ID của chat được chọn
-            MessageService.get(`/chat/${selectedChat.id}`)
-                .then((data) => setChatMessages(data)) // Cập nhật danh sách tin nhắn
-                .catch((err) => console.error("Error fetching messages:", err));
-        }
-    }, [selectedChat]);
-
-    // Lắng nghe tin nhắn mới từ WebSocket
+    // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            // Chỉ thêm tin nhắn nếu nó thuộc cuộc trò chuyện đang chọn
-            if (incomingMessage.receiverID === selectedChat?.id) {
-                setChatMessages((prev) => [...prev, incomingMessage]);
+            if (
+                (incomingMessage.senderID === MyUser.my_user.id && incomingMessage.receiverID === selectedChat?.id) ||
+                (incomingMessage.senderID === selectedChat?.id && incomingMessage.receiverID === MyUser.my_user.id)
+            ) {
+                setChatMessages((prev) => [...prev, incomingMessage].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
             }
         });
 
         return () => {
             unsubscribe(); // Hủy đăng ký khi component unmount
         };
-    }, [selectedChat, onMessage]);
+    }, [selectedChat, onMessage, MyUser.my_user.id]);
+    //cuộn xuống tin nhắn mới nhất
+    useEffect(() => {
+        const chatContainer = document.querySelector(".chat-messages");
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    }, [chatMessages]);
+
 
 
     const [friends, setFriends] = useState([]); // Danh sách bạn bè
@@ -184,7 +113,7 @@ const MainPage = () => {
         };
 
         sendMessage(message); // Gửi qua WebSocket
-        setChatMessages((prev) => [...prev, message]); // Cập nhật UI
+        setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));// sap xep tin nhan
         setMessageInput(""); // Xóa input
     };
 
