@@ -11,12 +11,31 @@ function App() {
     const { MyUser } = useAuth(); // Lấy thông tin user từ context
     const [isLoading, setIsLoading] = useState(true); // Trạng thái đang tải thông tin user
 
+    const SESSION_TIMEOUT = 3 * 60 * 1000; // 30 phút (thời gian hết hạn phiên đăng nhập)
+
     // Kiểm tra nếu người dùng đã đăng nhập khi trang tải
     useEffect(() => {
-        if (MyUser) {
-            setIsLoading(false); // Đã có thông tin người dùng, không còn loading
+        // Lấy thông tin phiên từ localStorage
+        const lastLoginTime = localStorage.getItem('lastLoginTime');
+        const idToken = localStorage.getItem('idToken');
+
+        if (lastLoginTime && idToken) {
+            // Tính toán thời gian hết hạn
+            const timeElapsed = Date.now() - parseInt(lastLoginTime);
+
+            if (timeElapsed > SESSION_TIMEOUT) {
+                // Nếu thời gian hết hạn, xóa thông tin người dùng và yêu cầu đăng nhập lại
+                localStorage.removeItem('idToken');
+                localStorage.removeItem('lastLoginTime');
+                setIsLoading(false);
+                navigate('/'); // Chuyển hướng về trang login
+            } else {
+                setIsLoading(false); // Nếu chưa hết hạn, không cần tải lại
+            }
+        } else {
+            setIsLoading(false); // Nếu không có token, không có phiên đăng nhập
         }
-    }, [MyUser]);
+    }, [navigate]);
 
     // Kiểm tra sau khi loading xong, điều hướng đến trang phù hợp
     useEffect(() => {

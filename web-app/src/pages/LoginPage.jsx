@@ -33,6 +33,9 @@ const LoginPage = () => {
                 localStorage.setItem('userAttributes', JSON.stringify(userAttributes));
                 localStorage.setItem('my_user', JSON.stringify(my_user));
 
+                localStorage.setItem('idToken', idToken);
+                localStorage.setItem('lastLoginTime', Date.now().toString()); // Lưu thời gian đăng nhập
+
                 // Chuyển hướng tới trang chính sau khi đăng nhập thành công
                 setTimeout(() => {
                     navigate('/main');

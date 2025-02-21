@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
     // Hàm login để lưu thông tin vào context và localStorage
     const login = (userData) => {
         setMyUser(userData);
+        localStorage.setItem('idToken', userData.idToken);
         localStorage.setItem('my_user', JSON.stringify(userData)); // Lưu thông tin vào LocalStorage
         localStorage.setItem('phoneNumber', userData.username);
         localStorage.setItem('userAttributes', JSON.stringify(userData.userAttributes));
