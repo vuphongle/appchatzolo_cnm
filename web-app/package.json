@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@stomp/stompjs": "^7.0.0",
     "aws-amplify": "^6.11.0",
     "axios": "^1.7.9",
     "cra-template": "1.2.0",
@@ -13,6 +15,7 @@
     "react-scripts": "^5.0.1",
     "react-select": "^5.9.0",
     "socket.io-client": "^4.8.1",
+    "sockjs-client": "^1.6.1",
     "web-vitals": "^4.2.4",
     "webpack": "^5.97.1"
   },
