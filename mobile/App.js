@@ -13,6 +13,8 @@ import { UserProvider } from './context/UserContext';
 import Chat from './components/Message/Chat/Chat';
 import Detail_infoChat from './components/Message/Chat/Detail_infoChat';
 import ImageChat from './components/Message/Chat/ImageChat';
+import ScreenCloud from './components/Message/Cloud/ScreenCloud';
+import CloudStorageScreen from './components/Message/Cloud/CloudStorageScreen'
 
 // Amplify.configure({
 //   ...awsConfig,
@@ -66,6 +68,20 @@ const App = () => {
               headerShown: false,
             }}
           />
+            <Stack.Screen
+          name="ScreenCloud"
+          component={ScreenCloud}
+          options={{
+            headerShown: false,
+          }}
+        />
+         <Stack.Screen
+          name="CloudStorageScreen"
+          component={CloudStorageScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>
