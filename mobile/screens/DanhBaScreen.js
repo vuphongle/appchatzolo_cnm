@@ -59,24 +59,47 @@ const DanhBaScreen = () => {
         fetchSentRequests();
     }, [user?.id]);
 
-    // Hàm xóa lời mời
-    const handleDeleteRequest = async (requestId, receiverID) => {
+    // Hàm xử lý "Chấp nhận" hoặc "Từ chối" lời mời
+    const handleRequestResponse = async (requestId, senderId, receiverId, action) => {
         try {
-            const response = await fetch(`${IPV4}/messages/invitations/${user?.id}/${receiverID}`, {
-                method: 'DELETE',
+            let url = '';
+            let method = 'POST';
+
+            if (action === 'accept') {
+                url = `${IPV4}/messages/acceptFriendRequest/${senderId}/${receiverId}`;
+            } else if (action === 'reject') {
+                url = `${IPV4}/messages/invitations/${senderId}/${receiverId}`;
+                method = 'DELETE';
+            } else if (action === 'delete') {
+                url = `${IPV4}/messages/invitations/${user?.id}/${receiverId}`;
+                method = 'DELETE';
+            }
+
+            const response = await fetch(url, {
+                method,
             });
 
-            console.log('response: ', response);
+            console.log(response);
 
             if (response.ok) {
-                // Cập nhật lại state để loại bỏ lời mời đã xóa
-                setSentRequests(sentRequests.filter((request) => request.id !== requestId));
-                console.log('Lời mời đã được xóa');
+                if (action === 'accept') {
+                    // Cập nhật lại state để loại bỏ lời mời đã chấp nhận
+                    setFriendRequests(friendRequests.filter((request) => request.senderID !== senderId));
+                    console.log('Lời mời đã được chấp nhận');
+                } else if (action === 'reject') {
+                    // Cập nhật lại state để loại bỏ lời mời đã từ chối hoặc đã xóa
+                    setFriendRequests(friendRequests.filter((request) => request.id !== requestId));
+                    console.log('Lời mời đã bị từ chối');
+                } else if (action === 'delete') {
+                    // Cập nhật lại state để loại bỏ lời mời đã gửi
+                    setSentRequests(sentRequests.filter((request) => request.id !== requestId));
+                    console.log('Lời mời đã bị xóa');
+                }
             } else {
-                console.log('Xóa lời mời thất bại');
+                console.log(`${action === 'accept' ? 'Chấp nhận' : action === 'reject' ? 'Từ chối' : 'Xóa'} lời mời thất bại`);
             }
         } catch (error) {
-            console.error('Có lỗi xảy ra khi xóa lời mời:', error);
+            console.error(`Có lỗi xảy ra khi ${action === 'accept' ? 'chấp nhận' : action === 'reject' ? 'từ chối' : 'xóa'} lời mời:`, error);
         }
     };
 
@@ -110,10 +133,16 @@ const DanhBaScreen = () => {
                                 )}
                                 <Text style={styles.requestText}>{request.content}</Text>
                                 <View style={styles.buttonContainer}>
-                                    <TouchableOpacity style={styles.actionButton}>
+                                    <TouchableOpacity
+                                        style={styles.actionButton}
+                                        onPress={() => handleRequestResponse(request.id, request.senderID, request.receiverID, 'accept')}
+                                    >
                                         <Text style={styles.actionButtonText}>Chấp nhận</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={styles.actionButton}>
+                                    <TouchableOpacity
+                                        style={[styles.actionButton, styles.rejectButton]}
+                                        onPress={() => handleRequestResponse(request.id, request.senderID, request.receiverID, 'reject')}
+                                    >
                                         <Text style={styles.actionButtonText}>Từ chối</Text>
                                     </TouchableOpacity>
                                 </View>
@@ -144,7 +173,7 @@ const DanhBaScreen = () => {
                                 <Text style={styles.requestStatus}>Trạng thái: {request.status}</Text>
                                 <TouchableOpacity
                                     style={[styles.actionButton, styles.deleteButton]}
-                                    onPress={() => handleDeleteRequest(request.id, request.receiverID)}
+                                    onPress={() => handleRequestResponse(request.id, request.senderID, request.receiverID, 'delete')}
                                 >
                                     <Text style={styles.actionButtonText}>Xóa lời mời</Text>
                                 </TouchableOpacity>
@@ -215,6 +244,9 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         flex: 1,
         marginHorizontal: 5,
+    },
+    rejectButton: {
+        backgroundColor: '#FF3B30',
     },
     deleteButton: {
         backgroundColor: '#FF3B30',
