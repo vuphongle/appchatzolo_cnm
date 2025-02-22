@@ -13,6 +13,7 @@ export const UserProvider = ({ children }) => {
     // Hàm để lấy thông tin người dùng từ server
     const fetchUserProfile = async (phoneNumber) => {
         try {
+            console.log(IPV4 + '/user/findByPhoneNumber///');
             const response = await fetch(IPV4 + '/user/findByPhoneNumber', {
                 method: 'POST',
                 headers: {

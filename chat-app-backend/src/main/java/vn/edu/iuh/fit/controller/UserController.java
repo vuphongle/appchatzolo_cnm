@@ -102,4 +102,19 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching friends: " + e.getMessage());
         }
     }
+
+    // API Tìm bạn bè theo ID
+    @GetMapping("/findById/{id}")
+    public ResponseEntity<?> findUserById(@PathVariable String id) {
+        try {
+            User user = userService.findUserById_ttt(id);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with ID: " + id);
+            }
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while fetching user");
+        }
+    }
 }

@@ -3,13 +3,22 @@ import { View, StyleSheet, ScrollView, Text, TouchableOpacity, ActivityIndicator
 import SearchBar from '../components/SearchBar';
 import { UserContext } from '../context/UserContext';
 import ListFriend from '../components/Message/listFriend/ListFriend';
+import { v4 as uuidv4 } from 'uuid';
+import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, IPV4 } from '@env';
+
 const TinNhanScreen = () => {
     const [searchText, setSearchText] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [searchResult, setSearchResult] = useState(null);
     const [loading, setLoading] = useState(false);
-
     const { fetchUserProfile, user } = useContext(UserContext);
+    const [friendRequestStatus, setFriendRequestStatus] = useState("Kết bạn");
+
+    useEffect(() => {
+        if (searchResult) {
+            checkFriendRequestStatus();
+        }
+    }, [searchResult]);
 
     // Tạo ref cho ô tìm kiếm
     const searchInputRef = useRef(null);
@@ -52,10 +61,95 @@ const TinNhanScreen = () => {
         setSearchResult(null);
     };
 
-    const handleAddFriend = () => {
-        console.log('Kết bạn với người dùng', searchResult.name);
+    // Hàm gửi lời mời kết bạn hoặc hoàn tác lời mời
+    const sendFriendRequest = async () => {
+        if(friendRequestStatus === "Hoàn tác") {
+            handleDeleteFriendRequest();
+        } else if (friendRequestStatus === "Kết bạn") {
+            handleAddFriend();
+        }
+    }
+
+    // Hàm gửi lời mời kết bạn
+    const handleAddFriend = async () => {
+        if (!searchResult) return;
+
+        const newFriendRequest = {
+            id: uuidv4(),
+            content: 'Lời mời kết bạn',
+            sendDate: new Date().toISOString(),
+            senderID: user?.id,
+            receiverID: searchResult.id,
+            isRead: false,
+            media: null,
+            status: 'Chờ đồng ý',
+        };
+
+        try {
+            const response = await fetch(IPV4 + '/messages/addFriend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newFriendRequest),
+            });
+
+            if (response.ok) {
+                console.log('Lời mời kết bạn đã được gửi');
+            } else {
+                console.log('Gửi lời mời kết bạn thất bại');
+            }
+            checkFriendRequestStatus();
+        } catch (error) {
+            console.error('Có lỗi xảy ra khi gửi lời mời kết bạn:', error);
+        }
     };
 
+    // Hàm xóa lời mời kết bạn
+    const handleDeleteFriendRequest = async () => {
+        if (!searchResult) return;
+
+        try {
+            const response = await fetch(IPV4 + '/messages/invitations/' + user?.id + '/' + searchResult.id, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                console.log('Lời mời kết bạn đã được xóa');
+                // Cập nhật lại trạng thái nút sau khi xóa lời mời
+                setFriendRequestStatus('Kết bạn');
+            } else {
+                console.log('Xóa lời mời kết bạn thất bại');
+            }
+        } catch (error) {
+            console.error('Có lỗi xảy ra khi xóa lời mời kết bạn:', error);
+        }
+    };
+
+    // Hàm kiểm tra trạng thái lời mời kết bạn
+    const checkFriendRequestStatus = async () => {
+        if (!searchResult) return;
+
+        try {
+            const response = await fetch(IPV4 + '/messages/invitations/sent/' + user?.id);
+            const invitations = await response.json();
+
+            // Kiểm tra xem người dùng đã gửi lời mời kết bạn cho người này chưa
+            const sentInvitation = invitations.find((invitation) => invitation.receiverID === searchResult.id);
+
+            if (sentInvitation) {
+                // Nếu đã gửi lời mời, thay đổi trạng thái nút
+                setFriendRequestStatus("Hoàn tác");
+            } else {
+                // Nếu chưa gửi lời mời, giữ nguyên trạng thái nút "Kết bạn"
+                setFriendRequestStatus("Kết bạn");
+            }
+        } catch (error) {
+            console.error('Có lỗi xảy ra khi kiểm tra lời mời:', error);
+        }
+    };
+
+    // Hàm xử lý khi ô tìm kiếm được focus
     const handleSearchBarFocus = () => {
         console.log('Search bar focused before:', isSearching);
         setIsSearching(true);
@@ -117,8 +211,8 @@ const TinNhanScreen = () => {
                                     <Text style={styles.phone}>{searchResult.phoneNumber || 'Chưa có số điện thoại'}</Text>
                                 </View>
                                 {!searchResult.isOwnProfile && (
-                                    <TouchableOpacity onPress={handleAddFriend} style={styles.addFriendButton}>
-                                        <Text style={styles.addFriendButtonText}>Kết bạn</Text>
+                                    <TouchableOpacity onPress={sendFriendRequest} style={styles.addFriendButton}>
+                                        <Text style={styles.addFriendButtonText}>{friendRequestStatus}</Text>
                                     </TouchableOpacity>
                                 )}
                             </View>
