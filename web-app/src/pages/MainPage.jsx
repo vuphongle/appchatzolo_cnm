@@ -25,9 +25,113 @@ const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
     </li>
 );
 
+const UserInfoModal = ({ user, onClose }) => {
+    const [isEditing, setIsEditing] = useState(false);
+  return (
+    <div className="modal show d-block" tabIndex="-1">
+      <div className="modal-dialog">
+        <div className="modal-content">
+          {/* Header */}
+          <div className="modal-header">
+            <h5 className="modal-title fw-bold">
+                {isEditing ? "Cập nhật thông tin cá nhân" : "Thông tin tài khoản"}
+            </h5>
+            <i className="fas fa-times" onClick={onClose}></i>
+          </div>
+
+          {/* Profile Image & Name */}
+          {!isEditing && (
+            <div className="d-flex align-items-center p-3 border-bottom">
+              <div className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center" style={{ width: "60px", height: "60px", fontSize: "24px" }}>
+                {user.name?.split(" ").map(word => word[0]).join("")}
+              </div>
+              <p className="ms-3 fw-bold mb-0">
+                {user.name}
+                <i className="fas fa-pencil-alt ms-2" style={{ cursor: "pointer" }} onClick={() => setIsEditing(true)}></i>
+              </p>
+            </div>
+          )}
+          
+          {/* Body */}
+          <div className="modal-body">
+            {isEditing ? (
+              // Giao diện chỉnh sửa
+              <div>
+                <div className="mb-3">
+                  <h6 className="form-label">Tên hiển thị</h6>
+                  <input type="text" className="form-control" defaultValue={user.name} />
+                </div>
+                <div className="mb-3">
+                  <h5 className="form-label fw-bold">Thông tin cá nhân</h5>
+                  <div className="d-flex align-items-center">
+                    <div className="form-check me-3 d-flex align-items-center">
+                        <input type="radio" name="gender" value="Nam" defaultChecked={user.sex === "Nam"} className="form-check-input" />
+                        <label className="form-check-label ms-2">Nam</label>
+                    </div>
+                    <div className="form-check me-3 d-flex align-items-center">
+                        <input type="radio" name="gender" value="Nữ" defaultChecked={user.sex === "Nữ"} className="form-check-input" />
+                        <label className="form-check-label ms-2">Nữ</label>
+                    </div>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="d-flex">
+                    <select className="form-select me-2" defaultValue="02">
+                      <option>02</option>
+                    </select>
+                    <select className="form-select me-2" defaultValue="12">
+                      <option>12</option>
+                    </select>
+                    <select className="form-select" defaultValue="2003">
+                      <option>2003</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Giao diện xem thông tin
+              <div>
+                <p><strong>Giới tính:</strong> {user.sex}</p>
+                <p><strong>Ngày sinh:</strong> {user.dob}</p>
+                <p><strong>Điện thoại:</strong> {user.phoneNumber}</p>
+                <p className="text-muted small">Chỉ bạn bè có lưu số của bạn trong danh bạ mới xem được số này</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Footer */}
+          <div className="modal-footer">
+            {isEditing ? (
+              <>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>Hủy</button>
+                <button type="button" className="btn btn-primary">Cập nhật</button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-primary" onClick={() => setIsEditing(true)}>Cập nhật</button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Component chính
 const MainPage = () => {
+<<<<<<< HEAD
     const navigate = useNavigate();
+=======
+    const { MyUser } = useAuth();
+    const [isUserInfoVisible, setIsUserInfoVisible] = useState(false);
+
+    const handleUserInfoToggle = () => {
+        setIsUserInfoVisible(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsUserInfoVisible(false);
+    };
+>>>>>>> origin/dat
 
     const { MyUser, setMyUser, logout } = useAuth();
     const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
@@ -434,7 +538,9 @@ const MainPage = () => {
                     {isSettingsOpen && (
                         <div className="settings-menu">
                             <ul>
-                                <li className="cat-dat">Thông tin tài khoản</li>
+                                <li className="cat-dat" onClick={handleUserInfoToggle}>
+                                    Thông tin tài khoản
+                                </li>
                                 <li className="cat-dat">Cài đặt</li>
                                 <li className="cat-dat">Dữ liệu</li>
                                 <li className="cat-dat">Ngôn ngữ</li>
@@ -445,6 +551,9 @@ const MainPage = () => {
                     )}
                 </div>
             </nav>
+            {isUserInfoVisible && (
+                <UserInfoModal user={MyUser.my_user} onClose={handleCloseModal}/>
+            )}
 
             {/* Sidebar header luôn hiển thị */}
             <aside className="sidebar">
