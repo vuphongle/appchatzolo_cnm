@@ -14,20 +14,32 @@ export const AuthProvider = ({ children }) => {
     });
 
     // Hàm login để lưu thông tin vào context và localStorage
-    const login = (userData) => {
+    const login = (userData, callback) => {
         setMyUser(userData);
         localStorage.setItem('idToken', userData.idToken);
         localStorage.setItem('my_user', JSON.stringify(userData)); // Lưu thông tin vào LocalStorage
         localStorage.setItem('phoneNumber', userData.username);
         localStorage.setItem('userAttributes', JSON.stringify(userData.userAttributes));
+        localStorage.setItem('lastLoginTime', userData.lastLoginTime);
+
+        if (callback) {
+            callback(); // Gọi callback sau khi MyUser được cập nhật
+        }
     };
 
     // Hàm logout để xóa thông tin trong context và localStorage
-    const logout = () => {
+    const logout = (callback) => {
         setMyUser(null);
+        localStorage.removeItem('idToken');
         localStorage.removeItem('my_user'); // Xóa thông tin người dùng khỏi LocalStorage
         localStorage.removeItem('phoneNumber');
         localStorage.removeItem('userAttributes');
+
+        if (callback) {
+            setTimeout(() => {
+                callback();
+            }, 3000);
+        }
     };
 
     // Hàm updateUserInfo để cập nhật thông tin người dùng
@@ -65,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     }, [MyUser]);
 
     return (
-        <AuthContext.Provider value={{ MyUser, login, logout, updateUserInfo }}>
+        <AuthContext.Provider value={{ MyUser, setMyUser, login, logout, updateUserInfo }}>
             {children}
         </AuthContext.Provider>
     );

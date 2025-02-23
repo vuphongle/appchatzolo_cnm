@@ -7,6 +7,7 @@ import avatar_default from '../image/avatar_user.jpg';
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import ContactsTab from "./ContactsTab";
 import { useWebSocket } from "../context/WebSocket";
+import { useNavigate } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
@@ -26,8 +27,9 @@ const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
 
 // Component chính
 const MainPage = () => {
-    const { MyUser } = useAuth();
+    const navigate = useNavigate();
 
+    const { MyUser, setMyUser, logout } = useAuth();
     const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
     const [activeTab, setActiveTab] = useState("chat"); // State quản lý tab
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -37,20 +39,22 @@ const MainPage = () => {
     const [messageInput, setMessageInput] = useState(""); // Nội dung tin nhắn nhập vào
     const [chatMessages, setChatMessages] = useState([]); // Danh sách tin nhắn của chat
 
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
 
 
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
-        if (selectedChat) {
-            MessageService.get(`/messages?senderID=${MyUser.my_user.id}&receiverID=${selectedChat.id}`)
-                .then(data => {
-                    // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
-                    const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
-                    setChatMessages(sortedMessages);
-                })
-                .catch(err => console.error("Error fetching messages:", err));
-        }
-    }, [selectedChat, MyUser.my_user.id]);
+        if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
+
+        MessageService.get(`/messages?senderID=${MyUser?.my_user?.id}&receiverID=${selectedChat?.id}`)
+            .then(data => {
+                // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+                const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
+                setChatMessages(sortedMessages);
+            })
+            .catch(err => console.error("Error fetching messages:", err));
+    }, [selectedChat, MyUser?.my_user?.id]);
 
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
@@ -71,9 +75,11 @@ const MainPage = () => {
     // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
+            if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
+
             if (
-                (incomingMessage.senderID === MyUser.my_user.id && incomingMessage.receiverID === selectedChat?.id) ||
-                (incomingMessage.senderID === selectedChat?.id && incomingMessage.receiverID === MyUser.my_user.id)
+                (incomingMessage.senderID === MyUser?.my_user?.id && incomingMessage.receiverID === selectedChat?.id) ||
+                (incomingMessage.senderID === selectedChat?.id && incomingMessage.receiverID === MyUser?.my_user?.id)
             ) {
                 setChatMessages((prev) => [...prev, incomingMessage].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
             }
@@ -82,7 +88,7 @@ const MainPage = () => {
         return () => {
             unsubscribe(); // Hủy đăng ký khi component unmount
         };
-    }, [selectedChat, onMessage, MyUser.my_user.id]);
+    }, [selectedChat, onMessage, MyUser?.my_user?.id]);
     //cuộn xuống tin nhắn mới nhất
     useEffect(() => {
         const chatContainer = document.querySelector(".chat-messages");
@@ -96,15 +102,15 @@ const MainPage = () => {
     const [friends, setFriends] = useState([]); // Danh sách bạn bè
     // Lấy danh sách bạn bè từ backend
     useEffect(() => {
-        if (MyUser?.my_user?.id) {
-            UserService.getFriends(MyUser.my_user.id)
-                .then((data) => {
-                    setFriends(data); // Cập nhật danh sách bạn bè
-                })
-                .catch((err) => {
-                    console.error("Error fetching friends:", err);
-                });
-        }
+        if (!MyUser || !MyUser.my_user || !MyUser.my_user.id) return;
+
+        UserService.getFriends(MyUser.my_user.id)
+            .then((data) => {
+                setFriends(data); // Cập nhật danh sách bạn bè
+            })
+            .catch((err) => {
+                console.error("Error fetching friends:", err);
+            });
     }, [MyUser]);
 
 
@@ -112,6 +118,8 @@ const MainPage = () => {
     //nhấn enter gửi tin nhắn
     const handleSendMessage = () => {
         if (messageInput.trim() === "" || !selectedChat) return;
+
+        if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
 
         const message = {
             id: new Date().getTime().toString(),
@@ -142,7 +150,7 @@ const MainPage = () => {
 
     // Xử lý gửi tin nhắn kết bạn
     const [isFriendRequestModalOpen, setIsFriendRequestModalOpen] = useState(false);
-    const [messageContent, setMessageContent] = useState(`Xin chào, mình là ${MyUser.my_user.name}. Mình biết bạn qua số điện thoại. Kết bạn với mình nhé!`);
+    const [messageContent, setMessageContent] = useState(`Xin chào, mình là ${MyUser?.my_user?.name}. Mình biết bạn qua số điện thoại. Kết bạn với mình nhé!`);
     const [isRequestSent, setIsRequestSent] = useState(false);
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
     const allMessagesAndFriends = [
@@ -174,7 +182,7 @@ const MainPage = () => {
                                             chatMessages.map((msg) => (
                                                 <div
                                                     key={msg.id}
-                                                    className={`chat-message ${msg.senderID === MyUser.my_user.id ? "sent" : "received"
+                                                    className={`chat-message ${msg.senderID === MyUser?.my_user?.id ? "sent" : "received"
                                                         }`}
                                                 >
                                                     <p>{msg.content}</p>
@@ -228,7 +236,7 @@ const MainPage = () => {
                                     </div>
                                 </header>
                                 <section className="welcome-section">
-                                    <h1>Chào mừng {MyUser.my_user.name} đến với Zolo PC!</h1>
+                                    <h1>Chào mừng {MyUser?.my_user?.name || "Khách"} đến với Zolo PC!</h1>
                                     <p>
                                         Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người thân,
                                         bạn bè được tối ưu hóa cho máy tính của bạn.
@@ -239,7 +247,7 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} />
+                return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} /> : <div>Loading...</div>;
             // return (
             //     <div>
             //         <h3>Danh sách bạn bè</h3>
@@ -272,6 +280,8 @@ const MainPage = () => {
 
 
     const handleSearchFriend = async () => {
+        if (!MyUser || !MyUser.my_user || !MyUser.my_user.phoneNumber) return;
+
         if (phoneNumber === MyUser.my_user.phoneNumber) {
             setError("Bạn không thể tìm kiếm chính mình.");
             return;
@@ -309,6 +319,8 @@ const MainPage = () => {
 
     // Hàm gửi yêu cầu kết bạn
     const sendFriendRequest = async () => {
+        if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !user?.id) return;
+
         const message = {
             id: new Date().getTime().toString(),
             senderID: MyUser.my_user.id,
@@ -338,32 +350,67 @@ const MainPage = () => {
         }
     };
 
-    // const fetchRequests = () => {
-    //     // Gọi lại các API để tải lại danh sách lời mời
-    //     MessageService.get(`/invitations/received/${user.id}`)
-    //         .then((data) => {
-    //             setReceivedRequests(data);
-    //         })
-    //         .catch((error) => {
-    //             setError('Lỗi khi lấy dữ liệu lời mời đã nhận');
-    //         });
+    // Kiểm tra giá trị của MyUser tại đây
+    console.log("MyUser:", MyUser ? MyUser : "No user logged in");
 
-    //     MessageService.get(`/invitations/sent/${user.id}`)
-    //         .then((data) => {
-    //             setSentRequests(data);
-    //         })
-    //         .catch((error) => {
-    //             setError('Lỗi khi lấy lời mời đã gửi');
-    //         });
+    // const logout = (callback) => {
+    //     setIsLoggingOut(true); // Hiển thị hiệu ứng logout
+    //     setMyUser(null);
+    //     localStorage.removeItem('idToken'); // Xóa token để App.js nhận diện đăng xuất
+    //     localStorage.removeItem('my_user');
+    //     localStorage.removeItem('phoneNumber');
+    //     localStorage.removeItem('userAttributes');
+    //     localStorage.removeItem('lastLoginTime');
+
+    //     if (callback) {
+    //         setTimeout(() => {
+    //             setIsLoggingOut(false);
+    //             callback(); // Chờ 3 giây trước khi chuyển hướng
+    //         }, 3000);
+    //     }
     // };
 
+    const handleLogout = () => {
+        setIsLoggingOut(true);
+        logout(() => {
+            navigate('/');
+        });
+    };
 
-    // Kiểm tra giá trị của MyUser tại đây
-    console.log("MyUser:", MyUser);
+    //Phiên đăng nhập
+    const [sessionExpired, setSessionExpired] = useState(false);
 
-    if (!MyUser) {
-        return <div>User not logged in</div>;
-    }
+    const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 phút
+    const [lastActivity, setLastActivity] = useState(Date.now());
+
+    useEffect(() => {
+        const handleActivity = () => setLastActivity(Date.now());
+
+        window.addEventListener('mousemove', handleActivity);
+        window.addEventListener('keydown', handleActivity);
+        window.addEventListener('click', handleActivity);
+
+        const intervalId = setInterval(() => {
+            if (Date.now() - lastActivity > SESSION_TIMEOUT) {
+                // logout();
+                // navigate('/main');
+                setSessionExpired(true);
+            }
+        }, 1000);
+
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('mousemove', handleActivity);
+            window.removeEventListener('keydown', handleActivity);
+            window.removeEventListener('click', handleActivity);
+        };
+    }, [lastActivity]);
+
+    const handleSessionExpired = () => {
+        setSessionExpired(false);
+        logout();
+        navigate('/');
+    };
 
     return (
         <div className="main-container">
@@ -392,7 +439,7 @@ const MainPage = () => {
                                 <li className="cat-dat">Dữ liệu</li>
                                 <li className="cat-dat">Ngôn ngữ</li>
                                 <li className="cat-dat">Hỗ trợ</li>
-                                <li className="logout">Đăng xuất</li>
+                                <li className="logout" onClick={handleLogout}>Đăng xuất</li>
                             </ul>
                         </div>
                     )}
@@ -451,64 +498,64 @@ const MainPage = () => {
                 {/* Sidebar tabs hiển thị trong tab "contacts" */}
                 {activeTab === "contacts" && (
                     <>
-                    <div className="container-fluid">
-                        <div className="d-flex align-items-start w-100">
-                            <div className="nav flex-column nav-pills me-3 w-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                                <button
-                                    className="nav-link active d-flex align-items-center fs-6 text-dark"
-                                    id="v-pills-friendlist-tab"
-                                    data-bs-toggle="pill"
-                                    data-bs-target="#v-pills-friendlist"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="v-pills-friendlist"
-                                    aria-selected="true"
-                                >
-                                    <i className="fas fa-user-friends me-2"></i>
-                                    Danh sách bạn bè
-                                </button>
-                                <button
-                                    className="nav-link d-flex align-items-center fs-6 text-dark"
-                                    id="v-pills-grouplist-tab"
-                                    data-bs-toggle="pill"
-                                    data-bs-target="#v-pills-grouplist"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="v-pills-grouplist"
-                                    aria-selected="false"
-                                >
-                                    <i className="fas fa-users me-2"></i>
-                                    Danh sách nhóm
-                                </button>
-                                <button
-                                    className="nav-link d-flex align-items-center fs-6 text-dark"
-                                    id="v-pills-friend-tab"
-                                    data-bs-toggle="pill"
-                                    data-bs-target="#v-pills-friend"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="v-pills-friend"
-                                    aria-selected="false"
-                                >
-                                    <i className="fas fa-user-plus me-2"></i>
-                                    Lời mời kết bạn
-                                </button>
-                                <button
-                                    className="nav-link d-flex align-items-center fs-6 text-dark"
-                                    id="v-pills-group-tab"
-                                    data-bs-toggle="pill"
-                                    data-bs-target="#v-pills-group"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="v-pills-group"
-                                    aria-selected="false"
-                                >
-                                    <i className="fas fa-users me-2"></i>
-                                    Lời mời vào nhóm
-                                </button>
+                        <div className="container-fluid">
+                            <div className="d-flex align-items-start w-100">
+                                <div className="nav flex-column nav-pills me-3 w-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                    <button
+                                        className="nav-link active d-flex align-items-center fs-6 text-dark"
+                                        id="v-pills-friendlist-tab"
+                                        data-bs-toggle="pill"
+                                        data-bs-target="#v-pills-friendlist"
+                                        type="button"
+                                        role="tab"
+                                        aria-controls="v-pills-friendlist"
+                                        aria-selected="true"
+                                    >
+                                        <i className="fas fa-user-friends me-2"></i>
+                                        Danh sách bạn bè
+                                    </button>
+                                    <button
+                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        id="v-pills-grouplist-tab"
+                                        data-bs-toggle="pill"
+                                        data-bs-target="#v-pills-grouplist"
+                                        type="button"
+                                        role="tab"
+                                        aria-controls="v-pills-grouplist"
+                                        aria-selected="false"
+                                    >
+                                        <i className="fas fa-users me-2"></i>
+                                        Danh sách nhóm
+                                    </button>
+                                    <button
+                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        id="v-pills-friend-tab"
+                                        data-bs-toggle="pill"
+                                        data-bs-target="#v-pills-friend"
+                                        type="button"
+                                        role="tab"
+                                        aria-controls="v-pills-friend"
+                                        aria-selected="false"
+                                    >
+                                        <i className="fas fa-user-plus me-2"></i>
+                                        Lời mời kết bạn
+                                    </button>
+                                    <button
+                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        id="v-pills-group-tab"
+                                        data-bs-toggle="pill"
+                                        data-bs-target="#v-pills-group"
+                                        type="button"
+                                        role="tab"
+                                        aria-controls="v-pills-group"
+                                        aria-selected="false"
+                                    >
+                                        <i className="fas fa-users me-2"></i>
+                                        Lời mời vào nhóm
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
                     </>
                 )}
             </aside>
@@ -625,6 +672,23 @@ const MainPage = () => {
                 <div className="notification-box">
                     <p>Bạn đã gửi lời mời kết bạn thành công!</p>
                     <button className="button-confirm-send" onClick={() => setIsRequestSent(false)}>OK</button>
+                </div>
+            )}
+
+            {sessionExpired && (
+                <div className="session-expired-overlay">
+                    <div className="session-expired-box">
+                        <p>Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại !!</p>
+                        <button onClick={handleSessionExpired}>OK</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Hiển thị loading spinner khi đang xử lý logout */}
+            {isLoggingOut && (
+                <div className="loading-overlay">
+                    <div className="spinner"></div>
+                    <p className="loading-text">Đang đăng xuất...</p>
                 </div>
             )}
         </div>

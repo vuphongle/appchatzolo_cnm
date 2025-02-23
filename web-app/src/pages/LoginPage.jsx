@@ -12,44 +12,41 @@ const LoginPage = () => {
     const [activeTab, setActiveTab] = useState('phone'); // Thêm state cho tab hiện tại
     const { login } = useAuth();
 
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+
     const handleLogin = async () => {
+        setIsLoggingIn(true); // Hiển thị loading khi bắt đầu đăng nhập
+
         try {
             const response = await ApiService.post('/login', {
                 username: phoneNumber,
                 password,
             });
-            // Kiểm tra phản hồi và xử lý đăng nhập
+
             if (response && response.idToken) {
                 const { idToken, userAttributes, my_user } = response;
+
                 login({
                     username: phoneNumber,
-                    idToken,  // Lấy idToken từ phản hồi
-                    userAttributes, // thông tin trong cognito
-                    my_user, // thông tin trong bảng user của dynamodb
+                    idToken,
+                    userAttributes,
+                    my_user,
+                    lastLoginTime: Date.now(),
+                }, () => {
+                    setIsLoggingIn(false); // Ẩn hiệu ứng login
+                    navigate('/main'); // Chuyển trang sau khi context cập nhật
                 });
-
-                // Lưu thông tin vào localStorage (nếu cần)
-                localStorage.setItem('phoneNumber', phoneNumber);
-                localStorage.setItem('userAttributes', JSON.stringify(userAttributes));
-                localStorage.setItem('my_user', JSON.stringify(my_user));
-
-                localStorage.setItem('idToken', idToken);
-                localStorage.setItem('lastLoginTime', Date.now().toString()); // Lưu thời gian đăng nhập
-
-                // Chuyển hướng tới trang chính sau khi đăng nhập thành công
-                setTimeout(() => {
-                    navigate('/main');
-                }, 100);
             } else {
                 setErrorMessage('ID Token không có trong phản hồi từ server.');
+                setIsLoggingIn(false);
             }
         } catch (error) {
             console.error("Error logging in:", error.response || error);
-            setErrorMessage(
-                error.response?.data?.error || 'Error logging in'
-            );
+            setErrorMessage(error.response?.data?.error || 'Error logging in');
+            setIsLoggingIn(false);
         }
     };
+
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -137,6 +134,14 @@ const LoginPage = () => {
                     <a href="/create-user" className="text-primary text-decoration-none fw-bold">Đăng Ký</a>
                 </div>
             </div>
+
+            {/* Hiển thị loading khi đang xử lý login */}
+            {isLoggingIn && (
+                <div className="loading-overlay">
+                    <div className="spinner"></div>
+                    <p className="loading-text">Đang đăng nhập...</p>
+                </div>
+            )}
         </div>
     );
 
