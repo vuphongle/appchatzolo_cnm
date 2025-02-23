@@ -4,8 +4,9 @@ import { SwipeListView } from 'react-native-swipe-list-view';
 import Icon from 'react-native-vector-icons/AntDesign';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import ItemFriend from './ItemFriend';
-
+import CloudItem from './CloudItem';
 function ListFriend() {
+  const [openRow, setOpenRow] = useState(null); 
   const [friends, setFriends] = useState([
     {
       id: '1',
@@ -31,12 +32,37 @@ function ListFriend() {
   ]);
 
   // Hàm xử lý ghim
+  // const pinFriend = (id) => {
+  //   setFriends((prevFriends) => {
+  //     const friendIndex = prevFriends.findIndex((friend) => friend.id === id);
+  //     const [pinnedFriend] = prevFriends.splice(friendIndex, 1);
+  //     return [pinnedFriend, ...prevFriends];
+  //   });
+  // };
   const pinFriend = (id) => {
-    setFriends((prevFriends) => {
-      const friendIndex = prevFriends.findIndex((friend) => friend.id === id);
-      const [pinnedFriend] = prevFriends.splice(friendIndex, 1);
-      return [pinnedFriend, ...prevFriends];
-    });
+    Alert.alert(
+      "Xác nhận",
+      "Bạn có muốn ghim người bạn này lên đầu danh sách?",
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Có",
+          onPress: () => {
+            setFriends((prevFriends) => {
+              const friendIndex = prevFriends.findIndex((friend) => friend.id === id);
+              if (friendIndex === -1) return prevFriends; // Kiểm tra nếu không tìm thấy
+  
+              const updatedFriends = [...prevFriends];
+              const [pinnedFriend] = updatedFriends.splice(friendIndex, 1);
+              return [pinnedFriend, ...updatedFriends];
+            });
+          },
+        },
+      ]
+    );
   };
 
   // Hàm xử lý xóa
@@ -62,7 +88,9 @@ function ListFriend() {
 
   const renderItem = ({ item }) => <ItemFriend {...item} />;
 
-  const renderHiddenItem = ({ item }) => (
+  const renderHiddenItem = ({ item }) => {
+    if (openRow !== item.id) return <View style={{ height: 0 }} />;
+return (
     <View style={styles.rowBack}>
       <View style={styles.actionLeft}></View>
       <View style={styles.actionRight}>
@@ -84,10 +112,12 @@ function ListFriend() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
+       <CloudItem timestamp="23 tiếng" />
       <SwipeListView
         data={friends}
         keyExtractor={(item) => item.id}
@@ -95,6 +125,11 @@ function ListFriend() {
         renderHiddenItem={renderHiddenItem}
         rightOpenValue={-230}
         showsVerticalScrollIndicator={false}
+        closeOnRowPress={true}
+        disableRightSwipe={true}
+        previewOpenDelay={3000}
+        onRowOpen={(rowKey) => setOpenRow(rowKey)} 
+        onRowClose={() => setOpenRow(null)}
       />
     </View>
   );
@@ -113,7 +148,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     backgroundColor: '#f8f8f8',
-    height: '80%',
+    height: '100%',
   },
   actionLeft: {
     flex: 1,
