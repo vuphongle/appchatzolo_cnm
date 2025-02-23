@@ -7,76 +7,10 @@ import avatar_default from '../image/avatar_user.jpg';
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import ContactsTab from "./ContactsTab";
 import { useWebSocket } from "../context/WebSocket";
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
-// Dữ liệu danh sách tin nhắn
-// const messages = [
-//     {
-//         id: 1,
-//         groupName: "IUH - DHKTPM17A - CT7",
-//         unreadCount: 86,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 2,
-//         groupName: "Team Ổn CN Mới",
-//         unreadCount: 6,
-//         img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
-//     },
-//     {
-//         id: 3,
-//         groupName: "Team Ổn",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 4,
-//         groupName: "Nhóm 4 PTUD JAVA",
-//         unreadCount: 0,
-//         img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg",
-//     },
-//     {
-//         id: 5,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 6,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 7,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 8,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 9,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 10,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-//     {
-//         id: 11,
-//         groupName: "Cloud của tôi",
-//         unreadCount: 0,
-//         img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg",
-//     },
-// ];
+
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
@@ -103,19 +37,23 @@ const MainPage = () => {
     const [messageInput, setMessageInput] = useState(""); // Nội dung tin nhắn nhập vào
     const [chatMessages, setChatMessages] = useState([]); // Danh sách tin nhắn của chat
 
+
+
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
         if (selectedChat) {
             MessageService.get(`/messages?senderID=${MyUser.my_user.id}&receiverID=${selectedChat.id}`)
-                .then(data => setChatMessages(data))
+                .then(data => {
+                    // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+                    const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
+                    setChatMessages(sortedMessages);
+                })
                 .catch(err => console.error("Error fetching messages:", err));
         }
-    }, [selectedChat]);
-
+    }, [selectedChat, MyUser.my_user.id]);
 
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
-
     useEffect(() => {
         // Gọi API để lấy dữ liệu tin nhắn từ backend
         MessageService.get("/messages")
@@ -129,29 +67,30 @@ const MainPage = () => {
     }, []); // Chỉ chạy một lần khi component được mount
 
 
-    // Thêm useEffect để tải tin nhắn từ backend khi cuộc trò chuyện được chọn
-    useEffect(() => {
-        if (selectedChat) {
-            // Tải tin nhắn từ backend dựa vào ID của chat được chọn
-            MessageService.get(`/chat/${selectedChat.id}`)
-                .then((data) => setChatMessages(data)) // Cập nhật danh sách tin nhắn
-                .catch((err) => console.error("Error fetching messages:", err));
-        }
-    }, [selectedChat]);
 
-    // Lắng nghe tin nhắn mới từ WebSocket
+    // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            // Chỉ thêm tin nhắn nếu nó thuộc cuộc trò chuyện đang chọn
-            if (incomingMessage.receiverID === selectedChat?.id) {
-                setChatMessages((prev) => [...prev, incomingMessage]);
+            if (
+                (incomingMessage.senderID === MyUser.my_user.id && incomingMessage.receiverID === selectedChat?.id) ||
+                (incomingMessage.senderID === selectedChat?.id && incomingMessage.receiverID === MyUser.my_user.id)
+            ) {
+                setChatMessages((prev) => [...prev, incomingMessage].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
             }
         });
 
         return () => {
             unsubscribe(); // Hủy đăng ký khi component unmount
         };
-    }, [selectedChat, onMessage]);
+    }, [selectedChat, onMessage, MyUser.my_user.id]);
+    //cuộn xuống tin nhắn mới nhất
+    useEffect(() => {
+        const chatContainer = document.querySelector(".chat-messages");
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    }, [chatMessages]);
+
 
 
     const [friends, setFriends] = useState([]); // Danh sách bạn bè
@@ -184,7 +123,7 @@ const MainPage = () => {
         };
 
         sendMessage(message); // Gửi qua WebSocket
-        setChatMessages((prev) => [...prev, message]); // Cập nhật UI
+        setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));// sap xep tin nhan
         setMessageInput(""); // Xóa input
     };
 
@@ -199,19 +138,22 @@ const MainPage = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [loading, setLoading] = useState(false); // Loading state
 
-    const [sentInvitations, setSentInvitations] = useState([]); // Danh sách lời mời đã gửi
+    const [friendRequests, setFriendRequests] = useState([]);
 
     // Xử lý gửi tin nhắn kết bạn
     const [isFriendRequestModalOpen, setIsFriendRequestModalOpen] = useState(false);
     const [messageContent, setMessageContent] = useState(`Xin chào, mình là ${MyUser.my_user.name}. Mình biết bạn qua số điện thoại. Kết bạn với mình nhé!`);
     const [isRequestSent, setIsRequestSent] = useState(false);
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
-    const allMessagesAndFriends = [...messages, ...friends.map((friend) => ({
-        id: friend.id,
-        groupName: friend.name,
-        unreadCount: 0,
-        img: friend.avatar,
-    }))];
+    const allMessagesAndFriends = [
+        ...messages,
+        ...(Array.isArray(friends) ? friends.map((friend) => ({
+            id: friend.id,
+            groupName: friend.name,
+            unreadCount: 0,
+            img: friend.avatar,
+        })) : []), // Nếu friends không phải mảng, trả về mảng rỗng
+    ];
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (activeTab) {
@@ -297,7 +239,7 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return <ContactsTab />
+                return <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} />
             // return (
             //     <div>
             //         <h3>Danh sách bạn bè</h3>
@@ -387,12 +329,33 @@ const MainPage = () => {
             setIsRequestSent(true);
             setIsFriendRequestModalOpen(false);
 
+            // Cập nhật trực tiếp trong state để danh sách luôn mới
+            setFriendRequests((prevRequests) => [...prevRequests, message]);
 
             console.log('Message sent successfully');
         } catch (error) {
             console.error('Error sending message:', error);
         }
     };
+
+    // const fetchRequests = () => {
+    //     // Gọi lại các API để tải lại danh sách lời mời
+    //     MessageService.get(`/invitations/received/${user.id}`)
+    //         .then((data) => {
+    //             setReceivedRequests(data);
+    //         })
+    //         .catch((error) => {
+    //             setError('Lỗi khi lấy dữ liệu lời mời đã nhận');
+    //         });
+
+    //     MessageService.get(`/invitations/sent/${user.id}`)
+    //         .then((data) => {
+    //             setSentRequests(data);
+    //         })
+    //         .catch((error) => {
+    //             setError('Lỗi khi lấy lời mời đã gửi');
+    //         });
+    // };
 
 
     // Kiểm tra giá trị của MyUser tại đây
@@ -488,64 +451,64 @@ const MainPage = () => {
                 {/* Sidebar tabs hiển thị trong tab "contacts" */}
                 {activeTab === "contacts" && (
                     <>
-                        <div className="container-fluid">
-                            <div className="d-flex align-items-start ">
-                                <div className="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                                    <button
-                                        className="nav-link active d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-friendlist-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-friendlist"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-friendlist"
-                                        aria-selected="true"
-                                    >
-                                        <i className="fas fa-user-friends me-2"></i>
-                                        Danh sách bạn bè
-                                    </button>
-                                    <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-grouplist-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-grouplist"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-grouplist"
-                                        aria-selected="false"
-                                    >
-                                        <i className="fas fa-users me-2"></i>
-                                        Danh sách nhóm
-                                    </button>
-                                    <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-friend-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-friend"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-friend"
-                                        aria-selected="false"
-                                    >
-                                        <i className="fas fa-user-plus me-2"></i>
-                                        Lời mời kết bạn
-                                    </button>
-                                    <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
-                                        id="v-pills-group-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-group"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-group"
-                                        aria-selected="false"
-                                    >
-                                        <i className="fas fa-users me-2"></i>
-                                        Lời mời vào nhóm
-                                    </button>
-                                </div>
+                    <div className="container-fluid">
+                        <div className="d-flex align-items-start w-100">
+                            <div className="nav flex-column nav-pills me-3 w-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                <button
+                                    className="nav-link active d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-friendlist-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-friendlist"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-friendlist"
+                                    aria-selected="true"
+                                >
+                                    <i className="fas fa-user-friends me-2"></i>
+                                    Danh sách bạn bè
+                                </button>
+                                <button
+                                    className="nav-link d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-grouplist-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-grouplist"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-grouplist"
+                                    aria-selected="false"
+                                >
+                                    <i className="fas fa-users me-2"></i>
+                                    Danh sách nhóm
+                                </button>
+                                <button
+                                    className="nav-link d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-friend-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-friend"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-friend"
+                                    aria-selected="false"
+                                >
+                                    <i className="fas fa-user-plus me-2"></i>
+                                    Lời mời kết bạn
+                                </button>
+                                <button
+                                    className="nav-link d-flex align-items-center fs-6 text-dark"
+                                    id="v-pills-group-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#v-pills-group"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="v-pills-group"
+                                    aria-selected="false"
+                                >
+                                    <i className="fas fa-users me-2"></i>
+                                    Lời mời vào nhóm
+                                </button>
                             </div>
                         </div>
+                    </div>
                     </>
                 )}
             </aside>

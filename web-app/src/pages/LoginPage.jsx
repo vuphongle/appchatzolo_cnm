@@ -31,9 +31,12 @@ const LoginPage = () => {
                 // Lưu thông tin vào localStorage (nếu cần)
                 localStorage.setItem('phoneNumber', phoneNumber);
                 localStorage.setItem('userAttributes', JSON.stringify(userAttributes));
+                localStorage.setItem('my_user', JSON.stringify(my_user));
 
                 // Chuyển hướng tới trang chính sau khi đăng nhập thành công
-                navigate('/main');
+                setTimeout(() => {
+                    navigate('/main');
+                }, 100);
             } else {
                 setErrorMessage('ID Token không có trong phản hồi từ server.');
             }

@@ -36,7 +36,7 @@ public class UserRepository {
                 .orElse(null);
     }
 
-    //tín làm find id userr để chat message
+    //Find id userr để chat message
     public User findById_ttt(String id) {
         Key key = Key.builder().partitionValue(id).build();
         return table.getItem(key); // Sử dụng getItem thay vì query
@@ -51,5 +51,11 @@ public class UserRepository {
 
     public List<User> findAllUsers() {
         return table.scan().items().stream().collect(Collectors.toList());
+    }
+
+    public List<User> findByNameContainingIgnoreCase(String name) {
+        return table.scan().items().stream()
+                .filter(user -> user.getName().toLowerCase().contains(name.toLowerCase()))
+                .collect(Collectors.toList());
     }
 }

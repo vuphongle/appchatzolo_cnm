@@ -1,18 +1,9 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import MessageService from "../services/MessageService";
-
+import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import FriendRequestsTab from "./ListFriend_RequestTab";
-
-const friendList = [
-    { id: 1, name: "Anh Tú", avatar: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
-    { id: 2, name: "Bình Đại", avatar: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg" },
-    { id: 3, name: "Bảo An", avatar: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
-    { id: 4, name: "Tấn Đạt", avatar: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg" },
-    { id: 5, name: "Thanh Sơn", avatar: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
-    { id: 6, name: "Văn Đại", avatar: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
-];
 
 const FriendItem = ({ avatar, name }) => (
     <button type="button" className="btn btn-outline-secondary" style={{ outline: "none", border: "none" }}>
@@ -67,7 +58,6 @@ const GroupItem = ({ img, groupName, member }) => (
     </button>
 );
 
-
 // Hàm nhóm bạn bè theo chữ cái đầu
 const groupFriendsByLetter = (friends) => {
     return friends.reduce((groups, friend) => {
@@ -80,11 +70,57 @@ const groupFriendsByLetter = (friends) => {
     }, {});
 };
 
-function ContactsTab() {
-    const groupedFriends = groupFriendsByLetter(friendList); // Nhóm bạn bè theo chữ cái đầu
-
+function ContactsTab({ friendRequests }) {
     const { MyUser } = useAuth(); // Lấy thông tin người dùng từ context
     const userId = MyUser?.my_user?.id; // Lấy id người dùng
+    const [friends, setFriends] = useState([]);
+    const [searchTerm, setSearchTerm] = useState(""); // Giá trị nhập vào ô tìm kiếm
+    const [searchResults, setSearchResults] = useState([]); // Kết quả tìm kiếm
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Lấy danh sách bạn bè từ backend
+    useEffect(() => {
+        if (userId) {
+            UserService.getFriends(userId)
+                .then((data) => {
+                    setFriends(data); // Cập nhật danh sách bạn bè
+                })
+                .catch((err) => {
+                    console.error("Error fetching friends:", err);
+                    setError("Không thể tải danh sách bạn bè.");
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [userId]);
+
+    // Gọi API tìm kiếm khi searchTerm thay đổi
+    useEffect(() => {
+        if (searchTerm.trim() === "") {
+            setSearchResults([]); // Nếu ô tìm kiếm trống, hiển thị danh sách bạn bè ban đầu
+            return;
+        }
+
+        UserService.searchUserByName(searchTerm)
+            .then((data) => {
+                // Loại bỏ chính mình bằng cách so sánh ID người dùng
+                const filteredResults = data.filter(user => user.id !== userId);
+                setSearchResults(filteredResults);
+            })
+            .catch((err) => {
+                console.error("Lỗi khi tìm kiếm:", err);
+                setSearchResults([]); // Nếu lỗi, đặt danh sách tìm kiếm về rỗng
+            });
+    }, [searchTerm, userId]);
+
+
+    const groupedFriends = useMemo(() => {
+        const friendsToGroup = searchTerm.trim() ? searchResults : friends;
+        return groupFriendsByLetter(friendsToGroup);
+    }, [friends, searchResults, searchTerm]);
+
 
     return (
         <div>
@@ -97,24 +133,37 @@ function ContactsTab() {
                     </div>
                     <hr />
                     <div className="vh-100">
-                        <h6 >Bạn bè ({friendList.length})</h6>
+                        <h6 >Bạn bè ({searchTerm.trim() ? searchResults.length : friends.length})</h6>
                         <div className="search-bar d-flex align-items-center mb-3">
-                            <input type="text" className="form-control me-2" placeholder="Tìm bạn" />
+                            <input
+                                type="text"
+                                className="form-control me-2"
+                                placeholder="Tìm bạn"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                             <select className="form-select">
                                 <option value="name-asc">Tên (A-Z)</option>
                                 <option value="name-desc">Tên (Z-A)</option>
                             </select>
                         </div>
-                        {/* Hiển thị danh sách nhóm */}
+
+                        {/* Hiển thị danh sách tìm kiếm nếu có, nếu không thì hiển thị bạn bè */}
                         <div>
-                            {Object.keys(groupedFriends).sort().map((letter) => (
-                                <div key={letter}>
-                                    <h4>{letter}</h4>
-                                    {groupedFriends[letter].map((friend) => (
-                                        <FriendItem key={friend.id} avatar={friend.avatar} name={friend.name} />
-                                    ))}
-                                </div>
-                            ))}
+                            {Object.keys(groupedFriends).length === 0 ? (
+                                <p>Không tìm thấy người dùng nào.</p>
+                            ) : (
+                                Object.keys(groupedFriends)
+                                    .sort()
+                                    .map((letter) => (
+                                        <div key={letter}>
+                                            <h4>{letter}</h4>
+                                            {groupedFriends[letter].map((friend) => (
+                                                <FriendItem key={friend.id} avatar={friend.avatar} name={friend.name} />
+                                            ))}
+                                        </div>
+                                    ))
+                            )}
                         </div>
                     </div>
                 </div>
@@ -150,7 +199,7 @@ function ContactsTab() {
 
                 {/* Tab lời mời kết bạn */}
                 <div className="tab-pane fade" id="v-pills-friend" role="tabpanel" aria-labelledby="v-pills-messages-friend">
-                    <FriendRequestsTab userId={userId} /> {/* Gọi FriendRequestsTab */}
+                    <FriendRequestsTab key={userId} userId={userId} friendRequests={friendRequests} /> {/* Gọi FriendRequestsTab */}
                 </div>
 
                 {/* Tab lời mời vào nhóm */}

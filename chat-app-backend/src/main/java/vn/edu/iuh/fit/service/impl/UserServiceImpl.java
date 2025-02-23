@@ -42,4 +42,8 @@ public class UserServiceImpl implements UserService {
     public User findUserById_ttt(String id) {
         return userRepository.findById_ttt(id);
     }
+
+    @Override
+    public List<User> findByNameContainingIgnoreCase(String name) { return userRepository.findByNameContainingIgnoreCase(name);}
+
 }

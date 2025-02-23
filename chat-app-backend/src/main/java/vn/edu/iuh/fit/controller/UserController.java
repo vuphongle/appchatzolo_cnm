@@ -117,4 +117,31 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while fetching user");
         }
     }
+
+    //Tìm User (người gửi) theo ID
+    @GetMapping("/searchSender")
+    public ResponseEntity<?> getUserById(@RequestParam String senderId) {
+        try {
+            User user = userService.findUserById_ttt(senderId);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching user: " + e.getMessage());
+        }
+    }
+    @GetMapping("/searchUserByName")
+    public ResponseEntity<?> searchUserByName(@RequestParam String name) {
+        try {
+            List<User> users = userService.findByNameContainingIgnoreCase(name); // Tìm kiếm không phân biệt chữ hoa/thường
+            return users.isEmpty() ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("No users found") : ResponseEntity.ok(users);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred");
+
+        }
+    }
 }
