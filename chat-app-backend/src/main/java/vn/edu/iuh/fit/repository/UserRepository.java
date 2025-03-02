@@ -53,9 +53,22 @@ public class UserRepository {
         return table.scan().items().stream().collect(Collectors.toList());
     }
 
-    public List<User> findByNameContainingIgnoreCase(String name) {
-        return table.scan().items().stream()
+    public List<User> findByNameContainingIgnoreCase(String name, String userId) {
+        List<User> friends = findFriendsByUserId(userId);
+
+        return friends.stream()
                 .filter(user -> user.getName().toLowerCase().contains(name.toLowerCase()))
                 .collect(Collectors.toList());
     }
+
+    public List<User> findFriendsByUserId(String userId) {
+        User user = findById(userId);
+        if (user == null || user.getFriendIds() == null) return List.of();
+
+        // Lọc danh sách bạn bè từ danh sách user
+        return table.scan().items().stream()
+                .filter(u -> user.getFriendIds().contains(u.getId()))
+                .collect(Collectors.toList());
+    }
+
 }

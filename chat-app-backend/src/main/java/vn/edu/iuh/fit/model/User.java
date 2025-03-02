@@ -85,6 +85,11 @@ public class User {
         // Cần phải có constructor mặc định cho Spring/DynamoDB Enhanced SDK
     }
 
+    public User(String id, String avatar) {
+        this.id = id;
+        this.avatar = avatar;
+    }
+
     @Override
     public String toString() {
         return "User{" +

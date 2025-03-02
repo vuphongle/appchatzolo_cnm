@@ -10,5 +10,6 @@ public interface UserService {
     User findUserByPhoneNumber(String phoneNumber);
     List<User> findAllUsers();
     User findUserById_ttt(String id);
-    List<User> findByNameContainingIgnoreCase(String name);
+    List<User> findByNameContainingIgnoreCase(String name, String userId);
+    void updateUser(String id, String name, String dob);
 }

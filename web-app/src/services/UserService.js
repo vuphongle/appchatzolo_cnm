@@ -35,16 +35,32 @@ const UserService = {
     }
   },
 
-  searchUserByName: async (name) => {
-     try {
-         const response = await axios.get(`${API_BASE_URL}/searchUserByName`, {
-             params: { name },
-         });
-         return response.data;
-     } catch (error) {
-         throw error.response ? error.response.data : error;
-     }
-  }
+  searchUserByName: async (name, userId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/searchUserByName`, {
+        params: { name, userId }, // Gửi userId để lọc danh sách bạn bè
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
+
+
+  /** 
+   * API cập nhật thông tin người dùng 
+   * @param {string} userId - ID người dùng
+   * @param {Object} data - Thông tin cập nhật (name, dob)
+   * @returns {Promise<Object>} - Kết quả cập nhật
+   */
+  updateUserInfo: async (userId, data) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/update/${userId}`, data);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
 };
 
 

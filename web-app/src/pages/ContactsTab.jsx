@@ -99,22 +99,19 @@ function ContactsTab({ friendRequests }) {
     // Gọi API tìm kiếm khi searchTerm thay đổi
     useEffect(() => {
         if (searchTerm.trim() === "") {
-            setSearchResults([]); // Nếu ô tìm kiếm trống, hiển thị danh sách bạn bè ban đầu
+            setSearchResults([]);
             return;
         }
 
-        UserService.searchUserByName(searchTerm)
+        UserService.searchUserByName(searchTerm, userId) // Truyền userId
             .then((data) => {
-                // Loại bỏ chính mình bằng cách so sánh ID người dùng
-                const filteredResults = data.filter(user => user.id !== userId);
-                setSearchResults(filteredResults);
+                setSearchResults(data);
             })
             .catch((err) => {
                 console.error("Lỗi khi tìm kiếm:", err);
-                setSearchResults([]); // Nếu lỗi, đặt danh sách tìm kiếm về rỗng
+                setSearchResults([]);
             });
     }, [searchTerm, userId]);
-
 
     const groupedFriends = useMemo(() => {
         const friendsToGroup = searchTerm.trim() ? searchResults : friends;
