@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "./MainPage.css"; // CSS riêng cho giao diện
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
@@ -11,6 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import moment from "moment";
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import axios from "axios";
+import S3Service from "../services/S3Service";
 
 
 
@@ -26,89 +28,201 @@ const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
     </li>
 );
 
+
 const UserInfoModal = ({ user, onClose }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const [isUploading, setIsUploading] = useState(false); // Trạng thái để hiển thị màn hình cập nhật ảnh
+    const [avatar, setAvatar] = useState(user.avatar);
+    const [file, setFile] = useState(null);
+    const [originalAvatar, setOriginalAvatar] = useState(user.avatar);
+    const [name, setName] = useState(user.name);
+    const [dob, setDob] = useState(user.dob ? new Date(user.dob).toISOString().split('T')[0] : "2003-12-02");
+
+    // Kiểm tra dữ liệu có thay đổi không
+    const isChanged = useMemo(() => name !== user.name || dob !== (user.dob ? new Date(user.dob).toISOString().split('T')[0] : "2003-12-02"), [name, dob, user]);
+
+    const handleUpdateInfo = async () => {
+        try {
+            await UserService.updateUserInfo(user.id, { name, dob });
+            // Cập nhật lại thông tin người dùng trong state
+            user.name = name;
+            user.dob = dob;
+            alert("Cập nhật thông tin thành công!");
+            onClose();
+        } catch (error) {
+            alert("Cập nhật thất bại! " + error.message);
+        }
+    };
+
+    const startUploading = () => {
+        setOriginalAvatar(avatar);  // Lưu lại avatar gốc
+        setIsUploading(true);
+    };
+
+    const cancelUpload = () => {
+        setAvatar(originalAvatar);  // Phục hồi avatar gốc
+        setFile(null);  // Xóa file đã chọn
+        setIsUploading(false);
+    };
+
+
+    // Xử lý khi chọn ảnh mới
+    const handleFileChange = (event) => {
+        const selectedFile = event.target.files[0];
+
+        if (selectedFile) {
+            const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+            if (!validTypes.includes(selectedFile.type)) {
+                alert("Chỉ chấp nhận file (.jpg, .jpeg, .png)");
+                return;
+            }
+            setFile(selectedFile);
+            setAvatar(URL.createObjectURL(selectedFile)); // Hiển thị ảnh mới
+        }
+    };
+
+
+    // Upload file lên server
+    const uploadAvatar = async () => {
+        if (!file) return;
+
+        try {
+            const url = await S3Service.uploadAvatar(file);
+            setAvatar(url);
+            // setUser((prev) => ({ ...prev, avatar: url })); // Nếu có state user
+            setIsUploading(false);
+            alert("Cập nhật avatar thành công!");
+        } catch (error) {
+            alert("Upload thất bại!");
+        }
+    };
+
     return (
         <div className="modal show d-block" tabIndex="-1">
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-dialog-centered modal-lg">
                 <div className="modal-content">
                     {/* Header */}
                     <div className="modal-header">
                         <h5 className="modal-title fw-bold">
-                            {isEditing ? "Cập nhật thông tin cá nhân" : "Thông tin tài khoản"}
+                            {isUploading ? "Cập nhật ảnh đại diện" : isEditing ? "Cập nhật thông tin cá nhân" : "Thông tin tài khoản"}
                         </h5>
-                        <i className="fas fa-times" onClick={onClose}></i>
+                        <i className="fas fa-times" onClick={onClose} style={{ cursor: "pointer" }}></i>
                     </div>
 
-                    {/* Profile Image & Name */}
-                    {!isEditing && (
-                        <div className="d-flex align-items-center p-3 border-bottom">
-                            <div className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center" style={{ width: "60px", height: "60px", fontSize: "24px" }}>
-                                {user.name?.split(" ").map(word => word[0]).join("")}
+                    {/* Nếu đang tải ảnh lên */}
+                    {isUploading ? (
+                        <div className="modal-body text-center">
+                            <label className="btn btn-light d-flex align-items-center mx-auto" style={{ border: "1px solid #ddd", cursor: "pointer" }}>
+                                <i className="fas fa-upload me-2"></i> Tải lên từ máy tính
+                                <input type="file" className="d-none" accept=".jpg, .jpeg, .png" onChange={handleFileChange} />
+                            </label>
+                            <h6 className="mt-3">Ảnh đại diện của tôi</h6>
+                            <div className="mb-3 d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
+                                <img src={avatar} alt="Avatar" className="rounded-circle mt-2" style={{ width: "80px", height: "100px" }} />
                             </div>
-                            <p className="ms-3 fw-bold mb-0">
-                                {user.name}
-                                <i className="fas fa-pencil-alt ms-2" style={{ cursor: "pointer" }} onClick={() => setIsEditing(true)}></i>
-                            </p>
+                            <p className="text-muted">Bạn chưa cập nhật ảnh đại diện nào</p>
                         </div>
-                    )}
+                    ) : (
+                        <>
+                            {/* Profile Image & Name */}
+                            {!isEditing && (
+                                <div className="d-flex align-items-center p-3 border-bottom">
+                                    <div className="position-relative" style={{ width: "60px", height: "60px" }}>
+                                        {avatar && avatar !== "" ? (
+                                            <img src={avatar} alt="Avatar" className="rounded-circle shadow-sm" style={{ width: "60px", height: "60px", objectFit: "cover" }} />
+                                        ) : (
+                                            <div className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center" style={{ width: "60px", height: "60px", fontSize: "24px" }}>
+                                                {user.name?.split(" ").map(word => word[0]).join("")}
+                                            </div>
+                                        )}
 
-                    {/* Body */}
-                    <div className="modal-body">
-                        {isEditing ? (
-                            // Giao diện chỉnh sửa
-                            <div>
-                                <div className="mb-3">
-                                    <h6 className="form-label">Tên hiển thị</h6>
-                                    <input type="text" className="form-control" defaultValue={user.name} />
+                                        <label
+                                            className="position-absolute bottom-0 end-0 bg-light rounded-circle shadow-sm d-flex justify-content-center align-items-center"
+                                            style={{ width: "24px", height: "24px", cursor: "pointer" }}
+                                            onClick={() => setIsUploading(true)}
+                                        >
+                                            <i className="fas fa-camera" style={{ fontSize: "12px" }}></i>
+                                        </label>
+                                    </div>
+
+                                    {/* Tên */}
+                                    <p className="ms-3 fw-bold mb-0">
+                                        {user.name}
+                                        <i className="fas fa-pencil-alt ms-2" style={{ cursor: "pointer" }} onClick={() => setIsEditing(true)}></i>
+                                    </p>
                                 </div>
-                                <div className="mb-3">
-                                    <h5 className="form-label fw-bold">Thông tin cá nhân</h5>
-                                    <div className="d-flex align-items-center">
-                                        <div className="form-check me-3 d-flex align-items-center">
-                                            <input type="radio" name="gender" value="Nam" defaultChecked={user.sex === "Nam"} className="form-check-input" />
-                                            <label className="form-check-label ms-2">Nam</label>
+                            )}
+
+
+                            {/* Body */}
+                            <div className="modal-body">
+                                {isEditing ? (
+                                    // Giao diện chỉnh sửa
+                                    <div>
+                                        <div className="mb-3">
+                                            <h6 className="form-label">Tên hiển thị</h6>
+                                            <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} />
                                         </div>
-                                        <div className="form-check me-3 d-flex align-items-center">
-                                            <input type="radio" name="gender" value="Nữ" defaultChecked={user.sex === "Nữ"} className="form-check-input" />
-                                            <label className="form-check-label ms-2">Nữ</label>
+                                        <div className="mb-3 mt-4">
+                                            <h5 className="form-label fw-bold">Thông tin cá nhân</h5>
+                                            <div className="d-flex align-items-center">
+                                                <div className="form-check me-3 d-flex align-items-center">
+                                                    <input
+                                                        type="radio"
+                                                        value="Nam"
+                                                        checked={"Nam"}
+                                                        className="form-check-input"
+                                                    />
+                                                    <label className="form-check-label ms-2">Nam</label>
+                                                </div>
+                                                <div className="form-check me-3 d-flex align-items-center">
+                                                    <input
+                                                        type="radio"
+                                                        value="Nữ"
+                                                        checked={""}
+                                                        className="form-check-input"
+                                                    />
+                                                    <label className="form-check-label ms-2">Nữ</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mb-3">
+                                            <h6 className="form-label">Ngày sinh</h6>
+                                            <input
+                                                type="date"
+                                                className="form-control"
+                                                value={dob}
+                                                onChange={(e) => setDob(e.target.value)}
+                                            />
                                         </div>
                                     </div>
-                                </div>
-                                <div className="mb-3">
-                                    <div className="d-flex">
-                                        <select className="form-select me-2" defaultValue="02">
-                                            <option>02</option>
-                                        </select>
-                                        <select className="form-select me-2" defaultValue="12">
-                                            <option>12</option>
-                                        </select>
-                                        <select className="form-select" defaultValue="2003">
-                                            <option>2003</option>
-                                        </select>
+                                ) : (
+                                    // Giao diện xem thông tin
+                                    <div>
+                                        <p><strong>Giới tính:</strong> {user.sex}</p>
+                                        <p><strong>Ngày sinh:</strong> {user.dob}</p>
+                                        <p><strong>Điện thoại:</strong> {user.phoneNumber}</p>
+                                        <p className="text-muted small">Chỉ bạn bè có lưu số của bạn trong danh bạ mới xem được số này</p>
                                     </div>
-                                </div>
+                                )}
                             </div>
-                        ) : (
-                            // Giao diện xem thông tin
-                            <div>
-                                <p><strong>Giới tính:</strong> {user.sex}</p>
-                                <p><strong>Ngày sinh:</strong> {user.dob}</p>
-                                <p><strong>Điện thoại:</strong> {user.phoneNumber}</p>
-                                <p className="text-muted small">Chỉ bạn bè có lưu số của bạn trong danh bạ mới xem được số này</p>
-                            </div>
-                        )}
-                    </div>
+                        </>
+                    )}
 
                     {/* Footer */}
                     <div className="modal-footer">
-                        {isEditing ? (
+                        {isUploading ? (
+                            <>
+                                <button type="button" className="btn btn-secondary" onClick={cancelUpload}>Hủy</button>
+                                <button type="button" className="btn btn-primary" onClick={uploadAvatar}>Cập nhật ảnh</button>
+                            </>
+                        ) : isEditing ? (
                             <>
                                 <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>Hủy</button>
-                                <button type="button" className="btn btn-primary">Cập nhật</button>
+                                <button type="button" className="btn btn-primary" disabled={!isChanged} onClick={handleUpdateInfo}>Cập nhật</button>
                             </>
                         ) : (
-                            <button type="button" className="btn btn-primary" onClick={() => setIsEditing(true)}>Cập nhật</button>
+                            <button type="button" className="btn btn-primary" onClick={() => setIsEditing(true)} >Cập nhật</button>
                         )}
                     </div>
                 </div>
@@ -116,6 +230,7 @@ const UserInfoModal = ({ user, onClose }) => {
         </div>
     );
 };
+
 
 // Component chính
 const MainPage = () => {

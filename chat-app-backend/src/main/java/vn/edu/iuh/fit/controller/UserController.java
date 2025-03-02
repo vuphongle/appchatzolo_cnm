@@ -107,7 +107,7 @@ public class UserController {
     @GetMapping("/findById/{id}")
     public ResponseEntity<?> findUserById(@PathVariable String id) {
         try {
-            User user = userService.findUserById_ttt(id);
+            User user = userService.findUserById(id);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with ID: " + id);
             }
@@ -134,14 +134,42 @@ public class UserController {
         }
     }
     @GetMapping("/searchUserByName")
-    public ResponseEntity<?> searchUserByName(@RequestParam String name) {
+    public ResponseEntity<?> searchUserByName(@RequestParam String name, @RequestParam String userId) {
         try {
-            List<User> users = userService.findByNameContainingIgnoreCase(name); // Tìm kiếm không phân biệt chữ hoa/thường
-            return users.isEmpty() ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("No users found") : ResponseEntity.ok(users);
+            List<User> users = userService.findByNameContainingIgnoreCase(name, userId);
+            return users.isEmpty()
+                    ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("No users found")
+                    : ResponseEntity.ok(users);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred");
-
         }
     }
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody Map<String, String> payload) {
+        try {
+            String newName = payload.get("name");
+            String newDob = payload.get("dob");
+
+            User user = userService.findUserById_ttt(id);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with ID: " + id);
+            }
+
+            if (newName != null && !newName.trim().isEmpty()) {
+                user.setName(newName);
+            }
+
+            if (newDob != null && !newDob.trim().isEmpty()) {
+                user.setDob(newDob);
+            }
+
+            userService.createUser(user); // Lưu lại thông tin đã cập nhật
+            return ResponseEntity.ok("User updated successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user: " + e.getMessage());
+        }
+    }
+
 }

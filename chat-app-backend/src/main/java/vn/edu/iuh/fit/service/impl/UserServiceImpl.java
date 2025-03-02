@@ -44,7 +44,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> findByNameContainingIgnoreCase(String name) { return userRepository.findByNameContainingIgnoreCase(name);}
+    public List<User> findByNameContainingIgnoreCase(String name, String userId) {
+        return userRepository.findByNameContainingIgnoreCase(name, userId);
+    }
 
     @Override
     public void updateUser(User user) {
