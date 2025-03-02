@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.1.0",
+    "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "^8.2.0",
     "@react-native-community/netinfo": "^11.4.1",
     "@react-native-masked-view/masked-view": "^0.3.2",
@@ -21,6 +21,7 @@
     "aws-amplify": "^5.3.27",
     "aws-amplify-react-native": "^7.0.8",
     "aws-sdk": "^2.1692.0",
+    "axios": "^1.8.1",
     "buffer": "^4.9.1",
     "process": "^0.11.0",
     "react": "18.3.1",
@@ -36,7 +37,9 @@
     "react-native-screens": "^4.4.0",
     "react-native-swipe-list-view": "^3.2.9",
     "react-native-vector-icons": "^10.2.0",
+    "react-native-websocket": "^1.0.2",
     "readable-stream": "^1.0.33",
+    "socket.io-client": "^4.8.1",
     "stream-browserify": "^1.0.0",
     "util": "^0.10.4"
   },

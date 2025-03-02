@@ -13,6 +13,6 @@ public interface MessageService {
     List<Message> getMessagesBetweenUsers(String senderID, String receiverID);
     List<Message> findUnreadMessages(String receiverID, String senderID);
 
-
+    Message getLatestMessageBetweenUsers(String senderID, String receiverID);
     void saveReadMess(List<Message> messages);
 }

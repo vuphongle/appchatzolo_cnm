@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Alert, Image, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-function MessageItem({ avatar, name, time, message, type, emoji }) {
+import { formatDate } from '../../../../utils/formatDate';
+function MessageItem({ avatar,  time, message }) {
   const navigation = useNavigation();
-  const [emojiIndex, setEmojiIndex] = useState(emoji);
-const [typeIndex, setTypeIndex] = useState(type);
+  const [emojiIndex, setEmojiIndex] = useState(null);
+const [typeIndex, setTypeIndex] = useState('text');
+const type = 'text';
   // Hàm xử lý nhấn vào ảnh
   const handlePressImage = () => {
     navigation.navigate('ImageChat', {
       avatar,
-      name,
+      
       image: message,
     });
   };
@@ -55,11 +56,11 @@ const [typeIndex, setTypeIndex] = useState(type);
             <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>
           ) : (
             <Text style={styles.messageText}>{message}</Text>
-          )}
+      )} 
         </TouchableOpacity>
 
         {/* Thời gian tin nhắn */}
-        <Text style={styles.time}>{time}</Text>
+        <Text style={styles.time}>{formatDate(time)}</Text>
 
         {/* Emoji phản ứng */}
         {emojiIndex && (
@@ -111,12 +112,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
   },
-  name: {
-    fontSize: 16,
-    color: '#1f65b0',
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
+
   image: {
     width: 160,
     height: 160,

@@ -67,4 +67,8 @@ public class MessageServiceImpl implements MessageService {
     public void saveReadMess(List<Message> messages) {
         repository.saveReadMess(messages);
     }
+    @Override
+    public Message getLatestMessageBetweenUsers(String senderID, String receiverID) {
+        return repository.findLatestMessageBetweenUsers(senderID, receiverID);
+    }
 }

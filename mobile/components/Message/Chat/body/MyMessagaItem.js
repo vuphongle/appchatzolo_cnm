@@ -7,11 +7,12 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-
-function MyMessageItem({ time, message, type, emoji }) {
+import { formatDate } from '../../../../utils/formatDate';
+function MyMessageItem({ time, message }) {
   const [messIndex, setMessIndex] = useState(message);
-  const [typeIndex, setTypeIndex] = useState(type);
-  const [emojiIndex, setEmojiIndex] = useState(emoji);
+  const [typeIndex, setTypeIndex] = useState("text");
+  const [emojiIndex, setEmojiIndex] = useState(null);
+
 
   // Hàm phản ứng emoji
   const reactMessage = (reaction) => {
@@ -74,7 +75,7 @@ function MyMessageItem({ time, message, type, emoji }) {
         )}
 
         {/* Thời gian */}
-        <Text style={styles.time}>{time}</Text>
+        <Text style={styles.time}>{formatDate(time)}</Text>
 
         {/* Emoji */}
         {emojiIndex && (

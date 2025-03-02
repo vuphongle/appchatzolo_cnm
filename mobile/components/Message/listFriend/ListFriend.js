@@ -1,35 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect,UseContext } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import Icon from 'react-native-vector-icons/AntDesign';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import ItemFriend from './ItemFriend';
 import CloudItem from './CloudItem';
-function ListFriend() {
+import axios from 'axios';
+import { UserContext } from '../../../context/UserContext';
+import UserService from '../../../services/UserService';
+import { IPV4 } from '@env';
+function ListFriend({userId}) {
   const [openRow, setOpenRow] = useState(null); 
-  const [friends, setFriends] = useState([
-    {
-      id: '1',
-      name: 'Nguyễn Văn A',
-      lastMessage: 'Hello, bạn khỏe không?',
-      time: '2 phút trước',
-      avatar: 'https://randomuser.me/api/portraits/women/43.jpg',
-    },
-    {
-      id: '2',
-      name: 'Trần Thị B',
-      lastMessage: 'Lâu rồi không gặp!',
-      time: '10 phút trước',
-      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-    },
-    {
-      id: '3',
-      name: 'Lê Văn C',
-      lastMessage: 'Hẹn gặp nhé!',
-      time: '1 giờ trước',
-      avatar: 'https://randomuser.me/api/portraits/men/45.jpg',
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [friends, setFriends] = useState([]);
+  // const { user } = UseContext(UserContext);
+  // const userId=user?.id||"1";
+  const fetchFriends = async () => {
+    try {
+      setLoading(true);
+      // const response = await UserService.getFriends(userId);
+      const response = await axios.get(`${IPV4}/user/${userId}/friends`);
+      console.log(IPV4);
+      setFriends(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Không có bạn trong danh sách');
+      Alert.alert('Error',"Không thể tải danh sách bạn bè.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchFriends();
+  }, []);
+  
+
 
   // Hàm xử lý ghim
   // const pinFriend = (id) => {
@@ -86,7 +92,7 @@ function ListFriend() {
     );
   };
 
-  const renderItem = ({ item }) => <ItemFriend {...item} />;
+  const renderItem = ({ item }) => <ItemFriend receiverID={item.id} name={item.name} avatar={item.avatar} />;
 
   const renderHiddenItem = ({ item }) => {
     if (openRow !== item.id) return <View style={{ height: 0 }} />;
@@ -114,6 +120,21 @@ return (
     </View>
     );
   };
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

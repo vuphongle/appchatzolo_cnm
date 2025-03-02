@@ -99,6 +99,14 @@ public class MessageController {
 
         return ResponseEntity.ok("Messages marked as read");
     }
+    // tin nhăn mới nhất
+    @GetMapping("/latest-message")
+    public ResponseEntity<Message> getLatestMessage(
+            @RequestParam String senderID,
+            @RequestParam String receiverID) {
+        Message latestMessage = service.getLatestMessageBetweenUsers(senderID, receiverID);
+        return latestMessage != null ? ResponseEntity.ok(latestMessage) : ResponseEntity.noContent().build();
+    }
 
 
 }

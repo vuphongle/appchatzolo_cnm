@@ -1,29 +1,26 @@
 import React from "react";
 import { View, Text, StyleSheet, SafeAreaView, KeyboardAvoidingView } from "react-native";
-import Footer from "./Footer";
+
 import Header from "./Header";
 import BodyChat from "./body/BodyChat";
 
 function Chat({ route }) {
-    const { name, id, avatar } = route.params;
+    const { name, receiverid, avatar } = route.params||[];
 
 
 
     return (
         <SafeAreaView style={styles.container}>
 
-            <Header name={name} id={id} image={avatar} />
+            <Header name={name} id={receiverid} image={avatar} />
 
             <View style={styles.chatContainer}>
 
 
-                <BodyChat />
+            <BodyChat receiverID={receiverid} name={name} avatar={avatar} />
             </View>
 
 
-            <KeyboardAvoidingView behavior="padding" >
-                <Footer />
-            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
