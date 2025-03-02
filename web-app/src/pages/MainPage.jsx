@@ -143,7 +143,7 @@ const MainPage = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState([]); // Danh sách tin nhắn chưa đọc
 
-    //set trang thái online/offline
+    //set trang thái online/offline ------------- ở đây
     const handleSelectChat = async (user) => {
         try {
             // 🔥 1. Gọi API kiểm tra trạng thái online của user
@@ -335,7 +335,7 @@ const MainPage = () => {
         switch (activeTab) {
             case "chat":
                 return (
-                    <div>
+                    <div style={{ position: "relative", bottom: "15px" }}>
                         {selectedChat ? (
                             <>
                                 <header className="content-header">
