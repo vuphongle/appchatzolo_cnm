@@ -328,10 +328,6 @@ button {
   height: 45px;
 }
 
-button:hover {
-  background-color: #0056b3;
-}
-
 .search-modal {
   background-color: #007bff;
   color: white;
@@ -643,6 +639,7 @@ button:hover {
 
 .chat-icons button:hover {
   transform: scale(1.2); /* Phóng to khi hover */
+  background-color: #ebecf0;
 }
 
 
@@ -726,6 +723,51 @@ button:hover {
 }
 
 .session-expired-box button:hover {
-    background: #084baf;
+    background: #ebecf0;
 }
 
+
+/* css cho Bảng biểu tượng cảm xúc */
+.chat-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.chat-icons button {
+    margin-left: 10px;
+    position: relative;
+}
+
+.emoji-picker {
+    position: absolute;
+    bottom: 50px; /* Điều chỉnh để bảng emoji nằm ngay trên nút */
+    left: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    z-index: 10; /* Đảm bảo bảng emoji nổi lên trên các phần tử khác */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0; /* Ẩn bảng mặc định */
+    pointer-events: none; /* Không thể tương tác khi ẩn */
+    transition: opacity 0.3s ease-in-out;
+}
+
+.emoji-picker.visible {
+    opacity: 1; /* Hiển thị bảng emoji khi bấm */
+    pointer-events: auto; /* Cho phép tương tác */
+}
+
+.emoji-picker span {
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.emoji-picker span:hover {
+    transform: scale(1.2);
+}

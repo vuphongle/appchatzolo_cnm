@@ -2,20 +2,33 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/AuthService';
 import { useAuth } from '../context/AuthContext';
-// import './LoginPage.css'; 
+import "./LoginPage.css";
 
 const LoginPage = () => {
     const navigate = useNavigate();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [activeTab, setActiveTab] = useState('phone'); // Thêm state cho tab hiện tại
+    const [activeTab, setActiveTab] = useState('phone');
     const { login } = useAuth();
-
     const [isLoggingIn, setIsLoggingIn] = useState(false);
 
     const handleLogin = async () => {
-        setIsLoggingIn(true); // Hiển thị loading khi bắt đầu đăng nhập
+        setIsLoggingIn(true);
+        setErrorMessage(''); // Xóa thông báo lỗi cũ khi bắt đầu đăng nhập
+
+        // Kiểm tra điều kiện lỗi trước khi gửi request
+        if (!phoneNumber) {
+            setErrorMessage('Bạn chưa nhập số điện thoại');
+            setIsLoggingIn(false);
+            return;
+        }
+
+        if (!password) {
+            setErrorMessage('Bạn chưa nhập mật khẩu');
+            setIsLoggingIn(false);
+            return;
+        }
 
         try {
             const response = await ApiService.post('/login', {
@@ -33,31 +46,26 @@ const LoginPage = () => {
                     my_user,
                     lastLoginTime: Date.now(),
                 }, () => {
-                    setIsLoggingIn(false); // Ẩn hiệu ứng login
-                    navigate('/main'); // Chuyển trang sau khi context cập nhật
+                    setIsLoggingIn(false);
+                    navigate('/main');
                 });
             } else {
-                setErrorMessage('ID Token không có trong phản hồi từ server.');
+                setErrorMessage('Tài khoản không tồn tại');
                 setIsLoggingIn(false);
             }
         } catch (error) {
-            console.error("Error logging in:", error.response || error);
-            setErrorMessage(error.response?.data?.error || 'Error logging in');
+            console.error("Lỗi đăng nhập:", error.response || error);
+            setErrorMessage('Số điện thoại hoặc mật khẩu không đúng !!!');
             setIsLoggingIn(false);
         }
     };
-
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
 
-    if (errorMessage) {
-        return <p>{errorMessage}</p>;
-    }
-
     return (
-        <div className="d-flex justify-content-center align-items-center flex-column vh-100" style={{ backgroundColor: "#f0f8ff" }}>
+        <div className="d-flex justify-content-center align-items-center flex-column vh-100">
             <div className="text-center mb-4">
                 <h1 className="text-primary fw-bold">Zolo</h1>
                 <p>Đăng nhập tài khoản Zolo <br /> để kết nối với ứng dụng Zolo Web</p>
@@ -86,6 +94,7 @@ const LoginPage = () => {
                 <form onSubmit={(e) => e.preventDefault()}>
                     {activeTab === 'phone' && (
                         <>
+                            {errorMessage && <div className="error-message">{errorMessage}</div>}
                             <div className="mb-3">
                                 <div className="input-group">
                                     <input
@@ -116,7 +125,6 @@ const LoginPage = () => {
                     {activeTab === 'qr' && (
                         <div className="mb-3 text-center">
                             <p>Quét mã QR để đăng nhập</p>
-                            {/* Tạo một khu vực hoặc hình ảnh cho QR */}
                             <img src="../image/qr.png" alt="QR Code" style={{ width: '200px' }} />
                         </div>
                     )}
@@ -135,7 +143,6 @@ const LoginPage = () => {
                 </div>
             </div>
 
-            {/* Hiển thị loading khi đang xử lý login */}
             {isLoggingIn && (
                 <div className="loading-overlay">
                     <div className="spinner"></div>
@@ -144,7 +151,6 @@ const LoginPage = () => {
             )}
         </div>
     );
-
 };
 
 export default LoginPage;
