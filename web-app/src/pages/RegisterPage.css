@@ -1,12 +1,13 @@
-/* body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    background-image: url('../image/Register_Background.jpg'); 
-    background-size: cover; 
-    background-position: center; 
-    background-repeat: no-repeat; 
-} */
+body {
+    background-image: url('../image/backgorund2.webp'); /* Đường dẫn đến ảnh nền */
+    background-size: cover; /* Tự động điều chỉnh kích thước ảnh để phủ toàn bộ trang */
+    background-position: center; /* Đặt ảnh nền ở giữa */
+    background-repeat: no-repeat; /* Không lặp lại ảnh nền */
+}
+
+.d-flex {
+    background-color: rgba(240, 248, 255, 0.3); 
+}
 
 .register-verify-container {
     max-width: 500px;

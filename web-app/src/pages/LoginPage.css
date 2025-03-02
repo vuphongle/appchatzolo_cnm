@@ -1,3 +1,15 @@
+body {
+    background-image: url('../image/backgorund2.webp'); /* Đường dẫn đến ảnh nền */
+    background-size: cover; /* Tự động điều chỉnh kích thước ảnh để phủ toàn bộ trang */
+    background-position: center; /* Đặt ảnh nền ở giữa */
+    background-repeat: no-repeat; /* Không lặp lại ảnh nền */
+}
+
+.d-flex {
+    background-color: rgba(240, 248, 255, 0.3); 
+}
+
+
 /* Container for the login page */
 .login-container {
     display: flex;
@@ -30,6 +42,24 @@
     font-size: 14px;
     color: #4a4a4a;
     margin-bottom: 20px;
+}
+
+/* Đảm bảo nền tab active và hover đúng */
+.nav-pills .nav-item .nav-link {
+    position: relative;
+    z-index: 1; /* Đảm bảo rằng nền không bị che mất */
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-pills .nav-item .nav-link:hover {
+    background-color: #0051cc; /* Đổi màu khi hover */
+    color: #ffffff; /* Đổi màu chữ khi hover */
+}
+
+.nav-pills .nav-item .nav-link.active {
+    background-color: #0051cc; /* Màu nền khi active */
+    color: white; /* Màu chữ khi active */
+    z-index: 2; /* Đảm bảo rằng tab active có độ ưu tiên hiển thị */
 }
 
 /* Input group styling */
@@ -107,6 +137,19 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
+}
+
+.error-message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 /* Biểu tượng bánh răng xoay */

@@ -118,7 +118,7 @@ const RegistePage = () => {
     };
 
     return (
-        <div className="d-flex justify-content-center align-items-center flex-column vh-100" style={{ backgroundColor: "#f0f8ff" }}>
+        <div className="d-flex justify-content-center align-items-center flex-column vh-100">
             <div className="text-center mb-4">
                 <h1 className="text-primary fw-bold">Zolo</h1>
                 <p>Đăng ký tài khoản Zolo <br /> để kết nối với ứng dụng Zolo Web</p>

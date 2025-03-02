@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import "./MainPage.css"; // CSS riêng cho giao diện
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
@@ -427,6 +427,13 @@ const MainPage = () => {
     const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
+    const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
+    const [emojiBtnPosition, setEmojiBtnPosition] = useState({});
+    const modalRef = useRef(null);
+    const userInfoModalRef = useRef(null);
+    const isSettingsOpenRef = useRef(null);
+    const emojiPickerVisibleRef = useRef(null);
+
     const [loading, setLoading] = useState(false); // Loading state
 
     const [friendRequests, setFriendRequests] = useState([]);
@@ -445,6 +452,22 @@ const MainPage = () => {
             img: friend.avatar,
         })) : []), // Nếu friends không phải mảng, trả về mảng rỗng
     ];
+
+    const handleEmojiClick = (emoji) => {
+        setMessageInput(messageInput + emoji); // Thêm emoji vào tin nhắn
+        setEmojiPickerVisible(false); // Ẩn bảng cảm xúc sau khi chọn
+    };
+
+    const toggleEmojiPicker = (e) => {
+        // Định vị vị trí của biểu tượng cảm xúc
+        const buttonRect = e.target.getBoundingClientRect();
+        setEmojiBtnPosition({
+            top: buttonRect.top,
+            left: buttonRect.left,
+        });
+        setEmojiPickerVisible(!emojiPickerVisible);
+    };
+
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (activeTab) {
@@ -534,7 +557,7 @@ const MainPage = () => {
                                             Gửi
                                         </button>
                                         <div className="chat-icons">
-                                            <button title="Sticker">
+                                            <button title="Sticker" onClick={toggleEmojiPicker}>
                                                 <span>😊</span>
                                             </button>
                                             <button title="Image">
@@ -544,13 +567,62 @@ const MainPage = () => {
                                                 <span>📎</span>
                                             </button>
                                             <button title="Capture">
-                                                <span>📸</span>
+                                                <span>🔉</span>
                                             </button>
                                             <button title="Thumbs Up">
-                                                <span>👍</span>
+                                                <span>🎙️</span>
                                             </button>
                                         </div>
                                     </div>
+
+                                    {/* Emoji Picker */}
+                                    {emojiPickerVisible && (
+                                        <div
+                                            className="emoji-picker visible"
+                                            style={{ top: emojiBtnPosition.top + 50, left: emojiBtnPosition.left }}
+                                            ref={emojiPickerVisibleRef}
+                                        >
+                                            <span onClick={() => handleEmojiClick('😊')}>😊</span>
+                                            <span onClick={() => handleEmojiClick('😂')}>😂</span>
+                                            <span onClick={() => handleEmojiClick('😍')}>😍</span>
+                                            <span onClick={() => handleEmojiClick('😎')}>😎</span>
+                                            <span onClick={() => handleEmojiClick('🥺')}>🥺</span>
+                                            <span onClick={() => handleEmojiClick('🥰')}>🥰</span>
+                                            <span onClick={() => handleEmojiClick('🤩')}>🤩</span>
+                                            <span onClick={() => handleEmojiClick('🤗')}>🤗</span>
+                                            <span onClick={() => handleEmojiClick('🤔')}>🤔</span>
+                                            <span onClick={() => handleEmojiClick('🤭')}>🤭</span>
+                                            <span onClick={() => handleEmojiClick('🤫')}>🤫</span>
+                                            <span onClick={() => handleEmojiClick('🤥')}>🤥</span>
+                                            <span onClick={() => handleEmojiClick('🤐')}>🤐</span>
+                                            <span onClick={() => handleEmojiClick('🤨')}>🤨</span>
+                                            <span onClick={() => handleEmojiClick('🤓')}>🤓</span>
+                                            <span onClick={() => handleEmojiClick('🧐')}>🧐</span>
+                                            <span onClick={() => handleEmojiClick('🤠')}>🤠</span>
+                                            <span onClick={() => handleEmojiClick('🤡')}>🤡</span>
+                                            <span onClick={() => handleEmojiClick('🤢')}>🤢</span>
+                                            <span onClick={() => handleEmojiClick('🤧')}>🤧</span>
+                                            <span onClick={() => handleEmojiClick('🤮')}>🤮</span>
+                                            <span onClick={() => handleEmojiClick('🤥')}>🤥</span>
+                                            <span onClick={() => handleEmojiClick('🤬')}>🤬</span>
+                                            <span onClick={() => handleEmojiClick('🤯')}>🤯</span>
+                                            <span onClick={() => handleEmojiClick('🤠')}>🤠</span>
+                                            <span onClick={() => handleEmojiClick('😈')}>😈</span>
+                                            <span onClick={() => handleEmojiClick('💀')}>💀</span>
+                                            <span onClick={() => handleEmojiClick('☠️')}>☠️</span>
+                                            <span onClick={() => handleEmojiClick('👻')}>👻</span>
+                                            <span onClick={() => handleEmojiClick('👽')}>👽</span>
+                                            <span onClick={() => handleEmojiClick('🙀')}>🙀</span>
+                                            <span onClick={() => handleEmojiClick('😸')}>😸</span>
+                                            <span onClick={() => handleEmojiClick('🤖')}>🤖</span>
+                                            <span onClick={() => handleEmojiClick('🙈')}>🙈</span>
+                                            <span onClick={() => handleEmojiClick('💩')}>💩</span>
+
+                                            <span onClick={() => handleEmojiClick('👍')}>👍</span>
+
+
+                                        </div>
+                                    )}
                                 </section>
                             </>
                         ) : (
@@ -757,7 +829,7 @@ const MainPage = () => {
                 <div className="nav-item settings" onClick={toggleSettingsMenu}>
                     <i className="icon">⚙️</i>
                     {isSettingsOpen && (
-                        <div className="settings-menu">
+                        <div className="settings-menu" ref={isSettingsOpenRef}>
                             <ul>
                                 <li className="cat-dat" onClick={handleUserInfoToggle}>
                                     Thông tin tài khoản
@@ -898,7 +970,7 @@ const MainPage = () => {
             {/* Add Friend Modal */}
             {isModalOpen && (
                 <div className="modal">
-                    <div className="modal-content">
+                    <div className="modal-content" ref={modalRef}>
                         <h2 className="Search-model-header">Thêm bạn</h2>
                         <div className="input-group">
                             <select className="country-code">
@@ -927,7 +999,7 @@ const MainPage = () => {
 
             {isUserInfoModalOpen && user && (
                 <div className="modal">
-                    <div className="modal-content user-info-modal">
+                    <div className="modal-content user-info-modal" ref={userInfoModalRef}>
                         <div className="modal-header">
                             <i className="fas fa-chevron-left" onClick={() => setIsUserInfoModalOpen(false)}></i>
                             <h2>Thông tin tài khoản</h2>
