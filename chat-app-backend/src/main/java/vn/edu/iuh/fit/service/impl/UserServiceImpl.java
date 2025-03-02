@@ -46,4 +46,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findByNameContainingIgnoreCase(String name) { return userRepository.findByNameContainingIgnoreCase(name);}
 
+    @Override
+    public void updateUser(User user) {
+        userRepository.save(user);
+
+    }
+
 }

@@ -11,4 +11,5 @@ public interface UserService {
     List<User> findAllUsers();
     User findUserById_ttt(String id);
     List<User> findByNameContainingIgnoreCase(String name);
+    void updateUser(User user);
 }

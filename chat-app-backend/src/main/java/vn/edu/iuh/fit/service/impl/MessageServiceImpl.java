@@ -55,4 +55,16 @@ public class MessageServiceImpl implements MessageService {
     public List<Message> getMessagesBetweenUsers(String senderID, String receiverID) {
         return repository.findMessagesBetweenUsers(senderID, receiverID);
     }
+
+
+    //xét trạng thái đọc tin nhắn
+    @Override
+    public List<Message> findUnreadMessages(String receiverID, String senderID) {
+        return repository.findUnreadMessages(receiverID, senderID);
+    }
+
+    @Override
+    public void saveReadMess(List<Message> messages) {
+        repository.saveReadMess(messages);
+    }
 }

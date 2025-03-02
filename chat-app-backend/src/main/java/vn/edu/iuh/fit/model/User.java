@@ -16,6 +16,7 @@ public class User {
     private String dob;
     private List<String> friendIds;
     private List<String> groupIds;
+    private boolean isOnline;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -81,6 +82,15 @@ public class User {
         this.groupIds = groupIds;
     }
 
+    @DynamoDbAttribute("isOnline")
+    public boolean getIsOnline() {
+        return isOnline;
+    }
+
+    public void setIsOnline(boolean isOnline) {
+        this.isOnline = isOnline;
+    }
+
     public User() {
         // Cần phải có constructor mặc định cho Spring/DynamoDB Enhanced SDK
     }
@@ -97,4 +107,6 @@ public class User {
                 ", groupIds=" + groupIds +
                 '}';
     }
+
+
 }

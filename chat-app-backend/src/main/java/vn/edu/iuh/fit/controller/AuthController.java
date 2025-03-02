@@ -2,6 +2,7 @@ package vn.edu.iuh.fit.controller;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
@@ -207,6 +208,11 @@ public class AuthController {
 
             // Sử dụng số điện thoại để tìm người dùng trong DynamoDB hoặc cơ sở dữ liệu khác
             User my_user = userService.findUserByPhoneNumber(username); //username là phone number
+            //set trạng thái online cho user
+            if (my_user != null) {
+                my_user.setIsOnline(true); // Cập nhật trạng thái online
+                userService.updateUser(my_user); // Lưu trạng thái online vào DB
+            }
 
             // Trả về dữ liệu kết hợp từ Cognito và hệ thống của bạn
             Map<String, Object> responseData = new HashMap<>();
@@ -225,6 +231,19 @@ public class AuthController {
             return ResponseEntity.status(500).body("Error during authentication: " + e.getMessage());
         }
     }
+
+    //hàm logout thì sét offline - tín viết cho đạt làm
+    @PutMapping("/logout/{userId}")
+    public ResponseEntity<?> logoutUser(@PathVariable Long userId) {
+        User user = userService.findUserById(String.valueOf(userId));
+        if (user != null) {
+            user.setIsOnline(false);
+            userService.updateUser(user);
+            return ResponseEntity.ok("User logged out successfully");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+    }
+
 
     private String calculateSecretHash(String clientId, String clientSecret, String username) {
         try {

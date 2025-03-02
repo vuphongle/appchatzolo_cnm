@@ -132,4 +132,26 @@ public class MessageRepository {
                 .collect(Collectors.toList());
     }
 
+
+    //hàm tăng tốc độ lấy tin nhắn
+    public List<Message> findUnreadMessages(String receiverID, String senderID) {
+        Key key = Key.builder().partitionValue(receiverID).build(); // Chỉ truy vấn tin nhắn đến receiverID
+
+        return table.query(r -> r.queryConditional(
+                        QueryConditional.keyEqualTo(key) // Điều kiện chính: receiverID là partition key
+                ))
+                .items()
+                .stream()
+                .filter(message ->
+                        message.getSenderID().equals(senderID) && !message.getIsRead() // Chỉ lấy tin chưa đọc
+                )
+                .collect(Collectors.toList());
+    }
+
+    // 🔹 Thêm phương thức lưu tất cả tin nhắn đã đọc
+    public void saveReadMess(List<Message> messages) {
+        for (Message message : messages) {
+            table.putItem(message);
+        }
+    }
 }

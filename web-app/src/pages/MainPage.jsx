@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext"; // Import custom hook để s�
 import ContactsTab from "./ContactsTab";
 import { useWebSocket } from "../context/WebSocket";
 import { useNavigate } from 'react-router-dom';
+import moment from "moment";
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
@@ -140,6 +141,72 @@ const MainPage = () => {
     const [chatMessages, setChatMessages] = useState([]); // Danh sách tin nhắn của chat
 
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [unreadMessages, setUnreadMessages] = useState([]); // Danh sách tin nhắn chưa đọc
+
+    //set trang thái online/offline
+    const handleSelectChat = async (user) => {
+        try {
+            // 🔥 1. Gọi API kiểm tra trạng thái online của user
+            const updatedUser = await UserService.getUserStatus(user.id);
+
+            // 🔥 2. Gọi API lấy tin nhắn chưa đọc
+            const unreadMsgs = await MessageService.getUnreadMessages(MyUser.my_user.id, user.id);
+
+            // 🔥 3. Nếu có tin nhắn chưa đọc => Đánh dấu là đã đọc
+            if (unreadMsgs.length > 0) {
+                await MessageService.savereadMessages(MyUser.my_user.id, user.id);
+            }
+
+            // 🔥 4. Cập nhật state
+            setSelectedChat({
+                ...user,
+                isOnline: updatedUser.isOnline, // Cập nhật trạng thái online từ backend
+            });
+
+            setUnreadMessages([]); // Đánh dấu tất cả tin nhắn là đã đọc
+
+        } catch (error) {
+            console.error("Lỗi khi lấy dữ liệu user hoặc tin nhắn:", error);
+
+            // Nếu có lỗi, vẫn cập nhật user nhưng mặc định là offline
+            setSelectedChat({
+                ...user,
+                isOnline: false,
+            });
+
+            setUnreadMessages([]); // Nếu lỗi, reset danh sách tin nhắn chưa đọc
+        }
+    };
+
+
+
+
+
+
+    useEffect(() => {
+        const unsubscribe = onMessage((message) => {
+            if (message.type === "USER_STATUS_UPDATE") {
+                setFriends((prevFriends) =>
+                    prevFriends.map((friend) =>
+                        friend.id === message.userId ? { ...friend, isOnline: message.isOnline } : friend
+                    )
+                );
+
+                if (selectedChat && selectedChat.id === message.userId) {
+                    setSelectedChat((prevChat) => ({
+                        ...prevChat,
+                        isOnline: message.isOnline,
+                    }));
+                }
+            }
+        });
+
+        return () => {
+            unsubscribe(); // Hủy lắng nghe khi unmount
+        };
+    }, [selectedChat, onMessage]);
+
+
 
 
 
@@ -235,6 +302,7 @@ const MainPage = () => {
         setMessageInput(""); // Xóa input
     };
 
+
     const toggleSettingsMenu = () => {
         setIsSettingsOpen(!isSettingsOpen);
     };
@@ -273,23 +341,65 @@ const MainPage = () => {
                                 <header className="content-header">
                                     <div className="profile">
                                         <img src={selectedChat.img} alt="Avatar" className="avatar" />
-                                        <span>{selectedChat.groupName}</span>
+                                        <span className="username">{selectedChat.groupName}</span>
+                                        <span className="user-status">
+                                            {selectedChat.isOnline ? (
+                                                <span className="status-dot online"></span>
+                                            ) : (
+                                                <span className="status-dot offline"></span>
+                                            )}
+                                            {selectedChat.isOnline ? " Đang hoạt động" : " Không hoạt động"}
+                                        </span>
                                     </div>
                                 </header>
                                 <section className="chat-section">
                                     <div className="chat-messages">
                                         {chatMessages.length > 0 ? (
-                                            chatMessages.map((msg) => (
-                                                <div
-                                                    key={msg.id}
-                                                    className={`chat-message ${msg.senderID === MyUser?.my_user?.id ? "sent" : "received"
-                                                        }`}
-                                                >
-                                                    <p>{msg.content}</p>
-                                                </div>
-                                            ))
+                                            chatMessages.map((msg, index) => {
+                                                const isSentByMe = msg.senderID === MyUser?.my_user?.id;
+                                                const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
+
+                                                // 📌 Lấy thời gian gửi tin nhắn
+                                                const messageTime = moment(msg.sendDate).format("HH:mm");
+                                                const messageDate = moment(msg.sendDate).format("DD/MM/YYYY");
+
+                                                // 📌 Lấy ngày của tin nhắn trước đó
+                                                const prevMessage = chatMessages[index - 1];
+                                                const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).format("DD/MM/YYYY") : null;
+
+                                                // 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó
+                                                const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
+
+                                                return (
+                                                    <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
+                                                        {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày */}
+                                                        {shouldShowDate && (
+                                                            <div className="message-date-center">
+                                                                {moment(msg.sendDate).calendar(null, {
+                                                                    sameDay: "[Hôm nay]",
+                                                                    lastDay: "[Hôm qua]",
+                                                                    lastWeek: "[Tuần trước]",
+                                                                    sameElse: "DD/MM/YYYY"
+                                                                })}
+                                                            </div>
+                                                        )}
+
+                                                        <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
+                                                            <p>{msg.content}</p>
+
+                                                            {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}
+                                                            <span className="message-time">{messageTime}</span>
+
+                                                            {/* 📌 Nếu là tin nhắn cuối cùng bạn gửi và đã đọc => hiển thị "✔✔ Đã nhận" */}
+                                                            {isLastMessageByMe && msg.isRead && (
+                                                                <span className="message-status read-status">✔✔ Đã nhận</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
                                         ) : (
-                                            <p>Bắt đầu trò chuyện với {selectedChat.groupName}</p>
+                                            <p>Bắt đầu trò chuyện với {selectedChat?.groupName}</p>
                                         )}
                                     </div>
                                     <div className="chat-input-container">

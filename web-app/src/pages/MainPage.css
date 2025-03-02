@@ -178,6 +178,9 @@ body {
   padding: 10px 0;
   border-bottom: 1px solid #ddd;
 }
+.message-item:hover {
+  background-color: #cce7ff; /* Màu xanh da trời nhạt khi hover */
+}
 
 .avatar {
   width: 40px;
@@ -574,18 +577,26 @@ button:hover {
   border-radius: 50%;
   margin-right: 10px;
 }
+.profile .username {
+  position: relative;
+  left: 10px;
+  bottom: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
 
 .chat-section {
   flex: 1;
   display: flex;
+  height: 600px;
   flex-direction: column;
 }
 
 .chat-messages {
   flex: 1;
-  padding: 20px;
+  padding: 10px;
   overflow-y: auto; /* Thêm thanh cuộn khi nội dung dài */
-  max-height: 400px; /* Giới hạn chiều cao tối đa của phần tin nhắn */
+  max-height: 470px; /* Giới hạn chiều cao tối đa của phần tin nhắn */
   background-color: #f9f9f9;
   display: flex;
   flex-direction: column; /* Sắp xếp tin nhắn theo chiều dọc */
@@ -598,16 +609,28 @@ button:hover {
   word-wrap: break-word; /* Đảm bảo nội dung tin nhắn không bị tràn */
 }
 
+/* 📌 Căn chỉnh tin nhắn gửi (phải) */
 .chat-message.sent {
   background-color: #e6f7ff;
   align-self: flex-end;
-  text-align: right;
+  text-align: left; /* Chỉnh về trái */
+  border-radius: 10px 10px 0 10px;
+  max-width: 60%;
+  padding: 10px;
+  margin: 5px 0;
+  position: relative;
 }
 
+/* 📌 Căn chỉnh tin nhắn nhận (trái) */
 .chat-message.received {
   background-color: #f1f1f1;
   align-self: flex-start;
   text-align: left;
+  border-radius: 10px 10px 10px 0;
+  max-width: 60%;
+  padding: 10px;
+  margin: 5px 0;
+  position: relative;
 }
 
 .chat-input-container {
@@ -645,87 +668,171 @@ button:hover {
   transform: scale(1.2); /* Phóng to khi hover */
 }
 
-
 /* Hiệu ứng loading khi hành động */
 .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 /* Biểu tượng bánh răng xoay */
 .spinner {
-    width: 50px;
-    height: 50px;
-    border: 6px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  width: 50px;
+  height: 50px;
+  border: 6px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 /* Văn bản "Đang đăng nhập..." và "Đang đăng xuất..." */
 .loading-text {
-    color: white;
-    font-size: 20px;
-    margin-top: 10px;
+  color: white;
+  font-size: 20px;
+  margin-top: 10px;
 }
 
 /* Keyframes cho hiệu ứng xoay */
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Hộp thoại thông báo hết phiên đăng nhập (không hoạt động > 20 phút) */
 .session-expired-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
 .session-expired-box {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    width: 320px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  width: 320px;
 }
 
 .session-expired-box p {
-    font-size: 18px;
-    color: #333;
+  font-size: 18px;
+  color: #333;
 }
 
 .session-expired-box button {
-    margin-top: 10px;
-    padding: 10px 20px;
-    border: none;
-    background: #0c6dfc;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
-    border-radius: 5px;
-    transition: 0.3s;
-    width: 70px;
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: none;
+  background: #0c6dfc;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  transition: 0.3s;
+  width: 70px;
 }
 
 .session-expired-box button:hover {
-    background: #084baf;
+  background: #084baf;
 }
 
+/* phần trạng thái online/offline*/
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.online {
+  background-color: green;
+}
+
+.offline {
+  background-color: gray;
+}
+.user-status {
+  position: relative;
+  right: 100px;
+  top: 20px;
+  font-size: 13px;
+  color: #888;
+  display: flex;
+  align-items: center;
+}
+/* Phần trạng thái đã/chưa đọc tin nhắn */
+.message-date {
+  text-align: center;
+  font-size: 10px;
+  color: #888;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+/* 📌 Trạng thái tin nhắn */
+.message-status {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  color: #28a745; /* Màu xanh lá */
+  gap: 4px;
+  white-space: nowrap; /* 🔥 Ngăn chữ xuống dòng */
+  position: absolute;
+  bottom: -15px; /* 🔥 Đưa sát xuống dưới */
+  right: 10px; /* 🔥 Căn về phải trong khung tin nhắn */
+}
+
+.read-status {
+  font-weight: bold;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap; /* 🔥 Ngăn chữ xuống dòng */
+}
+
+.unread-status {
+  color: #dc3545; /* Đỏ cho "Chưa đọc" */
+  font-weight: bold;
+}
+
+/* 📌 Hiển thị ngày giữa màn hình chat */
+.message-date-center {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  background: #ccc;
+  padding: 5px 10px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 10px auto;
+}
+
+/* 📌 Căn chỉnh thời gian bên dưới nội dung tin nhắn */
+.message-time {
+  font-size: 10px;
+  color: #888;
+  margin-top: 3px;
+  display: block;
+  text-align: right;
+}

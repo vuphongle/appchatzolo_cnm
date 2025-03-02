@@ -80,4 +80,25 @@ public class MessageController {
         return ResponseEntity.ok(messages);
     }
 
+    //trạng thái đã xem / chưa xem message
+    @GetMapping("/messages/unread/{receiverID}/{senderID}")
+    public ResponseEntity<List<Message>> getUnreadMessages(@PathVariable String receiverID, @PathVariable String senderID) {
+        List<Message> unreadMessages = service.findUnreadMessages(receiverID, senderID);
+        return ResponseEntity.ok(unreadMessages);
+    }
+    // trạng thái đọc tin nhắn
+    @PutMapping("/messages/read/{receiverID}/{senderID}")
+    public ResponseEntity<?> markMessagesAsRead(@PathVariable String receiverID, @PathVariable String senderID) {
+        List<Message> messages = service.getMessagesBetweenUsers(receiverID, senderID);
+
+        for (Message message : messages) {
+            message.setIsRead(true); // Đánh dấu là đã đọc
+        }
+
+        service.saveReadMess(messages); // 🔹 Lưu trạng thái vào DB
+
+        return ResponseEntity.ok("Messages marked as read");
+    }
+
+
 }

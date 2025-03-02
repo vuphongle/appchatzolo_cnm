@@ -36,15 +36,18 @@ const UserService = {
   },
 
   searchUserByName: async (name) => {
-     try {
-         const response = await axios.get(`${API_BASE_URL}/searchUserByName`, {
-             params: { name },
-         });
-         return response.data;
-     } catch (error) {
-         throw error.response ? error.response.data : error;
-     }
-  }
+    try {
+      const response = await axios.get(`${API_BASE_URL}/searchUserByName`, {
+        params: { name },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
+  //lấy trạng thái online offline
+
+
 };
 
 

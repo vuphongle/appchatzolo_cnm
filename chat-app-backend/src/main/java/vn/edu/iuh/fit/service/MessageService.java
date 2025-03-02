@@ -11,5 +11,8 @@ public interface MessageService {
     void deleteInvitation(String senderID, String receiverID);
     boolean acceptFriendRequest(String senderId, String receiverId);
     List<Message> getMessagesBetweenUsers(String senderID, String receiverID);
+    List<Message> findUnreadMessages(String receiverID, String senderID);
 
+
+    void saveReadMess(List<Message> messages);
 }
