@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useContext } from 'react';
 import {
   KeyboardAvoidingView,
   TextInput,
@@ -10,15 +10,21 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-
-function FooterChat() {
-  const [text, setText] = useState('');
-
+import { useWebSocket } from '../../../context/WebSocketService';
+import { UserContext } from '../../../context/UserContext';
+function FooterChat({receiverID}) {
+  // const userId="1";
+  const user = useContext(UserContext);
+  const userId=user?.id||"1";
+  const { messages, sendMessage } = useWebSocket(userId, receiverID);
+  const [messageText, setMessageText] = useState("");
   const handleSendMessage = () => {
-
-    console.log('Gửi tin nhắn:', text);
-    setText('');
+    if (messageText.trim()) {
+      sendMessage(messageText, receiverID);
+      setMessageText("");
+    }
   };
+
   // const handleImagePicker = async () => {
   //   const result = await ImagePicker.launchImageLibraryAsync({
   //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -36,8 +42,8 @@ function FooterChat() {
       <View style={styles.footerleft}>
         <MaterialIcons name="insert-emoticon" size={24} color="#0091ff" />
         <TextInput
-          value={text}
-          onChangeText={setText}
+          value={messageText}
+          onChangeText={(text)=>setMessageText(text)}
           style={styles.inputMessage}
           placeholder="Nhập tin nhắn..."
           placeholderTextColor="#999"
@@ -79,6 +85,6 @@ const styles = StyleSheet.create({
   inputMessage: {
     width: 210,
     marginLeft: 10,
-    height: 26,
+    
   },
 });

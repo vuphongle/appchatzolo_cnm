@@ -180,7 +180,7 @@ const TinNhanScreen = () => {
                         onFocus={handleSearchBarFocus}
                         inputRef={searchInputRef} // Truyền ref vào
                     />
-                    <ListFriend />
+                    <ListFriend userId={user?.id} />
                 </>
             ) : (
                 <View style={styles.searchScreen}>

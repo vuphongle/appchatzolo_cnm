@@ -10,7 +10,9 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.model.User;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -153,5 +155,15 @@ public class MessageRepository {
         for (Message message : messages) {
             table.putItem(message);
         }
+    }
+    public Message findLatestMessageBetweenUsers(String senderID, String receiverID) {
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh"); // Chuyển đổi về múi giờ Việt Nam
+
+        return table.scan().items().stream()
+                .filter(message ->
+                        (message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID)) ||
+                                (message.getSenderID().equals(receiverID) && message.getReceiverID().equals(senderID)))
+                .max(Comparator.comparing(m -> m.getSendDate().atZone(zoneId).toInstant())) // So sánh theo múi giờ Việt Nam
+                .orElse(null);
     }
 }

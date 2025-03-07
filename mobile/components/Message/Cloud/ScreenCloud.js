@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import Footer from '../Chat/Footer';
+import FooterChat from '../Chat/Footer';
 
 const ScreenCloud = () => {
   const navigation = useNavigation();
@@ -78,7 +78,7 @@ const ScreenCloud = () => {
           <Text style={styles.warningText}>Đã đầy dung lượng Cloud của tôi</Text>
         </View> */}
       </ScrollView>
-      <View style={styles.bottomNav}><Footer /></View>
+      <View style={styles.bottomNav}><FooterChat /></View>
     </SafeAreaView>
   );
 };
