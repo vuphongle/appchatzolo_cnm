@@ -14,8 +14,6 @@ import SockJS from 'sockjs-client';
 import axios from "axios";
 import S3Service from "../services/S3Service";
 
-
-
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
     <li className="message-item" onClick={onClick}>
@@ -645,31 +643,6 @@ const MainPage = () => {
                 );
             case "contacts":
                 return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} /> : <div>Loading...</div>;
-            // return (
-            //     <div>
-            //         <h3>Danh sách bạn bè</h3>
-            //         <ul>
-            //             {friends.length > 0 ? (
-            //                 friends.map((friend) => (
-            //                     <li
-            //                         key={friend.id}
-            //                         className="contact-item"
-            //                         onClick={() => setSelectedChat(friend)}
-            //                     >
-            //                         <img
-            //                             src={friend.avatar || avatar_default}
-            //                             alt="Avatar"
-            //                             className="avatar"
-            //                         />
-            //                         <span>{friend.name}</span>
-            //                     </li>
-            //                 ))
-            //             ) : (
-            //                 <p>Không có bạn bè nào</p>
-            //             )}
-            //         </ul>
-            //     </div>
-            // );
             default:
                 return null;
         }
