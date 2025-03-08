@@ -93,6 +93,32 @@ public class S3ServiceImpl implements S3Service {
 
     @Override
     public String uploadFile(MultipartFile file) {
-        return "";
+        try {
+            // Lấy tên file gốc
+            String fileName = file.getOriginalFilename();
+
+            if (fileName == null) {
+                throw new IllegalArgumentException("File name is required.");
+            }
+
+            // Tạo đường dẫn file trong S3
+            String s3Key = "file/" + fileName;
+
+            // Tạo request để upload
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .contentType(file.getContentType())
+                    .acl(String.valueOf(CannedAccessControlList.PublicRead)) // Cấp quyền công khai nếu muốn
+                    .build();
+
+            // Upload file lên S3
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
+
+            // Trả về URL của file đã tải lên S3
+            return "https://" + bucketName + ".s3.amazonaws.com/" + s3Key;
+        } catch (IOException e) {
+            throw new RuntimeException("File upload failed: " + e.getMessage(), e);
+        }
     }
 }

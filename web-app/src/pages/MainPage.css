@@ -814,6 +814,12 @@ button {
   font-weight: bold;
 }
 
+.message-image {
+    max-width: 100%;       
+    max-height: 350px;      
+    object-fit: contain;   
+}
+
 /* 📌 Trạng thái tin nhắn */
 .message-status {
   font-size: 12px;
@@ -897,6 +903,7 @@ button {
 .emoji-picker.visible {
     opacity: 1; /* Hiển thị bảng emoji khi có class `visible` */
     pointer-events: auto; /* Cho phép tương tác khi bảng emoji hiển thị */
+    overflow-y: auto;
 }
 
 
