@@ -13,6 +13,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import axios from "axios";
 import S3Service from "../services/S3Service";
+import { se } from "date-fns/locale";
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
@@ -65,7 +66,7 @@ const UserInfoModal = ({ user, onClose }) => {
 
 
     // Xử lý khi chọn ảnh mới
-    const handleFileChange = (event) => {
+    const handleAvatarChange = (event) => {
         const selectedFile = event.target.files[0];
 
         if (selectedFile) {
@@ -112,7 +113,7 @@ const UserInfoModal = ({ user, onClose }) => {
                         <div className="modal-body text-center">
                             <label className="btn btn-light d-flex align-items-center mx-auto" style={{ border: "1px solid #ddd", cursor: "pointer" }}>
                                 <i className="fas fa-upload me-2"></i> Tải lên từ máy tính
-                                <input type="file" className="d-none" accept=".jpg, .jpeg, .png" onChange={handleFileChange} />
+                                <input type="file" className="d-none" accept=".jpg, .jpeg, .png" onChange={handleAvatarChange} />
                             </label>
                             <h6 className="mt-3">Ảnh đại diện của tôi</h6>
                             <div className="mb-3 d-flex justify-content-center align-items-center" style={{ height: "100px" }}>
@@ -319,10 +320,6 @@ const MainPage = () => {
         };
     }, [selectedChat, onMessage]);
 
-
-
-
-
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
@@ -350,8 +347,6 @@ const MainPage = () => {
             });
     }, []); // Chỉ chạy một lần khi component được mount
 
-
-
     // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
@@ -377,8 +372,6 @@ const MainPage = () => {
         }
     }, [chatMessages]);
 
-
-
     const [friends, setFriends] = useState([]); // Danh sách bạn bè
     // Lấy danh sách bạn bè từ backend
     useEffect(() => {
@@ -393,50 +386,109 @@ const MainPage = () => {
             });
     }, [MyUser]);
 
-
-
     //nhấn enter gửi tin nhắn
     const handleSendMessage = async () => {
-        if (messageInput.trim() === "" || !selectedChat) return;
+        if (messageInput.trim() === "" && selectedFiles.length === 0 && selectedImages.length === 0) return; // Nếu không có nội dung và không có file
 
-        if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
-
-        let messageContent = messageInput;
-
-        // Kiểm tra xem có ảnh không (nếu có ảnh được chọn, tải lên S3)
-        const selectedFile = document.querySelector('input[type="file"]').files[0];
-
-        if (selectedFile) {
+        // Xử lý ảnh đã chọn
+        if (selectedImages.length > 0) {
             try {
-                // Gửi file lên S3
-                const imageUrl = await S3Service.uploadImage(selectedFile); // Sử dụng S3Service.uploadImage
+                const uploadedImages = [];
+                // Tải lên tất cả các ảnh
+                for (let file of selectedImages) {
+                    const fileUrl = await S3Service.uploadImage(file); // Tải ảnh lên S3
+                    uploadedImages.push(fileUrl);
+                }
 
-                // Cập nhật messageContent bằng URL ảnh
-                messageContent = imageUrl;
+                // Gửi tin nhắn cho mỗi ảnh
+                for (let url of uploadedImages) {
+                    const message = {
+                        id: new Date().getTime().toString(),
+                        senderID: MyUser.my_user.id,
+                        receiverID: selectedChat.id,
+                        content: url, // Nội dung là URL của ảnh đã tải lên
+                        sendDate: new Date().toISOString(),
+                        isRead: false,
+                    };
 
-                // Xóa file đã chọn sau khi gửi
-                document.querySelector('input[type="file"]').value = null;
+                    // Gửi tin nhắn qua WebSocket hoặc API của bạn
+                    sendMessage(message);
 
+                    // Cập nhật tin nhắn vào danh sách chat
+                    setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                }
+                setSelectedImages([]); // Reset images
             } catch (error) {
                 console.error("Upload image failed", error);
-                return; // Nếu lỗi, không tiếp tục gửi tin nhắn
+                return;
             }
         }
 
-        // Tạo tin nhắn
-        const message = {
-            id: new Date().getTime().toString(),
-            senderID: MyUser.my_user.id,
-            receiverID: selectedChat.id,
-            content: messageContent, // Nội dung là văn bản hoặc URL ảnh
-            sendDate: new Date().toISOString(),
-            isRead: false
-        };
+        // Xử lý các tệp đã chọn
+        if (selectedFiles.length > 0) {
+            try {
+                const uploadedFiles = [];
+                // Tải lên tất cả các tệp
+                for (let file of selectedFiles) {
+                    const fileUrl = await S3Service.uploadFile(file); // Tải tệp lên S3
+                    uploadedFiles.push(fileUrl);
+                }
 
-        // Gửi tin nhắn qua WebSocket
-        sendMessage(message);
-        setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
-        setMessageInput("");
+                // Gửi tin nhắn cho mỗi tệp
+                for (let url of uploadedFiles) {
+                    const message = {
+                        id: new Date().getTime().toString(),
+                        senderID: MyUser.my_user.id,
+                        receiverID: selectedChat.id,
+                        content: url, // Nội dung là URL của tệp đã tải lên
+                        sendDate: new Date().toISOString(),
+                        isRead: false,
+                    };
+
+                    // Gửi tin nhắn qua WebSocket hoặc API của bạn
+                    sendMessage(message);
+
+                    // Cập nhật tin nhắn vào danh sách chat
+                    setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                }
+                setSelectedFiles([]);
+            } catch (error) {
+                console.error("Upload file failed", error);
+                return;
+            }
+        }
+
+        //Xử lý tin nhắn văn bản nếu có
+        if (messageInput.trim()) {
+            //Loại bỏ tên file nếu có trong tin nhắn
+            const textMessage = messageInput.replace(/(?:https?|ftp):\/\/[\n\S]+|(\S+\.\w{3,4})/g, "").trim();
+
+            if (textMessage === "") {
+                setMessageInput("");
+                return
+            }; // Nếu tin nhắn chỉ chứa URL hoặc tên file
+
+            const message = {
+                id: new Date().getTime().toString(),
+                senderID: MyUser.my_user.id,
+                receiverID: selectedChat.id,
+                content: textMessage, // Nội dung tin nhắn là văn bản
+                sendDate: new Date().toISOString(),
+                isRead: false,
+            };
+
+            // Gửi tin nhắn qua WebSocket hoặc API của bạn
+            sendMessage(message);
+
+            // Cập nhật tin nhắn vào danh sách chat
+            setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+        }
+
+        // Reset lại danh sách file và nội dung tin nhắn
+        setMessageInput(""); // Xóa ô input
+        setSelectedFiles([]); // Reset images
+        setSelectedImages([]); // Reset images
     };
 
 
@@ -491,10 +543,38 @@ const MainPage = () => {
         setEmojiPickerVisible(!emojiPickerVisible);
     };
 
+    // const handleImageUpload = (event) => {
+    //     const file = event.target.files[0];
+    //     if (!file) return;
+    //     setMessageInput(messageInput + file.name); // Thêm URL ảnh vào tin nhắn
+    // };
+
+    // const handleFileChange = (event) => {
+    //     const file = event.target.files[0]; // Lấy file người dùng chọn
+    //     if (!file) return;
+    //     setMessageInput(messageInput + file.name); // Thêm URL ảnh vào tin nhắn
+
+    // };
+
+    const [selectedImages, setSelectedImages] = useState([]); // Lưu trữ các file đã chọn
+    const [selectedFiles, setSelectedFiles] = useState([]); // Lưu trữ các file đã chọn
+
+    // Hàm xử lý khi chọn ảnh
     const handleImageUpload = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        setMessageInput(messageInput + "🖼️");
+        const file = event.target.files[0]; // Chỉ lấy 1 file mỗi lần
+        if (file) {
+            setMessageInput(messageInput + " " + file.name); // Thêm URL ảnh vào tin nhắn
+            setSelectedImages((prevFiles) => [...prevFiles, file]); // Thêm file vào danh sách
+        }
+    };
+
+    // Hàm xử lý khi chọn file
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0]; // Chỉ lấy 1 file mỗi lần
+        if (file) {
+            setMessageInput(messageInput + " " + file.name); // Thêm URL ảnh vào tin nhắn
+            setSelectedFiles((prevFiles) => [...prevFiles, file]); // Thêm file vào danh sách
+        }
     };
 
     // Hàm render nội dung theo tab
@@ -582,7 +662,7 @@ const MainPage = () => {
                                         <div className="chat-icons">
                                             <button
                                                 title="Image"
-                                                onClick={() => document.getElementById('file-input').click()} // Kích hoạt input khi nhấn vào button
+                                                onClick={() => document.getElementById('image-input').click()} // Kích hoạt input khi nhấn vào button
                                             >
                                                 {/* Ẩn input nhưng vẫn giữ nó kích hoạt khi nhấn vào */}
                                                 <input
@@ -590,7 +670,7 @@ const MainPage = () => {
                                                     accept="image/*"
                                                     onChange={handleImageUpload} // Gọi hàm handleImageUpload khi có thay đổi
                                                     style={{ display: 'none' }} // Ẩn input khỏi giao diện
-                                                    id="file-input"
+                                                    id="image-input"
                                                 />
                                                 <span>
                                                     <i className="fas fa-image" style={{ fontSize: "24px", color: '#47546c' }}></i> {/* Biểu tượng hình ảnh từ Font Awesome */}
@@ -604,8 +684,8 @@ const MainPage = () => {
                                                 {/* Ẩn input nhưng vẫn giữ nó kích hoạt khi nhấn vào */}
                                                 <input
                                                     type="file"
-                                                    accept="*/*" // Cho phép chọn tất cả các loại file (có thể thay đổi nếu cần)
-                                                    onChange={handleFileChange} // Gọi hàm handleFileChange khi có thay đổi
+                                                    accept="file/*" // Cho phép chọn tất cả các loại file (có thể thay đổi nếu cần)
+                                                    onChange={handleFileUpload} // Gọi hàm handleFileChange khi có thay đổi
                                                     style={{ display: 'none' }} // Ẩn input khỏi giao diện
                                                     id="file-input"
                                                 />

@@ -35,7 +35,21 @@ const S3Service = {
         } catch (error) {
             throw error.response ? error.response.data : error;
         }
-    }
+    },
+
+    uploadFile: async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await axios.post(`${API_BASE_URL}/file`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            return response.data.url; // Trả về URL ảnh mới
+        } catch (error) {
+            throw error.response ? error.response.data : error;
+        }
+    },
 };
 
 export default S3Service;
