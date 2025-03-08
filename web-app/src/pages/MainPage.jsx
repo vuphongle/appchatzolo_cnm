@@ -396,24 +396,49 @@ const MainPage = () => {
 
 
     //nhấn enter gửi tin nhắn
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (messageInput.trim() === "" || !selectedChat) return;
 
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
 
+        let messageContent = messageInput;
+
+        // Kiểm tra xem có ảnh không (nếu có ảnh được chọn, tải lên S3)
+        const selectedFile = document.querySelector('input[type="file"]').files[0];
+
+        if (selectedFile) {
+            try {
+                // Gửi file lên S3
+                const imageUrl = await S3Service.uploadImage(selectedFile); // Sử dụng S3Service.uploadImage
+
+                // Cập nhật messageContent bằng URL ảnh
+                messageContent = imageUrl;
+
+                // Xóa file đã chọn sau khi gửi
+                document.querySelector('input[type="file"]').value = null;
+
+            } catch (error) {
+                console.error("Upload image failed", error);
+                return; // Nếu lỗi, không tiếp tục gửi tin nhắn
+            }
+        }
+
+        // Tạo tin nhắn
         const message = {
             id: new Date().getTime().toString(),
-            senderID: MyUser.my_user.id, // Thay bằng ID người dùng hiện tại
+            senderID: MyUser.my_user.id,
             receiverID: selectedChat.id,
-            content: messageInput,
+            content: messageContent, // Nội dung là văn bản hoặc URL ảnh
             sendDate: new Date().toISOString(),
             isRead: false
         };
 
-        sendMessage(message); // Gửi qua WebSocket
-        setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));// sap xep tin nhan
-        setMessageInput(""); // Xóa input
+        // Gửi tin nhắn qua WebSocket
+        sendMessage(message);
+        setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+        setMessageInput("");
     };
+
 
 
     const toggleSettingsMenu = () => {
@@ -460,10 +485,16 @@ const MainPage = () => {
         // Định vị vị trí của biểu tượng cảm xúc
         const buttonRect = e.target.getBoundingClientRect();
         setEmojiBtnPosition({
-            top: buttonRect.top,
-            left: buttonRect.left,
+            top: buttonRect.top + 50,
+            left: buttonRect.left - 200,
         });
         setEmojiPickerVisible(!emojiPickerVisible);
+    };
+
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        setMessageInput(messageInput + "🖼️");
     };
 
     // Hàm render nội dung theo tab
@@ -471,7 +502,7 @@ const MainPage = () => {
         switch (activeTab) {
             case "chat":
                 return (
-                    <div style={{ position: "relative", bottom: "15px" }}>
+                    <div style={{ position: "relative", bottom: "0px" }}>
                         {selectedChat ? (
                             <>
                                 <header className="content-header">
@@ -506,9 +537,12 @@ const MainPage = () => {
                                                 // 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó
                                                 const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
 
+                                                // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
+                                                const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+
                                                 return (
                                                     <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
-                                                        {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày */}
+                                                        {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
                                                                 {moment(msg.sendDate).calendar(null, {
@@ -521,7 +555,12 @@ const MainPage = () => {
                                                         )}
 
                                                         <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
-                                                            <p>{msg.content}</p>
+                                                            {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
+                                                            {isImageMessage(msg.content) ? (
+                                                                <img src={msg.content} alt="Image" className="message-image" />
+                                                            ) : (
+                                                                <p>{msg.content}</p>
+                                                            )}
 
                                                             {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}
                                                             <span className="message-time">{messageTime}</span>
@@ -534,51 +573,74 @@ const MainPage = () => {
                                                     </div>
                                                 );
                                             })
+
                                         ) : (
                                             <p>Bắt đầu trò chuyện với {selectedChat?.groupName}</p>
                                         )}
                                     </div>
                                     <div className="chat-input-container">
-                                        <input
-                                            type="text"
-                                            className="chat-input"
-                                            value={messageInput}
-                                            onChange={(e) => setMessageInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    handleSendMessage();
-                                                }
-                                            }}
-                                            placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
-                                        />
+                                        <div className="chat-icons">
+                                            {/* <button title="Sticker" onClick={toggleEmojiPicker}>
+                                                <span>😊</span>
+                                            </button> */}
+                                            <button
+                                                title="Image"
+                                                onClick={() => document.getElementById('file-input').click()} // Kích hoạt input khi nhấn vào button
+                                            >
+                                                {/* Ẩn input nhưng vẫn giữ nó kích hoạt khi nhấn vào */}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleImageUpload} // Gọi hàm handleImageUpload khi có thay đổi
+                                                    style={{ display: 'none' }} // Ẩn input khỏi giao diện
+                                                    id="file-input"
+                                                />
+                                                <span>
+                                                    <i className="fas fa-image" style={{ fontSize: "24px", color: '#47546c' }}></i> {/* Biểu tượng hình ảnh từ Font Awesome */}
+                                                    {/* #1675ff */}
+                                                </span>
+                                            </button>
+                                            <button title="Attachment">
+                                                <span> <i className="fas fa-paperclip" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
+                                            </button>
+                                            <button title="Record">
+                                                <span><i className="fas fa-microphone" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
+                                            </button>
+                                            <button title="Thumbs Up">
+                                                <span><i className="fas fa-volume-up" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
+                                            </button>
+                                        </div>
+                                        <div className="input-container">
+                                            <input
+                                                type="text"
+                                                className="chat-input"
+                                                value={messageInput}
+                                                onChange={(e) => setMessageInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        handleSendMessage();
+                                                    }
+                                                }}
+                                                placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
+                                            />
+                                            <button
+                                                className="icon-button"
+                                                onClick={toggleEmojiPicker}
+                                            >
+                                                <i className="fas fa-smile" style={{ color: 'gray', fontSize: '20px' }}></i>
+                                            </button>
+                                        </div>
                                         <button onClick={handleSendMessage} className="send-button">
                                             Gửi
                                         </button>
-                                        <div className="chat-icons">
-                                            <button title="Sticker" onClick={toggleEmojiPicker}>
-                                                <span>😊</span>
-                                            </button>
-                                            <button title="Image">
-                                                <span>🖼️</span>
-                                            </button>
-                                            <button title="Attachment">
-                                                <span>📎</span>
-                                            </button>
-                                            <button title="Capture">
-                                                <span>🔉</span>
-                                            </button>
-                                            <button title="Thumbs Up">
-                                                <span>🎙️</span>
-                                            </button>
-                                        </div>
                                     </div>
 
                                     {/* Emoji Picker */}
                                     {emojiPickerVisible && (
                                         <div
                                             className="emoji-picker visible"
-                                            style={{ top: emojiBtnPosition.top + 50, left: emojiBtnPosition.left }}
-                                            ref={emojiPickerVisibleRef}
+                                            style={{ top: emojiBtnPosition.top - 400, left: emojiBtnPosition.left - 385 }}
+                                        // ref={emojiPickerVisibleRef}
                                         >
                                             <span onClick={() => handleEmojiClick('😊')}>😊</span>
                                             <span onClick={() => handleEmojiClick('😂')}>😂</span>

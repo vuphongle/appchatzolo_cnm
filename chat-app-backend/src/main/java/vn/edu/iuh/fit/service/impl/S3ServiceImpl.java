@@ -13,6 +13,7 @@ package vn.edu.iuh.fit.service.impl;
  * @created: 02-March-2025 1:20 PM
  */
 
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,5 +60,39 @@ public class S3ServiceImpl implements S3Service {
         } catch (IOException e) {
             throw new RuntimeException("File upload failed: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public String uploadImage(MultipartFile file) {
+        try {
+
+            String fileName = file.getOriginalFilename();
+
+            if (fileName == null || !fileName.matches(".*\\.(jpg|jpeg|png)$")) {
+                throw new IllegalArgumentException("Chỉ chấp nhận file (.jpg,.jpeg,.png)");
+            }
+
+            // Tạo đường dẫn file trong S3
+            String s3Key = "image/" + fileName;
+
+            // Tạo request để upload
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .contentType(file.getContentType())
+                    .acl(String.valueOf(CannedAccessControlList.PublicRead)) // Cấp quyền public-read cho tệp khi tải lên
+                    .build();
+            // Upload file lên S3
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
+
+            return "https://" + bucketName + ".s3.amazonaws.com/" + s3Key;
+        } catch (IOException e) {
+            throw new RuntimeException("File upload failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String uploadFile(MultipartFile file) {
+        return "";
     }
 }
