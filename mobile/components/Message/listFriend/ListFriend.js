@@ -14,8 +14,7 @@ function ListFriend({userId}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [friends, setFriends] = useState([]);
-  // const { user } = UseContext(UserContext);
-  // const userId=user?.id||"1";
+
   const fetchFriends = async () => {
     try {
       setLoading(true);

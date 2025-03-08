@@ -5,7 +5,7 @@ import {
   KeyboardAvoidingView,
   TextInput,
   TouchableOpacity,
-  View,
+  View,Text
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -17,12 +17,10 @@ import { useWebSocket } from '../../../../context/WebSocketService';
 import { UserContext } from '../../../../context/UserContext';
 
 const ChatScreen = ({ receiverID, name, avatar }) => {
-  // { receiverID, name, avatar }
+
   const { user } = useContext(UserContext);
   const userId = user?.id;
-//   const receiverID="1";
-//   const name="Phan dep zai";
-//   const avatar=null;
+
   const { messages, sendMessage } = useWebSocket(userId, receiverID);
   const scrollViewRef = useRef(null);
   const [messageText, setMessageText] = useState("");
@@ -40,20 +38,53 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       setMessageText("");
     }
   };
+  const todayFormatted = new Date().toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'Asia/Ho_Chi_Minh',
+  });
 
+  let lastDate = null;
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <ScrollView
+          <ScrollView
         style={styles.messageContainer}
         ref={scrollViewRef}
         onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
       >
         {(Array.isArray(messages) ? messages : []).map((e, index) => {
           const isMyMessage = e.senderID === userId;
-          return isMyMessage ? (
-            <MyMessageItem key={e.id || index} time={e.sendDate} message={e.content} />
-          ) : (
-            <MessageItem key={e.id || index} avatar={avatar} name={name} time={e.sendDate} message={e.content} />
+          const messageDate = new Date(e.sendDate);
+          const formattedDate = messageDate.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            timeZone: 'Asia/Ho_Chi_Minh',
+          });
+
+          // Xác định tiêu đề ngày
+          let showDateHeader = false;
+          let headerText = formattedDate;
+          if (lastDate !== formattedDate) {
+            showDateHeader = true;
+            headerText = formattedDate === todayFormatted ? "Hôm nay" : formattedDate;
+            lastDate = formattedDate;
+          }
+
+          return (
+            <View key={e.id || index}>
+              {showDateHeader && (
+                <View style={styles.dateHeader}>
+                  <Text style={styles.dateText}>{headerText}</Text>
+                </View>
+              )}
+              {isMyMessage ? (
+                <MyMessageItem time={e.sendDate} message={e.content} />
+              ) : (
+                <MessageItem avatar={avatar} name={name} time={e.sendDate} message={e.content} />
+              )}
+            </View>
           );
         })}
       </ScrollView>
@@ -66,6 +97,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
             style={styles.inputMessage}
             placeholder="Nhập tin nhắn..."
             placeholderTextColor="#999"
+            onSubmitEditing={handleSendMessage}
           />
         </View>
         <View style={styles.actionButtons}>
@@ -122,5 +154,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     gap:10
+  },
+  dateHeader: {
+    alignSelf: 'center',
+    backgroundColor: '#e0e0e0',
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#555',
   },
 });

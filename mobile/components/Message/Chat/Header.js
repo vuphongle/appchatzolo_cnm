@@ -3,13 +3,13 @@ import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from "@react-navigation/native";
-
+import { StackActions } from "@react-navigation/native";
 function Header({ name, id, avatar }) {
     const navigation = useNavigation();
 
     const handlePressBack = () => {
         navigation.goBack();
-    };
+      };
 
     const handlePressMenu = () => {
         navigation.navigate("DetailChat");

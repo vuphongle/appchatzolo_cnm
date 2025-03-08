@@ -1,18 +1,53 @@
-const formatDate = (timestampArray) => {
-    // Chuyển đổi thành đối tượng Date
-    let date = new Date(timestampArray);
+const formatDate = (timestamp) => {
+    try {
+      
+      if (typeof timestamp === 'string') {
+       
+        if (timestamp.includes('phút trước') || 
+            timestamp.includes('giờ trước') || 
+            timestamp.includes('Vừa gửi xong') ||
+            /^\d{1,2}:\d{2}$/.test(timestamp)) { // Kiểm tra định dạng HH:MM
+         
+          return timestamp;
+        }
+      }
+    
+      if (!timestamp) {
+        console.log("Timestamp is empty");
+        return "Không xác định";
+      }
+    
+      let date = new Date(timestamp);
+      date.setHours(date.getHours() + 7);
+     
+      if (isNaN(date.getTime())) {
+        console.log("Invalid date from timestamp:", timestamp);
+        return "Không xác định";
+      }
+    
+      let now = new Date();
+      let diffInSeconds = Math.floor((now - date) / 1000);
+      let diffInMinutes = Math.floor(diffInSeconds / 60);
+      let diffInHours = Math.floor(diffInMinutes / 60);
+      
 
-    // Cộng 7 giờ vào thời gian nhận từ DynamoDB để chuyển về múi giờ của bạn
-    date.setHours(date.getHours() + 7);
-
-    // Trả về định dạng ngày giờ theo múi giờ của bạn
-    return date.toLocaleString('vi-VN', {
-        // day: '2-digit',
-        // month: '2-digit',
-        // year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        // second: '2-digit',
-    });
-};
-export { formatDate };
+      if (diffInSeconds < 60) {
+        return "Vừa gửi xong";
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes} phút trước`;
+      } else if (diffInHours < 24) {
+        return `${diffInHours} giờ trước`;
+      } else {
+        
+        return date.toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    } catch (error) {
+      console.error("Error in formatDate:", error, "for timestamp:", timestamp);
+      return "Không xác định";
+    }
+  };
+  
+  export { formatDate };

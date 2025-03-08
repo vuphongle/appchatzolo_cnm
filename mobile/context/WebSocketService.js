@@ -8,7 +8,13 @@ export const useWebSocket = (userId, receiverID) => {
   const listenersRef = useRef([]);
   const [messages, setMessages] = useState([]);
   const [isHistoryFetched, setIsHistoryFetched] = useState(false);
-
+// Kiểm tra xem tin nhắn có liên quan đến cuộc trò chuyện hiện tại không
+const isRelevantMessage = (message) => {
+  return (
+    (message.senderID === userId && message.receiverID === receiverID) ||
+    (message.senderID === receiverID && message.receiverID === userId)
+  );
+};
   useEffect(() => {
     if (!userId) return;
 
@@ -20,8 +26,14 @@ export const useWebSocket = (userId, receiverID) => {
   
     socketRef.current.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      setMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
-      saveMessageToLocal(message);
+      if (isRelevantMessage(message)) {
+        setMessages((prev) => 
+          [...prev, message].sort((a, b) => 
+            new Date(a.sendDate) - new Date(b.sendDate)
+          )
+        );
+        saveMessageToLocal(message);
+      }
       listenersRef.current.forEach((listener) => listener(message));
     };
 
@@ -49,7 +61,14 @@ export const useWebSocket = (userId, receiverID) => {
         isRead: false,
       };
       socketRef.current.send(JSON.stringify(newMessage));
-      setMessages((prev) => [...prev, newMessage].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+      if (receiverID === receiverID) {
+        setMessages((prev) => 
+          [...prev, newMessage].sort((a, b) => 
+            new Date(a.sendDate) - new Date(b.sendDate)
+          )
+        );
+      }
       saveMessageToLocal(newMessage);
     }
   };
@@ -58,8 +77,11 @@ export const useWebSocket = (userId, receiverID) => {
     try {
       const response = await fetch(`${IPV4}/messages/messages?senderID=${userId}&receiverID=${receiverID}`);
       const data = await response.json();
-      setMessages(data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
-    } catch (error) {
+      const filteredMessages = data.filter(isRelevantMessage);
+      setMessages(filteredMessages.sort((a, b) => 
+        new Date(a.sendDate) - new Date(b.sendDate)
+      ));
+       } catch (error) {
       console.error("❌ Lỗi tải lịch sử tin nhắn:", error);
     }
   };
@@ -74,10 +96,17 @@ export const useWebSocket = (userId, receiverID) => {
     }
   };
 
-  const loadChatHistory = async () => {
+   // Load tin nhắn từ AsyncStorage
+   const loadChatHistory = async () => {
     try {
       const storedMessages = JSON.parse(await AsyncStorage.getItem("chatHistory")) || [];
-      setMessages(storedMessages.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+      
+      // Lọc các tin nhắn liên quan đến cuộc trò chuyện hiện tại
+      const relevantMessages = storedMessages.filter(isRelevantMessage);
+      
+      setMessages(relevantMessages.sort((a, b) => 
+        new Date(a.sendDate) - new Date(b.sendDate)
+      ));
     } catch (error) {
       console.error("Error loading chat history:", error);
     }
