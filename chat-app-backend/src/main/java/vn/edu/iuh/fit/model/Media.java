@@ -15,6 +15,7 @@ public class Media {
     private Long fileSize;
     private String thumbnailURL;
     private String uploaderId;
+    private String receiverId;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("mediaID")
@@ -88,5 +89,14 @@ public class Media {
 
     public void setUploaderId(String uploaderId) {
         this.uploaderId = uploaderId;
+    }
+
+    @DynamoDbAttribute("receiverId")
+    public String getReceiverId() {
+        return receiverId;
+    }
+
+    public void setReceiverId(String receiverId) {
+        this.receiverId = receiverId;
     }
 }

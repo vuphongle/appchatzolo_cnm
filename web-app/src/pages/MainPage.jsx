@@ -15,6 +15,8 @@ import axios from "axios";
 import UserInfoModal from "./UserInfoModal";
 
 
+import S3Service from "../services/S3Service";
+import { se } from "date-fns/locale";
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
@@ -27,7 +29,6 @@ const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
         {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
     </li>
 );
-
 
 // Component chính
 const MainPage = () => {
@@ -118,10 +119,6 @@ const MainPage = () => {
         };
     }, [selectedChat, onMessage]);
 
-
-
-
-
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
@@ -149,8 +146,6 @@ const MainPage = () => {
             });
     }, []); // Chỉ chạy một lần khi component được mount
 
-
-
     // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
@@ -176,8 +171,6 @@ const MainPage = () => {
         }
     }, [chatMessages]);
 
-
-
     const [friends, setFriends] = useState([]); // Danh sách bạn bè
     // Lấy danh sách bạn bè từ backend
     useEffect(() => {
@@ -192,27 +185,111 @@ const MainPage = () => {
             });
     }, [MyUser]);
 
-
-
     //nhấn enter gửi tin nhắn
-    const handleSendMessage = () => {
-        if (messageInput.trim() === "" || !selectedChat) return;
+    const handleSendMessage = async () => {
+        if (messageInput.trim() === "" && selectedFiles.length === 0 && selectedImages.length === 0) return; // Nếu không có nội dung và không có file
 
-        if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
+        // Xử lý ảnh đã chọn
+        if (selectedImages.length > 0) {
+            try {
+                const uploadedImages = [];
+                // Tải lên tất cả các ảnh
+                for (let file of selectedImages) {
+                    const fileUrl = await S3Service.uploadImage(file); // Tải ảnh lên S3
+                    uploadedImages.push(fileUrl);
+                }
 
-        const message = {
-            id: new Date().getTime().toString(),
-            senderID: MyUser.my_user.id, // Thay bằng ID người dùng hiện tại
-            receiverID: selectedChat.id,
-            content: messageInput,
-            sendDate: new Date().toISOString(),
-            isRead: false
-        };
+                // Gửi tin nhắn cho mỗi ảnh
+                for (let url of uploadedImages) {
+                    const message = {
+                        id: new Date().getTime().toString(),
+                        senderID: MyUser.my_user.id,
+                        receiverID: selectedChat.id,
+                        content: url, // Nội dung là URL của ảnh đã tải lên
+                        sendDate: new Date().toISOString(),
+                        isRead: false,
+                    };
 
-        sendMessage(message); // Gửi qua WebSocket
-        setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));// sap xep tin nhan
-        setMessageInput(""); // Xóa input
+                    // Gửi tin nhắn qua WebSocket hoặc API của bạn
+                    sendMessage(message);
+
+                    // Cập nhật tin nhắn vào danh sách chat
+                    setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                }
+                setSelectedImages([]); // Reset images
+            } catch (error) {
+                console.error("Upload image failed", error);
+                return;
+            }
+        }
+
+        // Xử lý các tệp đã chọn
+        if (selectedFiles.length > 0) {
+            try {
+                const uploadedFiles = [];
+                // Tải lên tất cả các tệp
+                for (let file of selectedFiles) {
+                    const fileUrl = await S3Service.uploadFile(file); // Tải tệp lên S3
+                    uploadedFiles.push(fileUrl);
+                }
+
+                // Gửi tin nhắn cho mỗi tệp
+                for (let url of uploadedFiles) {
+                    const message = {
+                        id: new Date().getTime().toString(),
+                        senderID: MyUser.my_user.id,
+                        receiverID: selectedChat.id,
+                        content: url, // Nội dung là URL của tệp đã tải lên
+                        sendDate: new Date().toISOString(),
+                        isRead: false,
+                    };
+
+                    // Gửi tin nhắn qua WebSocket hoặc API của bạn
+                    sendMessage(message);
+
+                    // Cập nhật tin nhắn vào danh sách chat
+                    setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                }
+                setSelectedFiles([]);
+            } catch (error) {
+                console.error("Upload file failed", error);
+                return;
+            }
+        }
+
+        //Xử lý tin nhắn văn bản nếu có
+        if (messageInput.trim()) {
+            //Loại bỏ tên file nếu có trong tin nhắn
+            const textMessage = messageInput.replace(/(?:https?|ftp):\/\/[\n\S]+|(\S+\.\w{3,4})/g, "").trim();
+
+            if (textMessage === "") {
+                setMessageInput("");
+                return
+            }; // Nếu tin nhắn chỉ chứa URL hoặc tên file
+
+            const message = {
+                id: new Date().getTime().toString(),
+                senderID: MyUser.my_user.id,
+                receiverID: selectedChat.id,
+                content: textMessage, // Nội dung tin nhắn là văn bản
+                sendDate: new Date().toISOString(),
+                isRead: false,
+            };
+
+            // Gửi tin nhắn qua WebSocket hoặc API của bạn
+            sendMessage(message);
+
+            // Cập nhật tin nhắn vào danh sách chat
+            setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+        }
+
+        // Reset lại danh sách file và nội dung tin nhắn
+        setMessageInput(""); // Xóa ô input
+        setSelectedFiles([]); // Reset images
+        setSelectedImages([]); // Reset images
     };
+
 
 
     const toggleSettingsMenu = () => {
@@ -259,10 +336,44 @@ const MainPage = () => {
         // Định vị vị trí của biểu tượng cảm xúc
         const buttonRect = e.target.getBoundingClientRect();
         setEmojiBtnPosition({
-            top: buttonRect.top,
-            left: buttonRect.left,
+            top: buttonRect.top + 50,
+            left: buttonRect.left - 200,
         });
         setEmojiPickerVisible(!emojiPickerVisible);
+    };
+
+    // const handleImageUpload = (event) => {
+    //     const file = event.target.files[0];
+    //     if (!file) return;
+    //     setMessageInput(messageInput + file.name); // Thêm URL ảnh vào tin nhắn
+    // };
+
+    // const handleFileChange = (event) => {
+    //     const file = event.target.files[0]; // Lấy file người dùng chọn
+    //     if (!file) return;
+    //     setMessageInput(messageInput + file.name); // Thêm URL ảnh vào tin nhắn
+
+    // };
+
+    const [selectedImages, setSelectedImages] = useState([]); // Lưu trữ các file đã chọn
+    const [selectedFiles, setSelectedFiles] = useState([]); // Lưu trữ các file đã chọn
+
+    // Hàm xử lý khi chọn ảnh
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0]; // Chỉ lấy 1 file mỗi lần
+        if (file) {
+            setMessageInput(messageInput + " " + file.name); // Thêm URL ảnh vào tin nhắn
+            setSelectedImages((prevFiles) => [...prevFiles, file]); // Thêm file vào danh sách
+        }
+    };
+
+    // Hàm xử lý khi chọn file
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0]; // Chỉ lấy 1 file mỗi lần
+        if (file) {
+            setMessageInput(messageInput + " " + file.name); // Thêm URL ảnh vào tin nhắn
+            setSelectedFiles((prevFiles) => [...prevFiles, file]); // Thêm file vào danh sách
+        }
     };
 
     // Hàm render nội dung theo tab
@@ -270,12 +381,12 @@ const MainPage = () => {
         switch (activeTab) {
             case "chat":
                 return (
-                    <div style={{ position: "relative", bottom: "15px" }}>
+                    <div style={{ position: "relative", bottom: "0px" }}>
                         {selectedChat ? (
                             <>
                                 <header className="content-header">
                                     <div className="profile">
-                                        <img src={selectedChat.img} alt="Avatar" className="avatar" />
+                                        <img src={selectedChat.img || avatar_default} alt="Avatar" className="avatar" />
                                         <span className="username">{selectedChat.groupName}</span>
                                         <span className="user-status">
                                             {selectedChat.isOnline ? (
@@ -305,9 +416,12 @@ const MainPage = () => {
                                                 // 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó
                                                 const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
 
+                                                // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
+                                                const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+
                                                 return (
                                                     <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
-                                                        {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày */}
+                                                        {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
                                                                 {moment(msg.sendDate).calendar(null, {
@@ -320,7 +434,12 @@ const MainPage = () => {
                                                         )}
 
                                                         <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
-                                                            <p>{msg.content}</p>
+                                                            {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
+                                                            {isImageMessage(msg.content) ? (
+                                                                <img src={msg.content} alt="Image" className="message-image" />
+                                                            ) : (
+                                                                <p>{msg.content}</p>
+                                                            )}
 
                                                             {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}
                                                             <span className="message-time">{messageTime}</span>
@@ -333,52 +452,86 @@ const MainPage = () => {
                                                     </div>
                                                 );
                                             })
+
                                         ) : (
                                             <p>Bắt đầu trò chuyện với {selectedChat?.groupName}</p>
                                         )}
                                     </div>
                                     <div className="chat-input-container">
-                                        <input
-                                            type="text"
-                                            className="chat-input"
-                                            value={messageInput}
-                                            onChange={(e) => setMessageInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    handleSendMessage();
-                                                }
-                                            }}
-                                            placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
-                                        />
+                                        <div className="chat-icons">
+                                            <button
+                                                title="Image"
+                                                onClick={() => document.getElementById('image-input').click()} // Kích hoạt input khi nhấn vào button
+                                            >
+                                                {/* Ẩn input nhưng vẫn giữ nó kích hoạt khi nhấn vào */}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleImageUpload} // Gọi hàm handleImageUpload khi có thay đổi
+                                                    style={{ display: 'none' }} // Ẩn input khỏi giao diện
+                                                    id="image-input"
+                                                />
+                                                <span>
+                                                    <i className="fas fa-image" style={{ fontSize: "24px", color: '#47546c' }}></i> {/* Biểu tượng hình ảnh từ Font Awesome */}
+                                                    {/* #1675ff */}
+                                                </span>
+                                            </button>
+                                            <button
+                                                title="Attachment"
+                                                onClick={() => document.getElementById('file-input').click()} // Kích hoạt input khi nhấn vào button
+                                            >
+                                                {/* Ẩn input nhưng vẫn giữ nó kích hoạt khi nhấn vào */}
+                                                <input
+                                                    type="file"
+                                                    accept="file/*" // Cho phép chọn tất cả các loại file (có thể thay đổi nếu cần)
+                                                    onChange={handleFileUpload} // Gọi hàm handleFileChange khi có thay đổi
+                                                    style={{ display: 'none' }} // Ẩn input khỏi giao diện
+                                                    id="file-input"
+                                                />
+                                                <span>
+                                                    <i className="fas fa-paperclip" style={{ fontSize: "24px", color: '#47546c' }}></i> {/* Biểu tượng đính kèm từ Font Awesome */}
+                                                </span>
+                                            </button>
+                                            <button title="Record">
+                                                <span><i className="fas fa-microphone" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
+                                            </button>
+                                            <button title="Thumbs Up">
+                                                <span><i className="fas fa-volume-up" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
+                                            </button>
+                                        </div>
+                                        <div className="input-container">
+                                            <input
+                                                type="text"
+                                                className="chat-input"
+                                                value={messageInput}
+                                                onChange={(e) => setMessageInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        handleSendMessage();
+                                                    }
+                                                }}
+                                                placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
+                                            />
+                                            <button
+                                                className="icon-button"
+                                                onClick={toggleEmojiPicker}
+                                            >
+                                                <i className="fas fa-smile" style={{ color: 'gray', fontSize: '20px' }}></i>
+                                            </button>
+                                        </div>
                                         <button onClick={handleSendMessage} className="send-button">
                                             Gửi
                                         </button>
-                                        <div className="chat-icons">
-                                            <button title="Sticker" onClick={toggleEmojiPicker}>
-                                                <span>😊</span>
-                                            </button>
-                                            <button title="Image">
-                                                <span>🖼️</span>
-                                            </button>
-                                            <button title="Attachment">
-                                                <span>📎</span>
-                                            </button>
-                                            <button title="Capture">
-                                                <span>🔉</span>
-                                            </button>
-                                            <button title="Thumbs Up">
-                                                <span>🎙️</span>
-                                            </button>
-                                        </div>
                                     </div>
 
                                     {/* Emoji Picker */}
                                     {emojiPickerVisible && (
                                         <div
                                             className="emoji-picker visible"
-                                            style={{ top: emojiBtnPosition.top + 50, left: emojiBtnPosition.left }}
-                                            ref={emojiPickerVisibleRef}
+                                            style={{ top: emojiBtnPosition.top - 400, left: emojiBtnPosition.left - 415 }}
+                                        // ref={emojiPickerVisibleRef}
                                         >
+                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Cảm xúc</h6>
                                             <span onClick={() => handleEmojiClick('😊')}>😊</span>
                                             <span onClick={() => handleEmojiClick('😂')}>😂</span>
                                             <span onClick={() => handleEmojiClick('😍')}>😍</span>
@@ -415,9 +568,130 @@ const MainPage = () => {
                                             <span onClick={() => handleEmojiClick('🙈')}>🙈</span>
                                             <span onClick={() => handleEmojiClick('💩')}>💩</span>
 
+                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Cử chỉ</h6>
                                             <span onClick={() => handleEmojiClick('👍')}>👍</span>
+                                            <span onClick={() => handleEmojiClick('🤚')}>🤚</span>
+                                            <span onClick={() => handleEmojiClick('👌')}>👌</span>
+                                            <span onClick={() => handleEmojiClick('🤌')}>🤌</span>
+                                            <span onClick={() => handleEmojiClick('✌️')}>✌️</span>
+                                            <span onClick={() => handleEmojiClick('🤟')}>🤟</span>
+                                            <span onClick={() => handleEmojiClick('🤙')}>🤙</span>
+                                            <span onClick={() => handleEmojiClick('🫵')}>🫵</span>
+                                            <span onClick={() => handleEmojiClick('👈')}>👈</span>
+                                            <span onClick={() => handleEmojiClick('👉')}>👉</span>
+                                            <span onClick={() => handleEmojiClick('👀')}>👀</span>
+                                            <span onClick={() => handleEmojiClick('👅')}>👅</span>
+                                            <span onClick={() => handleEmojiClick('👎')}>👎</span>
+                                            <span onClick={() => handleEmojiClick('👏')}>👏</span>
 
+                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Động vật và tự nhiên</h6>
+                                            <span onClick={() => handleEmojiClick('🐶')}>🐶</span>
+                                            <span onClick={() => handleEmojiClick('🐭')}>🐭</span>
+                                            <span onClick={() => handleEmojiClick('🐹')}>🐹</span>
+                                            <span onClick={() => handleEmojiClick('🐰')}>🐰</span>
+                                            <span onClick={() => handleEmojiClick('🦊')}>🦊</span>
+                                            <span onClick={() => handleEmojiClick('🐻')}>🐻</span>
+                                            <span onClick={() => handleEmojiClick('🐼')}>🐼</span>
+                                            <span onClick={() => handleEmojiClick('🐨')}>🐨</span>
+                                            <span onClick={() => handleEmojiClick('🐯')}>🐯</span>
+                                            <span onClick={() => handleEmojiClick('🦁')}>🦁</span>
+                                            <span onClick={() => handleEmojiClick('🐮')}>🐮</span>
+                                            <span onClick={() => handleEmojiClick('🐷')}>🐷</span>
+                                            <span onClick={() => handleEmojiClick('🐽')}>🐽</span>
+                                            <span onClick={() => handleEmojiClick('🐞')}>🐞</span>
+                                            <span onClick={() => handleEmojiClick('🪰')}>🪰</span>
+                                            <span onClick={() => handleEmojiClick('🦋')}>🦋</span>
+                                            <span onClick={() => handleEmojiClick('🐢')}>🐢</span>
+                                            <span onClick={() => handleEmojiClick('🐍')}>🐍</span>
+                                            <span onClick={() => handleEmojiClick('🦕')}>🦕</span>
+                                            <span onClick={() => handleEmojiClick('🦞')}>🦞</span>
+                                            <span onClick={() => handleEmojiClick('🦀')}>🦀</span>
+                                            <span onClick={() => handleEmojiClick('🪼')}>🪼</span>
+                                            <span onClick={() => handleEmojiClick('🐋')}>🐋</span>
+                                            <span onClick={() => handleEmojiClick('🦍')}>🦍</span>
+                                            <span onClick={() => handleEmojiClick('🐓')}>🐓</span>
+                                            <span onClick={() => handleEmojiClick('🦢')}>🦢</span>
+                                            <span onClick={() => handleEmojiClick('🦜')}>🦜</span>
+                                            <span onClick={() => handleEmojiClick('🐀')}>🐀</span>
+                                            <span onClick={() => handleEmojiClick('🦔')}>🦔</span>
+                                            <span onClick={() => handleEmojiClick('🐘')}>🐘</span>
+                                            <span onClick={() => handleEmojiClick('🐎')}>🐎</span>
+                                            <span onClick={() => handleEmojiClick('🦨')}>🦨</span>
+                                            <span onClick={() => handleEmojiClick('🐇')}>🐇</span>
+                                            <span onClick={() => handleEmojiClick('🫎')}>🫎</span>
+                                            <span onClick={() => handleEmojiClick('🐃')}>🐃</span>
+                                            <span onClick={() => handleEmojiClick('🌱')}>🌱</span>
+                                            <span onClick={() => handleEmojiClick('🪨')}>🪨</span>
+                                            <span onClick={() => handleEmojiClick('🍁')}>🍁</span>
+                                            <span onClick={() => handleEmojiClick('🍄')}>🍄</span>
+                                            <span onClick={() => handleEmojiClick('🌺')}>🌺</span>
+                                            <span onClick={() => handleEmojiClick('🌻')}>🌻</span>
+                                            <span onClick={() => handleEmojiClick('🌞')}>🌞</span>
+                                            <span onClick={() => handleEmojiClick('🌓')}>🌓</span>
+                                            <span onClick={() => handleEmojiClick('🌙')}>🌙</span>
+                                            <span onClick={() => handleEmojiClick('🌏')}>🌏</span>
+                                            <span onClick={() => handleEmojiClick('🌟')}>🌟</span>
+                                            <span onClick={() => handleEmojiClick('✨')}>✨</span>
+                                            <span onClick={() => handleEmojiClick('🐾')}>🐾</span>
+                                            <span onClick={() => handleEmojiClick('⛄️')}>⛄️</span>
+                                            <span onClick={() => handleEmojiClick('🍅')}>🍅</span>
+                                            <span onClick={() => handleEmojiClick('🍆')}>🍆</span>
+                                            <span onClick={() => handleEmojiClick('🥑')}>🥑</span>
+                                            <span onClick={() => handleEmojiClick('🫛')}>🫛</span>
+                                            <span onClick={() => handleEmojiClick('🧄')}>🧄</span>
+                                            <span onClick={() => handleEmojiClick('🫚')}>🫚</span>
+                                            <span onClick={() => handleEmojiClick('🍰')}>🍰</span>
+                                            <span onClick={() => handleEmojiClick('🍿')}>🍿</span>
+                                            <span onClick={() => handleEmojiClick('🍭')}>🍭</span>
+                                            <span onClick={() => handleEmojiClick('🍩')}>🍩</span>
+                                            <span onClick={() => handleEmojiClick('🍺')}>🍺</span>
+                                            <span onClick={() => handleEmojiClick('🍸')}>🍸</span>
+                                            <span onClick={() => handleEmojiClick('🍼')}>🍼</span>
+                                            <span onClick={() => handleEmojiClick('🍶')}>🍶</span>
 
+                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Hoạt động</h6>
+                                            <span onClick={() => handleEmojiClick('⚽️')}>⚽️</span>
+                                            <span onClick={() => handleEmojiClick('🏀')}>🏀</span>
+                                            <span onClick={() => handleEmojiClick('🏈')}>🏈</span>
+                                            <span onClick={() => handleEmojiClick('⚾️')}>⚾️</span>
+                                            <span onClick={() => handleEmojiClick('🏸')}>🏸</span>
+                                            <span onClick={() => handleEmojiClick('🏒')}>🏒</span>
+                                            <span onClick={() => handleEmojiClick('🪃')}>🪃</span>
+                                            <span onClick={() => handleEmojiClick('🥅')}>🥅</span>
+                                            <span onClick={() => handleEmojiClick('🏹')}>🏹</span>
+                                            <span onClick={() => handleEmojiClick('🥋')}>🥋</span>
+                                            <span onClick={() => handleEmojiClick('🛼')}>🛼</span>
+                                            <span onClick={() => handleEmojiClick('🎿')}>🎿</span>
+                                            <span onClick={() => handleEmojiClick('🏋️‍♀️')}>🏋️‍♀️</span>
+                                            <span onClick={() => handleEmojiClick('🥁')}>🥁</span>
+                                            <span onClick={() => handleEmojiClick('🪘')}>🪘</span>
+                                            <span onClick={() => handleEmojiClick('🎷')}>🎷</span>
+                                            <span onClick={() => handleEmojiClick('🎺')}>🎺</span>
+                                            <span onClick={() => handleEmojiClick('🎻')}>🎻</span>
+                                            <span onClick={() => handleEmojiClick('🎲')}>🎲</span>
+                                            <span onClick={() => handleEmojiClick('🎯')}>🎯</span>
+                                            <span onClick={() => handleEmojiClick('🎳')}>🎳</span>
+                                            <span onClick={() => handleEmojiClick('🎮')}>🎮</span>
+                                            <span onClick={() => handleEmojiClick('🎰')}>🎰</span>
+                                            <span onClick={() => handleEmojiClick('🧩')}>🧩</span>
+                                            <span onClick={() => handleEmojiClick('🚴‍♂️')}>🚴‍♂️</span>
+                                            <span onClick={() => handleEmojiClick('🏆')}>🏆</span>
+                                            <span onClick={() => handleEmojiClick('🏅')}>🏅</span>
+                                            <span onClick={() => handleEmojiClick('🚗')}>🚗</span>
+                                            <span onClick={() => handleEmojiClick('🚌')}>🚌</span>
+                                            <span onClick={() => handleEmojiClick('🚑')}>🚑</span>
+                                            <span onClick={() => handleEmojiClick('🦽')}>🦽</span>
+                                            <span onClick={() => handleEmojiClick('🚛')}>🚛</span>
+                                            <span onClick={() => handleEmojiClick('🚲')}>🚲</span>
+                                            <span onClick={() => handleEmojiClick('⌚️')}>⌚️</span>
+                                            <span onClick={() => handleEmojiClick('📱')}>📱</span>
+                                            <span onClick={() => handleEmojiClick('💻')}>💻</span>
+                                            <span onClick={() => handleEmojiClick('🖨')}>🖨</span>
+                                            <span onClick={() => handleEmojiClick('💿')}>💿</span>
+                                            <span onClick={() => handleEmojiClick('📷')}>📷</span>
+                                            <span onClick={() => handleEmojiClick('⌛️')}>⌛️</span>
+                                            <span onClick={() => handleEmojiClick('📋')}>📋</span>
+                                            <span onClick={() => handleEmojiClick('📚')}>📚</span>
                                         </div>
                                     )}
                                 </section>
@@ -656,7 +930,7 @@ const MainPage = () => {
                                         key={item.id}
                                         groupName={item.groupName}
                                         unreadCount={item.unreadCount}
-                                        img={item.img || "https://via.placeholder.com/40"}
+                                        img={item.img || avatar_default}
                                         onClick={() => setSelectedChat(item)}
                                     />
                                 ))}

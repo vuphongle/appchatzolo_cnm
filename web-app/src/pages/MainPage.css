@@ -12,6 +12,18 @@ body {
   overflow: auto; /* Loại bỏ cuộn không mong muốn */
 }
 
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    flex: 1;
+    margin: 0 5px; /* Khoảng cách giữa các nút */
+    height: 45px;
+  }
+
 .main-container {
   display: flex;
   height: 100vh;
@@ -213,6 +225,7 @@ body {
 .main-content {
   flex: 1;
   padding: 20px;
+  padding-bottom: 0px;
   background-color: #fff;
   overflow-y: auto;
   height: 100%;
@@ -316,18 +329,6 @@ body {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
-  height: 45px;
-}
-
-button {
-  background-color: #007bff;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  flex: 1;
-  margin: 0 5px; /* Khoảng cách giữa các nút */
   height: 45px;
 }
 
@@ -541,10 +542,6 @@ button {
   object-fit: cover;
 }
 
-.chat-section {
-  padding: 20px;
-  color: #333;
-}
 .main-content {
   flex: 1;
   display: flex;
@@ -584,7 +581,7 @@ button {
 .chat-section {
   flex: 1;
   display: flex;
-  height: 600px;
+  height: 650px;
   flex-direction: column;
 }
 
@@ -592,7 +589,7 @@ button {
   flex: 1;
   padding: 10px;
   overflow-y: auto; /* Thêm thanh cuộn khi nội dung dài */
-  max-height: 470px; /* Giới hạn chiều cao tối đa của phần tin nhắn */
+  max-height: 600px; /* Giới hạn chiều cao tối đa của phần tin nhắn */
   background-color: #f9f9f9;
   display: flex;
   flex-direction: column; /* Sắp xếp tin nhắn theo chiều dọc */
@@ -637,13 +634,44 @@ button {
   background-color: #fff;
 }
 
+.input-container {
+    position: relative;
+    width: 100%;
+}
+
 .chat-input {
-  flex: 1; /* Thanh nhập chiếm toàn bộ không gian còn lại */
+  /* flex: 1; Thanh nhập chiếm toàn bộ không gian còn lại */
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 20px;
   outline: none;
   margin-right: 10px; /* Tạo khoảng cách giữa thanh nhập và icon */
+}
+
+.icon-button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-65%); 
+    background: transparent;
+    border: none; 
+    padding: 0; 
+    cursor: pointer; 
+    display: inline-flex; 
+    width: 27px; 
+    height: 30px; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.icon-button:hover {
+    background-color: #ebecf0;
+}
+
+.send-button{
+    display: inline-flex;
+    cursor: pointer;
+    
 }
 
 .chat-icons {
@@ -786,6 +814,12 @@ button {
   font-weight: bold;
 }
 
+.message-image {
+    max-width: 100%;       
+    max-height: 350px;      
+    object-fit: contain;   
+}
+
 /* 📌 Trạng thái tin nhắn */
 .message-status {
   font-size: 12px;
@@ -850,8 +884,8 @@ button {
 
 .emoji-picker {
     position: absolute;
-    bottom: 50px; /* Điều chỉnh để bảng emoji nằm ngay trên nút */
-    left: 0;
+    bottom: 60px;  /* Điều chỉnh để emoji picker nằm ngay trên biểu tượng */
+    left: 0;  /* Đặt lại vị trí trái cho emoji picker */
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -859,17 +893,19 @@ button {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    z-index: 10; /* Đảm bảo bảng emoji nổi lên trên các phần tử khác */
+    z-index: 10000; /* Đảm bảo bảng emoji hiển thị trên các phần tử khác */
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    opacity: 0; /* Ẩn bảng mặc định */
+    opacity: 0; /* Mặc định ẩn bảng emoji */
     pointer-events: none; /* Không thể tương tác khi ẩn */
     transition: opacity 0.3s ease-in-out;
 }
 
 .emoji-picker.visible {
-    opacity: 1; /* Hiển thị bảng emoji khi bấm */
-    pointer-events: auto; /* Cho phép tương tác */
+    opacity: 1; /* Hiển thị bảng emoji khi có class `visible` */
+    pointer-events: auto; /* Cho phép tương tác khi bảng emoji hiển thị */
+    overflow-y: auto;
 }
+
 
 .emoji-picker span {
     font-size: 24px;

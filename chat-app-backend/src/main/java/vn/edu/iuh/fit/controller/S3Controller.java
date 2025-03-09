@@ -34,12 +34,46 @@ public class S3Controller {
     }
 
     @PostMapping("/avatar")
-    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "File không được để trống!"));
         }
         try {
             String fileUrl = s3Service.uploadAvatar(file);
+            if (fileUrl == null) {
+                return ResponseEntity.internalServerError().body(Map.of("error", "Upload thất bại: fileUrl null!"));
+            }
+            return ResponseEntity.ok(Map.of("url", fileUrl));
+        } catch (Exception e) {
+            e.printStackTrace(); // In lỗi chi tiết vào console/log
+            return ResponseEntity.internalServerError().body(Map.of("error", "Upload thất bại: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/image")
+    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File không được để trống!"));
+        }
+        try {
+            String fileUrl = s3Service.uploadImage(file);
+            if (fileUrl == null) {
+                return ResponseEntity.internalServerError().body(Map.of("error", "Upload thất bại: fileUrl null!"));
+            }
+            return ResponseEntity.ok(Map.of("url", fileUrl));
+        } catch (Exception e) {
+            e.printStackTrace(); // In lỗi chi tiết vào console/log
+            return ResponseEntity.internalServerError().body(Map.of("error", "Upload thất bại: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/file")
+    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File không được để trống!"));
+        }
+        try {
+            String fileUrl = s3Service.uploadFile(file);
             if (fileUrl == null) {
                 return ResponseEntity.internalServerError().body(Map.of("error", "Upload thất bại: fileUrl null!"));
             }

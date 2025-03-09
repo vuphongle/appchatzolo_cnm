@@ -17,4 +17,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface S3Service {
    String uploadAvatar(MultipartFile file);
+
+    String uploadImage(MultipartFile file);
+
+    String uploadFile(MultipartFile file);
 }
