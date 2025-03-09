@@ -2,10 +2,12 @@ package vn.edu.iuh.fit.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.service.MessageService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -71,4 +73,20 @@ public class MessageServiceImpl implements MessageService {
     public Message getLatestMessageBetweenUsers(String senderID, String receiverID) {
         return repository.findLatestMessageBetweenUsers(senderID, receiverID);
     }
+
+
+    @Override
+    public List<UnreadMessagesCountDTO> getUnreadCountForAllFriends(String receiverID) {
+        List<String> friendIds = repository.getFriendsList(receiverID);  // Giả sử bạn đã có phương thức để lấy danh sách bạn bè
+        List<UnreadMessagesCountDTO> unreadCounts = new ArrayList<>();
+
+        for (String friendId : friendIds) {
+            int unreadCount = repository.getUnreadMessagesCount(receiverID, friendId);
+            unreadCounts.add(new UnreadMessagesCountDTO(friendId, unreadCount));
+        }
+
+        return unreadCounts;
+    }
+
+
 }
