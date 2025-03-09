@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.service;
 
+import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
 import vn.edu.iuh.fit.model.Message;
 
 import java.util.List;
@@ -15,4 +16,7 @@ public interface MessageService {
 
     Message getLatestMessageBetweenUsers(String senderID, String receiverID);
     void saveReadMess(List<Message> messages);
+
+    List<UnreadMessagesCountDTO> getUnreadCountForAllFriends(String receiverID);
+
 }

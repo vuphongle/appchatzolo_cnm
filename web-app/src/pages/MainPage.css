@@ -217,7 +217,7 @@ button {
   background-color: #ff3b3b;
   color: white;
   border-radius: 50%;
-  padding: 5px 10px;
+  padding: 2px 10px;
   font-size: 12px;
 }
 
@@ -866,20 +866,19 @@ button {
   margin-top: 3px;
   display: block;
   text-align: right;
-    background: #ebecf0;
+  background: #ebecf0;
 }
-
 
 /* css cho Bảng biểu tượng cảm xúc */
 .chat-input-container {
-    position: relative;
-    display: flex;
-    align-items: center;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .chat-icons button {
-    margin-left: 10px;
-    position: relative;
+  margin-left: 10px;
+  position: relative;
 }
 
 .emoji-picker {
@@ -908,11 +907,11 @@ button {
 
 
 .emoji-picker span {
-    font-size: 24px;
-    cursor: pointer;
-    transition: transform 0.2s;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
 
 .emoji-picker span:hover {
-    transform: scale(1.2);
+  transform: scale(1.2);
 }

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.service.MessageService;
 import vn.edu.iuh.fit.service.impl.MessageServiceImpl;
@@ -92,9 +93,11 @@ public class MessageController {
         List<Message> messages = service.getMessagesBetweenUsers(receiverID, senderID);
 
         for (Message message : messages) {
-            message.setIsRead(true); // Đánh dấu là đã đọc
+            if (!message.getIsRead()) {
+                message.setIsRead(true); // Đánh dấu là đã đọc
+            }
         }
-
+        System.out.println("Marked messages as read: " + messages);
         service.saveReadMess(messages); // 🔹 Lưu trạng thái vào DB
 
         return ResponseEntity.ok("Messages marked as read");
@@ -107,6 +110,16 @@ public class MessageController {
         Message latestMessage = service.getLatestMessageBetweenUsers(senderID, receiverID);
         return latestMessage != null ? ResponseEntity.ok(latestMessage) : ResponseEntity.noContent().build();
     }
+
+    //lấy tin nhắn chưa đọc từ các bạn bè
+    @GetMapping("/messages/unread-count/{receiverID}")
+    public ResponseEntity<List<UnreadMessagesCountDTO>> getUnreadCountForAllFriends(@PathVariable String receiverID) {
+        List<UnreadMessagesCountDTO> unreadCounts = service.getUnreadCountForAllFriends(receiverID); // Gọi service để lấy số lượng tin nhắn chưa đọc
+        return ResponseEntity.ok(unreadCounts);
+    }
+
+
+
 
 
 }

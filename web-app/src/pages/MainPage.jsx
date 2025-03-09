@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext"; // Import custom hook để s�
 import ContactsTab from "./ContactsTab";
 import { useWebSocket } from "../context/WebSocket";
 import { useNavigate } from 'react-router-dom';
-import moment from "moment";
+import moment from "moment-timezone";
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import axios from "axios";
@@ -18,15 +18,25 @@ import UserInfoModal from "./UserInfoModal";
 import S3Service from "../services/S3Service";
 import { se } from "date-fns/locale";
 
+
+
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
-const MessageItem = ({ groupName, unreadCount, img, onClick }) => (
+const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [] }) => (
     <li className="message-item" onClick={onClick}>
         <img src={img} alt="Avatar" className="avatar" />
         <div className="message-info">
             <h4>{groupName}</h4>
-            <p>Chưa có tin nhắn</p>
+            {unreadCount > 0 ? (
+                <p>{`Bạn có tin nhắn chưa đọc`}</p>  // Hiển thị số tin nhắn chưa đọc
+            ) : (
+                chatMessages.length === 0 ? (
+                    <p></p>  // Hiển thị nếu không có tin nhắn
+                ) : (
+                    <p>{chatMessages[chatMessages.length - 1].content}</p>  // Hiển thị tin nhắn cuối
+                )
+            )}
         </div>
-        {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+        {unreadCount > 0 && <span className="badge">{unreadCount}</span>}  {/* Hiển thị số tin nhắn chưa đọc */}
     </li>
 );
 
@@ -63,7 +73,7 @@ const MainPage = () => {
             const updatedUser = await UserService.getUserStatus(user.id);
 
             // 🔥 2. Gọi API lấy tin nhắn chưa đọc
-            const unreadMsgs = await MessageService.getUnreadMessages(MyUser.my_user.id, user.id);
+            const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser.my_user.id, user.id);
 
             // 🔥 3. Nếu có tin nhắn chưa đọc => Đánh dấu là đã đọc
             if (unreadMsgs.length > 0) {
@@ -92,45 +102,109 @@ const MainPage = () => {
     };
 
 
-
-
-
-
+    // State để lưu số lượng tin nhắn chưa đọc cho từng bạn
+    const [unreadMessagesCounts, setUnreadMessagesCounts] = useState([]);
+    const [friends, setFriends] = useState([]); // Danh sách bạn bè
+    // Hàm lấy số lượng tin nhắn chưa đọc cho từng bạn
+    const getUnreadMessagesForFriends = async (friends) => {
+        const unreadCounts = await Promise.all(
+            friends.map(async (friend) => {
+                const unreadCount = await MessageService.getSLUnreadMessages(MyUser.my_user.id, friend.id);
+                return { friendId: friend.id, unreadCount }; // Trả về đối tượng với friendId và unreadCount
+            })
+        );
+        return unreadCounts; // Trả về danh sách các tin nhắn chưa đọc cho từng bạn
+    };
+    // useEffect để lấy số lượng tin nhắn chưa đọc cho tất cả bạn bè
     useEffect(() => {
-        const unsubscribe = onMessage((message) => {
-            if (message.type === "USER_STATUS_UPDATE") {
-                setFriends((prevFriends) =>
-                    prevFriends.map((friend) =>
-                        friend.id === message.userId ? { ...friend, isOnline: message.isOnline } : friend
-                    )
-                );
+        if (!MyUser || !MyUser.my_user || !MyUser.my_user.id) return;
 
-                if (selectedChat && selectedChat.id === message.userId) {
-                    setSelectedChat((prevChat) => ({
-                        ...prevChat,
-                        isOnline: message.isOnline,
-                    }));
-                }
-            }
-        });
-
-        return () => {
-            unsubscribe(); // Hủy lắng nghe khi unmount
+        const fetchUnreadMessagesCountForAllFriends = async () => {
+            const unreadCounts = await MessageService.getUnreadMessagesCountForAllFriends(MyUser.my_user.id);
+            setUnreadMessagesCounts(unreadCounts); // Lưu số lượng tin nhắn chưa đọc vào state
         };
-    }, [selectedChat, onMessage]);
+
+        fetchUnreadMessagesCountForAllFriends();
+    }, [MyUser]);
+
+
+
+
+
+    // useEffect(() => {
+    //     const unsubscribe = onMessage((message) => {
+    //         if (message.type === "USER_STATUS_UPDATE") {
+    //             setFriends((prevFriends) =>
+    //                 prevFriends.map((friend) =>
+    //                     friend.id === message.userId ? { ...friend, isOnline: message.isOnline } : friend
+    //                 )
+    //             );
+
+    //             if (selectedChat && selectedChat.id === message.userId) {
+    //                 setSelectedChat((prevChat) => ({
+    //                     ...prevChat,
+    //                     isOnline: message.isOnline,
+    //                 }));
+    //             }
+    //         }
+    //     });
+
+    //     return () => {
+    //         unsubscribe(); // Hủy lắng nghe khi unmount
+    //     };
+    // }, [selectedChat, onMessage]);
 
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
 
-        MessageService.get(`/messages?senderID=${MyUser?.my_user?.id}&receiverID=${selectedChat?.id}`)
-            .then(data => {
+        // Lấy tất cả tin nhắn giữa người gửi và người nhận
+        MessageService.get(`/messages?senderID=${MyUser.my_user.id}&receiverID=${selectedChat.id}`)
+            .then((data) => {
                 // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
                 const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
-                setChatMessages(sortedMessages);
+
+                // Lọc các tin nhắn chưa đọc
+                const unreadMessages = sortedMessages.filter((msg) => msg.isRead === false);
+
+                // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
+                if (unreadMessages.length > 0) {
+                    // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
+                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                        .then(() => {
+                            // Sau khi đánh dấu là đã đọc, cập nhật lại các tin nhắn đã được đọc
+                            const updatedMessages = sortedMessages.map((msg) =>
+                                msg.isRead === false ? { ...msg, isRead: true } : msg
+                            );
+                            setChatMessages(updatedMessages); // Cập nhật lại state tin nhắn ngay lập tức
+
+                            // Cập nhật số lượng tin nhắn chưa đọc cho bạn bè
+                            const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                if (count.friendId === selectedChat.id) {
+                                    return { ...count, unreadCount: 0 };
+                                }
+                                return count;
+                            });
+                            setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật số lượng tin nhắn chưa đọc
+                        })
+                        .catch((error) => {
+                            console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                        });
+                } else {
+                    // Nếu không có tin nhắn chưa đọc, chỉ cần cập nhật lại danh sách tin nhắn
+                    setChatMessages(sortedMessages);
+                }
             })
-            .catch(err => console.error("Error fetching messages:", err));
+            .catch((err) => {
+                console.error("Error fetching messages:", err);
+            });
     }, [selectedChat, MyUser?.my_user?.id]);
+
+
+
+
+
+
 
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
@@ -149,20 +223,33 @@ const MainPage = () => {
     // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
-
-            if (
-                (incomingMessage.senderID === MyUser?.my_user?.id && incomingMessage.receiverID === selectedChat?.id) ||
-                (incomingMessage.senderID === selectedChat?.id && incomingMessage.receiverID === MyUser?.my_user?.id)
-            ) {
-                setChatMessages((prev) => [...prev, incomingMessage].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+            if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
+                // Cập nhật tin nhắn mới vào chatMessages
+                setChatMessages((prevMessages) =>
+                    [...prevMessages, incomingMessage].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
+                );
             }
+
+            // Cập nhật số lượng tin nhắn chưa đọc cho các bạn bè
+            const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                if (count.friendId === incomingMessage.senderID) {
+                    return {
+                        ...count,
+                        unreadCount: count.unreadCount + 1, // Thêm 1 cho số tin nhắn chưa đọc
+                    };
+                }
+                return count;
+            });
+            setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
         });
 
         return () => {
-            unsubscribe(); // Hủy đăng ký khi component unmount
+            unsubscribe(); // Hủy lắng nghe khi component unmount
         };
-    }, [selectedChat, onMessage, MyUser?.my_user?.id]);
+    }, [selectedChat, unreadMessagesCounts, onMessage]);
+
+
+
     //cuộn xuống tin nhắn mới nhất
     useEffect(() => {
         const chatContainer = document.querySelector(".chat-messages");
@@ -171,7 +258,6 @@ const MainPage = () => {
         }
     }, [chatMessages]);
 
-    const [friends, setFriends] = useState([]); // Danh sách bạn bè
     // Lấy danh sách bạn bè từ backend
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id) return;
@@ -319,13 +405,17 @@ const MainPage = () => {
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
     const allMessagesAndFriends = [
         ...messages,
-        ...(Array.isArray(friends) ? friends.map((friend) => ({
-            id: friend.id,
-            groupName: friend.name,
-            unreadCount: 0,
-            img: friend.avatar,
-        })) : []), // Nếu friends không phải mảng, trả về mảng rỗng
+        ...(Array.isArray(friends) ? friends.map((friend) => {
+            const unreadCount = unreadMessagesCounts.find(u => u.friendId === friend.id)?.unreadCount || 0;
+            return {
+                id: friend.id,
+                groupName: friend.name,
+                unreadCount: unreadCount,  // Đảm bảo tính toán số tin nhắn chưa đọc
+                img: friend.avatar,
+            };
+        }) : []),
     ];
+
 
     const handleEmojiClick = (emoji) => {
         setMessageInput(messageInput + emoji); // Thêm emoji vào tin nhắn
@@ -405,13 +495,13 @@ const MainPage = () => {
                                                 const isSentByMe = msg.senderID === MyUser?.my_user?.id;
                                                 const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
 
-                                                // 📌 Lấy thời gian gửi tin nhắn
-                                                const messageTime = moment(msg.sendDate).format("HH:mm");
-                                                const messageDate = moment(msg.sendDate).format("DD/MM/YYYY");
+                                                // 📌 Lấy thời gian gửi tin nhắn và chuyển đổi sang múi giờ Việt Nam
+                                                const messageTime = moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').format("HH:mm");
+                                                const messageDate = moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY");
 
                                                 // 📌 Lấy ngày của tin nhắn trước đó
                                                 const prevMessage = chatMessages[index - 1];
-                                                const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).format("DD/MM/YYYY") : null;
+                                                const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY") : null;
 
                                                 // 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó
                                                 const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
@@ -424,7 +514,7 @@ const MainPage = () => {
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
-                                                                {moment(msg.sendDate).calendar(null, {
+                                                                {moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').calendar(null, {
                                                                     sameDay: "[Hôm nay]",
                                                                     lastDay: "[Hôm qua]",
                                                                     lastWeek: "[Tuần trước]",
@@ -794,7 +884,7 @@ const MainPage = () => {
     };
 
     // Kiểm tra giá trị của MyUser tại đây
-    console.log("MyUser:", MyUser ? MyUser : "No user logged in");
+    //console.log("MyUser:", MyUser ? MyUser : "No user logged in");
 
     // const logout = (callback) => {
     //     setIsLoggingOut(true); // Hiển thị hiệu ứng logout
@@ -935,11 +1025,6 @@ const MainPage = () => {
                                     />
                                 ))}
                             </ul>
-
-
-
-
-
                         </div>
                     </>
                 )}

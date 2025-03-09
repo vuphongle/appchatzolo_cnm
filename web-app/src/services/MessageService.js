@@ -17,7 +17,8 @@ const MessageService = {
             const response = await axios.get(`${API_BASE_URL}${url}`, { params });
             return response.data;
         } catch (error) {
-            throw error.response ? error.response.data : error;
+            console.error("Error fetching data from API:", error.response || error);
+            throw error; // Nếu muốn xử lý lỗi cụ thể sau
         }
     },
 
@@ -36,10 +37,19 @@ const MessageService = {
             return [];
         }
     },
+    getUnreadMessagesCountForAllFriends: async (receiverID) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/messages/unread-count/${receiverID}`);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching unread messages count:", error);
+            return [];
+        }
+    },
     //lưu trạng thái đánh dấu tin nhắn là "Đã đọc"
     savereadMessages: async (receiverID, senderID) => {
         try {
-            await axios.put(`${API_BASE_URL}/read/${receiverID}/${senderID}`);
+            await axios.put(`${API_BASE_URL}/messages/read/${receiverID}/${senderID}`);
         } catch (error) {
             console.error("Lỗi khi cập nhật trạng thái tin nhắn đã đọc:", error);
         }

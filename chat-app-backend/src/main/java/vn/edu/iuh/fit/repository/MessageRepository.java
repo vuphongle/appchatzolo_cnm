@@ -166,4 +166,19 @@ public class MessageRepository {
                 .max(Comparator.comparing(m -> m.getSendDate().atZone(zoneId).toInstant())) // So sánh theo múi giờ Việt Nam
                 .orElse(null);
     }
+
+    public int getUnreadMessagesCount(String receiverID, String senderID) {
+        List<Message> unreadMessages = table.scan().items().stream()
+                .filter(message -> message.getReceiverID().equals(receiverID)
+                        && message.getSenderID().equals(senderID)
+                        && !message.getIsRead())
+                .collect(Collectors.toList());
+        return unreadMessages.size();
+    }
+
+
+    public List<String> getFriendsList(String receiverID) {
+        User user = userTable.getItem(Key.builder().partitionValue(receiverID).build());
+        return user.getFriendIds();
+    }
 }
