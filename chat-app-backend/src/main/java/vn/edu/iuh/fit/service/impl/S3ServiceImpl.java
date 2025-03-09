@@ -28,6 +28,7 @@ public class S3ServiceImpl implements S3Service {
     private final Dotenv dotenv = Dotenv.load();
     private final S3Client s3Client;
     private final String bucketName = dotenv.get("aws.s3.bucketName");
+    private final String region = dotenv.get("aws.region");
 
     public S3ServiceImpl(S3Client s3Client) {
         this.s3Client = s3Client;
@@ -55,7 +56,7 @@ public class S3ServiceImpl implements S3Service {
             // Upload file lên S3
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
 
-            return "https://" + bucketName + ".s3.amazonaws.com/" + s3Key;
+            return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + s3Key;
         } catch (IOException e) {
             throw new RuntimeException("File upload failed: " + e.getMessage(), e);
         }

@@ -17,13 +17,13 @@ export const AuthProvider = ({ children }) => {
     const login = (userData, callback) => {
         setMyUser(userData);
         localStorage.setItem('idToken', userData.idToken);
-        localStorage.setItem('my_user', JSON.stringify(userData)); // Lưu thông tin vào LocalStorage
+        localStorage.setItem('my_user', JSON.stringify(userData));
         localStorage.setItem('phoneNumber', userData.username);
         localStorage.setItem('userAttributes', JSON.stringify(userData.userAttributes));
         localStorage.setItem('lastLoginTime', userData.lastLoginTime);
 
         if (callback) {
-            callback(); // Gọi callback sau khi MyUser được cập nhật
+            callback();
         }
     };
 
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     const logout = (callback) => {
         setMyUser(null);
         localStorage.removeItem('idToken');
-        localStorage.removeItem('my_user'); // Xóa thông tin người dùng khỏi LocalStorage
+        localStorage.removeItem('my_user');
         localStorage.removeItem('phoneNumber');
         localStorage.removeItem('userAttributes');
 
@@ -42,23 +42,22 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Hàm updateUserInfo để cập nhật thông tin người dùng
+    // Hàm updateUserInfo để cập nhật thông tin người dùng mà không mất dữ liệu cũ
     const updateUserInfo = (updatedUserData) => {
         setMyUser((prevUser) => {
-            const updatedUser = { ...prevUser, ...updatedUserData }; // Cập nhật thông tin người dùng
-            localStorage.setItem('my_user', JSON.stringify(updatedUser)); // Lưu lại vào localStorage
+            if (!prevUser) return updatedUserData;
+            const updatedUser = { ...prevUser, ...updatedUserData }; // Gộp dữ liệu cũ và mới
+            localStorage.setItem('my_user', JSON.stringify(updatedUser));
             return updatedUser;
         });
     };
 
     // Theo dõi sự thay đổi trong localStorage giữa các tab
     useEffect(() => {
-        const handleStorageChange = () => {
-            const storedUser = localStorage.getItem('my_user');
-            if (storedUser) {
-                setMyUser(JSON.parse(storedUser)); // Cập nhật giá trị MyUser từ localStorage
-            } else {
-                setMyUser(null); // Nếu không có dữ liệu, gán MyUser là null
+        const handleStorageChange = (event) => {
+            if (event.key === 'my_user') {
+                const storedUser = event.newValue ? JSON.parse(event.newValue) : null;
+                setMyUser(storedUser);
             }
         };
 
@@ -68,13 +67,6 @@ export const AuthProvider = ({ children }) => {
             window.removeEventListener('storage', handleStorageChange);
         };
     }, []);
-
-    // Lưu thông tin MyUser vào localStorage mỗi khi MyUser thay đổi
-    useEffect(() => {
-        if (MyUser) {
-            localStorage.setItem('my_user', JSON.stringify(MyUser)); // Lưu lại thông tin khi MyUser thay đổi
-        }
-    }, [MyUser]);
 
     return (
         <AuthContext.Provider value={{ MyUser, setMyUser, login, logout, updateUserInfo }}>

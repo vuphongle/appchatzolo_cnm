@@ -47,6 +47,16 @@ const UserService = {
   },
   //lấy trạng thái online offline
 
+  getUserById: async (userId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/findById/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
+
+
   /** 
    * API cập nhật thông tin người dùng 
    * @param {string} userId - ID người dùng
