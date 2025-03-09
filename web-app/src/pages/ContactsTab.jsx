@@ -8,7 +8,7 @@ import FriendRequestsTab from "./ListFriend_RequestTab";
 const FriendItem = ({ avatar, name }) => (
     <button type="button" className="btn btn-outline-secondary" style={{ outline: "none", border: "none" }}>
         <div className="friend-item d-flex align-items-center mb-3">
-            <img src={avatar} alt="Avatar" className="avatar me-3" style={{ width: 50, height: 50, borderRadius: "50%" }} />
+            <img src={avatar || "default-avatar.png"} alt="Avatar" className="avatar me-3" style={{ width: 50, height: 50, borderRadius: "50%" }} />
             <h4>{name}</h4>
             <i className="fas fa-ellipsis-h ms-auto" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"></i>
             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
@@ -33,22 +33,12 @@ const groupList = [
 const GroupItem = ({ img, groupName, member }) => (
     <button type="button" className="btn btn-outline-secondary" style={{ outline: "none", border: "none" }}>
         <div className="group-item d-flex align-items-center mb-3">
-            <img
-                src={img}
-                alt="Group Avatar"
-                className="avatar me-3"
-                style={{ width: 50, height: 50, borderRadius: "50%" }}
-            />
+            <img src={img} alt="Group Avatar" className="avatar me-3" style={{ width: 50, height: 50, borderRadius: "50%" }} />
             <div className="d-flex flex-column align-items-start">
                 <h4 className="mb-0 text-dark fw-bold">{groupName}</h4>
                 <small className="text-muted">{member} thành viên</small>
             </div>
-            <i
-                className="fas fa-ellipsis-h ms-auto"
-                id="dropdownMenuButton1"
-                data-bs-toggle="dropdown"
-                aria-expanded="false">
-            </i>
+            <i className="fas fa-ellipsis-h ms-auto" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"></i>
             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                 <li><a className="dropdown-item" href="#">Xem thông tin</a></li>
                 <li><hr className="dropdown-divider" /></li>
@@ -58,33 +48,21 @@ const GroupItem = ({ img, groupName, member }) => (
     </button>
 );
 
-// Hàm nhóm bạn bè theo chữ cái đầu
-const groupFriendsByLetter = (friends) => {
-    return friends.reduce((groups, friend) => {
-        const firstLetter = friend.name.charAt(0).toUpperCase(); // Lấy chữ cái đầu tiên
-        if (!groups[firstLetter]) {
-            groups[firstLetter] = [];
-        }
-        groups[firstLetter].push(friend);
-        return groups;
-    }, {});
-};
-
 function ContactsTab({ friendRequests }) {
-    const { MyUser } = useAuth(); // Lấy thông tin người dùng từ context
-    const userId = MyUser?.my_user?.id; // Lấy id người dùng
+    const { MyUser } = useAuth();
+    const userId = MyUser?.my_user?.id;
     const [friends, setFriends] = useState([]);
-    const [searchTerm, setSearchTerm] = useState(""); // Giá trị nhập vào ô tìm kiếm
-    const [searchResults, setSearchResults] = useState([]); // Kết quả tìm kiếm
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [sortOrder, setSortOrder] = useState("name-asc");
 
-    // Lấy danh sách bạn bè từ backend
     useEffect(() => {
         if (userId) {
             UserService.getFriends(userId)
                 .then((data) => {
-                    setFriends(data); // Cập nhật danh sách bạn bè
+                    setFriends(Array.isArray(data) ? data : []);
                 })
                 .catch((err) => {
                     console.error("Error fetching friends:", err);
@@ -96,16 +74,15 @@ function ContactsTab({ friendRequests }) {
         }
     }, [userId]);
 
-    // Gọi API tìm kiếm khi searchTerm thay đổi
     useEffect(() => {
         if (searchTerm.trim() === "") {
             setSearchResults([]);
             return;
         }
 
-        UserService.searchUserByName(searchTerm, userId) // Truyền userId
+        UserService.searchUserByName(searchTerm, userId)
             .then((data) => {
-                setSearchResults(data);
+                setSearchResults(Array.isArray(data) ? data : []);
             })
             .catch((err) => {
                 console.error("Lỗi khi tìm kiếm:", err);
@@ -113,11 +90,40 @@ function ContactsTab({ friendRequests }) {
             });
     }, [searchTerm, userId]);
 
-    const groupedFriends = useMemo(() => {
-        const friendsToGroup = searchTerm.trim() ? searchResults : friends;
-        return groupFriendsByLetter(friendsToGroup);
-    }, [friends, searchResults, searchTerm]);
+    // sort theo tên
+    const sortedFriends = useMemo(() => {
+        const friendsToSort = searchTerm.trim() ? searchResults : friends;
+        if (!Array.isArray(friendsToSort) || friendsToSort.length === 0) {
+            return [];
+        }
+        const sorted = [...friendsToSort].sort((a, b) => {
+            const nameA = (a.name || "").toLowerCase();
+            const nameB = (b.name || "").toLowerCase();
+            const comparison = nameA.localeCompare(nameB);
+            return sortOrder === "name-asc" ? comparison : -comparison;
+        });
+        return sorted;
+    }, [friends, searchResults, searchTerm, sortOrder]);
 
+    const handleSortChange = (e) => {
+        setSortOrder(e.target.value);
+    };
+
+    // Hàm render danh sách với nhóm chữ cái
+    const renderGroupedFriends = () => {
+        let lastLetter = null;
+        return sortedFriends.map((friend) => {
+            const firstLetter = friend.name.charAt(0).toUpperCase();
+            const showLetter = firstLetter !== lastLetter;
+            lastLetter = firstLetter;
+            return (
+                <React.Fragment key={friend.id}>
+                    {showLetter && <h4>{firstLetter}</h4>}
+                    <FriendItem avatar={friend.avatar} name={friend.name} />
+                </React.Fragment>
+            );
+        });
+    };
 
     return (
         <div>
@@ -130,7 +136,7 @@ function ContactsTab({ friendRequests }) {
                     </div>
                     <hr />
                     <div className="vh-100">
-                        <h6 >Bạn bè ({searchTerm.trim() ? searchResults.length : friends.length})</h6>
+                        <h6>Bạn bè ({searchTerm.trim() ? searchResults.length : friends.length})</h6>
                         <div className="search-bar d-flex align-items-center mb-3">
                             <input
                                 type="text"
@@ -139,29 +145,26 @@ function ContactsTab({ friendRequests }) {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <select className="form-select">
+                            <select
+                                className="form-select"
+                                value={sortOrder}
+                                onChange={(e) => {
+                                    handleSortChange(e);
+                                }}
+                            >
                                 <option value="name-asc">Tên (A-Z)</option>
                                 <option value="name-desc">Tên (Z-A)</option>
                             </select>
                         </div>
-
-                        {/* Hiển thị danh sách tìm kiếm nếu có, nếu không thì hiển thị bạn bè */}
-                        <div>
-                            {Object.keys(groupedFriends).length === 0 ? (
-                                <p>Không tìm thấy người dùng nào.</p>
-                            ) : (
-                                Object.keys(groupedFriends)
-                                    .sort()
-                                    .map((letter) => (
-                                        <div key={letter}>
-                                            <h4>{letter}</h4>
-                                            {groupedFriends[letter].map((friend) => (
-                                                <FriendItem key={friend.id} avatar={friend.avatar} name={friend.name} />
-                                            ))}
-                                        </div>
-                                    ))
-                            )}
-                        </div>
+                        {loading ? (
+                            <p>Đang tải...</p>
+                        ) : error ? (
+                            <p>{error}</p>
+                        ) : sortedFriends.length === 0 ? (
+                            <p>Không tìm thấy người dùng nào.</p>
+                        ) : (
+                            renderGroupedFriends()
+                        )}
                     </div>
                 </div>
 
