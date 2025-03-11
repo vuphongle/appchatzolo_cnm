@@ -522,14 +522,17 @@ const MainPage = () => {
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
-                                                                {moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').calendar(null, {
-                                                                    sameDay: "[Hôm nay]",
-                                                                    lastDay: "[Hôm qua]",
-                                                                    lastWeek: "[Tuần trước]",
-                                                                    sameElse: "DD/MM/YYYY"
-                                                                })}
+                                                                {moment(msg.sendDate).add(7, 'hours').isValid()
+                                                                    ? moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').calendar(null, {
+                                                                        sameDay: "[Hôm nay] DD/MM/YYYY",
+                                                                        lastDay: "[Hôm qua] DD/MM/YYYY",
+                                                                        lastWeek: "[Tuần trước] DD/MM/YYYY",
+                                                                        sameElse: "DD/MM/YYYY"
+                                                                    })
+                                                                    : "Invalid date"}
                                                             </div>
                                                         )}
+
 
                                                         <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
                                                             {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
