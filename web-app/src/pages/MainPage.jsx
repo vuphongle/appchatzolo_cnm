@@ -164,18 +164,20 @@ const MainPage = () => {
                 // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
                 const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
 
+                // Cộng 7 giờ vào sendDate của mỗi tin nhắn
+                const updatedMessages = sortedMessages.map((msg) => ({
+                    ...msg,
+                    sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
+                }));
+
                 // Lọc các tin nhắn chưa đọc
-                const unreadMessages = sortedMessages.filter((msg) => msg.isRead === false);
+                const unreadMessages = updatedMessages.filter((msg) => msg.isRead === false);
 
                 // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
                 if (unreadMessages.length > 0) {
                     // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
                     MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
                         .then(() => {
-                            // Sau khi đánh dấu là đã đọc, cập nhật lại các tin nhắn đã được đọc
-                            const updatedMessages = sortedMessages.map((msg) =>
-                                msg.isRead === false ? { ...msg, isRead: true } : msg
-                            );
                             setChatMessages(updatedMessages); // Cập nhật lại state tin nhắn ngay lập tức
 
                             // Cập nhật số lượng tin nhắn chưa đọc cho bạn bè
@@ -192,13 +194,14 @@ const MainPage = () => {
                         });
                 } else {
                     // Nếu không có tin nhắn chưa đọc, chỉ cần cập nhật lại danh sách tin nhắn
-                    setChatMessages(sortedMessages);
+                    setChatMessages(updatedMessages);
                 }
             })
             .catch((err) => {
                 console.error("Error fetching messages:", err);
             });
     }, [selectedChat, MyUser?.my_user?.id]);
+
 
 
 
@@ -235,7 +238,7 @@ const MainPage = () => {
                 if (count.friendId === incomingMessage.senderID) {
                     return {
                         ...count,
-                        unreadCount: count.unreadCount + 1, // Thêm 1 cho số tin nhắn chưa đọc
+                        unreadCount: count.unreadCount, // Thêm 1 cho số tin nhắn chưa đọc
                     };
                 }
                 return count;
@@ -496,7 +499,12 @@ const MainPage = () => {
                                                 const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
 
                                                 // 📌 Lấy thời gian gửi tin nhắn và chuyển đổi sang múi giờ Việt Nam
-                                                const messageTime = moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').format("HH:mm");
+
+
+                                                const messageTime = moment(msg.sendDate); // Giả sử msg.sendDate là thời gian nhận được
+                                                const displayTime = messageTime.isValid() ? messageTime.format("HH:mm") : moment().format("HH:mm");
+
+
                                                 const messageDate = moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY");
 
                                                 // 📌 Lấy ngày của tin nhắn trước đó
@@ -532,7 +540,7 @@ const MainPage = () => {
                                                             )}
 
                                                             {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}
-                                                            <span className="message-time">{messageTime}</span>
+                                                            <span className="message-time">{displayTime}</span>
 
                                                             {/* 📌 Nếu là tin nhắn cuối cùng bạn gửi và đã đọc => hiển thị "✔✔ Đã nhận" */}
                                                             {isLastMessageByMe && msg.isRead && (
