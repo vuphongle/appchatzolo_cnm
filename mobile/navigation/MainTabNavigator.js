@@ -14,7 +14,7 @@ import { UserContext } from '../context/UserContext';
 const Tab = createBottomTabNavigator();
 
 const MainTabNavigator = () => {
-     const { user } = useContext(UserContext);
+     const { user, friendRequestsCount } = useContext(UserContext);
 
      if (!user) {
          // Nếu người dùng chưa đăng nhập, hiển thị AuthScreen
@@ -78,7 +78,9 @@ const MainTabNavigator = () => {
             <Tab.Screen
                 name="DanhBa"
                 component={DanhBaScreen}
-                options={{ tabBarLabel: 'Danh bạ' }}
+                options={{ tabBarLabel: 'Danh bạ',
+                    tabBarBadge: friendRequestsCount > 0 ? friendRequestsCount : null,
+                }}
             />
             <Tab.Screen
                 name="KhamPha"

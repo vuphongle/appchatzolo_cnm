@@ -10,7 +10,7 @@ const DanhBaScreen = () => {
     const [sentRequests, setSentRequests] = useState([]);
     const [sendersInfo, setSendersInfo] = useState({}); // Lưu thông tin người gửi
     const [receiversInfo, setReceiversInfo] = useState({}); // Lưu thông tin người nhận
-    const { user } = useContext(UserContext);
+    const { user, updateFriendRequestsCount, friendRequestsCount } = useContext(UserContext);
 
     // Lấy các lời mời kết bạn đã nhận
     useEffect(() => {
@@ -57,7 +57,7 @@ const DanhBaScreen = () => {
 
         fetchFriendRequests();
         fetchSentRequests();
-    }, [user?.id]);
+    }, [user?.id, friendRequestsCount]);
 
     // Hàm xử lý "Chấp nhận" hoặc "Từ chối" lời mời
     const handleRequestResponse = async (requestId, senderId, receiverId, action) => {
@@ -83,18 +83,13 @@ const DanhBaScreen = () => {
 
             if (response.ok) {
                 if (action === 'accept') {
-                    // Cập nhật lại state để loại bỏ lời mời đã chấp nhận
                     setFriendRequests(friendRequests.filter((request) => request.senderID !== senderId));
-                    console.log('Lời mời đã được chấp nhận');
                 } else if (action === 'reject') {
-                    // Cập nhật lại state để loại bỏ lời mời đã từ chối hoặc đã xóa
                     setFriendRequests(friendRequests.filter((request) => request.id !== requestId));
-                    console.log('Lời mời đã bị từ chối');
                 } else if (action === 'delete') {
-                    // Cập nhật lại state để loại bỏ lời mời đã gửi
                     setSentRequests(sentRequests.filter((request) => request.id !== requestId));
-                    console.log('Lời mời đã bị xóa');
                 }
+                updateFriendRequestsCount();
             } else {
                 console.log(`${action === 'accept' ? 'Chấp nhận' : action === 'reject' ? 'Từ chối' : 'Xóa'} lời mời thất bại`);
             }
