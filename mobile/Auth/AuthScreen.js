@@ -1,4 +1,3 @@
-// screens/AuthScreen.js
 import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -18,17 +17,36 @@ AWS.config.update({
 
 const sns = new AWS.SNS();
 
+// Hàm định dạng số điện thoại
+const formatPhoneNumber = (phone) => {
+    // Loại bỏ khoảng trắng
+    const cleaned = phone.replace(/\s+/g, '');
+
+    // Kiểm tra nếu có ký tự không phải số và không phải dấu + ở đầu
+    if (!/^(\+?\d+)$/.test(cleaned)) {
+        return null;
+    }
+
+    // Nếu đã có +84 thì giữ nguyên
+    if (cleaned.startsWith('+84')) {
+        return cleaned;
+    }
+
+    // Nếu bắt đầu bằng 0 thì chuyển thành +84
+    if (cleaned.startsWith('0')) {
+        return '+84' + cleaned.substring(1);
+    }
+
+    // Trường hợp khác, trả về số đã được làm sạch
+    return cleaned;
+};
+
 const verifyPhoneNumber = async (phoneNumber) => {
     try {
         const result = await sns.createSMSSandboxPhoneNumber({
             PhoneNumber: phoneNumber,
             LanguageCode: 'en-US',
         }).promise();
-        console.log('Số điện thoại đã được thêm vào sandbox:', result);
-        Alert.alert(
-            'Thành công',
-            'Số điện thoại đã được thêm vào sandbox. Vui lòng kiểm tra tin nhắn để xác minh.'
-        );
     } catch (error) {
         console.error('Lỗi thêm số điện thoại vào sandbox:', error);
         Alert.alert(
@@ -38,7 +56,6 @@ const verifyPhoneNumber = async (phoneNumber) => {
     }
 };
 
-// Server -> get user (Đã chuyển vào UserContext)
 const AuthScreen = () => {
     const navigation = useNavigation();
     const { setUser, fetchUserProfile, user } = useContext(UserContext);
@@ -56,11 +73,7 @@ const AuthScreen = () => {
         setIsRegister(!isRegister);
         setStep(1);
     };
-    // useEffect(() => {
 
-    //     navigation.replace('MainTabs');
-
-    // }, [user, navigation]);
     const handleNextStep = () => {
         if (!name) {
             Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ tên và ngày sinh.');
@@ -80,29 +93,31 @@ const AuthScreen = () => {
             return;
         }
 
+        const formattedPhone = formatPhoneNumber(phoneNumber);
+        if (!formattedPhone) {
+            Alert.alert('Lỗi', 'Số điện thoại không đúng. Vui lòng kiểm tra lại.');
+            return;
+        }
+
+        setPhoneNumber(formattedPhone);
+
         setIsLoading(true);
         try {
             if (isRegister) {
-                // Thực hiện đăng ký (nếu cần)
-                // Ví dụ: sử dụng Auth.signUp nếu bạn sử dụng Cognito
-                // const result = await Auth.signUp({...});
-                // console.log('Sign up success', result);
-
-                // Thực hiện xác thực số điện thoại
-                await verifyPhoneNumber(phoneNumber);
+                await verifyPhoneNumber(formattedPhone);
                 Alert.alert('Thành công', 'Mã xác thực đã được gửi đến số điện thoại của bạn.');
 
                 navigation.navigate('ConfirmSignUpScreen', {
-                    phoneNumber: phoneNumber,
+                    phoneNumber: formattedPhone,
                     name: name,
                     dob: birthDate.toISOString().split('T')[0],
                     password: password,
                 });
             } else {
-                const user = await Auth.signIn(phoneNumber, password);
+                const user = await Auth.signIn(formattedPhone, password);
                 console.log('User signed in successfully:', user);
 
-                const userProfile = await fetchUserProfile(phoneNumber);
+                const userProfile = await fetchUserProfile(formattedPhone);
 
                 if (userProfile) {
                     setUser(userProfile);

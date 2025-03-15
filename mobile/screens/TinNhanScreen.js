@@ -1,10 +1,29 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { View, StyleSheet, ScrollView, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
 import SearchBar from '../components/SearchBar';
 import { UserContext } from '../context/UserContext';
 import ListFriend from '../components/Message/listFriend/ListFriend';
 import { v4 as uuidv4 } from 'uuid';
 import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, IPV4 } from '@env';
+
+// Hàm định dạng số điện thoại
+const formatPhoneNumber = (phone) => {
+    const cleaned = phone.replace(/\s+/g, '');
+
+    if (!/^(\+?\d+)$/.test(cleaned)) {
+        return null;
+    }
+
+    if (cleaned.startsWith('+84')) {
+        return cleaned;
+    }
+
+    if (cleaned.startsWith('0')) {
+        return '+84' + cleaned.substring(1);
+    }
+
+    return cleaned;
+};
 
 const TinNhanScreen = () => {
     const [searchText, setSearchText] = useState('');
@@ -23,7 +42,7 @@ const TinNhanScreen = () => {
     // Tạo ref cho ô tìm kiếm
     const searchInputRef = useRef(null);
 
-    // Sử dụng useEffect để tự động tìm kiếm khi người dùng nhập
+    // Tự động tìm kiếm khi người dùng nhập
     useEffect(() => {
         if (!searchText.trim()) {
             setSearchResult(null);
@@ -40,8 +59,15 @@ const TinNhanScreen = () => {
     const handleSearch = async () => {
         if (!searchText.trim()) return;
 
+        // Định dạng số điện thoại trước khi tìm kiếm
+        const formattedPhone = formatPhoneNumber(searchText);
+        if (!formattedPhone) {
+            Alert.alert('Lỗi', 'Số điện thoại không đúng định dạng.');
+            return;
+        }
+
         setLoading(true);
-        const result = await fetchUserProfile(searchText.trim());
+        const result = await fetchUserProfile(formattedPhone);
 
         if (result) {
             if (result.id === user?.id) {
@@ -68,7 +94,7 @@ const TinNhanScreen = () => {
         } else if (friendRequestStatus === "Kết bạn") {
             handleAddFriend();
         }
-    }
+    };
 
     // Hàm gửi lời mời kết bạn
     const handleAddFriend = async () => {
@@ -116,7 +142,6 @@ const TinNhanScreen = () => {
 
             if (response.ok) {
                 console.log('Lời mời kết bạn đã được xóa');
-                // Cập nhật lại trạng thái nút sau khi xóa lời mời
                 setFriendRequestStatus('Kết bạn');
             } else {
                 console.log('Xóa lời mời kết bạn thất bại');
@@ -134,14 +159,11 @@ const TinNhanScreen = () => {
             const response = await fetch(IPV4 + '/messages/invitations/sent/' + user?.id);
             const invitations = await response.json();
 
-            // Kiểm tra xem người dùng đã gửi lời mời kết bạn cho người này chưa
             const sentInvitation = invitations.find((invitation) => invitation.receiverID === searchResult.id);
 
             if (sentInvitation) {
-                // Nếu đã gửi lời mời, thay đổi trạng thái nút
                 setFriendRequestStatus("Hoàn tác");
             } else {
-                // Nếu chưa gửi lời mời, giữ nguyên trạng thái nút "Kết bạn"
                 setFriendRequestStatus("Kết bạn");
             }
         } catch (error) {
@@ -155,7 +177,6 @@ const TinNhanScreen = () => {
         setIsSearching(true);
         console.log('Search bar focused after:', isSearching);
 
-        // Đảm bảo focus lại vào ô tìm kiếm
         setTimeout(() => {
             if (searchInputRef.current) {
                 searchInputRef.current.focus();
@@ -178,7 +199,7 @@ const TinNhanScreen = () => {
                             setIsSearching(!!text);
                         }}
                         onFocus={handleSearchBarFocus}
-                        inputRef={searchInputRef} // Truyền ref vào
+                        inputRef={searchInputRef}
                     />
                     <ListFriend userId={user?.id} />
                 </>
@@ -191,7 +212,7 @@ const TinNhanScreen = () => {
                             onLeftIconPress={handleClearSearch}
                             searchText={searchText}
                             setSearchText={setSearchText}
-                            inputRef={searchInputRef} // Truyền ref vào
+                            inputRef={searchInputRef}
                         />
                         <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
                             <Text style={styles.searchButtonText}>Tìm</Text>
