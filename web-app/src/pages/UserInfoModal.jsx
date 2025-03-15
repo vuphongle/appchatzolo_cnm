@@ -9,8 +9,9 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [avatar, setAvatar] = useState(MyUser?.avatar || initialUser?.avatar || null);
     const [file, setFile] = useState(null);
-    const [originalAvatar, setOriginalAvatar] = useState(MyUser?.avatar || initialUser?.avatar || null);
+    const [originalAvatar, setOriginalAvatar] = useState(MyUser?.avatar || MyUser?.my_user.avatar || initialUser?.avatar || null);
     const [name, setName] = useState(MyUser?.my_user?.name || MyUser?.name || initialUser?.name || "");
+    const [showModal, setShowModal] = useState(false);
     const [dob, setDob] = useState(
         MyUser?.dob || initialUser?.dob || MyUser?.my_user?.dob
             ? new Date(MyUser?.dob || initialUser?.dob || MyUser?.my_user?.dob).toISOString().split("T")[0]
@@ -86,7 +87,9 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
         setAvatar(originalAvatar);
         setFile(null);
         setIsUploading(false);
+        setShowModal(false);
     };
+
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
@@ -105,18 +108,29 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
         if (!file) return;
 
         try {
+            // 1. Upload ảnh lên S3 và lấy URL
             const url = await S3Service.uploadAvatar(file);
+
+            // 2. Cập nhật avatar vào DynamoDB
+            const userId = MyUser?.my_user?.id;
+            if (!userId) throw new Error("User ID is missing");
+
+            await UserService.updateUserInfo(userId, { avatar: url });
+
+            // 3. Cập nhật MyUser và localStorage
+            const updatedUser = { ...MyUser, my_user: { ...MyUser.my_user, avatar: url } };
+            setMyUser(updatedUser);
+            localStorage.setItem("my_user", JSON.stringify(updatedUser));
+
             setAvatar(url);
-
-            // Cập nhật avatar vào MyUser
-            updateUserInfo({ avatar: url });
-
             setIsUploading(false);
             alert("Cập nhật avatar thành công!");
         } catch (error) {
+            console.error("Upload avatar failed:", error);
             alert("Upload thất bại!");
         }
     };
+
 
     if (!MyUser && !initialUser) {
         return (
@@ -158,30 +172,22 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
 
                     {isUploading ? (
                         <div className="modal-body text-center">
-                            <label
-                                className="btn btn-light d-flex align-items-center mx-auto"
-                                style={{ border: "1px solid #ddd", cursor: "pointer" }}
-                            >
-                                <i className="fas fa-upload me-2"></i> Tải lên từ máy tính
-                                <input
-                                    type="file"
-                                    className="d-none"
-                                    accept=".jpg, .jpeg, .png"
-                                    onChange={handleFileChange}
-                                />
+                            <label className="btn btn-outline-secondary d-flex align-items-center justify-content-center mx-auto" style={{ border: "2px dashed #ccc", padding: "10px", cursor: "pointer", width: "250px" }}>
+                                <i className="fas fa-upload me-2"></i> Tải ảnh lên
+                                <input type="file" className="d-none" accept=".jpg, .jpeg, .png" onChange={handleFileChange} />
                             </label>
+
                             <h6 className="mt-3">Ảnh đại diện của tôi</h6>
-                            <div
-                                className="mb-3 d-flex justify-content-center align-items-center"
-                                style={{ height: "100px" }}
-                            >
+                            <div className="d-flex justify-content-center">
                                 {avatar ? (
-                                    <img
-                                        src={avatar}
-                                        alt="Avatar"
-                                        className="rounded-circle mt-2"
-                                        style={{ width: "80px", height: "100px" }}
-                                    />
+                                    <div className="position-relative" style={{ width: "120px", height: "120px" }}>
+                                        <img
+                                            src={avatar}
+                                            alt="Avatar"
+                                            className="rounded-circle border border-3 shadow-sm"
+                                            style={{ width: "120px", height: "120px", objectFit: "cover" }}
+                                        />
+                                    </div>
                                 ) : (
                                     <p className="text-muted">Chưa có ảnh đại diện</p>
                                 )}
@@ -191,38 +197,63 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
                         <>
                             {!isEditing && (
                                 <div className="d-flex align-items-center p-3 border-bottom">
-                                    <div className="position-relative" style={{ width: "60px", height: "60px" }}>
+                                    <div
+                                        className="position-relative"
+                                        style={{ width: "80px", height: "80px", cursor: "pointer" }}
+                                        onClick={() => setShowModal(true)}
+                                    >
                                         {avatar ? (
                                             <img
                                                 src={avatar}
                                                 alt="Avatar"
-                                                className="rounded-circle shadow-sm"
-                                                style={{ width: "60px", height: "60px", objectFit: "cover" }}
+                                                className="rounded-circle border border-2 shadow-sm"
+                                                style={{ width: "80px", height: "80px", objectFit: "cover" }}
                                             />
                                         ) : (
                                             <div
                                                 className="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
-                                                style={{ width: "60px", height: "60px", fontSize: "24px" }}
+                                                style={{ width: "80px", height: "80px", fontSize: "28px", fontWeight: "bold" }}
                                             >
                                                 {name?.split(" ").map((word) => word[0]).join("") || "?"}
                                             </div>
                                         )}
                                         <label
                                             className="position-absolute bottom-0 end-0 bg-light rounded-circle shadow-sm d-flex justify-content-center align-items-center"
-                                            style={{ width: "24px", height: "24px", cursor: "pointer" }}
+                                            style={{ width: "28px", height: "28px", cursor: "pointer", border: "1px solid #ddd" }}
                                             onClick={startUploading}
                                         >
-                                            <i className="fas fa-camera" style={{ fontSize: "12px" }}></i>
+                                            <i className="fas fa-camera text-secondary" style={{ fontSize: "14px" }}></i>
                                         </label>
                                     </div>
                                     <p className="ms-3 fw-bold mb-0">
                                         {name}
                                         <i
-                                            className="fas fa-pencil-alt ms-2"
-                                            style={{ cursor: "pointer" }}
+                                            className="fas fa-pencil-alt ms-2 text-primary"
+                                            style={{ cursor: "pointer", fontSize: "14px" }}
                                             onClick={() => setIsEditing(true)}
                                         ></i>
                                     </p>
+                                </div>
+                            )}
+
+                            {showModal && !isUploading && (
+                                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)" }}>
+                                    <div className="d-flex justify-content-end p-3">
+                                        <i className="fas fa-times" onClick={() => setShowModal(false)} style={{ cursor: "pointer" }}></i>
+                                    </div>
+                                    {/* Body */}
+                                    <div className="modal-body d-flex justify-content-center align-items-center">
+                                        {avatar ? (
+                                            <img
+                                                src={avatar}
+                                                alt="Avatar"
+                                                className="img-fluid"
+                                                style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain" }}
+                                            />
+                                        ) : (
+                                            <p className="text-muted">Chưa có ảnh đại diện</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 

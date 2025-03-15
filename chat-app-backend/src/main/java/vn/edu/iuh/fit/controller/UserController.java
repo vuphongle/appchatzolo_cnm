@@ -150,6 +150,7 @@ public class UserController {
         try {
             String newName = payload.get("name");
             String newDob = payload.get("dob");
+            String newAvatar = payload.get("avatar");
 
             User user = userService.findUserById_ttt(id);
             if (user == null) {
@@ -164,12 +165,15 @@ public class UserController {
                 user.setDob(newDob);
             }
 
-            userService.createUser(user); // Lưu lại thông tin đã cập nhật
-            return ResponseEntity.ok("User updated successfully!");
+            if (newAvatar != null && !newAvatar.trim().isEmpty()) {
+                user.setAvatar(newAvatar);
+            }
+
+            userService.createUser(user);
+            return ResponseEntity.ok(user);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user: " + e.getMessage());
         }
     }
-
 }
