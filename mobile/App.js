@@ -15,6 +15,7 @@ import Detail_infoChat from './components/Message/Chat/Detail_infoChat';
 import ImageChat from './components/Message/Chat/ImageChat';
 import ScreenCloud from './components/Message/Cloud/ScreenCloud';
 import CloudStorageScreen from './components/Message/Cloud/CloudStorageScreen'
+import FriendInvitesScreen from './screens/FriendInvitesScreen';
 
  Amplify.configure({
    ...awsConfig,
@@ -80,6 +81,13 @@ const App = () => {
           component={CloudStorageScreen}
           options={{
             headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="FriendInvitesScreen"
+          component={FriendInvitesScreen}
+          options={{
+            headerTitle: 'Lời mời kết bạn',
           }}
         />
         </Stack.Navigator>
