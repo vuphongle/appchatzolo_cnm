@@ -32,9 +32,6 @@ const ConfirmSignUpScreen = () => {
         }
 
         setIsLoading(true);
-        console.log('Tên là:', name, 'kiểu dữ liệu:', typeof name);
-        console.log('Ngày sinh:', dob, 'kiểu dữ liệu:', typeof dob);
-        console.log('Bắt đầu xác thực với số điện thoại:', phoneNumber, 'kiểu dữ liệu:', typeof phoneNumber, 'mã:', code);
         try {
             const result = await sns.verifySMSSandboxPhoneNumber({
                         PhoneNumber: phoneNumber,

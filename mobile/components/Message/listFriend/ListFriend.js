@@ -18,9 +18,7 @@ function ListFriend({userId}) {
   const fetchFriends = async () => {
     try {
       setLoading(true);
-      // const response = await UserService.getFriends(userId);
       const response = await axios.get(`${IPV4}/user/${userId}/friends`);
-      console.log(IPV4);
       setFriends(response.data);
       setError(null);
     } catch (err) {
@@ -34,16 +32,6 @@ function ListFriend({userId}) {
     fetchFriends();
   }, []);
   
-
-
-  // Hàm xử lý ghim
-  // const pinFriend = (id) => {
-  //   setFriends((prevFriends) => {
-  //     const friendIndex = prevFriends.findIndex((friend) => friend.id === id);
-  //     const [pinnedFriend] = prevFriends.splice(friendIndex, 1);
-  //     return [pinnedFriend, ...prevFriends];
-  //   });
-  // };
   const pinFriend = (id) => {
     Alert.alert(
       "Xác nhận",
