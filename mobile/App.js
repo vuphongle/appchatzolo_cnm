@@ -2,6 +2,8 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
  import { Amplify } from 'aws-amplify';
  import awsConfig from './Auth/aws-exports';
@@ -25,6 +27,7 @@ const Stack = createStackNavigator();
 
 const App = () => {
   return (
+  <GestureHandlerRootView style={{ flex: 1 }}>
     <UserProvider>
       <NavigationContainer initialRouteName="AuthScreen">
         <Stack.Navigator>
@@ -93,6 +96,7 @@ const App = () => {
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>
+  </GestureHandlerRootView>
   );
 };
 

@@ -1,19 +1,17 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import SearchBar from '../components/SearchBar';
 import { IPV4 } from '@env';
 import { UserContext } from '../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 
 const DanhBaScreen = () => {
   const navigation = useNavigation();
   const { user, friendRequestsCount } = useContext(UserContext);
-
   const [activeTab, setActiveTab] = useState('friends');
-
   const [receivedCount, setReceivedCount] = useState(0);
-
   const [friends, setFriends] = useState([]);
 
   useEffect(() => {
@@ -22,7 +20,7 @@ const DanhBaScreen = () => {
       try {
         const response = await fetch(`${IPV4}/user/${user.id}/friends`);
         const data = await response.json();
-        if (typeof data === 'string' && data === "No friends found") {
+        if (typeof data === 'string' && data === 'No friends found') {
           setFriends([]);
         } else {
           setFriends(data);
@@ -53,6 +51,64 @@ const DanhBaScreen = () => {
     { id: 2, name: 'Nhóm React Native', membersCount: 10 },
   ];
 
+  // Hàm hiển thị các nút bên phải khi vuốt
+  const renderRightActions = (progress, dragX, contact) => {
+    return (
+      <View style={styles.rightActionsContainer}>
+        {/* Nút "Thêm" */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionButton,
+            { backgroundColor: pressed ? '#7D8590' : '#9199a4' }
+          ]}
+          onPress={() => handleAdd(contact)}
+        >
+          <Ionicons name="ellipsis-horizontal" size={24} color="#fff" />
+          <Text style={styles.actionButtonText}>Thêm</Text>
+        </Pressable>
+
+        {/* Nút "Nhật ký" */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionButton,
+            { backgroundColor: pressed ? '#394296' : '#4752bb' }
+          ]}
+          onPress={() => handleJournal(contact)}
+        >
+          <Ionicons name="time-outline" size={24} color="#fff" />
+          <Text style={styles.actionButtonText}>Nhật ký</Text>
+        </Pressable>
+
+        {/* Nút "Xóa" */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionButton,
+            { backgroundColor: pressed ? '#BE403C' : '#ed504b' }
+          ]}
+          onPress={() => handleDelete(contact)}
+        >
+          <Ionicons name="trash-outline" size={24} color="#fff" />
+          <Text style={styles.actionButtonText}>Xóa</Text>
+        </Pressable>
+      </View>
+    );
+  };
+
+  const handleAdd = (contact) => {
+    alert('Chưa phát triển tính năng này');
+    console.log('Thêm', contact.name);
+  };
+
+  const handleJournal = (contact) => {
+    alert('Chưa phát triển tính năng này');
+    console.log('Nhật ký', contact.name);
+  };
+
+  const handleDelete = (contact) => {
+    alert('Chưa phát triển tính năng này');
+    console.log('Xóa', contact.name);
+  };
+
   const renderFriendsTab = () => {
     return (
       <ScrollView style={styles.content}>
@@ -62,7 +118,12 @@ const DanhBaScreen = () => {
             onPress={() => navigation.navigate('FriendInvitesScreen')}
           >
             <View style={styles.shortcutItemRow}>
-              <Ionicons name="person-add-outline" size={20} color="#000" style={{ marginRight: 8 }} />
+              <Ionicons
+                name="person-add-outline"
+                size={20}
+                color="#000"
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.shortcutText}>
                 Lời mời kết bạn
                 {receivedCount > 0 ? ` (${receivedCount})` : ''}
@@ -72,25 +133,30 @@ const DanhBaScreen = () => {
         </View>
 
         <View style={styles.friendsHeader}>
-          <Text style={styles.friendsHeaderText}>Tất cả {friends.length}</Text>
+          <Text style={styles.friendsHeaderText}>Tất cả  {friends.length}</Text>
         </View>
 
         {friends.map((contact) => (
-          <View key={contact.id} style={styles.contactItem}>
-            <Image
-              source={{ uri: contact.avatar }}
-              style={styles.contactAvatar}
-            />
-            <Text style={styles.contactName}>{contact.name}</Text>
-            <TouchableOpacity
-              style={styles.messageIcon}
-              onPress={() => {
-                navigation.navigate('ChatScreen', { userId: contact.id });
-              }}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={22} color="#787878" />
+          <Swipeable
+            key={contact.id}
+            renderRightActions={(progress, dragX) =>
+              renderRightActions(progress, dragX, contact)
+            }
+          >
+            <TouchableOpacity style={styles.contactItem}>
+              <Image
+                source={{ uri: contact.avatar }}
+                style={styles.contactAvatar}
+              />
+              <Text style={styles.contactName}>{contact.name}</Text>
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={28}
+                color="#787878"
+                style={{ marginRight: 10 }}
+              />
             </TouchableOpacity>
-          </View>
+          </Swipeable>
         ))}
       </ScrollView>
     );
@@ -112,11 +178,7 @@ const DanhBaScreen = () => {
 
   return (
     <View style={styles.container}>
-      <SearchBar
-        placeholder="Tìm kiếm"
-        leftIcon="search"
-        rightIcon="notifications"
-      />
+      <SearchBar placeholder="Tìm kiếm" leftIcon="search" rightIcon="notifications" />
 
       <View style={styles.tabBar}>
         <TouchableOpacity
@@ -198,6 +260,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+    height: 60,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 5,
   },
   contactAvatar: {
     width: 45,
@@ -209,10 +274,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flex: 1,
   },
-  messageIcon: {
-    padding: 5,
-    marginLeft: 'auto',
-  },
   groupItem: {
     backgroundColor: '#F9F9F9',
     padding: 10,
@@ -222,5 +283,24 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  rightActionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    height: 60,
+  },
+  actionButton: {
+    width: 80,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+    marginTop: 4,
   },
 });
