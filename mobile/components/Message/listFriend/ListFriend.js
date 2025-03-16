@@ -1,14 +1,14 @@
-import React, { useState,useEffect,UseContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import Icon from 'react-native-vector-icons/AntDesign';
 import FeatherIcon from 'react-native-vector-icons/Feather';
+import { useFocusEffect } from '@react-navigation/native'; 
 import ItemFriend from './ItemFriend';
 import CloudItem from './CloudItem';
 import axios from 'axios';
-import { UserContext } from '../../../context/UserContext';
-import UserService from '../../../services/UserService';
 import { IPV4 } from '@env';
+
 function ListFriend({userId}) {
   const [openRow, setOpenRow] = useState(null); 
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,6 @@ function ListFriend({userId}) {
   const fetchFriends = async () => {
     try {
       setLoading(true);
-      // const response = await UserService.getFriends(userId);
       const response = await axios.get(`${IPV4}/user/${userId}/friends`);
       console.log(IPV4);
       setFriends(response.data);
@@ -30,20 +29,19 @@ function ListFriend({userId}) {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    fetchFriends();
-  }, []);
+
+ 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchFriends();
+      return () => {}       
+      
+    }, [userId])
+  );
   
 
-
+  
   // Hàm xử lý ghim
-  // const pinFriend = (id) => {
-  //   setFriends((prevFriends) => {
-  //     const friendIndex = prevFriends.findIndex((friend) => friend.id === id);
-  //     const [pinnedFriend] = prevFriends.splice(friendIndex, 1);
-  //     return [pinnedFriend, ...prevFriends];
-  //   });
-  // };
   const pinFriend = (id) => {
     Alert.alert(
       "Xác nhận",
@@ -95,30 +93,31 @@ function ListFriend({userId}) {
 
   const renderHiddenItem = ({ item }) => {
     if (openRow !== item.id) return <View style={{ height: 0 }} />;
-return (
-    <View style={styles.rowBack}>
-      <View style={styles.actionLeft}></View>
-      <View style={styles.actionRight}>
-        <View style={styles.actionButton}>
-          <FeatherIcon name="more-horizontal" size={24} color="white" />
-          <Text style={styles.actionText}>Thêm</Text>
+    return (
+      <View style={styles.rowBack}>
+        <View style={styles.actionLeft}></View>
+        <View style={styles.actionRight}>
+          <View style={styles.actionButton}>
+            <FeatherIcon name="more-horizontal" size={24} color="white" />
+            <Text style={styles.actionText}>Thêm</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => pinFriend(item.id)}>
+            <Icon name="pushpin" size={24} color="white" />
+            <Text style={styles.actionText}>Ghim</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => deleteFriend(item.id)}>
+            <Icon name="delete" size={24} color="white" />
+            <Text style={styles.actionText}>Xóa</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => pinFriend(item.id)}>
-          <Icon name="pushpin" size={24} color="white" />
-          <Text style={styles.actionText}>Ghim</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => deleteFriend(item.id)}>
-          <Icon name="delete" size={24} color="white" />
-          <Text style={styles.actionText}>Xóa</Text>
-        </TouchableOpacity>
       </View>
-    </View>
     );
   };
+  
   if (loading) {
     return (
       <View style={styles.container}>
@@ -138,6 +137,7 @@ return (
   return (
     <View style={styles.container}>
        <CloudItem timestamp="23 tiếng" />
+       {friends.length > 0 ? (
       <SwipeListView
         data={friends}
         keyExtractor={(item) => item.id}
@@ -148,10 +148,16 @@ return (
         closeOnRowPress={true}
         disableRightSwipe={true}
         previewOpenDelay={3000}
-        onRowOpen={(rowKey) => setOpenRow(rowKey)} 
+        onRowOpen={(rowKey) => setOpenRow(rowKey)}
         onRowClose={() => setOpenRow(null)}
       />
-    </View>
+    ) : (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>Không có bạn bè trong danh sách</Text>
+      </View>
+    )}
+  </View>
+  
   );
 }
 

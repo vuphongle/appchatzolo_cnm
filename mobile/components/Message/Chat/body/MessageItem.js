@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Image, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { formatDate } from '../../../../utils/formatDate';
+
 function MessageItem({ avatar,  time, message }) {
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState(null);
@@ -60,7 +60,7 @@ const type = 'text';
         </TouchableOpacity>
 
         {/* Thời gian tin nhắn */}
-        <Text style={styles.time}>{formatDate(time)}</Text>
+        <Text style={styles.time}>{time}</Text>
 
         {/* Emoji phản ứng */}
         {emojiIndex && (
