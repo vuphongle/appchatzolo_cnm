@@ -893,12 +893,13 @@ button {
 
 /* 📌 Căn chỉnh thời gian bên dưới nội dung tin nhắn */
 .message-time {
+  width: 30px;
   font-size: 10px;
-  color: #888;
+  color: #020202;
   margin-top: 3px;
   display: block;
   text-align: right;
-  background: #ebecf0;
+  background-color: #f1f1f1;
 }
 
 /* css cho Bảng biểu tượng cảm xúc */
