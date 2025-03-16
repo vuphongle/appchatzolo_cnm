@@ -67,39 +67,39 @@ const MainPage = () => {
     const [unreadMessages, setUnreadMessages] = useState([]); // Danh sách tin nhắn chưa đọc
 
     //set trang thái online/offline ------------- ở đây
+    // Khi người dùng chọn một bạn từ danh sách tìm kiếm
     const handleSelectChat = async (user) => {
         try {
-            // 🔥 1. Gọi API kiểm tra trạng thái online của user
+            // Gọi API để lấy trạng thái online của user
             const updatedUser = await UserService.getUserStatus(user.id);
 
-            // 🔥 2. Gọi API lấy tin nhắn chưa đọc
-            const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser.my_user.id, user.id);
+            // Cập nhật thông tin người bạn và trạng thái online
+            setSelectedChat({
+                ...user,
+                isOnline: updatedUser.isOnline,  // Cập nhật trạng thái online từ backend
+            });
 
-            // 🔥 3. Nếu có tin nhắn chưa đọc => Đánh dấu là đã đọc
+            // Gọi API hoặc xử lý thêm các bước cần thiết, ví dụ như lấy tin nhắn chưa đọc
+            const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser.my_user.id, user.id);
             if (unreadMsgs.length > 0) {
                 await MessageService.savereadMessages(MyUser.my_user.id, user.id);
             }
 
-            // 🔥 4. Cập nhật state
-            setSelectedChat({
-                ...user,
-                isOnline: updatedUser.isOnline, // Cập nhật trạng thái online từ backend
-            });
-
-            setUnreadMessages([]); // Đánh dấu tất cả tin nhắn là đã đọc
+            setUnreadMessages([]);  // Đánh dấu tất cả tin nhắn là đã đọc
 
         } catch (error) {
             console.error("Lỗi khi lấy dữ liệu user hoặc tin nhắn:", error);
 
-            // Nếu có lỗi, vẫn cập nhật user nhưng mặc định là offline
+            // Nếu có lỗi, thiết lập trạng thái offline mặc định
             setSelectedChat({
                 ...user,
                 isOnline: false,
             });
 
-            setUnreadMessages([]); // Nếu lỗi, reset danh sách tin nhắn chưa đọc
+            setUnreadMessages([]);
         }
     };
+
 
 
     // State để lưu số lượng tin nhắn chưa đọc cho từng bạn
@@ -405,6 +405,11 @@ const MainPage = () => {
     const [isFriendRequestModalOpen, setIsFriendRequestModalOpen] = useState(false);
     const [messageContent, setMessageContent] = useState(`Xin chào, mình là ${MyUser?.my_user?.name}. Mình biết bạn qua số điện thoại. Kết bạn với mình nhé!`);
     const [isRequestSent, setIsRequestSent] = useState(false);
+    //tìm kiếm ban bè trong danh sách chat
+    const [searchQuery, setSearchQuery] = useState(""); // State to store the search query
+    const filteredFriends = friends.filter(friend =>
+        friend.name.toLowerCase().includes(searchQuery.toLowerCase()) // Case-insensitive filtering by name
+    );
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
     const allMessagesAndFriends = [
         ...messages,
@@ -861,6 +866,11 @@ const MainPage = () => {
         setIsUserInfoModalOpen(false);
     };
 
+
+
+
+
+
     // Hàm gửi yêu cầu kết bạn
     const sendFriendRequest = async () => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !user?.id) return;
@@ -962,19 +972,26 @@ const MainPage = () => {
             <nav className="sidebar-nav">
                 <div className="nav-item">
                     <img
-                        src="https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg"
+                        src={MyUser.my_user?.avatar || avatar_default}
                         alt="User Avatar"
                         className="avatar-img"
                     />
                 </div>
+
                 <div className="nav-item" onClick={() => setActiveTab("chat")}>
-                    <i className="icon">💬</i>
+                    <i className="icon">
+                        <img src="/MainPage/chat.png" alt="Chat Icon" />
+                    </i>
                 </div>
                 <div className="nav-item" onClick={() => setActiveTab("contacts")}>
-                    <i className="icon">👥</i>
+                    <i className="icon">
+                        <img src="/MainPage/friends.png" alt="friends Icon" />
+                    </i>
                 </div>
                 <div className="nav-item settings" onClick={toggleSettingsMenu}>
-                    <i className="icon">⚙️</i>
+                    <i className="icon">
+                        <img src="/MainPage/settings2.png" alt="seting Icon" />
+                    </i>
                     {isSettingsOpen && (
                         <div className="settings-menu" ref={isSettingsOpenRef}>
                             <ul>
@@ -998,20 +1015,27 @@ const MainPage = () => {
             {/* Sidebar header luôn hiển thị */}
             <aside className="sidebar">
                 <div className="sidebar-header">
-                    <input type="text" className="search-bar" placeholder="Tìm kiếm" />
-                    <button className="search-button">🔍</button>
+                    <input type="text" className="search-bar" placeholder="Tìm kiếm"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <button className="search-button">
+                        <img src="/MainPage/search.png" alt="Chat Icon" />
+                    </button>
                     <button className="action-button" title="Thêm bạn" onClick={handleAddFriend}>
                         <img
                             className="action-button-img"
-                            src="https://img.icons8.com/?size=100&id=23372&format=png&color=000000"
+                            src="/MainPage/add-friend.png"
                             alt="Add Friend"
+
                         />
                     </button>
                     <button className="action-button" title="Tạo nhóm">
                         <img
                             className="action-button-img"
-                            src="https://img.icons8.com/?size=100&id=3734&format=png&color=000000"
+                            src="/MainPage/add-group1.png"
                             alt="Create Group"
+                            style={{ width: "35px", height: "35px" }}
                         />
                     </button>
                 </div>
@@ -1021,22 +1045,39 @@ const MainPage = () => {
                     <>
                         <div className="sidebar-tabs">
                             <button className="tab active">Tất cả</button>
-                            <button className="tab">Chưa đọc</button>
-                            <button className="tab">Phân loại</button>
+                            <button className="tab active">Chưa đọc</button>
+                            <button className="tab active">Phân loại</button>
                         </div>
                         <div className="message-list">
                             <ul>
-                                {allMessagesAndFriends.map((item) => (
-                                    <MessageItem
-                                        key={item.id}
-                                        groupName={item.groupName}
-                                        unreadCount={item.unreadCount}
-                                        img={item.img || avatar_default}
-                                        onClick={() => setSelectedChat(item)}
-                                    />
-                                ))}
+                                {searchQuery === "" ? (
+                                    // Hiển thị tất cả bạn bè nếu không có tìm kiếm
+                                    allMessagesAndFriends.map((item) => (
+                                        <MessageItem
+                                            key={item.id}
+                                            groupName={item.groupName}
+                                            unreadCount={item.unreadCount}
+                                            img={item.img || avatar_default}
+                                            onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
+                                        />
+                                    ))
+                                ) : filteredFriends.length > 0 ? (
+                                    // Hiển thị các bạn bè đã lọc theo query tìm kiếm
+                                    filteredFriends.map((item) => (
+                                        <MessageItem
+                                            key={item.id}
+                                            groupName={item.name}
+                                            unreadCount={unreadMessagesCounts.find((u) => u.friendId === item.id)?.unreadCount || 0}
+                                            img={item.avatar || avatar_default}
+                                            onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
+                                        />
+                                    ))
+                                ) : (
+                                    <p>Không tìm thấy bạn bè nào.</p> // Hiển thị khi không tìm thấy kết quả
+                                )}
                             </ul>
                         </div>
+
                     </>
                 )}
                 {/* Sidebar tabs hiển thị trong tab "contacts" */}
