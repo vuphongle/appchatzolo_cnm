@@ -75,7 +75,7 @@ function MyMessageItem({ time, message }) {
         )}
 
         {/* Thời gian */}
-        <Text style={styles.time}>{formatDate(time)}</Text>
+        <Text style={styles.time}>{time}</Text>
 
         {/* Emoji */}
         {emojiIndex && (

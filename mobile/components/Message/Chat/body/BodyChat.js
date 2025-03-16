@@ -5,7 +5,11 @@ import {
   KeyboardAvoidingView,
   TextInput,
   TouchableOpacity,
-  View,Text
+  View,
+  Text,
+  Platform,
+  Dimensions,
+  Keyboard, 
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -15,16 +19,20 @@ import MyMessageItem from './MyMessagaItem';
 import MessageItem from './MessageItem';
 import { useWebSocket } from '../../../../context/WebSocketService';
 import { UserContext } from '../../../../context/UserContext';
+import EmojiSelector from '../../../../utils/EmojiSelector';
+import { formatDate } from '../../../../utils/formatDate';
 
 const ChatScreen = ({ receiverID, name, avatar }) => {
-
   const { user } = useContext(UserContext);
   const userId = user?.id;
+  const { height: windowHeight } = Dimensions.get('window');
 
   const { messages, sendMessage } = useWebSocket(userId, receiverID);
   const scrollViewRef = useRef(null);
-  const [messageText, setMessageText] = useState("");
-
+  const [messageText, setMessageText] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [wantToShowEmojiPicker, setWantToShowEmojiPicker] = useState(false); // Thêm state mới
+  
   // Cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (scrollViewRef.current) {
@@ -32,12 +40,26 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     }
   }, [messages]);
 
+  // Xử lý sự kiện bàn phím ẩn để hiển thị emoji picker
+  useEffect(() => {
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      if (wantToShowEmojiPicker) {
+        setShowEmojiPicker(true);
+        setWantToShowEmojiPicker(false);
+      }
+    });
+    return () => {
+      keyboardDidHideListener.remove();
+    };
+  }, [wantToShowEmojiPicker]);
+
   const handleSendMessage = () => {
     if (messageText.trim()) {
       sendMessage(messageText, receiverID);
-      setMessageText("");
+      setMessageText('');
     }
   };
+
   const todayFormatted = new Date().toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -45,52 +67,85 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     timeZone: 'Asia/Ho_Chi_Minh',
   });
 
-  let lastDate = null;
+  const handleEmojiSelect = (emoji) => {
+    setMessageText((prevText) => prevText + emoji);
+  };
+  const toggleEmojiPicker = () => {
+    if (showEmojiPicker) {
+      setShowEmojiPicker(false);
+    } else {
+      Keyboard.dismiss();
+      setTimeout(() => setShowEmojiPicker(true), 100); 
+    }
+  };
+ 
+  const validMessages = Array.isArray(messages) ? messages.filter(msg => {
+
+    return msg && msg.sendDate && !isNaN(new Date(msg.sendDate).getTime());
+  }) : [];
+
+
+  const sortedMessages = [...validMessages].sort((a, b) => 
+    new Date(a.sendDate).getTime() - new Date(b.sendDate).getTime()
+  );
+
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-          <ScrollView
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <ScrollView
         style={styles.messageContainer}
         ref={scrollViewRef}
-        onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-      >
-        {(Array.isArray(messages) ? messages : []).map((e, index) => {
-          const isMyMessage = e.senderID === userId;
-          const messageDate = new Date(e.sendDate);
-          const formattedDate = messageDate.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            timeZone: 'Asia/Ho_Chi_Minh',
-          });
-
-          // Xác định tiêu đề ngày
-          let showDateHeader = false;
-          let headerText = formattedDate;
-          if (lastDate !== formattedDate) {
-            showDateHeader = true;
-            headerText = formattedDate === todayFormatted ? "Hôm nay" : formattedDate;
-            lastDate = formattedDate;
+        onContentSizeChange={() => {
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollToEnd({ animated: true });
           }
+        }}
+      >
+      {(() => {
+            let lastDate = null;
+            return sortedMessages.map((message, index) => {
+              const isMyMessage = message.senderID === userId;
+              const messageDate = new Date(message.sendDate);
+              const formattedDate = messageDate.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                timeZone: 'Asia/Ho_Chi_Minh',
+              });
 
-          return (
-            <View key={e.id || index}>
+              let showDateHeader = false;
+              if (lastDate !== formattedDate) {
+                showDateHeader = true;
+                lastDate = formattedDate;
+              }
+        
+              const headerText = formattedDate === todayFormatted ? "Hôm nay" : formattedDate;
+              
+              return (
+                <View key={message.id || `msg-${index}`}>
               {showDateHeader && (
                 <View style={styles.dateHeader}>
                   <Text style={styles.dateText}>{headerText}</Text>
                 </View>
               )}
               {isMyMessage ? (
-                <MyMessageItem time={e.sendDate} message={e.content} />
+              <MyMessageItem time={formatDate(message.sendDate)} message={message.content} />
               ) : (
-                <MessageItem avatar={avatar} name={name} time={e.sendDate} message={e.content} />
+                <MessageItem avatar={avatar} name={name} time={formattedDate ? formatDate(message.sendDate) : ""} message={message.content} />
               )}
             </View>
-          );
+              );
+            });
         })}
       </ScrollView>
       <View style={styles.footerContainer}>
         <View style={styles.inputContainer}>
-          <MaterialIcons name="insert-emoticon" size={24} color="#0091ff" />
+          <TouchableOpacity onPress={toggleEmojiPicker}>
+            <MaterialIcons name="insert-emoticon" size={24} color="#0091ff" />
+          </TouchableOpacity>
           <TextInput
             value={messageText}
             onChangeText={setMessageText}
@@ -112,6 +167,17 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           </TouchableOpacity>
         </View>
       </View>
+      {showEmojiPicker && ( 
+        <View style={{ height: 350, overflow: 'hidden' }}>
+          <EmojiSelector
+            onEmojiSelected={handleEmojiSelect}
+            showSearchBar={false}
+            columns={8}
+            showTabs={true}
+            showHistory={true}
+          />
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 };
@@ -134,7 +200,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderTopWidth: 1,
     borderColor: '#ddd',
-    width:'100%'
+    width: '100%',
+    backgroundColor: '#fff',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -148,12 +215,13 @@ const styles = StyleSheet.create({
   inputMessage: {
     flex: 1,
     marginLeft: 10,
+    fontSize: 16,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    gap:10
+    gap: 10,
   },
   dateHeader: {
     alignSelf: 'center',
@@ -166,5 +234,10 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 14,
     color: '#555',
+  },
+  emojiPickerContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    backgroundColor: '#fff',
   },
 });

@@ -33,19 +33,11 @@ const styles = StyleSheet.create({
     },
     chatContainer: {
         flex: 1,
-        // justifyContent: 'flex-start',
-        // padding: 10,
-        // backgroundColor: '#f2f2f2', // Background color for chat section
+       
     },
     chatText: {
         fontSize: 18,
         color: '#333',
     },
-    // footerContainer: {
-    //     // This keeps the Footer at the bottom of the screen
-    //     position: 'absolute',
-    //     bottom: 0,
-    //     width: '100%',
-    //     paddingBottom: 10,
-    // }
+    
 });

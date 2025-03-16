@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { IPV4, SOCKET_URL } from '@env';
+import { IPV4,SOCKET } from '@env';
+const SOCKET_URL = SOCKET+"/socket.io?userId=";
 
 export const useWebSocket = (userId, receiverID) => {
   const socketRef = useRef(null);

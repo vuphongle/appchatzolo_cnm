@@ -21,7 +21,7 @@ const formatDate = (timestamp) => {
       date.setHours(date.getHours() + 7);
      
       if (isNaN(date.getTime())) {
-        console.log("Invalid date from timestamp:", timestamp);
+       
         return "Không xác định";
       }
     
@@ -32,7 +32,7 @@ const formatDate = (timestamp) => {
       
 
       if (diffInSeconds < 60) {
-        return "Vừa gửi xong";
+        return "Vừa xong";
       } else if (diffInMinutes < 60) {
         return `${diffInMinutes} phút trước`;
       } else if (diffInHours < 24) {
