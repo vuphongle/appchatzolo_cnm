@@ -17,6 +17,7 @@ import UserInfoModal from "./UserInfoModal";
 
 import S3Service from "../services/S3Service";
 import { se } from "date-fns/locale";
+import CreateGroupModal from "./CreateGroupModal";
 
 
 
@@ -51,6 +52,7 @@ const MainPage = () => {
 
     const handleCloseModal = () => {
         setIsUserInfoVisible(false);
+        setIsModalGroupOpen(false);
     };
 
     const { MyUser, setMyUser, logout } = useAuth();
@@ -199,12 +201,6 @@ const MainPage = () => {
                 console.error("Error fetching messages:", err);
             });
     }, [selectedChat, MyUser?.my_user?.id]);
-
-
-
-
-
-
 
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
@@ -386,6 +382,7 @@ const MainPage = () => {
     const [user, setUser] = useState(null);
     const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalGroupOpen, setIsModalGroupOpen] = useState(false);
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
     const [emojiBtnPosition, setEmojiBtnPosition] = useState({});
@@ -845,6 +842,10 @@ const MainPage = () => {
         setIsModalOpen(true); // Open the "Add Friend" modal
     };
 
+    const handleCreateGroup = () => {
+        setIsModalGroupOpen(true);
+    };
+
     const closeAllModal = () => {
         setIsModalOpen(false);
         setIsUserInfoModalOpen(false);
@@ -996,7 +997,7 @@ const MainPage = () => {
                             alt="Add Friend"
                         />
                     </button>
-                    <button className="action-button" title="Tạo nhóm">
+                    <button className="action-button" title="Tạo nhóm" onClick={handleCreateGroup}>
                         <img
                             className="action-button-img"
                             src="https://img.icons8.com/?size=100&id=3734&format=png&color=000000"
@@ -1004,6 +1005,10 @@ const MainPage = () => {
                         />
                     </button>
                 </div>
+
+                {isModalGroupOpen && (
+                    <CreateGroupModal onClose={handleCloseModal} />
+                )}
 
                 {/* Sidebar tabs hiển thị trong tab "chat" */}
                 {activeTab === "chat" && (
