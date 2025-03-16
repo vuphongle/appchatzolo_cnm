@@ -139,7 +139,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
             </View>
               );
             });
-        })}
+        })()}
       </ScrollView>
       <View style={styles.footerContainer}>
         <View style={styles.inputContainer}>
