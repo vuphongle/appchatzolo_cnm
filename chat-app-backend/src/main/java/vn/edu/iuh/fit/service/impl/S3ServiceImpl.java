@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import vn.edu.iuh.fit.service.S3Service;
 
@@ -53,6 +54,7 @@ public class S3ServiceImpl implements S3Service {
                     .bucket(bucketName)
                     .key(s3Key)
                     .contentType(file.getContentType())
+                    .acl(ObjectCannedACL.PUBLIC_READ) // Đặt quyền public-read
                     .build();
             // Upload file lên S3
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
