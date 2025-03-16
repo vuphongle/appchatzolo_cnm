@@ -509,6 +509,9 @@ const MainPage = () => {
                                                 // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
                                                 const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
 
+                                                // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
+                                                const isFileMessage = (url) => url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/) != null;
+
                                                 return (
                                                     <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
@@ -527,6 +530,21 @@ const MainPage = () => {
                                                             {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
                                                             {isImageMessage(msg.content) ? (
                                                                 <img src={msg.content} alt="Image" className="message-image" />
+                                                            ) : isFileMessage(msg.content) ? (
+                                                                <div className="file-message">
+                                                                    {/* Hiển thị biểu tượng file FontAwesome */}
+                                                                    <span className="file-icon">
+                                                                        <i className="fa fa-file-alt"></i> {/* Bạn có thể thay đổi theo loại file, ví dụ: fa-file-pdf, fa-file-word */}
+                                                                    </span>
+                                                                    <span className="file-name">{msg.content.split('/').pop()}</span>
+
+                                                                    <div>
+                                                                        {/* Nút tải xuống dưới dạng button màu xanh */}
+                                                                        <a href={msg.content} download className="btn btn-blue">
+                                                                            <button className="download-btn">Tải xuống</button>
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
                                                             ) : (
                                                                 <p>{msg.content}</p>
                                                             )}
