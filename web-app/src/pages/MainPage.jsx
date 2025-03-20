@@ -82,9 +82,9 @@ const MainPage = () => {
             });
 
             // Gọi API hoặc xử lý thêm các bước cần thiết, ví dụ như lấy tin nhắn chưa đọc
-            const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser.my_user.id, user.id);
+            const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser?.my_user?.id, user.id);
             if (unreadMsgs.length > 0) {
-                await MessageService.savereadMessages(MyUser.my_user.id, user.id);
+                await MessageService.savereadMessages(MyUser?.my_user?.id, user.id);
             }
 
             setUnreadMessages([]);  // Đánh dấu tất cả tin nhắn là đã đọc
@@ -111,7 +111,7 @@ const MainPage = () => {
     const getUnreadMessagesForFriends = async (friends) => {
         const unreadCounts = await Promise.all(
             friends.map(async (friend) => {
-                const unreadCount = await MessageService.getSLUnreadMessages(MyUser.my_user.id, friend.id);
+                const unreadCount = await MessageService.getSLUnreadMessages(MyUser?.my_user?.id, friend.id);
                 return { friendId: friend.id, unreadCount }; // Trả về đối tượng với friendId và unreadCount
             })
         );
@@ -122,7 +122,7 @@ const MainPage = () => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id) return;
 
         const fetchUnreadMessagesCountForAllFriends = async () => {
-            const unreadCounts = await MessageService.getUnreadMessagesCountForAllFriends(MyUser.my_user.id);
+            const unreadCounts = await MessageService.getUnreadMessagesCountForAllFriends(MyUser?.my_user?.id);
             setUnreadMessagesCounts(unreadCounts); // Lưu số lượng tin nhắn chưa đọc vào state
         };
 
@@ -161,7 +161,7 @@ const MainPage = () => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
 
         // Lấy tất cả tin nhắn giữa người gửi và người nhận
-        MessageService.get(`/messages?senderID=${MyUser.my_user.id}&receiverID=${selectedChat.id}`)
+        MessageService.get(`/messages?senderID=${MyUser?.my_user?.id}&receiverID=${selectedChat.id}`)
             .then((data) => {
                 // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
                 const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
@@ -178,7 +178,7 @@ const MainPage = () => {
                 // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
                 if (unreadMessages.length > 0) {
                     // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
-                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                    MessageService.savereadMessages(MyUser?.my_user?.id, selectedChat.id)
                         .then(() => {
                             setChatMessages(updatedMessages); // Cập nhật lại state tin nhắn ngay lập tức
 
@@ -260,7 +260,7 @@ const MainPage = () => {
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id) return;
 
-        UserService.getFriends(MyUser.my_user.id)
+        UserService.getFriends(MyUser?.my_user?.id)
             .then((data) => {
                 setFriends(data); // Cập nhật danh sách bạn bè
             })
@@ -287,7 +287,7 @@ const MainPage = () => {
                 for (let url of uploadedImages) {
                     const message = {
                         id: new Date().getTime().toString(),
-                        senderID: MyUser.my_user.id,
+                        senderID: MyUser?.my_user?.id,
                         receiverID: selectedChat.id,
                         content: url, // Nội dung là URL của ảnh đã tải lên
                         sendDate: new Date().toISOString(),
@@ -321,7 +321,7 @@ const MainPage = () => {
                 for (let url of uploadedFiles) {
                     const message = {
                         id: new Date().getTime().toString(),
-                        senderID: MyUser.my_user.id,
+                        senderID: MyUser?.my_user?.id,
                         receiverID: selectedChat.id,
                         content: url, // Nội dung là URL của tệp đã tải lên
                         sendDate: new Date().toISOString(),
@@ -354,7 +354,7 @@ const MainPage = () => {
 
             const message = {
                 id: new Date().getTime().toString(),
-                senderID: MyUser.my_user.id,
+                senderID: MyUser?.my_user?.id,
                 receiverID: selectedChat.id,
                 content: textMessage, // Nội dung tin nhắn là văn bản
                 sendDate: new Date().toISOString(),
@@ -845,7 +845,7 @@ const MainPage = () => {
     const handleSearchFriend = async () => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.phoneNumber) return;
 
-        if (phoneNumber === MyUser.my_user.phoneNumber) {
+        if (phoneNumber === MyUser?.my_user?.phoneNumber) {
             setError("Bạn không thể tìm kiếm chính mình.");
             return;
         }
@@ -895,7 +895,7 @@ const MainPage = () => {
 
         const message = {
             id: new Date().getTime().toString(),
-            senderID: MyUser.my_user.id,
+            senderID: MyUser?.my_user?.id,
             receiverID: user.id,
             content: messageContent,
             isRead: false,
@@ -905,7 +905,7 @@ const MainPage = () => {
 
         try {
             // Xóa những lời mời cũ trước khi gửi lời mời mới
-            await MessageService.deleteInvitation(MyUser.my_user.id, user.id);
+            await MessageService.deleteInvitation(MyUser?.my_user?.id, user.id);
 
             // Gửi yêu cầu kết bạn qua MessageService
             const response = await MessageService.post('/addFriend', message);
@@ -990,7 +990,7 @@ const MainPage = () => {
             <nav className="sidebar-nav">
                 <div className="nav-item">
                     <img
-                        src={MyUser.my_user?.avatar || avatar_default}
+                        src={MyUser?.my_user?.avatar || avatar_default}
                         alt="User Avatar"
                         className="avatar-img"
                     />
@@ -1027,7 +1027,7 @@ const MainPage = () => {
                 </div>
             </nav>
             {isUserInfoVisible && (
-                <UserInfoModal user={MyUser.my_user} onClose={handleCloseModal} />
+                <UserInfoModal user={MyUser?.my_user} onClose={handleCloseModal} />
             )}
 
             {/* Sidebar header luôn hiển thị */}
@@ -1218,7 +1218,7 @@ const MainPage = () => {
 
                             <div className="action-buttons">
                                 {/* Kiểm tra nếu user đó có trong friendIds của my_user thì không hiển thị nút Kết bạn */}
-                                {!MyUser.my_user.friendIds.includes(user.id) && (
+                                {!MyUser?.my_user?.friendIds.includes(user.id) && (
                                     <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
                                 )}
                                 <button className="message-button">Nhắn tin</button>

@@ -623,7 +623,7 @@ button {
   padding: 10px;
   overflow-y: auto; /* Thêm thanh cuộn khi nội dung dài */
   max-height: 600px; /* Giới hạn chiều cao tối đa của phần tin nhắn */
-  background-color: #f9f9f9;
+  background-color: #f2f3f7;
   display: flex;
   flex-direction: column; /* Sắp xếp tin nhắn theo chiều dọc */
 }
@@ -637,25 +637,27 @@ button {
 
 /* 📌 Căn chỉnh tin nhắn gửi (phải) */
 .chat-message.sent {
-  background-color: #e6f7ff;
+  background-color: #d1e5ff;
   align-self: flex-end;
   text-align: left; /* Chỉnh về trái */
   border-radius: 10px 10px 0 10px;
   max-width: 60%;
   padding: 10px;
   margin: 5px 0;
+  border: 1px solid #66a6ff;
   position: relative;
 }
 
 /* 📌 Căn chỉnh tin nhắn nhận (trái) */
 .chat-message.received {
-  background-color: #f1f1f1;
+  background-color: #ffffff;
   align-self: flex-start;
   text-align: left;
   border-radius: 10px 10px 10px 0;
   max-width: 60%;
   padding: 10px;
   margin: 5px 0;
+  border: 1px solid #576684;
   position: relative;
 }
 
@@ -898,7 +900,7 @@ button {
   margin-top: 3px;
   display: block;
   text-align: right;
-  background: #ebecf0;
+  background-color: transparent;
 }
 
 /* css cho Bảng biểu tượng cảm xúc */
