@@ -73,7 +73,7 @@ const MainPage = () => {
     const handleSelectChat = async (user) => {
         try {
             // Gọi API để lấy trạng thái online của user
-            const updatedUser = await UserService.getUserStatus(user.id);
+            const updatedUser = await UserService.getUserById(user.id);
 
             // Cập nhật thông tin người bạn và trạng thái online
             setSelectedChat({
@@ -1026,6 +1026,8 @@ const MainPage = () => {
         logout();
         navigate('/');
     };
+
+
 
     return (
         <div className="main-container">
