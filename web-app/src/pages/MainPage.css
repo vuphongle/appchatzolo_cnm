@@ -70,8 +70,8 @@ button {
 
 .settings-menu {
   position: absolute;
-  left: 80px;
-  top: 200px;
+  left: 70px;
+  top: 220px;
   background-color: white;
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -260,8 +260,8 @@ button {
   height: 100%;
 }
 
-.modal {
-  position: fixed;
+/* .modal {
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -270,7 +270,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-}
+} */
 
 .Search-model-header {
   padding: 8px;
@@ -947,4 +947,47 @@ button {
 
 .emoji-picker span:hover {
   transform: scale(1.2);
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Màu mờ tối */
+    display: flex;
+    z-index: 1;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal {
+    top: 220px;
+    left: 600px;
+    right: '50%';
+    bottom: '50%';
+    display: flex;
+    /* position: absolute; */
+    background-color: white;
+    /* padding: 20px; */
+    border-radius: 10px;
+    width: 420px;
+    height: 240px;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    
+}
+
+.setting-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent; /* Overlay mờ */
+    z-index: 1; /* Để overlay ở phía trước modal */
 }

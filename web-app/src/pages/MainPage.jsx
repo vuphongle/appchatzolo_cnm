@@ -1011,17 +1011,31 @@ const MainPage = () => {
                         <img src="/MainPage/settings2.png" alt="seting Icon" />
                     </i>
                     {isSettingsOpen && (
-                        <div className="settings-menu" ref={isSettingsOpenRef}>
-                            <ul>
-                                <li className="cat-dat" onClick={handleUserInfoToggle}>
-                                    Thông tin tài khoản
-                                </li>
-                                <li className="cat-dat">Cài đặt</li>
-                                <li className="cat-dat">Dữ liệu</li>
-                                <li className="cat-dat">Ngôn ngữ</li>
-                                <li className="cat-dat">Hỗ trợ</li>
-                                <li className="logout" onClick={handleLogout}>Đăng xuất</li>
-                            </ul>
+                        <div
+                            className="setting-overlay"
+                            onClick={() => setIsSettingsOpen(false)}
+                        >
+                            <div
+                                className="settings-menu"
+                                onClick={(e) => e.stopPropagation()} // Ngừng sự kiện click bubble
+                            >
+                                <ul>
+                                    <li className="cat-dat" onClick={handleUserInfoToggle}>
+                                        Thông tin tài khoản
+                                    </li>
+                                    <li className="cat-dat">Cài đặt</li>
+                                    <li className="cat-dat">Dữ liệu</li>
+                                    <li className="cat-dat">Ngôn ngữ</li>
+                                    <li className="cat-dat">Hỗ trợ</li>
+                                    <li className="logout" onClick={handleLogout}>Đăng xuất</li>
+                                </ul>
+                            </div>
+
+                            {/* Overlay */}
+                            {/* <div
+                                className="overlay"
+                                onClick={() => setIsSettingsOpen(false)} // Đóng menu khi click ngoài
+                            ></div> */}
                         </div>
                     )}
                 </div>
@@ -1174,33 +1188,39 @@ const MainPage = () => {
             {/* ---------------------------------------------------------------------------------- */}
             {/* Add Friend Modal */}
             {isModalOpen && (
-                <div className="modal">
-                    <div className="modal-content" ref={modalRef}>
-                        <h2 className="Search-model-header">Thêm bạn</h2>
-                        <div className="input-group">
-                            <select className="country-code">
-                                <option value="+84">(+84) <img src={flag} alt="Flag" /></option>
-                                {/* Thêm các lựa chọn khác nếu cần */}
-                            </select>
-                            <input
-                                className="phone-number"
-                                type="text"
-                                placeholder="Số điện thoại"
-                                value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
-                            />
-                        </div>
-                        {error && <div className="error">{error}</div>}
+                <div className="overlay" onClick={() => setIsModalOpen(false)}>
+                    <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}  // Ngừng sự kiện click bubble tại modal
+                    >
+                        <div className="modal-content">
+                            <h2 className="Search-model-header">Thêm bạn</h2>
+                            <div className="input-group">
+                                <select className="country-code">
+                                    <option value="+84">(+84) <img src={flag} alt="Flag" /></option>
+                                    {/* Thêm các lựa chọn khác nếu cần */}
+                                </select>
+                                <input
+                                    className="phone-number"
+                                    type="text"
+                                    placeholder="Số điện thoại"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                />
+                            </div>
+                            {error && <div className="error">{error}</div>}
 
-                        <div className="action-buttons">
-                            <button className="search-modal" onClick={handleSearchFriend} disabled={loading}>
-                                {loading ? "Đang tìm kiếm..." : "Tìm kiếm"}
-                            </button>
-                            <button className="close-modal" onClick={() => setIsModalOpen(false)}>Hủy</button>
+                            <div className="action-buttons">
+                                <button className="search-modal" onClick={handleSearchFriend} disabled={loading}>
+                                    {loading ? "Đang tìm kiếm..." : "Tìm kiếm"}
+                                </button>
+                                <button className="close-modal" onClick={() => setIsModalOpen(false)}>Hủy</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
+
 
             {isUserInfoModalOpen && user && (
                 <div className="modal">
