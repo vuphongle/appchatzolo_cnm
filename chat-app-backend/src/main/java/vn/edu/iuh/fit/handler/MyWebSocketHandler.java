@@ -1,6 +1,8 @@
 package vn.edu.iuh.fit.handler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.context.annotation.Bean;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -8,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.service.MessageService;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MyWebSocketHandler extends TextWebSocketHandler {
@@ -99,6 +103,22 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             System.out.println("Message saved to database: " + message);
         } catch (Exception e) {
             System.err.println("Error saving message to database: " + e.getMessage());
+        }
+    }
+
+    public void sendFriendRequestNotification(String receiverId, int updatedCount) throws JsonProcessingException {
+        WebSocketSession receiverSession = sessions.get(receiverId);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "FRIEND_REQUEST");  // Loại thông báo
+            payload.put("count", updatedCount);       // Số lời mời cập nhật
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Friend request notification sent to user: " + receiverId);
+            } catch (Exception e) {
+                System.err.println("Error sending friend request notification: " + e.getMessage());
+            }
         }
     }
 }

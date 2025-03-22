@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -27,7 +28,7 @@ public class MessageController {
 
     //Gửi lời mời kết bạn
     @PostMapping("/addFriend")
-    public void sendMessage(@RequestBody Message message) {
+    public void sendMessage(@RequestBody Message message) throws JsonProcessingException {
         System.out.println("Received message: " + message);
         service.sendMessage(message);
     }
@@ -48,7 +49,7 @@ public class MessageController {
 
     // Xóa lời mời kết bạn (thu hồi hoặc từ chối)
     @DeleteMapping("/invitations/{senderId}/{receiverId}")
-    public ResponseEntity<String> deleteInvitation(@PathVariable String senderId, @PathVariable String receiverId) {
+    public ResponseEntity<String> deleteInvitation(@PathVariable String senderId, @PathVariable String receiverId) throws JsonProcessingException {
         service.deleteInvitation(senderId, receiverId);
         return ResponseEntity.ok("Lời mời đã bị xóa thành công.");
     }
