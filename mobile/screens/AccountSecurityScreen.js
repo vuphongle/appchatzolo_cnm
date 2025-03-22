@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'rea
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../context/UserContext';
 
-const AccountSecurityScreen = () => {
+const AccountSecurityScreen = ({navigation}) => {
   const { user, setUser } = useContext(UserContext);
   return (
     <ScrollView style={styles.container}>
@@ -12,7 +12,7 @@ const AccountSecurityScreen = () => {
         <Text style={styles.sectionTitle}>Tài khoản</Text>
 
         {/* Thông tin cá nhân */}
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('PersonalInfoScreen')}>
           <View style={styles.itemLeft}>
             {/* Ảnh đại diện và thông tin */}
             <Image

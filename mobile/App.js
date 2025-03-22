@@ -19,6 +19,7 @@ import ScreenCloud from './components/Message/Cloud/ScreenCloud';
 import CloudStorageScreen from './components/Message/Cloud/CloudStorageScreen'
 import FriendInvitesScreen from './screens/FriendInvitesScreen';
 import AccountSecurityScreen from './screens/AccountSecurityScreen';
+import PersonalInfoScreen from './screens/PersonalInfoScreen';
 
  Amplify.configure({
    ...awsConfig,
@@ -56,6 +57,11 @@ const App = () => {
             name="AccountSecurityScreen"
             component={AccountSecurityScreen}
             options={{ headerTitle: 'Tài khoản và bảo mật' }}
+          />
+          <Stack.Screen
+            name="PersonalInfoScreen"
+            component={PersonalInfoScreen}
+            options={{ headerTitle: 'Thông tin cá nhân' }}
           />
           <Stack.Screen
             name="Chat"
