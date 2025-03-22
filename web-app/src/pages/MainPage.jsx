@@ -60,6 +60,7 @@ const MainPage = () => {
     const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
     const [activeTab, setActiveTab] = useState("chat"); // State quản lý tab
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isFriendRequestSent, setIsFriendRequestSent] = useState(false);
 
     //chọn component MessageItem
     const [selectedChat, setSelectedChat] = useState(null);
@@ -459,6 +460,17 @@ const MainPage = () => {
             };
         }) : []),
     ];
+
+    const handleUserInfoModalOpen = async () => {
+        if (isFriendRequestSent === false) {
+            setIsFriendRequestModalOpen(true);
+        }
+        else if (isFriendRequestSent === true) {
+            // Xóa những lời mời cũ
+            await MessageService.deleteInvitation(MyUser?.my_user?.id, user.id);
+            setIsFriendRequestSent(false);
+        }
+    };
 
 
     const handleEmojiClick = (emoji) => {
@@ -946,12 +958,11 @@ const MainPage = () => {
         };
 
         try {
-            // Xóa những lời mời cũ trước khi gửi lời mời mới
-            await MessageService.deleteInvitation(MyUser?.my_user?.id, user.id);
 
             // Gửi yêu cầu kết bạn qua MessageService
             const response = await MessageService.post('/addFriend', message);
 
+            setIsFriendRequestSent(true);
             setIsRequestSent(true);
             setIsFriendRequestModalOpen(false);
 
@@ -1276,7 +1287,7 @@ const MainPage = () => {
                                 <div className="action-buttons">
                                     {/* Kiểm tra nếu user đó có trong friendIds của my_user thì không hiển thị nút Kết bạn */}
                                     {!MyUser?.my_user?.friendIds.includes(user.id) && (
-                                        <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
+                                        <button onClick={handleUserInfoModalOpen}> {isFriendRequestSent ? 'Hủy lời mời' : 'Kết bạn'} </button>
                                     )}
                                     <button className="message-button">Nhắn tin</button>
                                 </div>
