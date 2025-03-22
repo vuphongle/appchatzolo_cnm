@@ -19,11 +19,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import vn.edu.iuh.fit.service.S3Service;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Service
 public class S3ServiceImpl implements S3Service {
@@ -46,8 +49,11 @@ public class S3ServiceImpl implements S3Service {
                 throw new IllegalArgumentException("Chỉ chấp nhận file (.jpg,.jpeg,.png)");
             }
 
+            String timestamp = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
+            String newFileName = timestamp + "_" + fileName;
+
             // Tạo đường dẫn file trong S3
-            String s3Key = "avatar/" + fileName;
+            String s3Key = "avatar/" + newFileName;
 
             // Tạo request để upload
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -124,4 +130,21 @@ public class S3ServiceImpl implements S3Service {
             throw new RuntimeException("File upload failed: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public void deleteFile(String fileUrl) {
+        try {
+            if (fileUrl == null || fileUrl.isEmpty()) return;
+
+            String fileKey = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key("avatar/" + fileKey) // Chỉ xóa avatar
+                    .build();
+            s3Client.deleteObject(deleteObjectRequest);
+        } catch (Exception e) {
+            System.err.println("Xóa file thất bại: " + e.getMessage());
+        }
+    }
+
 }

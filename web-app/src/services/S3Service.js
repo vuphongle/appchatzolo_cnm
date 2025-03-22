@@ -8,10 +8,10 @@ const S3Service = {
    * @param {File} file - File ảnh cần upload
    * @returns {Promise<string>} - URL của avatar sau khi upload
    */
-    uploadAvatar: async (file) => {
+    uploadAvatar: async (file, userId) => {
         const formData = new FormData();
         formData.append("file", file);
-
+        formData.append("userId", userId);
         try {
             const response = await axios.post(`${API_BASE_URL}/avatar`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
