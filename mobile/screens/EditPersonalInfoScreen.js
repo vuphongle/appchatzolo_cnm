@@ -22,8 +22,8 @@ const EditPersonalInfoScreen = ({ navigation }) => {
   const initialDob = user.dob ? new Date(user.dob) : new Date();
   const [name, setName] = useState(user.name || '');
   const [dob, setDob] = useState(initialDob);
+  // Khởi tạo giới tính với giá trị hiện tại (Nam hoặc Nữ)
   const [gender, setGender] = useState(user.gender || '');
-  // Nếu avatarUri chưa là URL (bắt đầu bằng "http"), tức là ảnh mới được chọn
   const [avatarUri, setAvatarUri] = useState(user.avatar || '');
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -92,7 +92,7 @@ const EditPersonalInfoScreen = ({ navigation }) => {
     }
     const payload = {
       name,
-      // Sử dụng dob.toISOString() để gửi ngày sinh dưới dạng ISO string
+      // Gửi ngày sinh dưới dạng ISO string để đảm bảo parse đúng
       dob: dob.toISOString(),
       gender,
       avatar: avatarUrl,
@@ -168,14 +168,43 @@ const EditPersonalInfoScreen = ({ navigation }) => {
         )}
       </View>
 
+      {/* Chỉnh sửa phần chọn giới tính chỉ với 2 lựa chọn: Nam và Nữ */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Giới tính</Text>
-        <TextInput
-          style={styles.input}
-          value={gender}
-          onChangeText={setGender}
-          placeholder="Nam/Nữ"
-        />
+        <View style={styles.genderContainer}>
+          <TouchableOpacity
+            style={[
+              styles.genderOption,
+              gender === 'Nam' && styles.genderOptionSelected,
+            ]}
+            onPress={() => setGender('Nam')}
+          >
+            <Text
+              style={[
+                styles.genderText,
+                gender === 'Nam' && styles.genderTextSelected,
+              ]}
+            >
+              Nam
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.genderOption,
+              gender === 'Nữ' && styles.genderOptionSelected,
+            ]}
+            onPress={() => setGender('Nữ')}
+          >
+            <Text
+              style={[
+                styles.genderText,
+                gender === 'Nữ' && styles.genderTextSelected,
+              ]}
+            >
+              Nữ
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TouchableOpacity
@@ -246,6 +275,33 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
     color: '#333',
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  genderOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#FFF',
+    flex: 1,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  genderOptionSelected: {
+    borderColor: '#0084FF',
+    backgroundColor: '#0084FF',
+  },
+  genderText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  genderTextSelected: {
+    color: '#FFF',
+    fontWeight: '600',
   },
   saveButton: {
     backgroundColor: '#0084FF',

@@ -151,6 +151,7 @@ public class UserController {
             String newName = payload.get("name");
             String newDob = payload.get("dob");
             String newAvatar = payload.get("avatar");
+            String newGender = payload.get("gender");
 
             User user = userService.findUserById_ttt(id);
             if (user == null) {
@@ -167,6 +168,10 @@ public class UserController {
 
             if (newAvatar != null && !newAvatar.trim().isEmpty()) {
                 user.setAvatar(newAvatar);
+            }
+
+            if (newGender != null && !newGender.trim().isEmpty()) {
+                user.setGender(newGender);
             }
 
             userService.createUser(user);
