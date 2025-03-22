@@ -1,8 +1,10 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { UserContext } from '../context/UserContext';
 
 const AccountSecurityScreen = () => {
+  const { user, setUser } = useContext(UserContext);
   return (
     <ScrollView style={styles.container}>
       {/* Phần Tài khoản */}
@@ -14,12 +16,12 @@ const AccountSecurityScreen = () => {
           <View style={styles.itemLeft}>
             {/* Ảnh đại diện và thông tin */}
             <Image
-              source={{ uri: 'https://example.com/avatar.jpg' }}
+              source={{ uri: user?.avatar || 'https://placehold.co/100x100' }}
               style={styles.avatar}
             />
             <View style={styles.infoContainer}>
               <Text style={styles.itemTitle}>Thông tin cá nhân</Text>
-              <Text style={styles.itemSubtitle}>Lê Vũ Phong</Text>
+              <Text style={styles.name}>{user?.name || 'Người dùng vô danh'}</Text>
             </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#888" />
@@ -135,6 +137,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F0F8FF',
+    padding: 10,
   },
   section: {
     backgroundColor: '#FFFFFF',

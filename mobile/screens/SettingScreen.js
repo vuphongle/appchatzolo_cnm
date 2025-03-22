@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F0F8FF',
-        padding: 20,
+        padding: 10,
     },
     optionItem: {
         flexDirection: 'row',
