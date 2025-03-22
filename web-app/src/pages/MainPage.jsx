@@ -92,22 +92,6 @@ const MainPage = () => {
         updateUserInfo(updatedUserData);
     };
 
-    // // Socket lắng nghe phản hồi kết bạn để cập nhật lại danh sách bạn bè
-    // useEffect(() => {
-    //     const unsubscribe = onMessage((message) => {
-    //         if (message.type === 'friend_request_accepted') {
-    //             // Cập nhật danh sách bạn bè của bên A khi nhận được thông báo
-    //             console.log('Friend request accepted:', message);
-    //             updateFriendList(message.senderId);
-    //         }
-    //     });
-
-    //     return () => {
-    //         // Hủy đăng ký khi component bị unmount
-    //         unsubscribe();
-    //     };
-    // }, [onMessage]);
-
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
     const handleSelectChat = async (user) => {
@@ -461,14 +445,36 @@ const MainPage = () => {
         }) : []),
     ];
 
+    // const [countInvitations, setCountInvitations] = useState(0);
+
+    // useEffect(async () => {
+    //     const response = await MessageService.countInvitations(MyUser?.my_user?.id, user.id);
+    //     if (response > 0) {
+    //         setIsFriendRequestSent(true);
+    //     }
+    //     else if (response === 0) {
+    //         setIsFriendRequestSent(false);
+    //     }
+    // }, [countInvitations]);
+
     const handleUserInfoModalOpen = async () => {
         if (isFriendRequestSent === false) {
             setIsFriendRequestModalOpen(true);
         }
         else if (isFriendRequestSent === true) {
-            // Xóa những lời mời cũ
-            await MessageService.deleteInvitation(MyUser?.my_user?.id, user.id);
-            setIsFriendRequestSent(false);
+            try {
+                // Xóa những lời mời cũ
+                const response = await MessageService.deleteInvitation(MyUser?.my_user?.id, user.id);
+                if (response) {
+                    // Cập nhật trực tiếp trong state để danh sách luôn mới
+                    setFriendRequests((prevRequests) => [...prevRequests.filter((req) => req.senderID !== user.id)]);
+                    setIsFriendRequestSent(false);
+                } else {
+                    console.error('Không thể xóa lời mời');
+                }
+            } catch (error) {
+                console.error('Lỗi khi xóa lời mời:', error);
+            }
         }
     };
 
@@ -912,9 +918,22 @@ const MainPage = () => {
             const response = await UserService.get("/searchFriend", { phoneNumber: formattedPhoneNumber });
 
             setUser(response); // Cập nhật thông tin người dùng
-            setError(null);
 
             setIsUserInfoModalOpen(true); // Mở modal thông tin người dùng
+
+            //Xử lý hiện thị nút "Kết bạn" hay "Gửi lời mời"
+            try {
+                const response_count = await MessageService.countInvitations(MyUser?.my_user?.id, response.id);
+                if (response_count > 0) {
+                    setIsFriendRequestSent(true);
+                }
+                else if (response_count === 0) {
+                    setIsFriendRequestSent(false);
+                }
+            } catch (error) {
+                console.error('Lỗi khi kiểm tra lời mời:', error);
+            }
+            setError(null);
         } catch (err) {
             setUser(null);
             setError("Người dùng không tồn tại");
