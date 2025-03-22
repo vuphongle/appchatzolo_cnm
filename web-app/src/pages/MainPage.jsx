@@ -68,6 +68,7 @@ const MainPage = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState([]); // Danh sách tin nhắn chưa đọc
 
+
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
     const handleSelectChat = async (user) => {
@@ -1118,27 +1119,31 @@ const MainPage = () => {
                         <div className="message-list">
                             <ul>
                                 {searchQuery === "" ? (
-                                    // Hiển thị tất cả bạn bè nếu không có tìm kiếm
-                                    allMessagesAndFriends.map((item) => (
-                                        <MessageItem
-                                            key={item.id}
-                                            groupName={item.groupName}
-                                            unreadCount={item.unreadCount}
-                                            img={item.img || avatar_default}
-                                            onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
-                                        />
-                                    ))
+                                    // Sắp xếp các message item sao cho các item có unreadCount > 0 sẽ hiển thị đầu tiên
+                                    allMessagesAndFriends
+                                        .sort((a, b) => b.unreadCount - a.unreadCount) // Sắp xếp các tin nhắn theo unreadCount (tin nhắn chưa đọc lên đầu)
+                                        .map((item) => (
+                                            <MessageItem
+                                                key={item.id}
+                                                groupName={item.groupName}
+                                                unreadCount={item.unreadCount}
+                                                img={item.img || avatar_default}
+                                                onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
+                                            />
+                                        ))
                                 ) : filteredFriends.length > 0 ? (
-                                    // Hiển thị các bạn bè đã lọc theo query tìm kiếm
-                                    filteredFriends.map((item) => (
-                                        <MessageItem
-                                            key={item.id}
-                                            groupName={item.name}
-                                            unreadCount={unreadMessagesCounts.find((u) => u.friendId === item.id)?.unreadCount || 0}
-                                            img={item.avatar || avatar_default}
-                                            onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
-                                        />
-                                    ))
+                                    // Sắp xếp các message item của bạn bè đã lọc theo query tìm kiếm
+                                    filteredFriends
+                                        .sort((a, b) => b.unreadCount - a.unreadCount) // Sắp xếp các tin nhắn theo unreadCount (tin nhắn chưa đọc lên đầu)
+                                        .map((item) => (
+                                            <MessageItem
+                                                key={item.id}
+                                                groupName={item.name}
+                                                unreadCount={unreadMessagesCounts.find((u) => u.friendId === item.id)?.unreadCount || 0}
+                                                img={item.avatar || avatar_default}
+                                                onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
+                                            />
+                                        ))
                                 ) : (
                                     <p>Không tìm thấy bạn bè nào.</p> // Hiển thị khi không tìm thấy kết quả
                                 )}
