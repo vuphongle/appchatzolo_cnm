@@ -9,7 +9,7 @@ const PersonalInfoScreen = ({ navigation }) => {
   const { user, setUser } = useContext(UserContext);
 
   const handleEditPress = () => {
-    console.log('Chỉnh sửa thông tin cá nhân');
+    navigation.navigate('EditPersonalInfoScreen');
   };
 
   return (
@@ -20,10 +20,10 @@ const PersonalInfoScreen = ({ navigation }) => {
           <Image source={{ uri: user.avatar || 'https://placehold.co/100x100' }} style={styles.avatar} />
         </View>
 
-        {/* Thông tin Tên Zalo */}
+        {/* Thông tin Tên Zolo */}
         <View style={styles.infoRow}>
           <Ionicons name="person-outline" size={24} style={styles.infoIcon} />
-          <Text style={styles.label}>Tên Zalo</Text>
+          <Text style={styles.label}>Tên Zolo</Text>
           <Text style={styles.value}>{user.name || 'Người dùng vô danh'}</Text>
         </View>
 

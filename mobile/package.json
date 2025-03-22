@@ -31,6 +31,7 @@
     "react-native-emoji-selector": "^0.2.0",
     "react-native-gesture-handler": "^2.21.2",
     "react-native-get-random-values": "^1.11.0",
+    "react-native-image-crop-picker": "^0.42.0",
     "react-native-image-picker": "^7.2.3",
     "react-native-paper": "^5.13.1",
     "react-native-randombytes": "^3.6.1",
