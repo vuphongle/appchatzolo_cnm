@@ -49,6 +49,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean removeFriend(String userId, String friendId) {
+        return userRepository.removeFriend(userId, friendId);
+    }
+
+    @Override
     public void updateUser(User user) {
         userRepository.save(user);
 

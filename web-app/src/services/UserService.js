@@ -71,6 +71,15 @@ const UserService = {
       throw error.response ? error.response.data : error;
     }
   },
+
+  delete: async (url) => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}${url}`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
 };
 
 
