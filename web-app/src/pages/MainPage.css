@@ -260,7 +260,7 @@ button {
   height: 100%;
 }
 
-/* .modal {
+.modal {
   position: absolute;
   top: 0;
   left: 0;
@@ -270,7 +270,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-} */
+}
 
 .Search-model-header {
   padding: 8px;
@@ -916,9 +916,10 @@ button {
 }
 
 .emoji-picker {
-  position: absolute;
+  position: fixed;
   bottom: 60px; /* Điều chỉnh để emoji picker nằm ngay trên biểu tượng */
   left: 0; /* Đặt lại vị trí trái cho emoji picker */
+  width: 330px;
   background-color: white;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -959,26 +960,16 @@ button {
     height: 100%;
     background: rgba(0, 0, 0, 0.5); /* Màu mờ tối */
     display: flex;
-    z-index: 1;
+    /* z-index: 1; */
     justify-content: center;
     align-items: center;
 }
 
-.modal {
-    top: 220px;
-    left: 600px;
-    right: '50%';
-    bottom: '50%';
-    display: flex;
-    /* position: absolute; */
+.modal-e {
     background-color: white;
     /* padding: 20px; */
     border-radius: 10px;
-    width: 420px;
-    height: 240px;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+    width: 400px;
     
 }
 
@@ -990,4 +981,5 @@ button {
     height: 100%;
     background: transparent; /* Overlay mờ */
     z-index: 1; /* Để overlay ở phía trước modal */
+    cursor: default;
 }

@@ -48,6 +48,7 @@ const MainPage = () => {
 
     const handleUserInfoToggle = () => {
         setIsUserInfoVisible(true);
+        setIsSettingsOpen(false)
     };
 
     const handleCloseModal = () => {
@@ -646,172 +647,174 @@ const MainPage = () => {
 
                                     {/* Emoji Picker */}
                                     {emojiPickerVisible && (
-                                        <div
-                                            className="emoji-picker visible"
-                                            style={{ top: emojiBtnPosition.top - 400, left: emojiBtnPosition.left - 415 }}
-                                        // ref={emojiPickerVisibleRef}
-                                        >
-                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Cảm xúc</h6>
-                                            <span onClick={() => handleEmojiClick('😊')}>😊</span>
-                                            <span onClick={() => handleEmojiClick('😂')}>😂</span>
-                                            <span onClick={() => handleEmojiClick('😍')}>😍</span>
-                                            <span onClick={() => handleEmojiClick('😎')}>😎</span>
-                                            <span onClick={() => handleEmojiClick('🥺')}>🥺</span>
-                                            <span onClick={() => handleEmojiClick('🥰')}>🥰</span>
-                                            <span onClick={() => handleEmojiClick('🤩')}>🤩</span>
-                                            <span onClick={() => handleEmojiClick('🤗')}>🤗</span>
-                                            <span onClick={() => handleEmojiClick('🤔')}>🤔</span>
-                                            <span onClick={() => handleEmojiClick('🤭')}>🤭</span>
-                                            <span onClick={() => handleEmojiClick('🤫')}>🤫</span>
-                                            <span onClick={() => handleEmojiClick('🤥')}>🤥</span>
-                                            <span onClick={() => handleEmojiClick('🤐')}>🤐</span>
-                                            <span onClick={() => handleEmojiClick('🤨')}>🤨</span>
-                                            <span onClick={() => handleEmojiClick('🤓')}>🤓</span>
-                                            <span onClick={() => handleEmojiClick('🧐')}>🧐</span>
-                                            <span onClick={() => handleEmojiClick('🤠')}>🤠</span>
-                                            <span onClick={() => handleEmojiClick('🤡')}>🤡</span>
-                                            <span onClick={() => handleEmojiClick('🤢')}>🤢</span>
-                                            <span onClick={() => handleEmojiClick('🤧')}>🤧</span>
-                                            <span onClick={() => handleEmojiClick('🤮')}>🤮</span>
-                                            <span onClick={() => handleEmojiClick('🤥')}>🤥</span>
-                                            <span onClick={() => handleEmojiClick('🤬')}>🤬</span>
-                                            <span onClick={() => handleEmojiClick('🤯')}>🤯</span>
-                                            <span onClick={() => handleEmojiClick('🤠')}>🤠</span>
-                                            <span onClick={() => handleEmojiClick('😈')}>😈</span>
-                                            <span onClick={() => handleEmojiClick('💀')}>💀</span>
-                                            <span onClick={() => handleEmojiClick('☠️')}>☠️</span>
-                                            <span onClick={() => handleEmojiClick('👻')}>👻</span>
-                                            <span onClick={() => handleEmojiClick('👽')}>👽</span>
-                                            <span onClick={() => handleEmojiClick('🙀')}>🙀</span>
-                                            <span onClick={() => handleEmojiClick('😸')}>😸</span>
-                                            <span onClick={() => handleEmojiClick('🤖')}>🤖</span>
-                                            <span onClick={() => handleEmojiClick('🙈')}>🙈</span>
-                                            <span onClick={() => handleEmojiClick('💩')}>💩</span>
+                                        <div className="setting-overlay" onClick={() => setEmojiPickerVisible(false)}>
+                                            <div
+                                                className="emoji-picker visible"
+                                                onClick={(e) => e.stopPropagation()}
+                                                style={{ top: emojiBtnPosition.top - 400, left: emojiBtnPosition.left - 105 }}
+                                            >
+                                                <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Cảm xúc</h6>
+                                                <span onClick={() => handleEmojiClick('😊')}>😊</span>
+                                                <span onClick={() => handleEmojiClick('😂')}>😂</span>
+                                                <span onClick={() => handleEmojiClick('😍')}>😍</span>
+                                                <span onClick={() => handleEmojiClick('😎')}>😎</span>
+                                                <span onClick={() => handleEmojiClick('🥺')}>🥺</span>
+                                                <span onClick={() => handleEmojiClick('🥰')}>🥰</span>
+                                                <span onClick={() => handleEmojiClick('🤩')}>🤩</span>
+                                                <span onClick={() => handleEmojiClick('🤗')}>🤗</span>
+                                                <span onClick={() => handleEmojiClick('🤔')}>🤔</span>
+                                                <span onClick={() => handleEmojiClick('🤭')}>🤭</span>
+                                                <span onClick={() => handleEmojiClick('🤫')}>🤫</span>
+                                                <span onClick={() => handleEmojiClick('🤥')}>🤥</span>
+                                                <span onClick={() => handleEmojiClick('🤐')}>🤐</span>
+                                                <span onClick={() => handleEmojiClick('🤨')}>🤨</span>
+                                                <span onClick={() => handleEmojiClick('🤓')}>🤓</span>
+                                                <span onClick={() => handleEmojiClick('🧐')}>🧐</span>
+                                                <span onClick={() => handleEmojiClick('🤠')}>🤠</span>
+                                                <span onClick={() => handleEmojiClick('🤡')}>🤡</span>
+                                                <span onClick={() => handleEmojiClick('🤢')}>🤢</span>
+                                                <span onClick={() => handleEmojiClick('🤧')}>🤧</span>
+                                                <span onClick={() => handleEmojiClick('🤮')}>🤮</span>
+                                                <span onClick={() => handleEmojiClick('🤥')}>🤥</span>
+                                                <span onClick={() => handleEmojiClick('🤬')}>🤬</span>
+                                                <span onClick={() => handleEmojiClick('🤯')}>🤯</span>
+                                                <span onClick={() => handleEmojiClick('🤠')}>🤠</span>
+                                                <span onClick={() => handleEmojiClick('😈')}>😈</span>
+                                                <span onClick={() => handleEmojiClick('💀')}>💀</span>
+                                                <span onClick={() => handleEmojiClick('☠️')}>☠️</span>
+                                                <span onClick={() => handleEmojiClick('👻')}>👻</span>
+                                                <span onClick={() => handleEmojiClick('👽')}>👽</span>
+                                                <span onClick={() => handleEmojiClick('🙀')}>🙀</span>
+                                                <span onClick={() => handleEmojiClick('😸')}>😸</span>
+                                                <span onClick={() => handleEmojiClick('🤖')}>🤖</span>
+                                                <span onClick={() => handleEmojiClick('🙈')}>🙈</span>
+                                                <span onClick={() => handleEmojiClick('💩')}>💩</span>
 
-                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Cử chỉ</h6>
-                                            <span onClick={() => handleEmojiClick('👍')}>👍</span>
-                                            <span onClick={() => handleEmojiClick('🤚')}>🤚</span>
-                                            <span onClick={() => handleEmojiClick('👌')}>👌</span>
-                                            <span onClick={() => handleEmojiClick('🤌')}>🤌</span>
-                                            <span onClick={() => handleEmojiClick('✌️')}>✌️</span>
-                                            <span onClick={() => handleEmojiClick('🤟')}>🤟</span>
-                                            <span onClick={() => handleEmojiClick('🤙')}>🤙</span>
-                                            <span onClick={() => handleEmojiClick('🫵')}>🫵</span>
-                                            <span onClick={() => handleEmojiClick('👈')}>👈</span>
-                                            <span onClick={() => handleEmojiClick('👉')}>👉</span>
-                                            <span onClick={() => handleEmojiClick('👀')}>👀</span>
-                                            <span onClick={() => handleEmojiClick('👅')}>👅</span>
-                                            <span onClick={() => handleEmojiClick('👎')}>👎</span>
-                                            <span onClick={() => handleEmojiClick('👏')}>👏</span>
+                                                <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Cử chỉ</h6>
+                                                <span onClick={() => handleEmojiClick('👍')}>👍</span>
+                                                <span onClick={() => handleEmojiClick('🤚')}>🤚</span>
+                                                <span onClick={() => handleEmojiClick('👌')}>👌</span>
+                                                <span onClick={() => handleEmojiClick('🤌')}>🤌</span>
+                                                <span onClick={() => handleEmojiClick('✌️')}>✌️</span>
+                                                <span onClick={() => handleEmojiClick('🤟')}>🤟</span>
+                                                <span onClick={() => handleEmojiClick('🤙')}>🤙</span>
+                                                <span onClick={() => handleEmojiClick('🫵')}>🫵</span>
+                                                <span onClick={() => handleEmojiClick('👈')}>👈</span>
+                                                <span onClick={() => handleEmojiClick('👉')}>👉</span>
+                                                <span onClick={() => handleEmojiClick('👀')}>👀</span>
+                                                <span onClick={() => handleEmojiClick('👅')}>👅</span>
+                                                <span onClick={() => handleEmojiClick('👎')}>👎</span>
+                                                <span onClick={() => handleEmojiClick('👏')}>👏</span>
 
-                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Động vật và tự nhiên</h6>
-                                            <span onClick={() => handleEmojiClick('🐶')}>🐶</span>
-                                            <span onClick={() => handleEmojiClick('🐭')}>🐭</span>
-                                            <span onClick={() => handleEmojiClick('🐹')}>🐹</span>
-                                            <span onClick={() => handleEmojiClick('🐰')}>🐰</span>
-                                            <span onClick={() => handleEmojiClick('🦊')}>🦊</span>
-                                            <span onClick={() => handleEmojiClick('🐻')}>🐻</span>
-                                            <span onClick={() => handleEmojiClick('🐼')}>🐼</span>
-                                            <span onClick={() => handleEmojiClick('🐨')}>🐨</span>
-                                            <span onClick={() => handleEmojiClick('🐯')}>🐯</span>
-                                            <span onClick={() => handleEmojiClick('🦁')}>🦁</span>
-                                            <span onClick={() => handleEmojiClick('🐮')}>🐮</span>
-                                            <span onClick={() => handleEmojiClick('🐷')}>🐷</span>
-                                            <span onClick={() => handleEmojiClick('🐽')}>🐽</span>
-                                            <span onClick={() => handleEmojiClick('🐞')}>🐞</span>
-                                            <span onClick={() => handleEmojiClick('🪰')}>🪰</span>
-                                            <span onClick={() => handleEmojiClick('🦋')}>🦋</span>
-                                            <span onClick={() => handleEmojiClick('🐢')}>🐢</span>
-                                            <span onClick={() => handleEmojiClick('🐍')}>🐍</span>
-                                            <span onClick={() => handleEmojiClick('🦕')}>🦕</span>
-                                            <span onClick={() => handleEmojiClick('🦞')}>🦞</span>
-                                            <span onClick={() => handleEmojiClick('🦀')}>🦀</span>
-                                            <span onClick={() => handleEmojiClick('🪼')}>🪼</span>
-                                            <span onClick={() => handleEmojiClick('🐋')}>🐋</span>
-                                            <span onClick={() => handleEmojiClick('🦍')}>🦍</span>
-                                            <span onClick={() => handleEmojiClick('🐓')}>🐓</span>
-                                            <span onClick={() => handleEmojiClick('🦢')}>🦢</span>
-                                            <span onClick={() => handleEmojiClick('🦜')}>🦜</span>
-                                            <span onClick={() => handleEmojiClick('🐀')}>🐀</span>
-                                            <span onClick={() => handleEmojiClick('🦔')}>🦔</span>
-                                            <span onClick={() => handleEmojiClick('🐘')}>🐘</span>
-                                            <span onClick={() => handleEmojiClick('🐎')}>🐎</span>
-                                            <span onClick={() => handleEmojiClick('🦨')}>🦨</span>
-                                            <span onClick={() => handleEmojiClick('🐇')}>🐇</span>
-                                            <span onClick={() => handleEmojiClick('🫎')}>🫎</span>
-                                            <span onClick={() => handleEmojiClick('🐃')}>🐃</span>
-                                            <span onClick={() => handleEmojiClick('🌱')}>🌱</span>
-                                            <span onClick={() => handleEmojiClick('🪨')}>🪨</span>
-                                            <span onClick={() => handleEmojiClick('🍁')}>🍁</span>
-                                            <span onClick={() => handleEmojiClick('🍄')}>🍄</span>
-                                            <span onClick={() => handleEmojiClick('🌺')}>🌺</span>
-                                            <span onClick={() => handleEmojiClick('🌻')}>🌻</span>
-                                            <span onClick={() => handleEmojiClick('🌞')}>🌞</span>
-                                            <span onClick={() => handleEmojiClick('🌓')}>🌓</span>
-                                            <span onClick={() => handleEmojiClick('🌙')}>🌙</span>
-                                            <span onClick={() => handleEmojiClick('🌏')}>🌏</span>
-                                            <span onClick={() => handleEmojiClick('🌟')}>🌟</span>
-                                            <span onClick={() => handleEmojiClick('✨')}>✨</span>
-                                            <span onClick={() => handleEmojiClick('🐾')}>🐾</span>
-                                            <span onClick={() => handleEmojiClick('⛄️')}>⛄️</span>
-                                            <span onClick={() => handleEmojiClick('🍅')}>🍅</span>
-                                            <span onClick={() => handleEmojiClick('🍆')}>🍆</span>
-                                            <span onClick={() => handleEmojiClick('🥑')}>🥑</span>
-                                            <span onClick={() => handleEmojiClick('🫛')}>🫛</span>
-                                            <span onClick={() => handleEmojiClick('🧄')}>🧄</span>
-                                            <span onClick={() => handleEmojiClick('🫚')}>🫚</span>
-                                            <span onClick={() => handleEmojiClick('🍰')}>🍰</span>
-                                            <span onClick={() => handleEmojiClick('🍿')}>🍿</span>
-                                            <span onClick={() => handleEmojiClick('🍭')}>🍭</span>
-                                            <span onClick={() => handleEmojiClick('🍩')}>🍩</span>
-                                            <span onClick={() => handleEmojiClick('🍺')}>🍺</span>
-                                            <span onClick={() => handleEmojiClick('🍸')}>🍸</span>
-                                            <span onClick={() => handleEmojiClick('🍼')}>🍼</span>
-                                            <span onClick={() => handleEmojiClick('🍶')}>🍶</span>
+                                                <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Động vật và tự nhiên</h6>
+                                                <span onClick={() => handleEmojiClick('🐶')}>🐶</span>
+                                                <span onClick={() => handleEmojiClick('🐭')}>🐭</span>
+                                                <span onClick={() => handleEmojiClick('🐹')}>🐹</span>
+                                                <span onClick={() => handleEmojiClick('🐰')}>🐰</span>
+                                                <span onClick={() => handleEmojiClick('🦊')}>🦊</span>
+                                                <span onClick={() => handleEmojiClick('🐻')}>🐻</span>
+                                                <span onClick={() => handleEmojiClick('🐼')}>🐼</span>
+                                                <span onClick={() => handleEmojiClick('🐨')}>🐨</span>
+                                                <span onClick={() => handleEmojiClick('🐯')}>🐯</span>
+                                                <span onClick={() => handleEmojiClick('🦁')}>🦁</span>
+                                                <span onClick={() => handleEmojiClick('🐮')}>🐮</span>
+                                                <span onClick={() => handleEmojiClick('🐷')}>🐷</span>
+                                                <span onClick={() => handleEmojiClick('🐽')}>🐽</span>
+                                                <span onClick={() => handleEmojiClick('🐞')}>🐞</span>
+                                                <span onClick={() => handleEmojiClick('🪰')}>🪰</span>
+                                                <span onClick={() => handleEmojiClick('🦋')}>🦋</span>
+                                                <span onClick={() => handleEmojiClick('🐢')}>🐢</span>
+                                                <span onClick={() => handleEmojiClick('🐍')}>🐍</span>
+                                                <span onClick={() => handleEmojiClick('🦕')}>🦕</span>
+                                                <span onClick={() => handleEmojiClick('🦞')}>🦞</span>
+                                                <span onClick={() => handleEmojiClick('🦀')}>🦀</span>
+                                                <span onClick={() => handleEmojiClick('🪼')}>🪼</span>
+                                                <span onClick={() => handleEmojiClick('🐋')}>🐋</span>
+                                                <span onClick={() => handleEmojiClick('🦍')}>🦍</span>
+                                                <span onClick={() => handleEmojiClick('🐓')}>🐓</span>
+                                                <span onClick={() => handleEmojiClick('🦢')}>🦢</span>
+                                                <span onClick={() => handleEmojiClick('🦜')}>🦜</span>
+                                                <span onClick={() => handleEmojiClick('🐀')}>🐀</span>
+                                                <span onClick={() => handleEmojiClick('🦔')}>🦔</span>
+                                                <span onClick={() => handleEmojiClick('🐘')}>🐘</span>
+                                                <span onClick={() => handleEmojiClick('🐎')}>🐎</span>
+                                                <span onClick={() => handleEmojiClick('🦨')}>🦨</span>
+                                                <span onClick={() => handleEmojiClick('🐇')}>🐇</span>
+                                                <span onClick={() => handleEmojiClick('🫎')}>🫎</span>
+                                                <span onClick={() => handleEmojiClick('🐃')}>🐃</span>
+                                                <span onClick={() => handleEmojiClick('🌱')}>🌱</span>
+                                                <span onClick={() => handleEmojiClick('🪨')}>🪨</span>
+                                                <span onClick={() => handleEmojiClick('🍁')}>🍁</span>
+                                                <span onClick={() => handleEmojiClick('🍄')}>🍄</span>
+                                                <span onClick={() => handleEmojiClick('🌺')}>🌺</span>
+                                                <span onClick={() => handleEmojiClick('🌻')}>🌻</span>
+                                                <span onClick={() => handleEmojiClick('🌞')}>🌞</span>
+                                                <span onClick={() => handleEmojiClick('🌓')}>🌓</span>
+                                                <span onClick={() => handleEmojiClick('🌙')}>🌙</span>
+                                                <span onClick={() => handleEmojiClick('🌏')}>🌏</span>
+                                                <span onClick={() => handleEmojiClick('🌟')}>🌟</span>
+                                                <span onClick={() => handleEmojiClick('✨')}>✨</span>
+                                                <span onClick={() => handleEmojiClick('🐾')}>🐾</span>
+                                                <span onClick={() => handleEmojiClick('⛄️')}>⛄️</span>
+                                                <span onClick={() => handleEmojiClick('🍅')}>🍅</span>
+                                                <span onClick={() => handleEmojiClick('🍆')}>🍆</span>
+                                                <span onClick={() => handleEmojiClick('🥑')}>🥑</span>
+                                                <span onClick={() => handleEmojiClick('🫛')}>🫛</span>
+                                                <span onClick={() => handleEmojiClick('🧄')}>🧄</span>
+                                                <span onClick={() => handleEmojiClick('🫚')}>🫚</span>
+                                                <span onClick={() => handleEmojiClick('🍰')}>🍰</span>
+                                                <span onClick={() => handleEmojiClick('🍿')}>🍿</span>
+                                                <span onClick={() => handleEmojiClick('🍭')}>🍭</span>
+                                                <span onClick={() => handleEmojiClick('🍩')}>🍩</span>
+                                                <span onClick={() => handleEmojiClick('🍺')}>🍺</span>
+                                                <span onClick={() => handleEmojiClick('🍸')}>🍸</span>
+                                                <span onClick={() => handleEmojiClick('🍼')}>🍼</span>
+                                                <span onClick={() => handleEmojiClick('🍶')}>🍶</span>
 
-                                            <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Hoạt động</h6>
-                                            <span onClick={() => handleEmojiClick('⚽️')}>⚽️</span>
-                                            <span onClick={() => handleEmojiClick('🏀')}>🏀</span>
-                                            <span onClick={() => handleEmojiClick('🏈')}>🏈</span>
-                                            <span onClick={() => handleEmojiClick('⚾️')}>⚾️</span>
-                                            <span onClick={() => handleEmojiClick('🏸')}>🏸</span>
-                                            <span onClick={() => handleEmojiClick('🏒')}>🏒</span>
-                                            <span onClick={() => handleEmojiClick('🪃')}>🪃</span>
-                                            <span onClick={() => handleEmojiClick('🥅')}>🥅</span>
-                                            <span onClick={() => handleEmojiClick('🏹')}>🏹</span>
-                                            <span onClick={() => handleEmojiClick('🥋')}>🥋</span>
-                                            <span onClick={() => handleEmojiClick('🛼')}>🛼</span>
-                                            <span onClick={() => handleEmojiClick('🎿')}>🎿</span>
-                                            <span onClick={() => handleEmojiClick('🏋️‍♀️')}>🏋️‍♀️</span>
-                                            <span onClick={() => handleEmojiClick('🥁')}>🥁</span>
-                                            <span onClick={() => handleEmojiClick('🪘')}>🪘</span>
-                                            <span onClick={() => handleEmojiClick('🎷')}>🎷</span>
-                                            <span onClick={() => handleEmojiClick('🎺')}>🎺</span>
-                                            <span onClick={() => handleEmojiClick('🎻')}>🎻</span>
-                                            <span onClick={() => handleEmojiClick('🎲')}>🎲</span>
-                                            <span onClick={() => handleEmojiClick('🎯')}>🎯</span>
-                                            <span onClick={() => handleEmojiClick('🎳')}>🎳</span>
-                                            <span onClick={() => handleEmojiClick('🎮')}>🎮</span>
-                                            <span onClick={() => handleEmojiClick('🎰')}>🎰</span>
-                                            <span onClick={() => handleEmojiClick('🧩')}>🧩</span>
-                                            <span onClick={() => handleEmojiClick('🚴‍♂️')}>🚴‍♂️</span>
-                                            <span onClick={() => handleEmojiClick('🏆')}>🏆</span>
-                                            <span onClick={() => handleEmojiClick('🏅')}>🏅</span>
-                                            <span onClick={() => handleEmojiClick('🚗')}>🚗</span>
-                                            <span onClick={() => handleEmojiClick('🚌')}>🚌</span>
-                                            <span onClick={() => handleEmojiClick('🚑')}>🚑</span>
-                                            <span onClick={() => handleEmojiClick('🦽')}>🦽</span>
-                                            <span onClick={() => handleEmojiClick('🚛')}>🚛</span>
-                                            <span onClick={() => handleEmojiClick('🚲')}>🚲</span>
-                                            <span onClick={() => handleEmojiClick('⌚️')}>⌚️</span>
-                                            <span onClick={() => handleEmojiClick('📱')}>📱</span>
-                                            <span onClick={() => handleEmojiClick('💻')}>💻</span>
-                                            <span onClick={() => handleEmojiClick('🖨')}>🖨</span>
-                                            <span onClick={() => handleEmojiClick('💿')}>💿</span>
-                                            <span onClick={() => handleEmojiClick('📷')}>📷</span>
-                                            <span onClick={() => handleEmojiClick('⌛️')}>⌛️</span>
-                                            <span onClick={() => handleEmojiClick('📋')}>📋</span>
-                                            <span onClick={() => handleEmojiClick('📚')}>📚</span>
+                                                <h6 style={{ width: "300px", height: "15px", marginTop: "10px", marginBottom: "0px" }}>Hoạt động</h6>
+                                                <span onClick={() => handleEmojiClick('⚽️')}>⚽️</span>
+                                                <span onClick={() => handleEmojiClick('🏀')}>🏀</span>
+                                                <span onClick={() => handleEmojiClick('🏈')}>🏈</span>
+                                                <span onClick={() => handleEmojiClick('⚾️')}>⚾️</span>
+                                                <span onClick={() => handleEmojiClick('🏸')}>🏸</span>
+                                                <span onClick={() => handleEmojiClick('🏒')}>🏒</span>
+                                                <span onClick={() => handleEmojiClick('🪃')}>🪃</span>
+                                                <span onClick={() => handleEmojiClick('🥅')}>🥅</span>
+                                                <span onClick={() => handleEmojiClick('🏹')}>🏹</span>
+                                                <span onClick={() => handleEmojiClick('🥋')}>🥋</span>
+                                                <span onClick={() => handleEmojiClick('🛼')}>🛼</span>
+                                                <span onClick={() => handleEmojiClick('🎿')}>🎿</span>
+                                                <span onClick={() => handleEmojiClick('🏋️‍♀️')}>🏋️‍♀️</span>
+                                                <span onClick={() => handleEmojiClick('🥁')}>🥁</span>
+                                                <span onClick={() => handleEmojiClick('🪘')}>🪘</span>
+                                                <span onClick={() => handleEmojiClick('🎷')}>🎷</span>
+                                                <span onClick={() => handleEmojiClick('🎺')}>🎺</span>
+                                                <span onClick={() => handleEmojiClick('🎻')}>🎻</span>
+                                                <span onClick={() => handleEmojiClick('🎲')}>🎲</span>
+                                                <span onClick={() => handleEmojiClick('🎯')}>🎯</span>
+                                                <span onClick={() => handleEmojiClick('🎳')}>🎳</span>
+                                                <span onClick={() => handleEmojiClick('🎮')}>🎮</span>
+                                                <span onClick={() => handleEmojiClick('🎰')}>🎰</span>
+                                                <span onClick={() => handleEmojiClick('🧩')}>🧩</span>
+                                                <span onClick={() => handleEmojiClick('🚴‍♂️')}>🚴‍♂️</span>
+                                                <span onClick={() => handleEmojiClick('🏆')}>🏆</span>
+                                                <span onClick={() => handleEmojiClick('🏅')}>🏅</span>
+                                                <span onClick={() => handleEmojiClick('🚗')}>🚗</span>
+                                                <span onClick={() => handleEmojiClick('🚌')}>🚌</span>
+                                                <span onClick={() => handleEmojiClick('🚑')}>🚑</span>
+                                                <span onClick={() => handleEmojiClick('🦽')}>🦽</span>
+                                                <span onClick={() => handleEmojiClick('🚛')}>🚛</span>
+                                                <span onClick={() => handleEmojiClick('🚲')}>🚲</span>
+                                                <span onClick={() => handleEmojiClick('⌚️')}>⌚️</span>
+                                                <span onClick={() => handleEmojiClick('📱')}>📱</span>
+                                                <span onClick={() => handleEmojiClick('💻')}>💻</span>
+                                                <span onClick={() => handleEmojiClick('🖨')}>🖨</span>
+                                                <span onClick={() => handleEmojiClick('💿')}>💿</span>
+                                                <span onClick={() => handleEmojiClick('📷')}>📷</span>
+                                                <span onClick={() => handleEmojiClick('⌛️')}>⌛️</span>
+                                                <span onClick={() => handleEmojiClick('📋')}>📋</span>
+                                                <span onClick={() => handleEmojiClick('📚')}>📚</span>
+                                            </div>
                                         </div>
                                     )}
                                 </section>
@@ -1190,7 +1193,7 @@ const MainPage = () => {
             {isModalOpen && (
                 <div className="overlay" onClick={() => setIsModalOpen(false)}>
                     <div
-                        className="modal"
+                        className="modal-e"
                         onClick={(e) => e.stopPropagation()}  // Ngừng sự kiện click bubble tại modal
                     >
                         <div className="modal-content">
@@ -1223,71 +1226,73 @@ const MainPage = () => {
 
 
             {isUserInfoModalOpen && user && (
-                <div className="modal">
-                    <div className="modal-content user-info-modal" ref={userInfoModalRef}>
-                        <div className="modal-header">
-                            <i className="fas fa-chevron-left" onClick={() => setIsUserInfoModalOpen(false)}></i>
-                            <h2>Thông tin tài khoản</h2>
-                            <i className="fas fa-times" onClick={() => closeAllModal()}></i>
-                        </div>
-                        <div className="modal-body">
-                            <div>
-                                <img src={user.avatar || avatar_default} />
-                                <h3>{user.name}</h3>
+                <div className="overlay" onClick={closeAllModal}>
+                    <div className="modal-e" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-content user-info-modal">
+                            <div className="modal-header">
+                                <i className="fas fa-chevron-left" onClick={() => setIsUserInfoModalOpen(false)}></i>
+                                <h2>Thông tin tài khoản</h2>
+                                <i className="fas fa-times" onClick={() => closeAllModal()}></i>
                             </div>
+                            <div className="modal-body">
+                                <div>
+                                    <img src={user.avatar || avatar_default} />
+                                    <h3>{user.name}</h3>
+                                </div>
 
-                            <div className="action-buttons">
-                                {/* Kiểm tra nếu user đó có trong friendIds của my_user thì không hiển thị nút Kết bạn */}
-                                {!MyUser?.my_user?.friendIds.includes(user.id) && (
-                                    <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
-                                )}
-                                <button className="message-button">Nhắn tin</button>
-                            </div>
+                                <div className="action-buttons">
+                                    {/* Kiểm tra nếu user đó có trong friendIds của my_user thì không hiển thị nút Kết bạn */}
+                                    {!MyUser?.my_user?.friendIds.includes(user.id) && (
+                                        <button onClick={() => setIsFriendRequestModalOpen(true)}>Kết bạn</button>
+                                    )}
+                                    <button className="message-button">Nhắn tin</button>
+                                </div>
 
-                            {/* Modal yêu cầu kết bạn */}
-                            {isFriendRequestModalOpen && (
-                                <div className="friend-request-modal">
-                                    <div className="modal-header">
-                                        <h2>Gửi yêu cầu kết bạn</h2>
-                                        <i className="fas fa-times" onClick={() => setIsFriendRequestModalOpen(false)}></i>
-                                    </div>
-                                    <div>
-                                        <textarea
-                                            className="message-sendRequest"
-                                            placeholder="Nhập nội dung yêu cầu kết bạn"
-                                            value={messageContent}
-                                            onChange={(e) => setMessageContent(e.target.value)}
-                                        />
-                                        <div className="sendRequest-class">
-                                            <button className="sendRequest-button" onClick={sendFriendRequest}>Gửi yêu cầu</button>
-                                            <button className="closeSendRequest-button" onClick={() => setIsFriendRequestModalOpen(false)}>Hủy</button>
+                                {/* Modal yêu cầu kết bạn */}
+                                {isFriendRequestModalOpen && (
+                                    <div className="friend-request-modal">
+                                        <div className="modal-header">
+                                            <h2>Gửi yêu cầu kết bạn</h2>
+                                            <i className="fas fa-times" onClick={() => setIsFriendRequestModalOpen(false)}></i>
+                                        </div>
+                                        <div>
+                                            <textarea
+                                                className="message-sendRequest"
+                                                placeholder="Nhập nội dung yêu cầu kết bạn"
+                                                value={messageContent}
+                                                onChange={(e) => setMessageContent(e.target.value)}
+                                            />
+                                            <div className="sendRequest-class">
+                                                <button className="sendRequest-button" onClick={sendFriendRequest}>Gửi yêu cầu</button>
+                                                <button className="closeSendRequest-button" onClick={() => setIsFriendRequestModalOpen(false)}>Hủy</button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            <div className="personal-info">
-                                <p>Giới tính:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{user.sex}</p>
-                                <p>Ngày sinh:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{user.dob}</p>
-                                <p>Điện thoại:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{user.phoneNumber}</p>
-                            </div>
+                                <div className="personal-info">
+                                    <p>Giới tính:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{user.sex}</p>
+                                    <p>Ngày sinh:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{user.dob}</p>
+                                    <p>Điện thoại:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{user.phoneNumber}</p>
+                                </div>
 
-                            <div className="list-container">
-                                <div className="list-item">
-                                    <i className="fas fa-users"></i>
-                                    <span>Nhóm chung (0)</span>
-                                </div>
-                                <div className="list-item">
-                                    <i className="fas fa-id-card"></i>
-                                    <span>Chia sẻ danh thiếp</span>
-                                </div>
-                                <div className="list-item">
-                                    <i className="fas fa-ban"></i>
-                                    <span>Chặn tin nhắn và cuộc gọi</span>
-                                </div>
-                                <div className="list-item">
-                                    <i className="fas fa-exclamation-triangle"></i>
-                                    <span>Báo xấu</span>
+                                <div className="list-container">
+                                    <div className="list-item">
+                                        <i className="fas fa-users"></i>
+                                        <span>Nhóm chung (0)</span>
+                                    </div>
+                                    <div className="list-item">
+                                        <i className="fas fa-id-card"></i>
+                                        <span>Chia sẻ danh thiếp</span>
+                                    </div>
+                                    <div className="list-item">
+                                        <i className="fas fa-ban"></i>
+                                        <span>Chặn tin nhắn và cuộc gọi</span>
+                                    </div>
+                                    <div className="list-item">
+                                        <i className="fas fa-exclamation-triangle"></i>
+                                        <span>Báo xấu</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
