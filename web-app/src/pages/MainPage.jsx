@@ -56,7 +56,7 @@ const MainPage = () => {
         setIsModalGroupOpen(false);
     };
 
-    const { MyUser, setMyUser, logout } = useAuth();
+    const { MyUser, setMyUser, logout, updateUserInfo } = useAuth();
     const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
     const [activeTab, setActiveTab] = useState("chat"); // State quản lý tab
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -68,6 +68,44 @@ const MainPage = () => {
 
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState([]); // Danh sách tin nhắn chưa đọc
+
+    const [friendList, setFriendList] = useState([]);
+
+    const updateFriendList = (friendId) => {
+        setFriendList((prevList) => {
+            // Kiểm tra xem bạn đã có trong danh sách chưa
+            if (!prevList.includes(friendId)) {
+                return [...prevList, friendId];  // Thêm bạn mới vào danh sách
+            }
+            return prevList;
+        });
+
+        // Cập nhật lại thông tin người dùng nếu cần
+        const updatedUserData = {
+            ...MyUser,
+            my_user: {
+                ...MyUser.my_user,
+                friendIds: [...MyUser.my_user.friendIds, friendId],
+            },
+        };
+        updateUserInfo(updatedUserData);
+    };
+
+    // // Socket lắng nghe phản hồi kết bạn để cập nhật lại danh sách bạn bè
+    // useEffect(() => {
+    //     const unsubscribe = onMessage((message) => {
+    //         if (message.type === 'friend_request_accepted') {
+    //             // Cập nhật danh sách bạn bè của bên A khi nhận được thông báo
+    //             console.log('Friend request accepted:', message);
+    //             updateFriendList(message.senderId);
+    //         }
+    //     });
+
+    //     return () => {
+    //         // Hủy đăng ký khi component bị unmount
+    //         unsubscribe();
+    //     };
+    // }, [onMessage]);
 
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
@@ -222,6 +260,7 @@ const MainPage = () => {
     // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
+            updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
             if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
                 // Cập nhật tin nhắn mới vào chatMessages
                 setChatMessages((prevMessages) =>
@@ -231,7 +270,7 @@ const MainPage = () => {
 
             // Cập nhật số lượng tin nhắn chưa đọc cho các bạn bè
             const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                if (count.friendId === incomingMessage.senderID) {
+                if (count.friendId === incomingMessage.receiverId) {
                     return {
                         ...count,
                         unreadCount: count.unreadCount, // Thêm 1 cho số tin nhắn chưa đọc
