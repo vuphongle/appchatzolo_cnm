@@ -1033,12 +1033,6 @@ const MainPage = () => {
                                     <li className="logout" onClick={handleLogout}>Đăng xuất</li>
                                 </ul>
                             </div>
-
-                            {/* Overlay */}
-                            {/* <div
-                                className="overlay"
-                                onClick={() => setIsSettingsOpen(false)} // Đóng menu khi click ngoài
-                            ></div> */}
                         </div>
                     )}
                 </div>

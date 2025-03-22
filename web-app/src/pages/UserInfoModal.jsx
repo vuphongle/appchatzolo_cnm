@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import UserService from "../services/UserService";
 import S3Service from "../services/S3Service";
 import { useAuth } from "../context/AuthContext";
+// import "./MainPage.css";
 
 const UserInfoModal = ({ user: initialUser, onClose }) => {
     const { MyUser, setMyUser, updateUserInfo } = useAuth();
@@ -157,8 +158,14 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
         );
     }
 
+    const handleModalClick = (e) => {
+        // Ngăn không cho đóng modal khi click vào trong nội dung modal
+        if (e.target.closest('.modal-dialog')) return;
+        onClose();
+    };
+
     return (
-        <div className="modal show d-block d-flex align-items-center justify-content-center" tabIndex="-1">
+        <div className="modal show d-block d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-lg">
                 <div className="modal-content">
                     <div className="modal-header">
