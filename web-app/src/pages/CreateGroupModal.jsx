@@ -48,8 +48,14 @@ const CreateGroupModal = ({ onClose }) => {
         friend.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleModalClick = (e) => {
+        // Ngăn không cho đóng modal khi click vào trong nội dung modal
+        if (e.target.closest('.modal-dialog')) return;
+        onClose();
+    };
+
     return (
-        <div className="modal show d-block" tabIndex="-1">
+        <div className="modal show d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-xl">
                 <div className="modal-content" style={{ width: "500px", maxHeight: "90vh", overflow: "hidden" }}>
                     <div className="modal-header">
