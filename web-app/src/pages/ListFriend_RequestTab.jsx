@@ -13,6 +13,8 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { sendMessage, onMessage } = useWebSocket();
+    const [data, setData] = useState([]);
+    const [lastFetched, setLastFetched] = useState(null); // Lưu thời gian lấy dữ liệu
 
 
     // Hàm chuyển đổi timestamp thành ngày tháng, chỉ đến giây
