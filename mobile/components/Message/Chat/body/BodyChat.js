@@ -111,6 +111,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         
         setMessageText(messageText + " " + fileName);
         setSelectedImages((prevFiles) => [...prevFiles, selectedAsset]);
+        console.log('Đã chọn ảnh:', selectedAsset);
       }
     } catch (error) {
       console.log('Lỗi xử lý chọn ảnh:', error);
@@ -178,7 +179,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           // Send message through WebSocket or your API
           sendMessage(message.content, receiverID);
      
-          setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
         }
         setSelectedImages([]); // Reset images
       } catch (error) {
@@ -212,7 +212,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           sendMessage(url, receiverID);
           
           // Update message in chat list if needed
-          setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+       
         }
         setSelectedFiles([]); // Reset files
       } catch (error) {
@@ -239,8 +239,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         // Send message through WebSocket or your API
         sendMessage(message.content, receiverID);
         
-        // Update message in chat list if needed
-        setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+        
       }
     }
     

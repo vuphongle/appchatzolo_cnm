@@ -30,10 +30,16 @@ const S3Service = {
 
     uploadImage: async (file) => {
         const formData = new FormData();
-        formData.append("file", file);
+       
+        formData.append("file", {
+            uri: file.uri, 
+            name: file.fileName, 
+            type: file.type,
+          });
+        
 
         try {
-            const response = await axios.post(`${IPV4}/image`, formData, {
+            const response = await axios.post(`${IPV4}/s3/image`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             return response.data.url; 
@@ -44,10 +50,14 @@ const S3Service = {
 
     uploadFile: async (file) => {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", {
+            uri: file.uri, 
+            name: file.fileName, 
+            type: file.type,
+          });
 
         try {
-            const response = await axios.post(`${IPV4}/file`, formData, {
+            const response = await axios.post(`${IPV4}/s3/file`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             return response.data.url; // Trả về URL ảnh mới
