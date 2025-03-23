@@ -14,6 +14,7 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
     const [error, setError] = useState(null);
     const { sendMessage, onMessage } = useWebSocket();
 
+
     // Hàm chuyển đổi timestamp thành ngày tháng, chỉ đến giây
     const formatDate = (timestampArray) => {
         // Chuyển đổi thành đối tượng Date
@@ -61,6 +62,19 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
     useEffect(() => {
         fetchRequests();
     }, [friendRequests]);
+
+    // useEffect(() => {
+    //     // Gọi hàm lấy dữ liệu lần đầu tiên khi component mount
+    //     fetchRequests();
+
+    //     // Polling: Gọi hàm fetchRequests mỗi 5 giây để kiểm tra dữ liệu mới
+    //     const interval = setInterval(() => {
+    //         fetchRequests();
+    //     }, 5000);
+
+    //     // Dọn dẹp khi component unmount
+    //     return () => clearInterval(interval);
+    // }, []);
 
     // Hàm xử lý xóa, thu hồi lời mời kết bạn
     const handleDeleteInvitation = (senderID, receiverID) => {

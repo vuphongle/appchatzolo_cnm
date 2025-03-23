@@ -58,6 +58,7 @@ const MainPage = () => {
 
     const { MyUser, setMyUser, logout, updateUserInfo } = useAuth();
     const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
+    const { sendFriendRequestToReceiver } = useWebSocket();
     const [activeTab, setActiveTab] = useState("chat"); // State quản lý tab
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isFriendRequestSent, setIsFriendRequestSent] = useState(false);
@@ -413,10 +414,6 @@ const MainPage = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
     const [emojiBtnPosition, setEmojiBtnPosition] = useState({});
-    const modalRef = useRef(null);
-    const userInfoModalRef = useRef(null);
-    const isSettingsOpenRef = useRef(null);
-    const emojiPickerVisibleRef = useRef(null);
 
     const [loading, setLoading] = useState(false); // Loading state
 
@@ -957,11 +954,6 @@ const MainPage = () => {
         setIsUserInfoModalOpen(false);
     };
 
-
-
-
-
-
     // Hàm gửi yêu cầu kết bạn
     const sendFriendRequest = async () => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !user?.id) return;
@@ -988,31 +980,14 @@ const MainPage = () => {
             // Cập nhật trực tiếp trong state để danh sách luôn mới
             setFriendRequests((prevRequests) => [...prevRequests, message]);
 
+            // Sau khi gửi yêu cầu thành công, gửi thông báo qua WebSocket
+            sendFriendRequestToReceiver(user.id, message);
+
             console.log('Message sent successfully');
         } catch (error) {
             console.error('Error sending message:', error);
         }
     };
-
-    // Kiểm tra giá trị của MyUser tại đây
-    //console.log("MyUser:", MyUser ? MyUser : "No user logged in");
-
-    // const logout = (callback) => {
-    //     setIsLoggingOut(true); // Hiển thị hiệu ứng logout
-    //     setMyUser(null);
-    //     localStorage.removeItem('idToken'); // Xóa token để App.js nhận diện đăng xuất
-    //     localStorage.removeItem('my_user');
-    //     localStorage.removeItem('phoneNumber');
-    //     localStorage.removeItem('userAttributes');
-    //     localStorage.removeItem('lastLoginTime');
-
-    //     if (callback) {
-    //         setTimeout(() => {
-    //             setIsLoggingOut(false);
-    //             callback(); // Chờ 3 giây trước khi chuyển hướng
-    //         }, 3000);
-    //     }
-    // };
 
     const handleLogout = () => {
         setIsLoggingOut(true);
