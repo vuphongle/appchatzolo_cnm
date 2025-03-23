@@ -114,6 +114,8 @@ const MainPage = () => {
 
             setUnreadMessages([]);  // Đánh dấu tất cả tin nhắn là đã đọc
 
+            setActiveTab("chat");
+
         } catch (error) {
             console.error("Lỗi khi lấy dữ liệu user hoặc tin nhắn:", error);
 
@@ -124,10 +126,10 @@ const MainPage = () => {
             });
 
             setUnreadMessages([]);
+
+            setActiveTab("chat")
         }
     };
-
-
 
     // State để lưu số lượng tin nhắn chưa đọc cho từng bạn
     const [unreadMessagesCounts, setUnreadMessagesCounts] = useState([]);
@@ -936,7 +938,7 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} /> : <div>Loading...</div>;
+                return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} onSelectChat={handleSelectChat} /> : <div>Loading...</div>;
             default:
                 return null;
         }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import vn.edu.iuh.fit.service.S3Service;
+import vn.edu.iuh.fit.service.UserService;
 
 import java.util.Map;
 
@@ -27,25 +28,35 @@ import java.util.Map;
 @RequestMapping("/s3")
 public class S3Controller {
     private final S3Service s3Service;
-
+    private final UserService userService;
     @Autowired
-    public S3Controller(S3Service s3Service) {
+    public S3Controller(S3Service s3Service, UserService userService) {
         this.s3Service = s3Service;
+        this.userService = userService;
     }
 
     @PostMapping("/avatar")
-    public ResponseEntity<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("userId") String userId) {  // Nhận userId từ request
+
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "File không được để trống!"));
         }
+
         try {
-            String fileUrl = s3Service.uploadAvatar(file);
-            if (fileUrl == null) {
-                return ResponseEntity.internalServerError().body(Map.of("error", "Upload thất bại: fileUrl null!"));
+            String oldAvatarUrl = userService.getUserAvatar(userId);
+
+            if (oldAvatarUrl != null && !oldAvatarUrl.isEmpty()) {
+                s3Service.deleteFile(oldAvatarUrl);
             }
-            return ResponseEntity.ok(Map.of("url", fileUrl));
+
+            String newAvatarUrl = s3Service.uploadAvatar(file);
+            userService.updateUserAvatar(userId, newAvatarUrl);
+
+            return ResponseEntity.ok(Map.of("url", newAvatarUrl));
         } catch (Exception e) {
-            e.printStackTrace(); // In lỗi chi tiết vào console/log
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of("error", "Upload thất bại: " + e.getMessage()));
         }
     }

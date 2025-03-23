@@ -110,9 +110,10 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
         if (!file) return;
 
         try {
-            const url = await S3Service.uploadAvatar(file);
             const userId = MyUser?.my_user?.id;
             if (!userId) throw new Error("User ID is missing");
+
+            const url = await S3Service.uploadAvatar(file, userId);
 
             await UserService.updateUserInfo(userId, { avatar: url });
 
