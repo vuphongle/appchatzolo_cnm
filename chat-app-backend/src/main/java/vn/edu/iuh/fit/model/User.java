@@ -110,6 +110,7 @@ public class User {
                 ", dob=" + dob +
                 ", friendIds=" + friendIds +
                 ", groupIds=" + groupIds +
+                ", isOnline=" + isOnline +
                 '}';
     }
 
