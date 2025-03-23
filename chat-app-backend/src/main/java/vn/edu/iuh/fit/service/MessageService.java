@@ -12,6 +12,7 @@ public interface MessageService {
     List<Message> getSentInvitationsBySenderId(String senderID);
     void deleteInvitation(String senderID, String receiverID) throws JsonProcessingException;
     boolean acceptFriendRequest(String senderId, String receiverId) throws JsonProcessingException;
+    int countInvitation(String senderID, String receiverID);
     List<Message> getMessagesBetweenUsers(String senderID, String receiverID);
     List<Message> findUnreadMessages(String receiverID, String senderID);
 

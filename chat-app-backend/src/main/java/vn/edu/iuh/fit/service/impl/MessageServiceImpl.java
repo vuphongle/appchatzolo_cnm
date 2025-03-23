@@ -94,6 +94,11 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    public int countInvitation(String senderID, String receiverID) {
+        return repository.countInvitation(senderID, receiverID);
+    }
+
+    @Override
     public List<Message> getMessagesBetweenUsers(String senderID, String receiverID) {
         return repository.findMessagesBetweenUsers(senderID, receiverID);
     }
