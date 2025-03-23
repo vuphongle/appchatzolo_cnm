@@ -6,15 +6,9 @@ import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import FriendRequestsTab from "./ListFriend_RequestTab";
 
-const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriendRemoved }) => {
+const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriendRemoved, user, onSelectChat }) => {
     const [showModalFriend, setShowModalFriend] = useState(false);
-    const friend = {
-        id: friendId,
-        avatar,
-        name,
-        phoneNumber,
-        dob,
-    };
+    user = { id: friendId, avatar, name, phoneNumber, dob };
     const handleRemoveFriend = async () => {
         try {
             await UserService.delete(`/${userId}/removeFriend/${friendId}`);
@@ -35,6 +29,7 @@ const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriend
                 style={{ transition: "background-color 0.3s ease" }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                onClick={() => onSelectChat(user)}
             >
                 {/* Avatar + Tên */}
                 <div className="d-flex align-items-center ms-3">
@@ -53,20 +48,21 @@ const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriend
                         className="btn btn-light border-0 p-2"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <i className="fas fa-ellipsis-h"></i>
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a className="dropdown-item" onClick={() => setShowModalFriend(true)}>
+                            <a className="dropdown-item" onClick={(e) => { e.stopPropagation(); setShowModalFriend(true); document.body.click(); }}>
                                 Xem thông tin
                             </a>
                         </li>
-                        <li><a className="dropdown-item">Đặt tên gợi nhớ</a></li>
-                        <li><a className="dropdown-item">Chặn người này</a></li>
+                        <li><a className="dropdown-item" onClick={(e) => { e.stopPropagation(); document.body.click(); }}>Đặt tên gợi nhớ</a></li>
+                        <li><a className="dropdown-item" onClick={(e) => { e.stopPropagation(); document.body.click(); }}>Chặn người này</a></li>
                         <li><hr className="dropdown-divider" /></li>
                         <li>
-                            <a className="dropdown-item text-danger" onClick={handleRemoveFriend}>
+                            <a className="dropdown-item text-danger" onClick={(e) => { e.stopPropagation(); handleRemoveFriend(); document.body.click(); }}>
                                 Xóa bạn
                             </a>
                         </li>
@@ -213,7 +209,7 @@ const GroupItem = ({ img, groupName, member }) => (
     </button>
 );
 
-function ContactsTab({ friendRequests }) {
+function ContactsTab({ friendRequests, onSelectChat }) {
     const { MyUser } = useAuth();
     const userId = MyUser?.my_user?.id;
     const [friends, setFriends] = useState([]);
@@ -285,7 +281,8 @@ function ContactsTab({ friendRequests }) {
                 <React.Fragment key={friend.id}>
                     {showLetter && <h4>{firstLetter}</h4>}
                     <FriendItem userId={userId} friendId={friend.id} avatar={friend.avatar} name={friend.name}
-                        dob={friend.dob} phoneNumber={friend.phoneNumber} onFriendRemoved={handleFriendRemoved} />
+                        dob={friend.dob} phoneNumber={friend.phoneNumber} onFriendRemoved={handleFriendRemoved}
+                        user={friend} onSelectChat={onSelectChat} />
                 </React.Fragment>
             );
         });

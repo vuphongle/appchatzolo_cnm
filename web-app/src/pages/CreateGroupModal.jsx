@@ -49,7 +49,7 @@ const CreateGroupModal = ({ onClose }) => {
     );
 
     return (
-        <div className="modal show d-block" tabIndex="-1">
+        <div className="modal show d-block d-flex align-items-center justify-content-center" tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-xl">
                 <div className="modal-content" style={{ width: "500px", maxHeight: "90vh", overflow: "hidden" }}>
                     <div className="modal-header">
