@@ -57,6 +57,9 @@ const EditPersonalInfoScreen = ({ navigation }) => {
         name: 'avatar.jpg',
         type: 'image/jpeg',
       });
+
+      formData.append('userId', user.id);
+
       try {
         const response = await fetch(`${IPV4}/s3/avatar`, {
           method: 'POST',
