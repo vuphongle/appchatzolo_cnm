@@ -7,29 +7,35 @@ import UserService from "../../../services/UserService";
 import axios from "axios";
 import { formatDate } from "../../../utils/formatDate";
 import { IPV4 } from "@env";
-const ItemFriend = ({ receiverID,name,avatar }) => {
+import TruncatedText from "../../../utils/TruncatedText";
+
+const ItemFriend = ({ receiverID, name, avatar }) => {
     const navigation = useNavigation();
     const { user } = useContext(UserContext); // Lấy user hiện tại
     const senderID = user?.id; // ID của người dùng hiện tại
     const [lastMessage, setLastMessage] = useState("");
     const [time, setTime] = useState("");
-    const [Messagedata, setMessageData] = useState(null);
-    // const senderID="1";
 
-    // Fetch tin nhắn mới nhất
+    // Functions to determine message type
+    const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+    const isFileMessage = (url) => url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/) != null;
+
     useEffect(() => {
         const fetchLatestMessage = async () => {
             try {
-                // const message = await MessageService.getLatestMessage(senderID, receiverID);
-                const message = await  axios.get(`${IPV4}/messages/latest-message`, {
-                    params: { senderID, receiverID }
-                });
-                // setMessageData(message.data);
-                if (message.data) {
-                    setLastMessage(message.data.content);
-                    setTime(formatDate(message.data.sendDate));
-                     // Chuyển đổi thời gian
-                     console.log("time",new Date(message.sendDate).toLocaleTimeString());
+                const message = await MessageService.getLatestMessage(senderID, receiverID);
+                if (message) {
+                    // Determine message type and display appropriate text
+                    if (isImageMessage(message.content)) {
+                        setLastMessage("Bạn đã được gửi một bức ảnh");
+                    } else if (isFileMessage(message.content)) {
+                        setLastMessage("Bạn đã được gửi một file");
+                    } else {
+                        setLastMessage(message.content);
+                    }
+                    
+                    setTime(formatDate(message.sendDate));
+                    console.log("time", new Date(message.sendDate).toLocaleTimeString());
                 } else {
                     setLastMessage("Chưa có tin nhắn");
                     setTime("");
@@ -39,16 +45,13 @@ const ItemFriend = ({ receiverID,name,avatar }) => {
             }
         };
 
-        
-
         if (senderID && receiverID) {
             fetchLatestMessage();
-            
         }
     }, [senderID, receiverID]);
 
     const handleNavigateChat = () => {
-        navigation.navigate('Chat', {  receiverid: receiverID,name: name,avatar: avatar });
+        navigation.navigate('Chat', { receiverid: receiverID, name: name, avatar: avatar });
     };
 
     return (
@@ -58,8 +61,7 @@ const ItemFriend = ({ receiverID,name,avatar }) => {
             </View>
             <View style={styles.infoContainer}>
                 <Text style={styles.name}>{name}</Text>
-
-                <Text style={styles.message}>{lastMessage}</Text>
+                <TruncatedText text={lastMessage} maxLength={30} />
             </View>
             <Text style={styles.time}>{time}</Text>
         </TouchableOpacity>

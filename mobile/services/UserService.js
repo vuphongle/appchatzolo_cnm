@@ -28,7 +28,7 @@ const UserService = {
    */
   getFriends: async (userId) => {
     try {
-      const response = await axios.get(`${IPV4}/${userId}/friends`);
+      const response = await axios.get(`${IPV4}/user/${userId}/friends`);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error;
@@ -44,7 +44,26 @@ const UserService = {
      } catch (error) {
          throw error.response ? error.response.data : error;
      }
-  }
+  },
+  getUserById: async (userId) => {
+    try {
+      const response = await axios.get(`${IPV4}/findById/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
+  getlastestMessage: async (senderID, receiverID) => {
+    try {
+      const response = await axios.get(`${IPV4}/messages/latest-message`, {
+        params: { senderID, receiverID },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
+
 };
 
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -8,11 +8,24 @@ import {
   StyleSheet,
 } from 'react-native';
 import { formatDate } from '../../../../utils/formatDate';
-function MyMessageItem({ time, message }) {
-  const [messIndex, setMessIndex] = useState(message);
-  const [typeIndex, setTypeIndex] = useState("text");
-  const [emojiIndex, setEmojiIndex] = useState(null);
 
+function MyMessageItem({ time, message, receiverID, isRead }) {
+  const [messIndex, setMessIndex] = useState(message);
+  const [emojiIndex, setEmojiIndex] = useState(null);
+  const [StatusRead, setStatusRead] = useState(false);
+
+  // Kiểm tra xem tin nhắn có phải là ảnh hay không
+  const isImageMessage = (url) => url && url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+  
+  // Kiểm tra xem tin nhắn có phải là URL của file hay không
+  const isFileMessage = (url) => url && url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/) != null;
+  
+  // Xác định loại tin nhắn
+  const [typeIndex, setTypeIndex] = useState(() => {
+    if (isImageMessage(message)) return 'image';
+    if (isFileMessage(message)) return 'file';
+    return 'text';
+  });
 
   // Hàm phản ứng emoji
   const reactMessage = (reaction) => {
@@ -57,17 +70,20 @@ function MyMessageItem({ time, message }) {
           <TouchableOpacity
             style={[
               styles.messageBox,
-              typeIndex === 'image' && styles.imageMessage,
+              (typeIndex === 'image' || typeIndex === 'file') && styles.mediaMessage,
             ]}
             onLongPress={handleLongPress}
             onPress={handlePressIcon}>
             {typeIndex === 'image' ? (
               <Image
                 style={styles.image}
-                source={{
-                  uri: 'https://i.pinimg.com/236x/85/40/33/854033242929cb15cd206e07b3981d58.jpg',
-                }}
+                source={{ uri: messIndex }}
               />
+            ) : typeIndex === 'file' ? (
+              <View style={styles.fileContainer}>
+                <Text style={styles.fileIcon}>📎</Text>
+                <Text style={styles.fileText}>{messIndex.split('/').pop()}</Text>
+              </View>
             ) : (
               <Text style={styles.messageText}>{messIndex}</Text>
             )}
@@ -83,12 +99,23 @@ function MyMessageItem({ time, message }) {
             <Text style={styles.emoji}>{emojiIndex}</Text>
           </View>
         )}
+        
+        {/* Trạng thái đọc */}
+        {isRead !== undefined ? (
+          isRead ? (
+            <View style={styles.statusContainer}>
+              <Text style={styles.statusText}>Đã xem</Text>
+            </View>
+          ) : (
+            <View style={styles.statusContainer}>
+              <Text style={styles.statusText}>✔✔ Đã gửi</Text>
+            </View>
+          )
+        ) : null}
       </View>
     </View>
   );
 }
-
-export default MyMessageItem;
 
 const styles = StyleSheet.create({
   container: {
@@ -113,8 +140,9 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
   },
-  imageMessage: {
+  mediaMessage: {
     padding: 0,
+    overflow: 'hidden',
   },
   messageText: {
     fontSize: 16,
@@ -140,6 +168,20 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 10,
   },
+  fileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  fileIcon: {
+    fontSize: 18,
+    marginRight: 5,
+  },
+  fileText: {
+    fontSize: 14,
+    color: '#0066cc',
+    textDecorationLine: 'underline',
+  },
   emojiContainer: {
     marginTop: 5,
     alignItems: 'flex-end',
@@ -147,4 +189,18 @@ const styles = StyleSheet.create({
   emoji: {
     fontSize: 20,
   },
+  statusContainer: {
+    borderRadius: 10,
+    backgroundColor: 'lightgray',
+    padding: 5,
+    marginTop: 5,
+    width: 80,
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    textAlign: 'center',
+  },
 });
+
+export default MyMessageItem;
