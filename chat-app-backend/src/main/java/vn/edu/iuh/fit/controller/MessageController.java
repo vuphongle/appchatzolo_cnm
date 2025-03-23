@@ -53,6 +53,13 @@ public class MessageController {
         return ResponseEntity.ok("Lời mời đã bị xóa thành công.");
     }
 
+    //Đếm số lời mời kết bạn
+    @GetMapping("/invitations/count/{senderId}/{receiverId}")
+    public ResponseEntity<Integer> countInvitation(@PathVariable String senderId, @PathVariable String receiverId) {
+        int count = service.countInvitation(senderId, receiverId);
+        return ResponseEntity.ok(count);
+    }
+
     // Xử lý đồng ý kết bạn
     @PostMapping("/acceptFriendRequest/{senderId}/{receiverId}")
     public ResponseEntity<String> acceptFriendRequest(
