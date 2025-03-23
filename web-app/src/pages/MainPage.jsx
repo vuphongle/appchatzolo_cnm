@@ -68,13 +68,14 @@ const MainPage = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState([]); // Danh sách tin nhắn chưa đọc
 
+
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
     const handleSelectChat = async (user) => {
         try {
             // Gọi API để lấy trạng thái online của user
             const updatedUser = await UserService.getUserStatus(user.id);
-                
+
             // Cập nhật thông tin người bạn và trạng thái online
             setSelectedChat({
                 ...user,
@@ -117,6 +118,7 @@ const MainPage = () => {
         );
         return unreadCounts; // Trả về danh sách các tin nhắn chưa đọc cho từng bạn
     };
+
     // useEffect để lấy số lượng tin nhắn chưa đọc cho tất cả bạn bè
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id) return;
@@ -177,15 +179,14 @@ const MainPage = () => {
 
                 // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
                 if (unreadMessages.length > 0) {
-                    // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
-                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)  // Đánh dấu tất cả tin nhắn là đã đọc
                         .then(() => {
-                            setChatMessages(updatedMessages); // Cập nhật lại state tin nhắn ngay lập tức
+                            setChatMessages(updatedMessages);  // Cập nhật tin nhắn ngay lập tức
 
                             // Cập nhật số lượng tin nhắn chưa đọc cho bạn bè
                             const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
                                 if (count.friendId === selectedChat.id) {
-                                    return { ...count, unreadCount: 0 };
+                                    return { ...count, unreadCount: 0 };  // Đánh dấu đã đọc (unreadCount = 0)
                                 }
                                 return count;
                             });
@@ -202,7 +203,9 @@ const MainPage = () => {
             .catch((err) => {
                 console.error("Error fetching messages:", err);
             });
-    }, [selectedChat, MyUser?.my_user?.id]);
+    }, [selectedChat, MyUser?.my_user?.id]);  // Khi selectedChat hoặc MyUser thay đổi
+
+
 
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
@@ -218,33 +221,74 @@ const MainPage = () => {
             });
     }, []); // Chỉ chạy một lần khi component được mount
 
-    // Lắng nghe tin nhắn mới từ WebSocket theo thời gian thực
+
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
             if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
-                // Cập nhật tin nhắn mới vào chatMessages
-                setChatMessages((prevMessages) =>
-                    [...prevMessages, incomingMessage].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
-                );
-            }
+                // Cập nhật tin nhắn mới
+                const validSendDate = moment(incomingMessage.sendDate).isValid()
+                    ? moment(incomingMessage.sendDate).toISOString()
+                    : new Date().toISOString();
 
-            // Cập nhật số lượng tin nhắn chưa đọc cho các bạn bè
-            const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                if (count.friendId === incomingMessage.senderID) {
-                    return {
-                        ...count,
-                        unreadCount: count.unreadCount, // Thêm 1 cho số tin nhắn chưa đọc
-                    };
+                // Cập nhật tin nhắn vào chatMessages
+                setChatMessages((prevMessages) => [
+                    ...prevMessages,
+                    { ...incomingMessage, sendDate: validSendDate },
+                ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
+                if (incomingMessage.isRead === false) {
+                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                        .then(() => {
+                            // Cập nhật trạng thái của tin nhắn trong chatMessages
+                            setChatMessages((prevMessages) =>
+                                prevMessages.map((msg) =>
+                                    msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
+                                )
+                            );
+
+                            // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
+                            const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                if (count.friendId === selectedChat.id) {
+                                    return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
+                                }
+                                return count;
+                            });
+                            setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                        })
+                        .catch((error) => {
+                            console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                        });
                 }
-                return count;
-            });
-            setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+            } else {
+                // Chỉ cập nhật số lượng tin nhắn chưa đọc khi có tin nhắn mới từ người chưa được chọn
+                if (incomingMessage.isRead === false) {
+                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                        if (count.friendId === incomingMessage.senderID) {
+                            return {
+                                ...count,
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc lên
+                            };
+                        }
+                        return count;
+                    });
+
+                    // Cập nhật lại số lượng tin nhắn chưa đọc
+                    setUnreadMessagesCounts(updatedUnreadCounts);
+                }
+            }
         });
 
         return () => {
             unsubscribe(); // Hủy lắng nghe khi component unmount
         };
-    }, [selectedChat, unreadMessagesCounts, onMessage]);
+    }, [selectedChat, unreadMessagesCounts, onMessage]);  // Khi selectedChat thay đổi
+
+
+
+
+
+
 
 
 
@@ -565,7 +609,7 @@ const MainPage = () => {
                                                             <span className="message-time">{displayTime}</span>
 
                                                             {/* 📌 Nếu là tin nhắn cuối cùng bạn gửi và đã đọc => hiển thị "✔✔ Đã nhận" */}
-                                                            {isLastMessageByMe && msg.isRead && (
+                                                            {isLastMessageByMe && isSentByMe && msg.isRead && (
                                                                 <span className="message-status read-status">✔✔ Đã nhận</span>
                                                             )}
                                                         </div>
@@ -984,6 +1028,8 @@ const MainPage = () => {
         navigate('/');
     };
 
+
+
     return (
         <div className="main-container">
             {/* Thanh bên trái */}
@@ -1073,27 +1119,31 @@ const MainPage = () => {
                         <div className="message-list">
                             <ul>
                                 {searchQuery === "" ? (
-                                    // Hiển thị tất cả bạn bè nếu không có tìm kiếm
-                                    allMessagesAndFriends.map((item) => (
-                                        <MessageItem
-                                            key={item.id}
-                                            groupName={item.groupName}
-                                            unreadCount={item.unreadCount}
-                                            img={item.img || avatar_default}
-                                            onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
-                                        />
-                                    ))
+                                    // Sắp xếp các message item sao cho các item có unreadCount > 0 sẽ hiển thị đầu tiên
+                                    allMessagesAndFriends
+                                        .sort((a, b) => b.unreadCount - a.unreadCount) // Sắp xếp các tin nhắn theo unreadCount (tin nhắn chưa đọc lên đầu)
+                                        .map((item) => (
+                                            <MessageItem
+                                                key={item.id}
+                                                groupName={item.groupName}
+                                                unreadCount={item.unreadCount}
+                                                img={item.img || avatar_default}
+                                                onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
+                                            />
+                                        ))
                                 ) : filteredFriends.length > 0 ? (
-                                    // Hiển thị các bạn bè đã lọc theo query tìm kiếm
-                                    filteredFriends.map((item) => (
-                                        <MessageItem
-                                            key={item.id}
-                                            groupName={item.name}
-                                            unreadCount={unreadMessagesCounts.find((u) => u.friendId === item.id)?.unreadCount || 0}
-                                            img={item.avatar || avatar_default}
-                                            onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
-                                        />
-                                    ))
+                                    // Sắp xếp các message item của bạn bè đã lọc theo query tìm kiếm
+                                    filteredFriends
+                                        .sort((a, b) => b.unreadCount - a.unreadCount) // Sắp xếp các tin nhắn theo unreadCount (tin nhắn chưa đọc lên đầu)
+                                        .map((item) => (
+                                            <MessageItem
+                                                key={item.id}
+                                                groupName={item.name}
+                                                unreadCount={unreadMessagesCounts.find((u) => u.friendId === item.id)?.unreadCount || 0}
+                                                img={item.avatar || avatar_default}
+                                                onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
+                                            />
+                                        ))
                                 ) : (
                                     <p>Không tìm thấy bạn bè nào.</p> // Hiển thị khi không tìm thấy kết quả
                                 )}

@@ -215,14 +215,25 @@ button {
 
 .message-item {
   display: flex;
+  position: relative;
+  right: 10px;
   align-items: center;
   padding: 10px 0;
+  cursor: pointer;
   border-bottom: 1px solid #ddd;
-}
-.message-item:hover {
-  background-color: #cce7ff; /* Màu xanh da trời nhạt khi hover */
+  transition: background-color 0.3s ease;
 }
 
+/* Hover khi di chuột qua */
+.message-item:hover {
+  background-color: #7fc2fc; /* Màu xanh da trời nhạt khi hover */
+}
+
+/* Giữ hover khi mục được chọn */
+.message-item.selected,
+.message-item.selected:hover {
+  background-color: #349ffd; /* Giữ màu nền khi hover trên mục đã chọn */
+}
 .avatar {
   width: 40px;
   height: 40px;
@@ -590,6 +601,9 @@ button {
   border-bottom: 1px solid #ddd;
   display: flex;
   align-items: center;
+  position: sticky; /* Để cố định khi cuộn */
+  top: 0; /* Cố định ở đầu trang */
+  z-index: 100; /* Đảm bảo header luôn ở trên */
 }
 
 .profile {
@@ -814,28 +828,26 @@ button {
 
 /* phần trạng thái online/offline*/
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: inline-block;
   margin-right: 5px;
 }
 
-.online {
+.status-dot.online {
   background-color: green;
 }
 
-.offline {
+.status-dot.offline {
   background-color: gray;
 }
 .user-status {
-  position: relative;
-  right: 100px;
-  top: 20px;
-  font-size: 13px;
-  color: #888;
-  display: flex;
-  align-items: center;
+  position: absolute;
+  left: 70px;
+  top: 10px;
+  margin-top: 30px;
+  font-size: 14px;
 }
 /* Phần trạng thái đã/chưa đọc tin nhắn */
 .message-date {
@@ -893,12 +905,13 @@ button {
 
 /* 📌 Căn chỉnh thời gian bên dưới nội dung tin nhắn */
 .message-time {
+  width: 30px;
   font-size: 10px;
-  color: #888;
+  color: #020202;
   margin-top: 3px;
   display: block;
   text-align: right;
-  background: #ebecf0;
+  background-color: #f1f1f1;
 }
 
 /* css cho Bảng biểu tượng cảm xúc */
