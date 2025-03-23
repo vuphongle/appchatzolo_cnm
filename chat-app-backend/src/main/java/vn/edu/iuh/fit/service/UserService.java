@@ -13,6 +13,7 @@ public interface UserService {
     User findUserById_ttt(String id);
     void updateUser(User user);
     List<User> findByNameContainingIgnoreCase(String name, String userId);
-
-
+    boolean removeFriend(String userId, String friendId);
+    String getUserAvatar(String userId);
+    void updateUserAvatar(String userId, String newAvatarUrl);
 }

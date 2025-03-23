@@ -1,8 +1,8 @@
-// contexts/UserContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { Auth } from 'aws-amplify';
 import { IPV4 } from '@env';
+import { useFriendRequestNotifications } from '../context/useFriendRequestNotifications';
 
 export const UserContext = createContext();
 
@@ -54,33 +54,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Hàm cập nhật số lời mời kết bạn từ server
-  const updateFriendRequestsCount = async () => {
-    if (!user) return;
-    try {
-      const response = await fetch(`${IPV4}/messages/invitations/received/${user.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setFriendRequestsCount(data.length);
-      }
-    } catch (error) {
-      console.error('Error fetching friend requests count:', error);
-    }
-  };
-
-  // Polling: cập nhật số lời mời mỗi 30 giây khi có user
-  useEffect(() => {
-    let intervalId;
-    if (user) {
-      updateFriendRequestsCount(); // Cập nhật ngay lần đầu
-      intervalId = setInterval(() => {
-        updateFriendRequestsCount();
-      }, 5000);
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [user]);
+  useFriendRequestNotifications(user?.id, setFriendRequestsCount);
 
   useEffect(() => {
     loadUser();
@@ -92,8 +66,7 @@ export const UserProvider = ({ children }) => {
         user,
         setUser,
         fetchUserProfile,
-        friendRequestsCount,
-        updateFriendRequestsCount,
+        friendRequestsCount
       }}
     >
       {!loading && children}

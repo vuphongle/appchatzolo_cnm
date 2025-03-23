@@ -17,6 +17,7 @@ public class User {
     private List<String> friendIds;
     private List<String> groupIds;
     private boolean isOnline;
+    private String gender;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -82,13 +83,22 @@ public class User {
         this.groupIds = groupIds;
     }
 
+    @DynamoDbAttribute("gender")
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
     @DynamoDbAttribute("isOnline")
-    public boolean getIsOnline() {
+    public boolean isOnline() {
         return isOnline;
     }
 
-    public void setIsOnline(boolean isOnline) {
-        this.isOnline = isOnline;
+    public void setOnline(boolean online) {
+        isOnline = online;
     }
 
     public User() {

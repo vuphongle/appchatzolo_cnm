@@ -151,6 +151,7 @@ public class UserController {
             String newName = payload.get("name");
             String newDob = payload.get("dob");
             String newAvatar = payload.get("avatar");
+            String newGender = payload.get("gender");
 
             User user = userService.findUserById_ttt(id);
             if (user == null) {
@@ -169,11 +170,27 @@ public class UserController {
                 user.setAvatar(newAvatar);
             }
 
+            if (newGender != null && !newGender.trim().isEmpty()) {
+                user.setGender(newGender);
+            }
+
             userService.createUser(user);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user: " + e.getMessage());
+        }
+    }
+
+
+    @DeleteMapping("/{userId}/removeFriend/{friendId}")
+    public ResponseEntity<?> removeFriend(@PathVariable String userId, @PathVariable String friendId) {
+        boolean success = userService.removeFriend(userId, friendId);
+
+        if (success) {
+            return ResponseEntity.ok("Bạn đã xóa bạn bè thành công!");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng hoặc bạn bè để xóa.");
         }
     }
 

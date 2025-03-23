@@ -11,7 +11,7 @@ const FriendInvitesScreen = () => {
   const [sentRequests, setSentRequests] = useState([]);    // Lời mời đã gửi
   const [sendersInfo, setSendersInfo] = useState({});
   const [receiversInfo, setReceiversInfo] = useState({});
-  const { user, updateFriendRequestsCount, friendRequestsCount } = useContext(UserContext);
+  const { user, friendRequestsCount } = useContext(UserContext);
 
   // Lấy lời mời đã nhận
   useEffect(() => {
@@ -83,7 +83,6 @@ const FriendInvitesScreen = () => {
         } else if (action === 'delete') {
           setSentRequests(sentRequests.filter(req => req.id !== requestId));
         }
-        updateFriendRequestsCount();
       } else {
         console.error('Action failed:', action);
       }

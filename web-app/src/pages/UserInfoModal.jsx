@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import UserService from "../services/UserService";
 import S3Service from "../services/S3Service";
 import { useAuth } from "../context/AuthContext";
+// import "./MainPage.css";
 
 const UserInfoModal = ({ user: initialUser, onClose }) => {
     const { MyUser, setMyUser, updateUserInfo } = useAuth();
@@ -71,7 +72,8 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             localStorage.setItem("my_user", JSON.stringify(newUserData)); // Cập nhật ngay
 
             alert("Cập nhật thông tin thành công!");
-            onClose();
+            setIsEditing(false);
+            // onClose();
         } catch (error) {
             console.error("Lỗi khi cập nhật user:", error);
             alert("Cập nhật thất bại! " + (error.message || JSON.stringify(error)));
@@ -108,29 +110,31 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
         if (!file) return;
 
         try {
-            // 1. Upload ảnh lên S3 và lấy URL
-            const url = await S3Service.uploadAvatar(file);
-
-            // 2. Cập nhật avatar vào DynamoDB
             const userId = MyUser?.my_user?.id;
             if (!userId) throw new Error("User ID is missing");
 
+            const url = await S3Service.uploadAvatar(file, userId);
+
             await UserService.updateUserInfo(userId, { avatar: url });
 
-            // 3. Cập nhật MyUser và localStorage
             const updatedUser = { ...MyUser, my_user: { ...MyUser.my_user, avatar: url } };
             setMyUser(updatedUser);
             localStorage.setItem("my_user", JSON.stringify(updatedUser));
 
             setAvatar(url);
+            setFile(null); // Reset file sau khi upload
             setIsUploading(false);
+            setShowModal(false);
+
+            // Reset trạng thái isChanged vì ảnh đã được cập nhật
+            setOriginalAvatar(url);
+
             alert("Cập nhật avatar thành công!");
         } catch (error) {
             console.error("Upload avatar failed:", error);
             alert("Upload thất bại!");
         }
     };
-
 
     if (!MyUser && !initialUser) {
         return (
@@ -155,8 +159,14 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
         );
     }
 
+    const handleModalClick = (e) => {
+        // Ngăn không cho đóng modal khi click vào trong nội dung modal
+        if (e.target.closest('.modal-dialog')) return;
+        onClose();
+    };
+
     return (
-        <div className="modal show d-block" tabIndex="-1">
+        <div className="modal show d-block d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-lg">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -322,7 +332,7 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
                                 <button type="button" className="btn btn-secondary" onClick={cancelUpload}>
                                     Hủy
                                 </button>
-                                <button type="button" className="btn btn-primary" onClick={uploadAvatar}>
+                                <button type="button" className="btn btn-primary" onClick={uploadAvatar} disabled={!file}>
                                     Cập nhật ảnh
                                 </button>
                             </>

@@ -48,8 +48,14 @@ const CreateGroupModal = ({ onClose }) => {
         friend.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleModalClick = (e) => {
+        // Ngăn không cho đóng modal khi click vào trong nội dung modal
+        if (e.target.closest('.modal-dialog')) return;
+        onClose();
+    };
+
     return (
-        <div className="modal show d-block" tabIndex="-1">
+        <div className="modal show d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-xl">
                 <div className="modal-content" style={{ width: "500px", maxHeight: "90vh", overflow: "hidden" }}>
                     <div className="modal-header">
@@ -116,31 +122,3 @@ const CreateGroupModal = ({ onClose }) => {
 };
 
 export default CreateGroupModal;
-
-// {Object.entries(filteredFriends.reduce((acc, friend) => {
-//     const firstLetter = friend.name[0].toUpperCase();
-//     if (!acc[firstLetter]) acc[firstLetter] = [];
-//     acc[firstLetter].push(friend);
-//     return acc;
-// }, {})).map(([letter, friends]) => (
-//     <div key={letter}>
-//         <h6 className="fw-bold mt-3">{letter}</h6>
-//         {friends.map(friend => (
-//             <div key={friend.id} className="d-flex align-items-center py-2 border-bottom">
-//                 <input
-//                     type="checkbox"
-//                     checked={selectedFriends.includes(friend.id)}
-//                     onChange={() => toggleSelect(friend.id)}
-//                     className="form-check-input me-2 ms-2 rounded-pill"
-//                 />
-//                 <img
-//                     src={friend.avatar || "default-avatar.png"}
-//                     alt={friend.name}
-//                     className="rounded-circle me-2 ms-2"
-//                     style={{ width: "40px", height: "40px", objectFit: "cover" }}
-//                 />
-//                 <span className="fw-semibold">{friend.name}</span>
-//             </div>
-//         ))}
-//     </div>
-// ))}

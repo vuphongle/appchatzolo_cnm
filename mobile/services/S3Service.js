@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/s3';
+import { IPV4 } from '@env';    
 
 const S3Service = {
     /**
@@ -8,12 +8,12 @@ const S3Service = {
    * @param {File} file - File ảnh cần upload
    * @returns {Promise<string>} - URL của avatar sau khi upload
    */
-    uploadAvatar: async (file, userId) => {
+    uploadAvatar: async (file) => {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("userId", userId);
+
         try {
-            const response = await axios.post(`${API_BASE_URL}/avatar`, formData, {
+            const response = await axios.post(`${IPV4}/avatar`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
@@ -30,13 +30,19 @@ const S3Service = {
 
     uploadImage: async (file) => {
         const formData = new FormData();
-        formData.append("file", file);
+       
+        formData.append("file", {
+            uri: file.uri, 
+            name: file.fileName, 
+            type: file.type,
+          });
+        
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/image`, formData, {
+            const response = await axios.post(`${IPV4}/s3/image`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-            return response.data.url; // Trả về URL ảnh mới
+            return response.data.url; 
         } catch (error) {
             throw error.response ? error.response.data : error;
         }
@@ -44,10 +50,14 @@ const S3Service = {
 
     uploadFile: async (file) => {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", {
+            uri: file.uri, 
+            name: file.fileName, 
+            type: file.type,
+          });
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/file`, formData, {
+            const response = await axios.post(`${IPV4}/s3/file`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             return response.data.url; // Trả về URL ảnh mới

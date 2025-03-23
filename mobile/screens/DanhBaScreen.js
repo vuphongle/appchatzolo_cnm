@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import SearchBar from '../components/SearchBar';
@@ -13,6 +13,11 @@ const DanhBaScreen = () => {
   const [activeTab, setActiveTab] = useState('friends');
   const [receivedCount, setReceivedCount] = useState(0);
   const [friends, setFriends] = useState([]);
+
+  // Ref để quản lý Swipeable đang mở
+  const currentlyOpenSwipeable = useRef(null);
+  // Map lưu trữ các ref của Swipeable theo contact.id
+  const swipeableRefs = useRef(new Map());
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -30,7 +35,7 @@ const DanhBaScreen = () => {
       }
     };
     fetchFriends();
-  }, [user?.id]);
+  }, [user?.id, friendRequestsCount]);
 
   useEffect(() => {
     const fetchReceivedCount = async () => {
@@ -125,8 +130,7 @@ const DanhBaScreen = () => {
                 style={{ marginRight: 8 }}
               />
               <Text style={styles.shortcutText}>
-                Lời mời kết bạn
-                {receivedCount > 0 ? ` (${receivedCount})` : ''}
+                Lời mời kết bạn{receivedCount > 0 ? ` (${receivedCount})` : ''}
               </Text>
             </View>
           </TouchableOpacity>
@@ -139,6 +143,26 @@ const DanhBaScreen = () => {
         {friends.map((contact) => (
           <Swipeable
             key={contact.id}
+            // Gán ref cho từng Swipeable
+            ref={(ref) => swipeableRefs.current.set(contact.id, ref)}
+            onSwipeableWillOpen={() => {
+              const currentRef = swipeableRefs.current.get(contact.id);
+              if (
+                currentlyOpenSwipeable.current &&
+                currentlyOpenSwipeable.current !== currentRef
+              ) {
+                // Đóng Swipeable đang mở trước đó
+                currentlyOpenSwipeable.current.close();
+              }
+              // Cập nhật Swipeable đang mở
+              currentlyOpenSwipeable.current = currentRef;
+            }}
+            onSwipeableWillClose={() => {
+              const currentRef = swipeableRefs.current.get(contact.id);
+              if (currentlyOpenSwipeable.current === currentRef) {
+                currentlyOpenSwipeable.current = null;
+              }
+            }}
             renderRightActions={(progress, dragX) =>
               renderRightActions(progress, dragX, contact)
             }

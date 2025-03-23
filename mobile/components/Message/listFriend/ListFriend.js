@@ -8,7 +8,8 @@ import ItemFriend from './ItemFriend';
 import CloudItem from './CloudItem';
 import axios from 'axios';
 import { IPV4 } from '@env';
-
+import UserService from '../../../services/UserService';
+import MessageService from '../../../services/MessageService';
 function ListFriend({userId}) {
   const [openRow, setOpenRow] = useState(null); 
   const [loading, setLoading] = useState(true);
@@ -17,26 +18,49 @@ function ListFriend({userId}) {
 
   const fetchFriends = async () => {
     try {
-      setLoading(true);
-      const response = await axios.get(`${IPV4}/user/${userId}/friends`);
-      setFriends(response.data);
-      setError(null);
-    } catch (err) {
-      setError('Không có bạn trong danh sách');
-      Alert.alert('Error',"Không thể tải danh sách bạn bè.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLoading(true);
+        const response = await UserService.getFriends(userId);
+        let friendsList = response;
 
- 
-  useFocusEffect(
+        // Lấy tin nhắn mới nhất của từng bạn
+        const friendsWithMessages = await Promise.all(
+            friendsList.map(async (friend) => {
+                try {
+                    const messageResponse = await MessageService.getLatestMessage(userId, friend.id);
+                    return {
+                        ...friend,
+                        lastMessage: messageResponse ? messageResponse.content : "Chưa có tin nhắn",
+                        sendDate: messageResponse ? new Date(messageResponse.sendDate) : null,
+                    };
+                } catch (error) {
+                    console.error("Lỗi khi lấy tin nhắn mới nhất:", error);
+                    return { ...friend, lastMessage: "Chưa có tin nhắn", sendDate: null };
+                }
+            })
+        );
+
+        // Sắp xếp bạn bè theo thời gian gửi tin nhắn mới nhất (gần nhất trước)
+        friendsWithMessages.sort((a, b) => {
+            return (b.sendDate?.getTime() || 0) - (a.sendDate?.getTime() || 0);
+        });
+
+        setFriends(friendsWithMessages);
+        setError(null);
+    } catch (err) {
+        setError('Không có bạn trong danh sách');
+        Alert.alert('Error', "Không thể tải danh sách bạn bè.");
+    } finally {
+        setLoading(false);
+    }
+};
+
+useFocusEffect(
     React.useCallback(() => {
-      fetchFriends();
-      return () => {}       
-      
+        fetchFriends();
+        return () => {};
     }, [userId])
-  );
+);
+
 
   // Hàm xử lý ghim
   const pinFriend = (id) => {

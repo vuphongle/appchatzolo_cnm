@@ -38,7 +38,7 @@ const SettingsScreen = ({ route, navigation }) => {
     };
 
     const settingsOptions = [
-        { icon: 'security', text: 'Tài khoản và bảo mật', onPress: () => {} },
+        { icon: 'security', text: 'Tài khoản và bảo mật', onPress: () => navigation.navigate('AccountSecurityScreen') },
         { icon: 'lock', text: 'Quyền riêng tư', onPress: () => {} },
         { icon: 'history', text: 'Dữ liệu trên máy', onPress: () => {} },
         { icon: 'sync', text: 'Sao lưu và khôi phục', onPress: () => {} },
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F0F8FF',
-        padding: 20,
+        padding: 10,
     },
     optionItem: {
         flexDirection: 'row',

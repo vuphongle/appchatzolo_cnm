@@ -18,6 +18,9 @@ import ImageChat from './components/Message/Chat/ImageChat';
 import ScreenCloud from './components/Message/Cloud/ScreenCloud';
 import CloudStorageScreen from './components/Message/Cloud/CloudStorageScreen'
 import FriendInvitesScreen from './screens/FriendInvitesScreen';
+import AccountSecurityScreen from './screens/AccountSecurityScreen';
+import PersonalInfoScreen from './screens/PersonalInfoScreen';
+import EditPersonalInfoScreen from './screens/EditPersonalInfoScreen';
 
  Amplify.configure({
    ...awsConfig,
@@ -50,6 +53,21 @@ const App = () => {
             name="SettingsScreen"
             component={SettingScreen}
             options={{ headerTitle: 'Cài đặt' }}
+          />
+          <Stack.Screen
+            name="AccountSecurityScreen"
+            component={AccountSecurityScreen}
+            options={{ headerTitle: 'Tài khoản và bảo mật' }}
+          />
+          <Stack.Screen
+            name="PersonalInfoScreen"
+            component={PersonalInfoScreen}
+            options={{ headerTitle: 'Thông tin cá nhân' }}
+          />
+          <Stack.Screen
+            name="EditPersonalInfoScreen"
+            component={EditPersonalInfoScreen}
+            options={{ headerTitle: 'Chỉnh sửa thông tin' }}
           />
           <Stack.Screen
             name="Chat"
