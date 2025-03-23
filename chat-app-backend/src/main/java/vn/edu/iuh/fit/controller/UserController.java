@@ -181,4 +181,15 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user: " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{userId}/removeFriend/{friendId}")
+    public ResponseEntity<?> removeFriend(@PathVariable String userId, @PathVariable String friendId) {
+        boolean success = userService.removeFriend(userId, friendId);
+
+        if (success) {
+            return ResponseEntity.ok("Bạn đã xóa bạn bè thành công!");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng hoặc bạn bè để xóa.");
+        }
+    }
 }

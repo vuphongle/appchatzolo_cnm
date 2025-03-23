@@ -71,4 +71,23 @@ public class UserRepository {
                 .collect(Collectors.toList());
     }
 
+    public boolean removeFriend(String userId, String friendId) {
+        User user = findById_ttt(userId);
+        User friend = findById_ttt(friendId);
+
+        if (user == null || friend == null || user.getFriendIds() == null || friend.getFriendIds() == null) {
+            return false; // Nếu không tìm thấy user hoặc friend, hoặc không có danh sách bạn bè
+        }
+
+        boolean removedFromUser = user.getFriendIds().remove(friendId);
+        boolean removedFromFriend = friend.getFriendIds().remove(userId);
+
+        if (removedFromUser || removedFromFriend) {
+            save(user);
+            save(friend);
+            return true;
+        }
+        return false;
+    }
+
 }

@@ -3,6 +3,7 @@ import MessageService from "../services/MessageService";
 import avatar_default from '../image/avatar_user.jpg';
 import './ListFriend_RequestTab.css';
 import { useAuth } from "../context/AuthContext";
+import { useWebSocket } from "../context/WebSocket";
 import UserService from "../services/UserService";
 
 const FriendRequestsTab = ({ userId, friendRequests }) => {
@@ -11,6 +12,8 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
     const [sentRequests, setSentRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { sendMessage, onMessage } = useWebSocket();
+
 
     // Hàm chuyển đổi timestamp thành ngày tháng, chỉ đến giây
     const formatDate = (timestampArray) => {
@@ -60,6 +63,19 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
         fetchRequests();
     }, [friendRequests]);
 
+    // useEffect(() => {
+    //     // Gọi hàm lấy dữ liệu lần đầu tiên khi component mount
+    //     fetchRequests();
+
+    //     // Polling: Gọi hàm fetchRequests mỗi 5 giây để kiểm tra dữ liệu mới
+    //     const interval = setInterval(() => {
+    //         fetchRequests();
+    //     }, 5000);
+
+    //     // Dọn dẹp khi component unmount
+    //     return () => clearInterval(interval);
+    // }, []);
+
     // Hàm xử lý xóa, thu hồi lời mời kết bạn
     const handleDeleteInvitation = (senderID, receiverID) => {
         MessageService.deleteInvitation(senderID, receiverID)
@@ -78,17 +94,28 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
         MessageService.post(`/acceptFriendRequest/${senderId}/${receiverId}`)
             .then((response) => {
                 alert(response);
-                fetchRequests();  // Cập nhật lại danh sách sau khi chấp nhận
+                fetchRequests();
 
-                // Cập nhật Friendlist(số bạn bè) của người chấp nhận 
                 const updatedUserData_receiver = {
-                    ...MyUser, // Giữ lại các thuộc tính cũ của người dùng
+                    ...MyUser,
                     my_user: {
                         ...MyUser.my_user,
-                        friendIds: [...MyUser.my_user.friendIds, senderId], // Thêm senderId vào mảng friendIds
+                        friendIds: [...MyUser.my_user.friendIds, senderId],
                     },
                 };
                 updateUserInfo(updatedUserData_receiver);
+
+                const message = {
+                    id: new Date().getTime().toString(),
+                    senderID: receiverId,
+                    receiverID: senderId,
+                    content: "Tôi đã chấp nhận lời mời kết bạn của bạn.",
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                };
+
+                // Gửi thông báo qua WebSocket đến bên A về việc đồng ý kết bạn
+                sendMessage(message);
 
             })
             .catch((error) => {
@@ -96,14 +123,6 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
                 alert(`Có lỗi xảy ra khi đồng ý kết bạn: ${error.response ? error.response.data : error.message}`);
             });
     };
-
-    // useEffect(() => {
-    //     if (!friendRequests || !friendRequests.received || !friendRequests.sent) {
-    //         setLoading(false);
-    //     } else {
-    //         fetchRequests();
-    //     }
-    // }, [friendRequests]);
 
     // Kiểm tra nếu đang tải dữ liệu hoặc có lỗi
     if (loading) {

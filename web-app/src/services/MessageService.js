@@ -27,6 +27,17 @@ const MessageService = {
         return axios.delete(`${API_BASE_URL}/invitations/${senderID}/${receiverID}`);
     },
 
+    //Dếm số lượng lời mời
+    countInvitations: async (senderID, receiverID) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/invitations/count/${senderID}/${receiverID}`);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching invitations count:", error);
+            return [];
+        }
+    },
+
     //lấy trạng thái đã đọc chưa đọc
     getUnreadMessages: async (receiverID, senderID) => {
         try {

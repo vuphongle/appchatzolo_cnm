@@ -1,27 +1,65 @@
 import React from "react";
 import { useState, useEffect, useMemo } from "react";
 import MessageService from "../services/MessageService";
+import avatar_default from '../image/avatar_user.jpg';
 import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import FriendRequestsTab from "./ListFriend_RequestTab";
 
-const FriendItem = ({ avatar, name }) => (
-    <button type="button" className="btn btn-outline-secondary" style={{ outline: "none", border: "none" }}>
-        <div className="friend-item d-flex align-items-center mb-3">
-            <img src={avatar || "default-avatar.png"} alt="Avatar" className="avatar me-3" style={{ width: 50, height: 50, borderRadius: "50%" }} />
-            <h4>{name}</h4>
-            <i className="fas fa-ellipsis-h ms-auto" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"></i>
-            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                <li><a className="dropdown-item" href="#">Xem thông tin</a></li>
-                <li><hr className="dropdown-divider" /></li>
-                <li><a className="dropdown-item" href="#">Đặt tên gợi nhớ</a></li>
-                <li><a className="dropdown-item" href="#">Chặn người này</a></li>
-                <li><hr className="dropdown-divider" /></li>
-                <li><a className="dropdown-item text-danger" href="#">Xóa bạn</a></li>
-            </ul>
+const FriendItem = ({ userId, friendId, avatar, name, onFriendRemoved }) => {
+    const handleRemoveFriend = async () => {
+        try {
+            await UserService.delete(`/${userId}/removeFriend/${friendId}`);
+            alert("Xóa bạn thành công!");
+            if (onFriendRemoved) {
+                onFriendRemoved(friendId);
+            }
+        } catch (error) {
+            alert("Lỗi khi xóa bạn bè: " + error.message);
+        }
+    };
+
+    return (
+        <div
+            className="friend-item d-flex align-items-center justify-content-between p-2 border-bottom mb-3"
+            style={{ transition: "background-color 0.3s ease" }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+        >
+            {/* Avatar + Tên */}
+            <div className="d-flex align-items-center ms-3">
+                <img
+                    src={avatar || avatar_default}
+                    alt="Avatar"
+                    className="rounded-circle me-3 mt-1"
+                    style={{ width: 50, height: 50 }}
+                />
+                <h5 className="mb-0 ms-2">{name}</h5>
+            </div>
+
+            {/* Dropdown Menu */}
+            <div className="dropdown">
+                <button
+                    className="btn btn-light border-0 p-2"
+                    id="dropdownMenuButton1"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                >
+                    <i className="fas fa-ellipsis-h"></i>
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1">
+                    <li><a className="dropdown-item" href="#">Xem thông tin</a></li>
+                    <li><a className="dropdown-item" href="#">Đặt tên gợi nhớ</a></li>
+                    <li><a className="dropdown-item" href="#">Chặn người này</a></li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li onClick={handleRemoveFriend}>
+                        <a className="dropdown-item text-danger" href="#">Xóa bạn</a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </button>
-);
+    );
+};
 
 const groupList = [
     { id: 1, groupName: "IUH - DHKTPM17A - CT7", member: 86, img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
@@ -119,11 +157,16 @@ function ContactsTab({ friendRequests }) {
             return (
                 <React.Fragment key={friend.id}>
                     {showLetter && <h4>{firstLetter}</h4>}
-                    <FriendItem avatar={friend.avatar} name={friend.name} />
+                    <FriendItem userId={userId} friendId={friend.id} avatar={friend.avatar} name={friend.name} onFriendRemoved={handleFriendRemoved} />
                 </React.Fragment>
             );
         });
     };
+
+    const handleFriendRemoved = (removedFriendId) => {
+        setFriends((prevFriends) => prevFriends.filter(friend => friend.id !== removedFriendId));
+    };
+
 
     return (
         <div>
@@ -135,18 +178,18 @@ function ContactsTab({ friendRequests }) {
                         <h4 className="mb-0">Danh sách bạn bè</h4>
                     </div>
                     <hr />
-                    <div className="vh-100">
+                    <div className="vh-100 container">
                         <h6>Bạn bè ({searchTerm.trim() ? searchResults.length : friends.length})</h6>
-                        <div className="search-bar d-flex align-items-center mb-3">
+                        <div className="d-flex align-items-center gap-2 mb-3">
                             <input
                                 type="text"
-                                className="form-control me-2"
+                                className="form-control w-50"
                                 placeholder="Tìm bạn"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                             <select
-                                className="form-select"
+                                className="form-select w-50"
                                 value={sortOrder}
                                 onChange={(e) => {
                                     handleSortChange(e);
