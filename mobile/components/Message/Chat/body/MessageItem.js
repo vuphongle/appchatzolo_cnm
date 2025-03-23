@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import { Alert, Image, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import MessageService from '../../../../services/MessageService';
 
-function MessageItem({ avatar,  time, message }) {
+function MessageItem({ avatar, time, message }) {
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState(null);
-const [typeIndex, setTypeIndex] = useState('text');
-const type = 'text';
+  const [StatusRead, setStatusRead] = useState(false);
+  
+  // Kiểm tra xem tin nhắn có phải là ảnh hay không
+  const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+  
+  // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
+  const isFileMessage = (url) => url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/) != null;
+  
+  // Xác định loại tin nhắn
+  const type = isImageMessage(message) ? 'image' : isFileMessage(message) ? 'file' : 'text';
+
   // Hàm xử lý nhấn vào ảnh
   const handlePressImage = () => {
     navigation.navigate('ImageChat', {
       avatar,
-      
       image: message,
     });
   };
-
+  
   // Hàm phản ứng emoji
   const reactMessage = (reaction) => {
     setEmojiIndex(reaction);
@@ -35,28 +44,29 @@ const type = 'text';
 
   return (
     <View style={styles.container}>
-     <View style={styles.avatarContainer}>
+      <View style={styles.avatarContainer}>
         <Image style={styles.avatar} source={{ uri: avatar }} />
       </View>
       <View style={styles.messageContainer}>
-  
-        
-       
-
         {/* Nội dung tin nhắn */}
-        <TouchableOpacity onLongPress={handlePressIcon}    style={[
-              styles.messageBox,
-              typeIndex === 'image' && styles.imageMessage,
-            ]}>
+        <TouchableOpacity onLongPress={handlePressIcon}
+          style={[
+            styles.messageBox,
+            type === 'image' && styles.imageMessage,
+          ]}>
           {type === 'image' ? (
             <TouchableOpacity onPress={handlePressImage}>
               <Image style={styles.image} source={{ uri: message }} />
             </TouchableOpacity>
+          ) : type === 'file' ? (
+            <View style={styles.fileContainer}>
+              <Text style={styles.fileText}>📎 {message.split('/').pop()}</Text>
+            </View>
           ) : type === 'unsend' ? (
             <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>
           ) : (
             <Text style={styles.messageText}>{message}</Text>
-      )} 
+          )}
         </TouchableOpacity>
 
         {/* Thời gian tin nhắn */}
@@ -69,7 +79,6 @@ const type = 'text';
           </View>
         )}
       </View>
-     
     </View>
   );
 }
@@ -84,7 +93,6 @@ const styles = StyleSheet.create({
   messageContainer: {
     flexDirection: 'column',
     maxWidth: '75%',
-    // backgroundColor: '#f0f8ff',
     padding: 12,
     borderRadius: 10,
     marginRight: 10,
@@ -112,7 +120,6 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
   },
-
   image: {
     width: 160,
     height: 160,
@@ -120,6 +127,15 @@ const styles = StyleSheet.create({
   },
   imageMessage: {
     padding: 0,
+  },
+  fileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fileText: {
+    fontSize: 14,
+    color: '#0066cc',
+    textDecorationLine: 'underline',
   },
   messageText: {
     fontSize: 14,

@@ -74,7 +74,7 @@ const MainPage = () => {
         try {
             // Gọi API để lấy trạng thái online của user
             const updatedUser = await UserService.getUserStatus(user.id);
-
+                
             // Cập nhật thông tin người bạn và trạng thái online
             setSelectedChat({
                 ...user,

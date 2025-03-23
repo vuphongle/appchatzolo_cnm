@@ -1,11 +1,14 @@
-import React from "react";
+import React,{useState,useEffect} from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from "@react-navigation/native";
 import { StackActions } from "@react-navigation/native";
+import UserService from "../../../services/UserService";
+
 function Header({ name, id, avatar }) {
     const navigation = useNavigation();
+    const [onlineStatus, setOnlineStatus] = useState(false);
 
     const handlePressBack = () => {
         navigation.goBack();
@@ -14,6 +17,25 @@ function Header({ name, id, avatar }) {
     const handlePressMenu = () => {
         navigation.navigate("DetailChat");
     };
+    const getOnlineStatus = () => {
+        try{
+            const receiver = UserService.getUserById(id);
+            setOnlineStatus(receiver.isOnline);
+        }
+        catch(err){
+            console.log(err);
+            setOnlineStatus(false);
+        }
+    }
+       
+    useEffect(() => {
+        getOnlineStatus();
+    },[]);
+
+
+
+
+
 
     return (
         <View style={styles.container}>
@@ -24,7 +46,13 @@ function Header({ name, id, avatar }) {
                 </TouchableOpacity>
 
                 <View style={styles.container_friend_Name}>
-                    <Text style={styles.friend_Name}>{name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.friend_Name}>{name}
+                    {onlineStatus ?   <Ionicons name="ellipse" size={10} color="green" style={{marginLeft:10}} /> : <Ionicons name="ellipse" size={10} color="grey" style={{marginLeft:10}}/>}
+                    </Text>
+                </View>
+                    {onlineStatus ? <Text style={{ color: 'white', fontSize: 12 }}>Hoạt động</Text>  :  <Text style={{ color: 'white', fontSize: 12 }}> Không hoạt động</Text>
+                  }
                 </View>
             </View>
 
