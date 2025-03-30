@@ -5,10 +5,31 @@ import avatar_default from '../image/avatar_user.jpg';
 import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import FriendRequestsTab from "./ListFriend_RequestTab";
+import FriendInfoModal from "./FriendInfoModal";
 
-const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriendRemoved, user, onSelectChat }) => {
-    const [showModalFriend, setShowModalFriend] = useState(false);
+const FriendItem = ({
+    userId,
+    friendId,
+    avatar,
+    name,
+    phoneNumber,
+    dob,
+    onFriendRemoved,
+    user,
+    onSelectChat,
+    avatar_default,
+    MyUser,
+    handleUserInfoModalOpen,
+    isFriendRequestSent,
+    isFriendRequestModalOpen,
+    messageContent,
+    setMessageContent,
+    sendFriendRequest,
+    setIsFriendRequestModalOpen,
+}) => {
+    const [showModalFriend, setShowModalFriend] = useState(false); // Trạng thái riêng cho mỗi FriendItem
     user = { id: friendId, avatar, name, phoneNumber, dob };
+
     const handleRemoveFriend = async () => {
         try {
             await UserService.delete(`/${userId}/removeFriend/${friendId}`);
@@ -23,15 +44,13 @@ const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriend
 
     return (
         <>
-            {/* Item danh sách bạn bè */}
             <div
                 className="d-flex align-items-center justify-content-between p-2 border-bottom mb-3"
                 style={{ transition: "background-color 0.3s ease" }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 onClick={() => onSelectChat(user)}
             >
-                {/* Avatar + Tên */}
                 <div className="d-flex align-items-center ms-3">
                     <img
                         src={avatar}
@@ -41,8 +60,6 @@ const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriend
                     />
                     <h5 className="mb-0 ms-2">{name}</h5>
                 </div>
-
-                {/* Dropdown Menu */}
                 <div className="dropdown">
                     <button
                         className="btn btn-light border-0 p-2"
@@ -54,15 +71,37 @@ const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriend
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a className="dropdown-item" onClick={(e) => { e.stopPropagation(); setShowModalFriend(true); document.body.click(); }}>
+                            <a
+                                className="dropdown-item"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowModalFriend(true); document.body.click();// Mở modal riêng cho FriendItem này
+                                }}
+                            >
                                 Xem thông tin
                             </a>
                         </li>
-                        <li><a className="dropdown-item" onClick={(e) => { e.stopPropagation(); document.body.click(); }}>Đặt tên gợi nhớ</a></li>
-                        <li><a className="dropdown-item" onClick={(e) => { e.stopPropagation(); document.body.click(); }}>Chặn người này</a></li>
-                        <li><hr className="dropdown-divider" /></li>
                         <li>
-                            <a className="dropdown-item text-danger" onClick={(e) => { e.stopPropagation(); handleRemoveFriend(); document.body.click(); }}>
+                            <a className="dropdown-item" onClick={(e) => { e.stopPropagation(); document.body.click(); }}>
+                                Đặt tên gợi nhớ
+                            </a>
+                        </li>
+                        <li>
+                            <a className="dropdown-item" onClick={(e) => { e.stopPropagation(); document.body.click(); }}>
+                                Chặn người này
+                            </a>
+                        </li>
+                        <li>
+                            <hr className="dropdown-divider" />
+                        </li>
+                        <li>
+                            <a
+                                className="dropdown-item text-danger"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveFriend(); document.body.click();
+                                }}
+                            >
                                 Xóa bạn
                             </a>
                         </li>
@@ -70,115 +109,22 @@ const FriendItem = ({ userId, friendId, avatar, name, phoneNumber, dob, onFriend
                 </div>
             </div>
 
-            {/* Modal hiển thị thông tin bạn bè */}
             {showModalFriend && (
-                <div className="modal show d-block d-flex align-items-center justify-content-center" tabIndex="-1">
-                    <div className="modal-dialog modal-dialog-centered modal-lg">
-                        <div className="modal-content" style={{ width: "400px", maxHeight: "100vh", overflow: "hidden" }}>
-                            <div className="modal-header">
-                                <h5 className="modal-title fw-bold">
-                                    Thông tin tài khoản
-                                </h5>
-                                <i className="fas fa-times" style={{ cursor: "pointer" }} onClick={() => setShowModalFriend(false)}></i>
-                            </div>
-
-                            {/* Body */}
-                            <div className="modal-body text-center">
-                                <div className="position-relative d-inline-block">
-                                    <img
-                                        src={avatar}
-                                        alt="Avatar"
-                                        className="rounded-circle border"
-                                        style={{ width: "90px", height: "90px", objectFit: "cover" }}
-                                    />
-                                </div>
-                                <h5 className="fw-bold mt-2 d-flex justify-content-center align-items-center">
-                                    {name}
-                                </h5>
-                                <hr />
-                                {/* Thông tin */}
-                                <div className="text-start mt-3 ms-3">
-                                    <h5 className="fw-bold mb-3">Thông tin cá nhân</h5>
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Bio</span>
-                                        <span className="fw-medium">{"Chưa cập nhật"}</span>
-                                    </div>
-
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Giới tính</span>
-                                        <span className="fw-medium">{"Chưa cập nhật"}</span>
-                                    </div>
-
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Ngày sinh</span>
-                                        <span className="fw-medium">{dob || "Chưa cập nhật"}</span>
-                                    </div>
-
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Điện thoại</span>
-                                        <span className="fw-medium">{phoneNumber || "Chưa cập nhật"}</span>
-                                    </div>
-                                </div>
-                                <div className="modal-footer d-flex justify-content-start align-items-center p-3">
-                                    {/* Nhóm chung */}
-                                    <div
-                                        className="d-flex align-items-center me-4"
-                                        style={{ cursor: "pointer", transition: "background-color 0.3s ease" }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                                    >
-                                        <i className="fas fa-users me-2"></i>
-                                        <span className="fw-bold">Nhóm chung (0)</span>
-                                    </div>
-
-                                    {/* Chia sẻ danh thiếp */}
-                                    <div
-                                        className="d-flex align-items-center me-4"
-                                        style={{ cursor: "pointer", transition: "background-color 0.3s ease" }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                                    >
-                                        <i className="fas fa-address-card me-2"></i>
-                                        <span className="fw-bold">Chia sẻ danh thiếp</span>
-                                    </div>
-
-                                    {/* Chặn tin nhắn và cuộc gọi */}
-                                    <div
-                                        className="d-flex align-items-center me-4"
-                                        style={{ cursor: "pointer", transition: "background-color 0.3s ease" }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                                    >
-                                        <i className="fas fa-ban me-2"></i>
-                                        <span className="fw-bold">Chặn tin nhắn và cuộc gọi</span>
-                                    </div>
-
-                                    {/* Báo xấu */}
-                                    <div
-                                        className="d-flex align-items-center me-4"
-                                        style={{ cursor: "pointer", transition: "background-color 0.3s ease" }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                                    >
-                                        <i className="fas fa-exclamation-triangle me-2"></i>
-                                        <span className="fw-bold">Báo xấu</span>
-                                    </div>
-
-                                    {/* Xóa khỏi danh sách bạn bè */}
-                                    <div
-                                        className="d-flex align-items-center"
-                                        style={{ cursor: "pointer", transition: "background-color 0.3s ease" }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                                    >
-                                        <i className="fas fa-trash-alt me-2"></i>
-                                        <span className="fw-bold">Xóa khỏi danh sách bạn bè</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <FriendInfoModal
+                    user={user}
+                    avatar_default={avatar_default}
+                    MyUser={MyUser}
+                    isUserInfoModalOpen={showModalFriend}
+                    setIsUserInfoModalOpen={setShowModalFriend}
+                    closeAllModal={() => setShowModalFriend(false)}
+                    handleUserInfoModalOpen={handleUserInfoModalOpen}
+                    isFriendRequestSent={isFriendRequestSent}
+                    isFriendRequestModalOpen={isFriendRequestModalOpen}
+                    messageContent={messageContent}
+                    setMessageContent={setMessageContent}
+                    sendFriendRequest={sendFriendRequest}
+                    setIsFriendRequestModalOpen={setIsFriendRequestModalOpen}
+                />
             )}
         </>
     );
@@ -209,9 +155,20 @@ const GroupItem = ({ img, groupName, member }) => (
     </button>
 );
 
-function ContactsTab({ friendRequests, onSelectChat }) {
-    const { MyUser } = useAuth();
-    const userId = MyUser?.my_user?.id;
+function ContactsTab({ userId,
+    friendRequests,
+    onSelectChat,
+    user,
+    avatar_default,
+    MyUser,
+    isUserInfoModalOpen,
+    setIsUserInfoModalOpen,
+    closeAllModal,
+    handleUserInfoModalOpen,
+    isFriendRequestSent,
+    isFriendRequestModalOpen, messageContent, setMessageContent, sendFriendRequest, setIsFriendRequestModalOpen }) {
+    // const { MyUser } = useAuth();
+    // const userId = MyUser?.my_user?.id;
     const [friends, setFriends] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
@@ -280,9 +237,27 @@ function ContactsTab({ friendRequests, onSelectChat }) {
             return (
                 <React.Fragment key={friend.id}>
                     {showLetter && <h4>{firstLetter}</h4>}
-                    <FriendItem userId={userId} friendId={friend.id} avatar={friend.avatar} name={friend.name}
-                        dob={friend.dob} phoneNumber={friend.phoneNumber} onFriendRemoved={handleFriendRemoved}
-                        user={friend} onSelectChat={onSelectChat} />
+                    <FriendItem userId={userId}
+                        friendId={friend.id}
+                        avatar={friend.avatar}
+                        name={friend.name}
+                        dob={friend.dob}
+                        phoneNumber={friend.phoneNumber}
+                        onFriendRemoved={handleFriendRemoved}
+                        user={friend}
+                        onSelectChat={onSelectChat}
+                        avatar_default={avatar_default}
+                        MyUser={MyUser}
+                        isUserInfoModalOpen={isUserInfoModalOpen}
+                        setIsUserInfoModalOpen={setIsUserInfoModalOpen}
+                        closeAllModal={closeAllModal}
+                        handleUserInfoModalOpen={handleUserInfoModalOpen}
+                        isFriendRequestSent={isFriendRequestSent}
+                        isFriendRequestModalOpen={isFriendRequestModalOpen}
+                        messageContent={messageContent}
+                        setMessageContent={setMessageContent}
+                        sendFriendRequest={sendFriendRequest}
+                        setIsFriendRequestModalOpen={setIsFriendRequestModalOpen} />
                 </React.Fragment>
             );
         });
