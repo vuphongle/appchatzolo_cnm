@@ -471,9 +471,11 @@ const MainPage = () => {
     const [isRequestSent, setIsRequestSent] = useState(false);
     //tìm kiếm ban bè trong danh sách chat
     const [searchQuery, setSearchQuery] = useState(""); // State to store the search query
-    const filteredFriends = friends.filter(friend =>
-        friend.name.toLowerCase().includes(searchQuery.toLowerCase()) // Case-insensitive filtering by name
-    );
+    const filteredFriends = Array.isArray(friends)
+        ? friends.filter(friend =>
+            friend.name.toLowerCase().includes(searchQuery.toLowerCase()) // Lọc tên theo query, không phân biệt chữ hoa/thường
+        )
+        : [];
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
     const allMessagesAndFriends = [
         ...messages,
