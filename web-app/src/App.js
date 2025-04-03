@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
 import MainPage from './pages/MainPage';
@@ -9,6 +9,7 @@ import { useAuth } from './context/AuthContext';
 function App() {
     const navigate = useNavigate();
     const { MyUser } = useAuth();
+    const location = useLocation();
     const [isLoading, setIsLoading] = useState(true);
 
     // Kiểm tra trạng thái đăng nhập
@@ -17,7 +18,7 @@ function App() {
 
         console.log('MyUser:', MyUser);
         console.log('idToken:', idToken);
-        if (!MyUser && !idToken) {
+        if (!MyUser && !idToken && location.pathname !== '/create-user') {
             setTimeout(() => {
                 navigate('/'); // Chuyển về trang login nếu chưa đăng nhập
             }, 3000);
@@ -26,7 +27,7 @@ function App() {
         }
 
         setIsLoading(false);
-    }, [MyUser, navigate]);
+    }, [MyUser, navigate, location.pathname]);
 
     return (
         !isLoading && (
