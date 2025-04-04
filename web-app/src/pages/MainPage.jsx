@@ -98,8 +98,8 @@ const MainPage = () => {
     const handleSelectChat = async (user) => {
         try {
             // Gọi API để lấy trạng thái online của user
-            const updatedUser = await UserService.getUserStatus(user.id);
-
+            const updatedUser = await UserService.getUserById(user.id);
+            console.log("User status", updatedUser.isOnline);
             // Cập nhật thông tin người bạn và trạng thái online
             setSelectedChat({
                 ...user,
