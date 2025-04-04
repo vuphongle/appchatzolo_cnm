@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Auth } from 'aws-amplify';
 import axios from 'axios';
 import { IPV4 } from '@env';
@@ -16,6 +16,22 @@ AWS.config.update({
 });
 
 const sns = new AWS.SNS();
+
+const resendOTP = async () => {
+    setIsLoading(true);
+    try {
+        const result = await sns.createSMSSandboxPhoneNumber({
+            PhoneNumber: phoneNumber,
+            LanguageCode: 'en-US',
+        }).promise();
+
+        Alert.alert('Thành công', 'Mã OTP mới đã được gửi đến số điện thoại của bạn.');
+    } catch (error) {
+        console.error('Lỗi khi gửi lại OTP:', error);
+        Alert.alert('Lỗi', error.message || 'Không thể gửi lại mã OTP.');
+    }
+    setIsLoading(false);
+};
 
 const ConfirmSignUpScreen = () => {
     const route = useRoute();
@@ -90,7 +106,12 @@ const ConfirmSignUpScreen = () => {
             }
         } catch (error) {
             console.log('Error confirming sign up', JSON.stringify(error, null, 2));
-            Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi xác thực mã.');
+
+            if (error.code === 'VerificationException' && error.message.includes('Verification code is incorrect')) {
+                Alert.alert('Lỗi', 'Mã OTP không chính xác. Vui lòng kiểm tra lại.');
+            } else {
+                Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi xác thực mã.');
+            }
         }
         setIsLoading(false);
     };
@@ -111,6 +132,10 @@ const ConfirmSignUpScreen = () => {
             ) : (
                 <Button title="Xác nhận" onPress={handleConfirm} />
             )}
+
+            <TouchableOpacity onPress={resendOTP}>
+                <Text style={{ marginTop: 20, color: 'blue', textAlign: 'center' }}>Bạn không nhận được OTP? Gửi lại</Text>
+            </TouchableOpacity>
         </View>
     );
 };
