@@ -22,6 +22,7 @@ import AccountSecurityScreen from './screens/AccountSecurityScreen';
 import PersonalInfoScreen from './screens/PersonalInfoScreen';
 import EditPersonalInfoScreen from './screens/EditPersonalInfoScreen';
 import ForgotPasswordScreen from './Auth/ForgotPasswordScreen';
+import ChangePasswordScreen from './Auth/ChangePasswordScreen';
 
  Amplify.configure({
    ...awsConfig,
@@ -117,6 +118,13 @@ const App = () => {
             component={ForgotPasswordScreen}
             options={{
                 headerShown: false,
+            }}
+        />
+        <Stack.Screen
+            name="ChangePasswordScreen"
+            component={ChangePasswordScreen}
+            options={{
+                headerTitle: 'Thay đổi mật khẩu',
             }}
         />
         </Stack.Navigator>

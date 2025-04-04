@@ -112,7 +112,7 @@ const AccountSecurityScreen = ({navigation}) => {
           <Ionicons name="chevron-forward" size={20} color="#888" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePasswordScreen')}>
             <View style={styles.itemLeft}>
                 <Ionicons name="lock-closed-outline" size={24} style={styles.icon} />
                 <Text style={styles.itemText}>Mật khẩu</Text>
