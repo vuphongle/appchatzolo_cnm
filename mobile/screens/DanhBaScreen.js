@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import SearchBar from '../components/SearchBar';
 import { IPV4, AVATAR_URL_DEFAULT } from '@env';
@@ -27,11 +27,7 @@ const DanhBaScreen = () => {
       try {
         const response = await fetch(`${IPV4}/user/${user.id}/friends`);
         const data = await response.json();
-        if (typeof data === 'string' && data === 'No friends found') {
-          setFriends([]);
-        } else {
-          setFriends(data);
-        }
+        setFriends(data);
       } catch (error) {
         console.error('Error fetching friends:', error);
       }
@@ -111,22 +107,45 @@ const DanhBaScreen = () => {
     console.log('Nhật ký', contact.name);
   };
 
-  const handleDelete = async (contact) => {
-        try {
-          const response = await fetch(`${IPV4}/user/${user.id}/removeFriend/${contact.id}`, {
-            method: 'DELETE',
-          });
+  const handleDelete = (contact) => {
+    Alert.alert(
+      "Xác nhận xóa",
+      `Bạn có chắc chắn muốn xóa ${contact.name} khỏi danh sách bạn bè?`,
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Xóa",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${IPV4}/user/${user.id}/removeFriend/${contact.id}`, {
+                method: 'DELETE',
+              });
 
-          const result = await response.json();
-          if (response.ok) {
-            alert(result);
-            setFriends(friends.filter((friend) => friend.id !== contact.id));
-          } else {
-            alert(result);
-          }
-        } catch (error) {
-          console.error('Error deleting friend:', error);
-        }
+              if (!response.ok) {
+                const errorMessage = await response.text();
+                alert(`Lỗi: ${errorMessage}`);
+                return;
+              }
+
+              // Cập nhật lại danh sách bạn bè sau khi xóa
+              setFriends(friends.filter((friend) => friend.id !== contact.id));
+
+              setIsModalVisible(false);
+
+              // Thông báo xóa thành công
+              Alert.alert('Xóa thành công', `${contact.name} đã được xóa khỏi danh sách bạn bè.`);
+            } catch (error) {
+              console.error('Lỗi khi xóa bạn bè:', error);
+              alert('Lỗi khi xóa bạn bè. Vui lòng thử lại.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const renderFriendsTab = () => {

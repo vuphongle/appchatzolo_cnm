@@ -85,9 +85,6 @@ public class UserController {
             }
 
             List<String> friendIds = user.getFriendIds();
-            if (friendIds == null || friendIds.isEmpty()) {
-                return ResponseEntity.ok("No friends found");
-            }
 
             // Lấy chi tiết bạn bè
             List<User> friends = friendIds.stream()
