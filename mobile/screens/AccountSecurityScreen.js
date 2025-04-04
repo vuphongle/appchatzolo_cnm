@@ -2,6 +2,7 @@ import React, {useContext} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../context/UserContext';
+import { AVATAR_URL_DEFAULT } from '@env';
 
 const AccountSecurityScreen = ({navigation}) => {
   const { user, setUser } = useContext(UserContext);
@@ -16,7 +17,7 @@ const AccountSecurityScreen = ({navigation}) => {
           <View style={styles.itemLeft}>
             {/* Ảnh đại diện và thông tin */}
             <Image
-              source={{ uri: user?.avatar || 'https://placehold.co/100x100' }}
+              source={{ uri: user?.avatar || AVATAR_URL_DEFAULT }}
               style={styles.avatar}
             />
             <View style={styles.infoContainer}>

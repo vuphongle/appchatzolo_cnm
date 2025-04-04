@@ -9,6 +9,7 @@ import {
   ScrollView
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { AVATAR_URL_DEFAULT } from '@env';
 
 const UserDetailModal = ({
   visible,
@@ -41,7 +42,7 @@ const UserDetailModal = ({
 
         <View style={styles.bottomSheetContainer}>
           <View style={styles.headerContainer}>
-            <Image source={{ uri: friend.avatar }} style={styles.avatar} />
+            <Image source={{ uri: friend.avatar || AVATAR_URL_DEFAULT }} style={styles.avatar} />
             <View style={styles.headerText}>
               <Text style={styles.userName}>{friend.name}</Text>
               <Ionicons

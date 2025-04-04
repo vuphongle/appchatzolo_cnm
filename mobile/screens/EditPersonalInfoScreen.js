@@ -14,7 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { UserContext } from '../context/UserContext';
-import { IPV4 } from '@env';
+import { IPV4, AVATAR_URL_DEFAULT } from '@env';
 import { formatDOB } from '../utils/dateDobUtils';
 
 const EditPersonalInfoScreen = ({ navigation }) => {
@@ -130,7 +130,7 @@ const EditPersonalInfoScreen = ({ navigation }) => {
 
       <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
         <Image
-          source={{ uri: avatarUri || 'https://placehold.co/100x100' }}
+          source={{ uri: avatarUri || AVATAR_URL_DEFAULT }}
           style={styles.avatar}
         />
         <View style={styles.editIconContainer}>

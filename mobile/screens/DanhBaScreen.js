@@ -2,10 +2,11 @@ import React, { useEffect, useState, useContext, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import SearchBar from '../components/SearchBar';
-import { IPV4 } from '@env';
+import { IPV4, AVATAR_URL_DEFAULT } from '@env';
 import { UserContext } from '../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import UserDetailModal from '../components/UserDetailModal';
 
 const DanhBaScreen = () => {
   const navigation = useNavigation();
@@ -13,10 +14,11 @@ const DanhBaScreen = () => {
   const [activeTab, setActiveTab] = useState('friends');
   const [receivedCount, setReceivedCount] = useState(0);
   const [friends, setFriends] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState(null);
 
   // Ref để quản lý Swipeable đang mở
   const currentlyOpenSwipeable = useRef(null);
-  // Map lưu trữ các ref của Swipeable theo contact.id
   const swipeableRefs = useRef(new Map());
 
   useEffect(() => {
@@ -100,8 +102,8 @@ const DanhBaScreen = () => {
   };
 
   const handleAdd = (contact) => {
-    alert('Chưa phát triển tính năng này');
-    console.log('Thêm', contact.name);
+    setSelectedFriend(contact);
+    setIsModalVisible(true);
   };
 
   const handleJournal = (contact) => {
@@ -109,9 +111,22 @@ const DanhBaScreen = () => {
     console.log('Nhật ký', contact.name);
   };
 
-  const handleDelete = (contact) => {
-    alert('Chưa phát triển tính năng này');
-    console.log('Xóa', contact.name);
+  const handleDelete = async (contact) => {
+        try {
+          const response = await fetch(`${IPV4}/user/${user.id}/removeFriend/${contact.id}`, {
+            method: 'DELETE',
+          });
+
+          const result = await response.json();
+          if (response.ok) {
+            alert(result);
+            setFriends(friends.filter((friend) => friend.id !== contact.id));
+          } else {
+            alert(result);
+          }
+        } catch (error) {
+          console.error('Error deleting friend:', error);
+        }
   };
 
   const renderFriendsTab = () => {
@@ -169,7 +184,7 @@ const DanhBaScreen = () => {
           >
             <TouchableOpacity style={styles.contactItem}>
               <Image
-                source={{ uri: contact.avatar }}
+                source={{ uri: contact.avatar || AVATAR_URL_DEFAULT }}
                 style={styles.contactAvatar}
               />
               <Text style={styles.contactName}>{contact.name}</Text>
@@ -221,6 +236,14 @@ const DanhBaScreen = () => {
       </View>
 
       {activeTab === 'friends' ? renderFriendsTab() : renderGroupsTab()}
+
+      {/* Show the UserDetailModal */}
+            <UserDetailModal
+              visible={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              friend={selectedFriend}
+              onDeleteFriend={handleDelete} // Pass delete function
+            />
     </View>
   );
 };

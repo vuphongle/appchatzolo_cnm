@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../context/UserContext';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import SearchBar from '../components/SearchBar';
+import { AVATAR_URL_DEFAULT } from '@env';
 
 const CaNhanScreen = () => {
     const navigation = useNavigation();
@@ -51,7 +52,7 @@ const CaNhanScreen = () => {
             {/* Header Section */}
             <View style={styles.header}>
                 <Image
-                    source={{ uri: user?.avatar || 'https://placehold.co/100x100' }}
+                    source={{ uri: user?.avatar || AVATAR_URL_DEFAULT }}
                     style={styles.avatar}
                 />
                 <View>

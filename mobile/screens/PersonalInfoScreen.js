@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'rea
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../context/UserContext';
 import { formatDOB } from '../utils/dateDobUtils';
-
+import { AVATAR_URL_DEFAULT } from '@env';
 
 const PersonalInfoScreen = ({ navigation }) => {
   const { user, setUser } = useContext(UserContext);
@@ -17,7 +17,7 @@ const PersonalInfoScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.body}>
         {/* Ảnh đại diện */}
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: user.avatar || 'https://placehold.co/100x100' }} style={styles.avatar} />
+          <Image source={{ uri: user.avatar || AVATAR_URL_DEFAULT }} style={styles.avatar} />
         </View>
 
         {/* Thông tin Tên Zolo */}
