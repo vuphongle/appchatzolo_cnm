@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import AWS from 'aws-sdk';
 import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, IPV4 } from '@env';
 import { UserContext } from '../context/UserContext';
+import { isPasswordValid } from '../utils/passwordUtils';
+import { formatPhoneNumber } from '../utils/formatPhoneNumber';
 
 AWS.config.update({
     region: REGION,
@@ -16,30 +18,6 @@ AWS.config.update({
 });
 
 const sns = new AWS.SNS();
-
-// Hàm định dạng số điện thoại
-const formatPhoneNumber = (phone) => {
-    // Loại bỏ khoảng trắng
-    const cleaned = phone.replace(/\s+/g, '');
-
-    // Kiểm tra nếu có ký tự không phải số và không phải dấu + ở đầu
-    if (!/^(\+?\d+)$/.test(cleaned)) {
-        return null;
-    }
-
-    // Nếu đã có +84 thì giữ nguyên
-    if (cleaned.startsWith('+84')) {
-        return cleaned;
-    }
-
-    // Nếu bắt đầu bằng 0 thì chuyển thành +84
-    if (cleaned.startsWith('0')) {
-        return '+84' + cleaned.substring(1);
-    }
-
-    // Trường hợp khác, trả về số đã được làm sạch
-    return cleaned;
-};
 
 const verifyPhoneNumber = async (phoneNumber) => {
     try {
@@ -93,6 +71,11 @@ const AuthScreen = () => {
             return;
         }
 
+        if(!isPasswordValid(password) && isRegister) {
+            Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự, một chữ cái thường, một chữ cái in hoa, một số và một ký tự đặc biệt.');
+            return;
+        }
+
         const formattedPhone = formatPhoneNumber(phoneNumber);
         if (!formattedPhone) {
             Alert.alert('Lỗi', 'Số điện thoại không đúng. Vui lòng kiểm tra lại.');
@@ -115,7 +98,7 @@ const AuthScreen = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Đăng nhập thất bại');
+                throw new Error('Tài khoản hoặc mật khẩu không chính xác');
             }
 
             const data = await response.json();
@@ -131,7 +114,6 @@ const AuthScreen = () => {
             console.log('ID Token:', idToken);
 
         } catch (error) {
-            console.error('Lỗi trong quá trình xác thực:', error);
             Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra.');
         }
         setIsLoading(false);
@@ -215,6 +197,14 @@ const AuthScreen = () => {
                     )}
                 </>
             )}
+            <TouchableOpacity style={styles.toggleButton} onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+                {!isRegister && (
+                    <Text style={styles.toggleText}>
+                        Quên mật khẩu?
+                    </Text>
+                )}
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={toggleMode} style={styles.toggleButton}>
                 <Text style={styles.toggleText}>
                     {isRegister ? 'Bạn đã có tài khoản? Đăng nhập' : 'Bạn chưa có tài khoản? Đăng ký'}

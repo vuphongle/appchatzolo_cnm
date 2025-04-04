@@ -21,6 +21,7 @@ import FriendInvitesScreen from './screens/FriendInvitesScreen';
 import AccountSecurityScreen from './screens/AccountSecurityScreen';
 import PersonalInfoScreen from './screens/PersonalInfoScreen';
 import EditPersonalInfoScreen from './screens/EditPersonalInfoScreen';
+import ForgotPasswordScreen from './Auth/ForgotPasswordScreen';
 
  Amplify.configure({
    ...awsConfig,
@@ -110,6 +111,13 @@ const App = () => {
           options={{
             headerTitle: 'Lời mời kết bạn',
           }}
+        />
+        <Stack.Screen
+            name="ForgotPasswordScreen"
+            component={ForgotPasswordScreen}
+            options={{
+                headerShown: false,
+            }}
         />
         </Stack.Navigator>
       </NavigationContainer>
