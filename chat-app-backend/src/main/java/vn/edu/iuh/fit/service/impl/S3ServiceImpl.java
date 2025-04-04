@@ -87,8 +87,8 @@ public class S3ServiceImpl implements S3Service {
             String newFileName = timestamp + "_" + fileName;
 
 
-            if (fileName == null || !fileName.matches(".*\\.(jpg|jpeg|png)$")) {
-                throw new IllegalArgumentException("Chỉ chấp nhận file (.jpg,.jpeg,.png)");
+            if (fileName == null || !fileName.matches(".*\\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$")) {
+                throw new IllegalArgumentException("Chỉ chấp nhận file (.jpg, .jpeg, .png, .gif, .bmp, .webp, .tiff, .heif, .heic)");
             }
 
             // Tạo đường dẫn file trong S3
