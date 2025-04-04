@@ -99,13 +99,13 @@ const MainPage = () => {
         try {
             // Gọi API để lấy trạng thái online của user
             const updatedUser = await UserService.getUserById(user.id);
-            console.log("User status", updatedUser.isOnline);
+
             // Cập nhật thông tin người bạn và trạng thái online
             setSelectedChat({
                 ...user,
                 isOnline: updatedUser.isOnline,  // Cập nhật trạng thái online từ backend
             });
-
+            console.log("User status", updatedUser.isOnline);
             // Gọi API hoặc xử lý thêm các bước cần thiết, ví dụ như lấy tin nhắn chưa đọc
             const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser?.my_user?.id, user.id);
             if (unreadMsgs.length > 0) {
