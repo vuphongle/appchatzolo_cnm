@@ -8,6 +8,7 @@ import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, IPV4 } from '@env';
 import { UserContext } from '../context/UserContext';
 import { isPasswordValid } from '../utils/passwordUtils';
 import { formatPhoneNumber } from '../utils/formatPhoneNumber';
+import { isOlderThan14 } from '../utils/ageUtils';
 
 AWS.config.update({
     region: REGION,
@@ -57,6 +58,11 @@ const AuthScreen = () => {
             Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ tên và ngày sinh.');
             return;
         }
+
+        if (!isOlderThan14(birthDate)) {
+            Alert.alert('Lỗi', 'Bạn phải từ 14 tuổi trở lên để đăng ký.');
+            return;
+        }
         setStep(2);
     };
 
@@ -86,33 +92,44 @@ const AuthScreen = () => {
 
         setIsLoading(true);
         try {
-            const response = await fetch(IPV4 + '/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: formattedPhone,
+            if(isRegister) {
+                await verifyPhoneNumber(formattedPhone);
+                Alert.alert('Thành công', 'Mã xác thực đã được gửi đến số điện thoại của bạn.');
+
+                navigation.navigate('ConfirmSignUpScreen', {
+                    name: name,
+                    phoneNumber: formattedPhone,
+                    dob: birthDate.toISOString().split('T')[0],
                     password: password,
-                }),
-            });
+                })
+            } else {
+                const response = await fetch(IPV4 + '/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: formattedPhone,
+                        password: password,
+                    }),
+                });
 
-            if (!response.ok) {
-                throw new Error('Tài khoản hoặc mật khẩu không chính xác');
+                if (!response.ok) {
+                    throw new Error('Tài khoản hoặc mật khẩu không chính xác');
+                }
+
+                const data = await response.json();
+
+                // Xử lý dữ liệu trả về từ backend
+                const { idToken, userAttributes, my_user } = data;
+
+                // Lưu thông tin người dùng và điều hướng
+                setUser(my_user);
+                navigation.replace('MainTabs');
+
+                console.log('Thông tin người dùng:', userAttributes);
+                console.log('ID Token:', idToken);
             }
-
-            const data = await response.json();
-
-            // Xử lý dữ liệu trả về từ backend
-            const { idToken, userAttributes, my_user } = data;
-
-            // Lưu thông tin người dùng và điều hướng
-            setUser(my_user);
-            navigation.replace('MainTabs');
-
-            console.log('Thông tin người dùng:', userAttributes);
-            console.log('ID Token:', idToken);
-
         } catch (error) {
             Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra.');
         }
@@ -136,7 +153,7 @@ const AuthScreen = () => {
                         style={styles.input}
                         onPress={() => setShowDatePicker(true)}
                     >
-                        <Text>{birthDate.toISOString().split('T')[0]}</Text>
+                        <Text>{`${String(birthDate.getDate()).padStart(2, '0')}-${String(birthDate.getMonth() + 1).padStart(2, '0')}-${birthDate.getFullYear()}`}</Text>
                     </TouchableOpacity>
                     {showDatePicker && (
                         <DateTimePicker
