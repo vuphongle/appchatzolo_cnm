@@ -343,6 +343,9 @@ const MainPage = () => {
 
     //nhấn enter gửi tin nhắn
     const handleSendMessage = async () => {
+        const progress = document.getElementById('uploadProgress');
+        const status = document.getElementById('status');
+
         if (messageInput.trim() === "" && selectedFiles.length === 0 && selectedImages.length === 0) return; // Nếu không có nội dung và không có file
 
         // Xử lý ảnh đã chọn
@@ -622,7 +625,7 @@ const MainPage = () => {
                                                 const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
-                                                const isFileMessage = (url) => url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/) != null;
+                                                const isFileMessage = (url) => url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml|sql|wmv|java|ypynb)$/) != null;
 
                                                 return (
                                                     <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>

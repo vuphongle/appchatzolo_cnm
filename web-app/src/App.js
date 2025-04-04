@@ -5,6 +5,8 @@ import ChatPage from './pages/ChatPage';
 import MainPage from './pages/MainPage';
 import RegisterPage from './pages/RegisterPage';
 import { useAuth } from './context/AuthContext';
+import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer và toast
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
     const navigate = useNavigate();
@@ -31,12 +33,17 @@ function App() {
 
     return (
         !isLoading && (
-            <Routes>
-                <Route path="/" element={<LoginPage />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/main" element={<MainPage />} />
-                <Route path="/create-user" element={<RegisterPage />} />
-            </Routes>
+            <>
+                <Routes>
+                    <Route path="/" element={<LoginPage />} />
+                    <Route path="/chat" element={<ChatPage />} />
+                    <Route path="/main" element={<MainPage />} />
+                    <Route path="/create-user" element={<RegisterPage />} />
+                </Routes>
+
+                {/* Thêm ToastContainer để hiển thị thông báo toast */}
+                <ToastContainer />
+            </>
         )
     );
 }
