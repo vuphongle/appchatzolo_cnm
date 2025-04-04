@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
 import MainPage from './pages/MainPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import RegisterPage from './pages/RegisterPage';
 import { useAuth } from './context/AuthContext';
 import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer và toast
@@ -20,7 +21,7 @@ function App() {
 
         console.log('MyUser:', MyUser);
         console.log('idToken:', idToken);
-        if (!MyUser && !idToken && location.pathname !== '/create-user') {
+        if (!MyUser && !idToken && location.pathname !== '/create-user' && location.pathname !== '/forgot-password') {
             setTimeout(() => {
                 navigate('/'); // Chuyển về trang login nếu chưa đăng nhập
             }, 3000);
@@ -39,6 +40,8 @@ function App() {
                     <Route path="/chat" element={<ChatPage />} />
                     <Route path="/main" element={<MainPage />} />
                     <Route path="/create-user" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
                 </Routes>
 
                 {/* Thêm ToastContainer để hiển thị thông báo toast */}
