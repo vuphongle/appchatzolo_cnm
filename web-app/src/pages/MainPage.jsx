@@ -104,6 +104,8 @@ const MainPage = () => {
             setSelectedChat({
                 ...user,
                 isOnline: updatedUser.isOnline,  // Cập nhật trạng thái online từ backend
+                username: updatedUser.name,
+                avatar: updatedUser.avatar,
             });
             console.log("User status", updatedUser.isOnline);
             // Gọi API hoặc xử lý thêm các bước cần thiết, ví dụ như lấy tin nhắn chưa đọc
@@ -123,6 +125,7 @@ const MainPage = () => {
             setSelectedChat({
                 ...user,
                 isOnline: false,
+
             });
 
             setUnreadMessages([]);
@@ -581,8 +584,8 @@ const MainPage = () => {
                             <>
                                 <header className="content-header">
                                     <div className="profile">
-                                        <img src={selectedChat.img || avatar_default} alt="Avatar" className="avatar" />
-                                        <span className="username">{selectedChat.groupName}</span>
+                                        <img src={selectedChat.avatar || avatar_default} alt="Avatar" className="avatar" />
+                                        <span className="username">{selectedChat.groupName || selectedChat.username}</span>
                                         <span className="user-status">
                                             {selectedChat.isOnline ? (
                                                 <span className="status-dot online"></span>
