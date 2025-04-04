@@ -103,30 +103,35 @@ const AuthScreen = () => {
 
         setIsLoading(true);
         try {
-            if (isRegister) {
-                await verifyPhoneNumber(formattedPhone);
-                Alert.alert('Thành công', 'Mã xác thực đã được gửi đến số điện thoại của bạn.');
-
-                navigation.navigate('ConfirmSignUpScreen', {
-                    phoneNumber: formattedPhone,
-                    name: name,
-                    dob: birthDate.toISOString().split('T')[0],
+            const response = await fetch(IPV4 + '/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: formattedPhone,
                     password: password,
-                });
-            } else {
-                const user = await Auth.signIn(formattedPhone, password);
-                console.log('User signed in successfully:', user);
+                }),
+            });
 
-                const userProfile = await fetchUserProfile(formattedPhone);
-
-                if (userProfile) {
-                    setUser(userProfile);
-                    navigation.replace('MainTabs');
-                }
-                console.log('User profile:', userProfile);
+            if (!response.ok) {
+                throw new Error('Đăng nhập thất bại');
             }
+
+            const data = await response.json();
+
+            // Xử lý dữ liệu trả về từ backend
+            const { idToken, userAttributes, my_user } = data;
+
+            // Lưu thông tin người dùng và điều hướng
+            setUser(my_user);
+            navigation.replace('MainTabs');
+
+            console.log('Thông tin người dùng:', userAttributes);
+            console.log('ID Token:', idToken);
+
         } catch (error) {
-            console.error('Error during authentication:', error);
+            console.error('Lỗi trong quá trình xác thực:', error);
             Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra.');
         }
         setIsLoading(false);
