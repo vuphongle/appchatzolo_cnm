@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from "react";
 import UserService from "../services/UserService";
 import S3Service from "../services/S3Service";
 import { useAuth } from "../context/AuthContext";
-// import "./MainPage.css";
 
 const UserInfoModal = ({ user: initialUser, onClose }) => {
     const { MyUser, setMyUser, updateUserInfo } = useAuth();
@@ -18,6 +17,8 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             ? new Date(MyUser?.dob || initialUser?.dob || MyUser?.my_user?.dob).toISOString().split("T")[0]
             : ""
     );
+    const [gender, setGender] = useState(MyUser?.gender || initialUser?.gender || "");
+
 
     useEffect(() => {
         const currentUser = MyUser || initialUser;
@@ -29,6 +30,7 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
                     ? new Date(currentUser.dob || currentUser.my_user?.dob).toISOString().split("T")[0]
                     : ""
             );
+            setGender(currentUser.gender || currentUser.my_user?.gender || "");
         }
     }, [MyUser, initialUser]);
 
@@ -39,9 +41,11 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             dob !==
             ((MyUser?.dob || initialUser?.dob)
                 ? new Date(MyUser?.dob || initialUser?.dob).toISOString().split("T")[0]
-                : ""),
-        [name, dob, MyUser, initialUser]
+                : "") ||
+            gender !== (MyUser?.gender || initialUser?.gender || ""),
+        [name, dob, gender, MyUser, initialUser]
     );
+
 
     const handleUpdateInfo = async () => {
         try {
@@ -52,7 +56,7 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             const userId = MyUser.my_user.id;
 
             // Gọi API cập nhật thông tin user
-            await UserService.updateUserInfo(userId, { name, dob });
+            await UserService.updateUserInfo(userId, { name, dob, gender });
 
             // Lấy dữ liệu mới nhất từ DB
             const updatedUserFromServer = await UserService.getUserById(userId);
@@ -281,26 +285,30 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
                                         </div>
                                         <div className="mb-3 mt-4">
                                             <h5 className="form-label fw-bold">Thông tin cá nhân</h5>
-                                            {/* <div className="d-flex align-items-center">
+                                            <div className="d-flex align-items-center">
                                                 <div className="form-check me-3 d-flex align-items-center">
                                                     <input
                                                         type="radio"
+                                                        id="nam"
                                                         value="Nam"
-                                                        checked={(MyUser?.sex || initialUser?.sex) === "Nam"}
+                                                        checked={gender === "Nam"}
                                                         className="form-check-input"
+                                                        onChange={(e) => setGender(e.target.value)}
                                                     />
-                                                    <label className="form-check-label ms-2">Nam</label>
+                                                    <label className="form-check-label ms-2" htmlFor="nam">Nam</label>
                                                 </div>
                                                 <div className="form-check me-3 d-flex align-items-center">
                                                     <input
                                                         type="radio"
+                                                        id="nu"
                                                         value="Nữ"
-                                                        checked={(MyUser?.sex || initialUser?.sex) === "Nữ"}
+                                                        checked={gender === "Nữ"}
                                                         className="form-check-input"
+                                                        onChange={(e) => setGender(e.target.value)}
                                                     />
-                                                    <label className="form-check-label ms-2">Nữ</label>
+                                                    <label className="form-check-label ms-2" htmlFor="nu">Nữ</label>
                                                 </div>
-                                            </div> */}
+                                            </div>
                                         </div>
                                         <div className="mb-3">
                                             <h6 className="form-label">Ngày sinh</h6>
@@ -314,7 +322,7 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
                                     </div>
                                 ) : (
                                     <div>
-                                        <p><strong>Giới tính:</strong> {(MyUser?.sex || initialUser?.sex) || "Chưa cập nhật"}</p>
+                                        <p><strong>Giới tính:</strong> {(MyUser?.gender || initialUser?.gender) || "Chưa cập nhật"}</p>
                                         <p><strong>Ngày sinh:</strong> {(MyUser?.dob || initialUser?.dob) || "Chưa cập nhật"}</p>
                                         <p><strong>Điện thoại:</strong> {(MyUser?.phoneNumber || initialUser?.phoneNumber) || "Chưa cập nhật"}</p>
                                         <p className="text-muted small">
