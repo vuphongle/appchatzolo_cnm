@@ -40,7 +40,7 @@ const CaNhanScreen = () => {
     {
       icon: 'brush',
       title: 'zStyle – Nổi bật trên Zolo',
-      subtitle: 'Hình nền và nhạc cho cuộc gọi Zalo',
+      subtitle: 'Hình nền và nhạc cho cuộc gọi Zolo',
       onPress: () => {},
     },
     {

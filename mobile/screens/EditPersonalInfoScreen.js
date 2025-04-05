@@ -139,7 +139,7 @@ const EditPersonalInfoScreen = ({ navigation }) => {
       </TouchableOpacity>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Tên Zalo</Text>
+        <Text style={styles.inputLabel}>Tên Zolo</Text>
         <TextInput
           style={styles.input}
           value={name}

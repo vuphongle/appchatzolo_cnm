@@ -57,7 +57,7 @@ const SettingsScreen = ({ route, navigation }) => {
     { icon: 'event-note', text: 'Nhật ký', onPress: () => {} },
     { icon: 'contacts', text: 'Danh bạ', onPress: () => {} },
     { icon: 'translate', text: 'Giao diện và ngôn ngữ', onPress: () => {} },
-    { icon: 'info', text: 'Thông tin về Zalo', onPress: () => {} },
+    { icon: 'info', text: 'Thông tin về Zolo', onPress: () => {} },
     { icon: 'help-outline', text: 'Liên hệ hỗ trợ', onPress: () => {} },
     { icon: 'swap-horiz', text: 'Chuyển tài khoản', onPress: () => {} },
   ];

@@ -95,7 +95,7 @@ const AccountSecurityScreen = ({ navigation }) => {
           <Ionicons name="chevron-forward" size={20} color="#888" />
         </TouchableOpacity>
 
-        {/* Khóa Zalo */}
+        {/* Khóa Zolo */}
         <TouchableOpacity style={styles.item}>
           <View style={styles.itemLeft}>
             <Ionicons
@@ -103,7 +103,7 @@ const AccountSecurityScreen = ({ navigation }) => {
               size={24}
               style={styles.icon}
             />
-            <Text style={styles.itemText}>Khóa Zalo</Text>
+            <Text style={styles.itemText}>Khóa Zolo</Text>
           </View>
           <Text style={styles.rightText}>Đang tắt</Text>
           <Ionicons name="chevron-forward" size={20} color="#888" />

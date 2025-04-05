@@ -197,7 +197,9 @@ function ListFriend({ userId }) {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Không có bạn bè trong danh sách</Text>
+          <Text style={styles.emptyText}>
+
+          </Text>
         </View>
       )}
     </View>
