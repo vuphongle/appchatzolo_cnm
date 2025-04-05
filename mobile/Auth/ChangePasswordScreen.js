@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,69 @@ import {
   Button,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
+import { Auth } from 'aws-amplify';
+import { IPV4 } from '@env';
+import { UserContext } from '../context/UserContext';
+import axios from 'axios';
+import { isPasswordValid } from '../utils/passwordUtils';
 
-const ChangePasswordScreen = () => {
+const ChangePasswordScreen = ({ navigation }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const { user, setUser } = useContext(UserContext);
+
+  const changePassword = async (currentPassword, newPassword, username) => {
+    // Validate password
+    if (!isPasswordValid(newPassword)) {
+      alert('Mật khẩu mới không hợp lệ. Vui lòng kiểm tra lại.');
+      return;
+    }
+    try {
+      const response = await axios.post(`${IPV4}/auth/change-password`, {
+        username,
+        currentPassword,
+        newPassword,
+      });
+
+      // Handle success
+      Alert.alert(
+        'Thành công',
+        response.data.message === 'Password updated successfully'
+          ? 'Mật khẩu đã được cập nhật vui lòng đăng nhập lại'
+          : response.data.message,
+      );
+      await Auth.signOut();
+      setUser(null); // Clear user info in context
+      navigation.replace('AuthScreen');
+    } catch (error) {
+      if (error.response) {
+        // Backend error
+        Alert.alert(
+          'Lỗi',
+          error.response.data === 'Current password is incorrect'
+            ? 'Mật khẩu cũ không chính xác'
+            : error.response.data,
+        );
+      } else {
+        // Network error
+        Alert.alert(
+          'Lỗi',
+          'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.',
+        );
+      }
+    }
+  };
 
   const handleUpdatePassword = () => {
     if (newPassword !== confirmPassword) {
       alert('Mật khẩu mới và mật khẩu xác nhận không khớp');
       return;
     }
-    // Handle password update logic here
-    alert('Mật khẩu đã được cập nhật');
+
+    changePassword(currentPassword, newPassword, user?.phoneNumber);
   };
 
   return (

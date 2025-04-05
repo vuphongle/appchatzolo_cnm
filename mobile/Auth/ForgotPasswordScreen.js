@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { isPasswordValid } from '../utils/passwordUtils';
 import { formatPhoneNumber } from '../utils/formatPhoneNumber';
-import {IPV4} from '@env';
+import { IPV4 } from '@env';
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -47,7 +47,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
         setStep(2); // Chuyển sang bước xác thực OTP
         Alert.alert('Thông báo', 'OTP đã được gửi đến số điện thoại của bạn.');
       } else {
-        Alert.alert('Lỗi', data.message || 'Không thể gửi OTP. Vui lòng thử lại.');
+        Alert.alert(
+          'Lỗi',
+          data.message || 'Không thể gửi OTP. Vui lòng thử lại.',
+        );
       }
     } catch (error) {
       console.error('Lỗi gửi OTP:', error);
@@ -83,14 +86,25 @@ const ForgotPasswordScreen = ({ navigation }) => {
         // Phản hồi thành công chứa thông điệp JSON
         const message = JSON.parse(data).message;
         setStep(3); // Chuyển sang bước nhập mật khẩu mới
-        Alert.alert('Thông báo', 'OTP xác thực thành công. Vui lòng nhập mật khẩu mới.');
+        Alert.alert(
+          'Thông báo',
+          'OTP xác thực thành công. Vui lòng nhập mật khẩu mới.',
+        );
       } else {
         console.log('Error response:', data);
-        Alert.alert('Lỗi', data === 'Invalid OTP' ? 'Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.' : 'Có lỗi trong quá trình xác thực OTP.');
+        Alert.alert(
+          'Lỗi',
+          data === 'Invalid OTP'
+            ? 'Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.'
+            : 'Có lỗi trong quá trình xác thực OTP.',
+        );
       }
     } catch (error) {
       console.error('Lỗi xác thực OTP:', error);
-      Alert.alert('Lỗi', 'Mã OTP không đúng hoặc có lỗi trong quá trình thay đổi mật khẩu.');
+      Alert.alert(
+        'Lỗi',
+        'Mã OTP không đúng hoặc có lỗi trong quá trình thay đổi mật khẩu.',
+      );
     }
     setIsLoading(false);
   };
@@ -115,19 +129,22 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${IPV4}/auth/forgot-password/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${IPV4}/auth/forgot-password/reset-password`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phoneNumber: formattedPhone,
+            newPassword: newPassword,
+          }),
         },
-        body: JSON.stringify({
-          phoneNumber: formattedPhone,
-          newPassword: newPassword,
-        }),
-      });
+      );
 
       // Đọc phản hồi dưới dạng văn bản (text) hoặc JSON tùy theo trường hợp
-      const data = await response.text();  // Đọc dưới dạng văn bản
+      const data = await response.text(); // Đọc dưới dạng văn bản
 
       // Kiểm tra nếu phản hồi thành công (status 200)
       if (response.ok) {

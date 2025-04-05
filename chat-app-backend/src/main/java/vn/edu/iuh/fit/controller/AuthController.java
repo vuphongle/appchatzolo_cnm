@@ -248,6 +248,9 @@ public class AuthController {
         String username = request.get("username");
         String currentPassword = request.get("currentPassword");
         String newPassword = request.get("newPassword");
+        System.out.println("username: " + username);
+        System.out.println("currentPassword: " + currentPassword);
+        System.out.println("newPassword: " + newPassword);
 
         try {
             if (username == null || currentPassword == null || newPassword == null || username.isEmpty() || currentPassword.isEmpty() || newPassword.isEmpty()) {
