@@ -46,7 +46,7 @@ const formatDate = (timestamp) => {
       }
     } catch (error) {
       console.error("Error in formatDate:", error, "for timestamp:", timestamp);
-      return "Không xác định";
+      return "vừa xong";
     }
   };
   

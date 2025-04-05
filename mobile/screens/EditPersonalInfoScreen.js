@@ -127,8 +127,8 @@ const EditPersonalInfoScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Chỉnh sửa thông tin cá nhân</Text>
-
-      <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
+     
+      <TouchableOpacity style={styles.avatarContainer}  onPress={pickImage}>
         <Image
           source={{ uri: avatarUri || 'https://placehold.co/100x100' }}
           style={styles.avatar}
