@@ -357,47 +357,47 @@ public class AuthController {
         }
     }
 
-    // Thay đổi mật khẩu (Truyền mk cũ vào, gửi cho cognito xác thực, nếu đúng thì tạo mk mới cho user)
-    @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> requestData) {
-        String username = requestData.get("username");
-        String oldPassword = requestData.get("oldPassword");
-        String newPassword = requestData.get("newPassword");
-
-        try {
-            String secretHash = calculateSecretHash(clientId, clientSecret, username);
-
-            // Gửi yêu cầu xác thực mật khẩu cũ
-            InitiateAuthRequest authRequest = InitiateAuthRequest.builder()
-                    .authFlow(AuthFlowType.USER_PASSWORD_AUTH)
-                    .clientId(clientId)
-                    .authParameters(Map.of(
-                            "USERNAME", username,
-                            "PASSWORD", oldPassword,
-                            "SECRET_HASH", secretHash
-                    ))
-                    .build();
-
-            InitiateAuthResponse authResponse = cognitoClient.initiateAuth(authRequest);
-
-            // Nếu mật khẩu cũ chính xác, tiếp tục thay đổi mật khẩu
-            AdminSetUserPasswordRequest setPasswordRequest = AdminSetUserPasswordRequest.builder()
-                    .userPoolId(userPoolId)
-                    .username(username)
-                    .password(newPassword)
-                    .permanent(true)
-                    .build();
-            cognitoClient.adminSetUserPassword(setPasswordRequest);
-
-            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
-
-        } catch (NotAuthorizedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Mật khẩu cũ không chính xác");
-        } catch (InvalidPasswordException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu mới không hợp lệ");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Lỗi khi thay đổi mật khẩu: " + e.getMessage());
-        }
-    }
+//    // Thay đổi mật khẩu (Truyền mk cũ vào, gửi cho cognito xác thực, nếu đúng thì tạo mk mới cho user)
+//    @PostMapping("/change-password")
+//    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> requestData) {
+//        String username = requestData.get("username");
+//        String oldPassword = requestData.get("oldPassword");
+//        String newPassword = requestData.get("newPassword");
+//
+//        try {
+//            String secretHash = calculateSecretHash(clientId, clientSecret, username);
+//
+//            // Gửi yêu cầu xác thực mật khẩu cũ
+//            InitiateAuthRequest authRequest = InitiateAuthRequest.builder()
+//                    .authFlow(AuthFlowType.USER_PASSWORD_AUTH)
+//                    .clientId(clientId)
+//                    .authParameters(Map.of(
+//                            "USERNAME", username,
+//                            "PASSWORD", oldPassword,
+//                            "SECRET_HASH", secretHash
+//                    ))
+//                    .build();
+//
+//            InitiateAuthResponse authResponse = cognitoClient.initiateAuth(authRequest);
+//
+//            // Nếu mật khẩu cũ chính xác, tiếp tục thay đổi mật khẩu
+//            AdminSetUserPasswordRequest setPasswordRequest = AdminSetUserPasswordRequest.builder()
+//                    .userPoolId(userPoolId)
+//                    .username(username)
+//                    .password(newPassword)
+//                    .permanent(true)
+//                    .build();
+//            cognitoClient.adminSetUserPassword(setPasswordRequest);
+//
+//            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+//
+//        } catch (NotAuthorizedException e) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Mật khẩu cũ không chính xác");
+//        } catch (InvalidPasswordException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu mới không hợp lệ");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500).body("Lỗi khi thay đổi mật khẩu: " + e.getMessage());
+//        }
+//    }
 
 }
