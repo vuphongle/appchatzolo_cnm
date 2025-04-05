@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from "react";
 import UserService from "../services/UserService";
 import S3Service from "../services/S3Service";
 import { useAuth } from "../context/AuthContext";
-// import "./MainPage.css";
 
 const UserInfoModal = ({ user: initialUser, onClose }) => {
     const { MyUser, setMyUser, updateUserInfo } = useAuth();

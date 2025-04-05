@@ -214,6 +214,7 @@ public class AuthController {
             // Trả về dữ liệu kết hợp từ Cognito và hệ thống của bạn
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("idToken", idToken);
+            responseData.put("accessToken", accessToken);
             responseData.put("userAttributes", userAttributes);
             responseData.put("my_user", my_user);
 
@@ -241,6 +242,56 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
     }
 
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
+        String currentPassword = request.get("currentPassword");
+        String newPassword = request.get("newPassword");
+
+        try {
+            if (username == null || currentPassword == null || newPassword == null || username.isEmpty() || currentPassword.isEmpty() || newPassword.isEmpty()) {
+                throw new IllegalArgumentException("Username, current password, and new password must not be empty");
+            }
+
+            if (currentPassword.equals(newPassword)) {
+                return ResponseEntity.badRequest().body("New password must not be the same as the current password");
+            }
+
+            String secretHash = calculateSecretHash(clientId, clientSecret, username);
+
+            // Gửi yêu cầu đăng nhập với mật khẩu hiện tại để xác thực
+            InitiateAuthRequest authRequest = InitiateAuthRequest.builder()
+                    .authFlow(AuthFlowType.USER_PASSWORD_AUTH)
+                    .clientId(clientId)
+                    .authParameters(Map.of(
+                            "USERNAME", username,
+                            "PASSWORD", currentPassword,
+                            "SECRET_HASH", secretHash
+                    ))
+                    .build();
+
+            cognitoClient.initiateAuth(authRequest);
+
+            // Nếu mật khẩu hiện tại đúng, cập nhật mật khẩu mới
+            AdminSetUserPasswordRequest setPasswordRequest = AdminSetUserPasswordRequest.builder()
+                    .userPoolId(userPoolId)
+                    .username(username)
+                    .password(newPassword)
+                    .permanent(true)
+                    .build();
+
+            cognitoClient.adminSetUserPassword(setPasswordRequest);
+
+            return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid input: " + e.getMessage());
+        } catch (NotAuthorizedException e) {
+            return ResponseEntity.status(401).body("Current password is incorrect");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error during password update: " + e.getMessage());
+        }
+    }
 
     private String calculateSecretHash(String clientId, String clientSecret, String username) {
         try {

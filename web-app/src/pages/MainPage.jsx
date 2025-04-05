@@ -19,6 +19,7 @@ import S3Service from "../services/S3Service";
 import { se } from "date-fns/locale";
 import CreateGroupModal from "./CreateGroupModal";
 import FriendInfoModal from "./FriendInfoModal";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 
 
@@ -46,15 +47,23 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [] }
 const MainPage = () => {
     const navigate = useNavigate();
     const [isUserInfoVisible, setIsUserInfoVisible] = useState(false);
+    const [isUserChangePWVisible, setIsUserChangePWVisible] = useState(false);
+
 
     const handleUserInfoToggle = () => {
         setIsUserInfoVisible(true);
         setIsSettingsOpen(false)
     };
 
+    const handleUserChangePWToggle = () => {
+        setIsUserChangePWVisible(true);
+        setIsSettingsOpen(false)
+    };
+
     const handleCloseModal = () => {
         setIsUserInfoVisible(false);
         setIsModalGroupOpen(false);
+        setIsUserChangePWVisible(false);
     };
 
     const { MyUser, setMyUser, logout, updateUserInfo } = useAuth();
@@ -1131,7 +1140,7 @@ const MainPage = () => {
                                     <li className="cat-dat" onClick={handleUserInfoToggle}>
                                         Thông tin tài khoản
                                     </li>
-                                    <li className="cat-dat">Cài đặt</li>
+                                    <li className="cat-dat" onClick={handleUserChangePWToggle} >Mật khẩu</li>
                                     <li className="cat-dat">Dữ liệu</li>
                                     <li className="cat-dat">Ngôn ngữ</li>
                                     <li className="cat-dat">Hỗ trợ</li>
@@ -1144,6 +1153,10 @@ const MainPage = () => {
             </nav>
             {isUserInfoVisible && (
                 <UserInfoModal user={MyUser?.my_user} onClose={handleCloseModal} />
+            )}
+
+            {isUserChangePWVisible && (
+                <ChangePasswordModal user={MyUser?.my_user} onClose={handleCloseModal} logout={handleLogout} />
             )}
 
             {/* Sidebar header luôn hiển thị */}
