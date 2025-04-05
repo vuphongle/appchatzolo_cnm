@@ -9,9 +9,9 @@ import {
   Text,
   Platform,
   Dimensions,
-  Keyboard, 
+  Keyboard,
   PermissionsAndroid,
-  Image
+  Image,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -35,7 +35,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const { height: windowHeight } = Dimensions.get('window');
   const [selectedImages, setSelectedImages] = useState([]); // Lưu trữ các ảnh đã chọn
   const [selectedFiles, setSelectedFiles] = useState([]); // Lưu trữ các file đã chọn
-  
+
   const { messages, sendMessage } = useWebSocket(userId, receiverID);
   const scrollViewRef = useRef(null);
   const [messageText, setMessageText] = useState('');
@@ -43,44 +43,51 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const [wantToShowEmojiPicker, setWantToShowEmojiPicker] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
-  
+
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
-  
+
   useEffect(() => {
     if (!userId || !receiverID) return;
 
     // Lấy tất cả tin nhắn giữa người gửi và người nhận
-    MessageService.get(`/messages/messages?senderID=${userId}&receiverID=${receiverID}`)
-        .then((data) => {
-            // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
-            const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
+    MessageService.get(
+      `/messages/messages?senderID=${userId}&receiverID=${receiverID}`,
+    )
+      .then((data) => {
+        // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+        const sortedMessages = data.sort(
+          (a, b) => new Date(a.sendDate) - new Date(b.sendDate),
+        );
 
-            // Cộng 7 giờ vào sendDate của mỗi tin nhắn
-            const updatedMessages = sortedMessages.map((msg) => ({
-                ...msg,
-                sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
-            }));
+        // Cộng 7 giờ vào sendDate của mỗi tin nhắn
+        const updatedMessages = sortedMessages.map((msg) => ({
+          ...msg,
+          sendDate: moment(msg.sendDate)
+            .add(7, 'hours')
+            .format('YYYY-MM-DDTHH:mm:ssZ'), // Cộng 7 giờ vào sendDate
+        }));
 
-            // Lọc các tin nhắn chưa đọc
-            const unreadMessages = updatedMessages.filter((msg) => msg.isRead === false);
+        // Lọc các tin nhắn chưa đọc
+        const unreadMessages = updatedMessages.filter(
+          (msg) => msg.isRead === false,
+        );
 
-            // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
-            if (unreadMessages.length > 0) {
-                // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
-                MessageService.savereadMessages(userId, receiverID)
-                    .catch((error) => {
-                        console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
-                    });
-            } else {
-                console.log("Không có tin nhắn chưa đọc");
-            }
-        })
-        .catch((err) => {
-            console.error("Error fetching messages:", err);
-        });
+        // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
+        if (unreadMessages.length > 0) {
+          // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
+          MessageService.savereadMessages(userId, receiverID).catch((error) => {
+            console.error('Lỗi khi đánh dấu tin nhắn là đã đọc', error);
+          });
+        } else {
+          console.log('Không có tin nhắn chưa đọc');
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching messages:', err);
+      });
   }, [receiverID, userId]);
 
   useEffect(() => {
@@ -91,7 +98,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       }, 100);
     }
   }, [messages]);
-  
+
   const handleImageUpload = async () => {
     if (isMounted) {
       const options = {
@@ -99,10 +106,10 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         quality: 1,
         includeBase64: false,
       };
-      
+
       try {
         const response = await launchImageLibrary(options);
-        
+
         if (response.didCancel) {
           console.log('Người dùng đã hủy chọn ảnh');
         } else if (response.errorCode) {
@@ -123,10 +130,10 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       const result = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
-      
+
       // DocumentPicker.pick có thể trả về một mảng trong các phiên bản mới
       const file = Array.isArray(result) ? result[0] : result;
-      
+
       setSelectedFiles((prevFiles) => [...prevFiles, file]);
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
@@ -137,23 +144,31 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       }
     }
   };
-  
+
   // Handle keyboard hide to show emoji picker
   useEffect(() => {
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      if (wantToShowEmojiPicker) {
-        setShowEmojiPicker(true);
-        setWantToShowEmojiPicker(false);
-      }
-    });
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        if (wantToShowEmojiPicker) {
+          setShowEmojiPicker(true);
+          setWantToShowEmojiPicker(false);
+        }
+      },
+    );
     return () => {
       keyboardDidHideListener.remove();
     };
   }, [wantToShowEmojiPicker]);
 
   const handleSendMessage = async () => {
-    if (messageText.trim() === "" && selectedFiles.length === 0 && selectedImages.length === 0) return; // Don't send if no content and no files
-    
+    if (
+      messageText.trim() === '' &&
+      selectedFiles.length === 0 &&
+      selectedImages.length === 0
+    )
+      return; // Don't send if no content and no files
+
     // Handle selected images
     if (selectedImages.length > 0) {
       try {
@@ -163,7 +178,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           const fileUrl = await S3Service.uploadImage(file); // Upload image to S3
           uploadedImages.push(fileUrl);
         }
-        
+
         // Send message for each image
         for (let url of uploadedImages) {
           const message = {
@@ -174,17 +189,17 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
             sendDate: new Date().toISOString(),
             isRead: false,
           };
-          
+
           // Send message through WebSocket or your API
           sendMessage(message.content, receiverID);
         }
         setSelectedImages([]); // Reset images
       } catch (error) {
-        console.error("Upload image failed", error);
+        console.error('Upload image failed', error);
         return;
       }
     }
-    
+
     // Handle selected files
     if (selectedFiles.length > 0) {
       try {
@@ -194,7 +209,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           const fileUrl = await S3Service.uploadFile(file); // Upload file to S3
           uploadedFiles.push(fileUrl);
         }
-        
+
         // Send message for each file
         for (let url of uploadedFiles) {
           const message = {
@@ -205,17 +220,17 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
             sendDate: new Date().toISOString(),
             isRead: false,
           };
-          
+
           // Send message through WebSocket or your API
           sendMessage(url, receiverID);
         }
         setSelectedFiles([]); // Reset files
       } catch (error) {
-        console.error("Upload file failed", error);
+        console.error('Upload file failed', error);
         return;
       }
     }
-    
+
     // Handle text message if exists
     if (messageText.trim()) {
       const message = {
@@ -226,30 +241,30 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         sendDate: new Date().toISOString(),
         isRead: false,
       };
-      
+
       // Send message through WebSocket or your API
       sendMessage(message.content, receiverID);
     }
-    
+
     // Reset input field and selected files/images
     setMessageText('');
     setSelectedFiles([]);
     setSelectedImages([]);
-    
+
     // Ensure the emoji picker is closed when sending a message
     if (showEmojiPicker) {
       setShowEmojiPicker(false);
     }
   };
-  
+
   const removeImage = (index) => {
-    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
   };
-  
+
   const removeFile = (index) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
-  
+
   const todayFormatted = new Date().toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -260,7 +275,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const handleEmojiSelect = (emoji) => {
     setMessageText((prevText) => prevText + emoji);
   };
-  
+
   const toggleEmojiPicker = () => {
     if (showEmojiPicker) {
       setShowEmojiPicker(false);
@@ -283,22 +298,22 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }}
       >
-      {(() => {
-        let lastDate = null;
+        {(() => {
+          let lastDate = null;
 
-        // Tìm tin nhắn cuối cùng của bạn
-        const lastMyMessageIndex = messages
+          // Tìm tin nhắn cuối cùng của bạn
+          const lastMyMessageIndex = messages
             .map((msg, idx) => (msg.senderID === userId ? idx : -1))
-            .filter(idx => idx !== -1)
+            .filter((idx) => idx !== -1)
             .pop(); // Lấy index cuối cùng của tin nhắn bạn gửi
 
-        return messages.map((message, index) => {
+          return messages.map((message, index) => {
             const isMyMessage = message.senderID === userId;
             const messageDate = new Date(message.sendDate);
 
             const formatMessageDate = (messageDate) => {
               if (!messageDate) return null;
-              
+
               try {
                 const date = new Date(messageDate);
                 if (isNaN(date.getTime())) {
@@ -326,9 +341,10 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
               lastDate = formattedDate;
             }
 
-            const headerText = formattedDate === todayFormatted 
-              ? "Hôm nay" 
-              : formattedDate || "Hôm nay";
+            const headerText =
+              formattedDate === todayFormatted
+                ? 'Hôm nay'
+                : formattedDate || 'Hôm nay';
 
             return (
               <View key={message.id || `msg-${index}-${message.sendDate}`}>
@@ -338,38 +354,40 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                   </View>
                 )}
                 {isMyMessage ? (
-                    <MyMessageItem 
-                        time={formatDate(message.sendDate)} 
-                        message={message.content} 
-                        receiverID={receiverID} 
-                        isRead={index === lastMyMessageIndex ? message.isRead : undefined} // Chỉ thêm isRead nếu là tin nhắn cuối cùng của bạn
-                    />
+                  <MyMessageItem
+                    time={formatDate(message.sendDate)}
+                    message={message.content}
+                    receiverID={receiverID}
+                    isRead={
+                      index === lastMyMessageIndex ? message.isRead : undefined
+                    } // Chỉ thêm isRead nếu là tin nhắn cuối cùng của bạn
+                  />
                 ) : (
-                    <MessageItem 
-                        avatar={avatar} 
-                        name={name} 
-                        time={formatDate(message.sendDate)} 
-                        message={message.content} 
-                    />
+                  <MessageItem
+                    avatar={avatar}
+                    name={name}
+                    time={formatDate(message.sendDate)}
+                    message={message.content}
+                  />
                 )}
-            </View>
+              </View>
             );
-        });
-      })()}
+          });
+        })()}
       </ScrollView>
-      
+
       {/* Media Preview Section */}
       {(selectedImages.length > 0 || selectedFiles.length > 0) && (
         <View style={styles.mediaPreviewContainer}>
           <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
             {selectedImages.map((image, index) => (
               <View key={`img-${index}`} style={styles.mediaPreviewItem}>
-                <Image 
-                  source={{ uri: image.uri }} 
-                  style={styles.previewImage} 
+                <Image
+                  source={{ uri: image.uri }}
+                  style={styles.previewImage}
                   resizeMode="cover"
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.removeMediaButton}
                   onPress={() => removeImage(index)}
                 >
@@ -377,7 +395,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                 </TouchableOpacity>
               </View>
             ))}
-            
+
             {selectedFiles.map((file, index) => (
               <View key={`file-${index}`} style={styles.mediaPreviewItem}>
                 <View style={styles.filePreview}>
@@ -386,7 +404,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                     {file.name}
                   </Text>
                 </View>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.removeMediaButton}
                   onPress={() => removeFile(index)}
                 >
@@ -397,7 +415,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           </ScrollView>
         </View>
       )}
-      
+
       <View style={styles.footerContainer}>
         <View style={styles.inputContainer}>
           <TouchableOpacity onPress={toggleEmojiPicker}>
@@ -425,7 +443,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           </TouchableOpacity>
         </View>
       </View>
-      {showEmojiPicker && ( 
+      {showEmojiPicker && (
         <View style={{ height: 350, overflow: 'hidden' }}>
           <EmojiSelector
             onEmojiSelected={handleEmojiSelect}

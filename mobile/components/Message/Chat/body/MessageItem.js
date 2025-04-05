@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Image, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+import {
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MessageService from '../../../../services/MessageService';
 
@@ -7,15 +14,22 @@ function MessageItem({ avatar, time, message }) {
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState(null);
   const [StatusRead, setStatusRead] = useState(false);
-  
+
   // Kiểm tra xem tin nhắn có phải là ảnh hay không
   const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
-  
+
   // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
-  const isFileMessage = (url) => url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/) != null;
-  
+  const isFileMessage = (url) =>
+    url.match(
+      /\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/,
+    ) != null;
+
   // Xác định loại tin nhắn
-  const type = isImageMessage(message) ? 'image' : isFileMessage(message) ? 'file' : 'text';
+  const type = isImageMessage(message)
+    ? 'image'
+    : isFileMessage(message)
+    ? 'file'
+    : 'text';
 
   // Hàm xử lý nhấn vào ảnh
   const handlePressImage = () => {
@@ -24,7 +38,7 @@ function MessageItem({ avatar, time, message }) {
       image: message,
     });
   };
-  
+
   // Hàm phản ứng emoji
   const reactMessage = (reaction) => {
     setEmojiIndex(reaction);
@@ -49,11 +63,10 @@ function MessageItem({ avatar, time, message }) {
       </View>
       <View style={styles.messageContainer}>
         {/* Nội dung tin nhắn */}
-        <TouchableOpacity onLongPress={handlePressIcon}
-          style={[
-            styles.messageBox,
-            type === 'image' && styles.imageMessage,
-          ]}>
+        <TouchableOpacity
+          onLongPress={handlePressIcon}
+          style={[styles.messageBox, type === 'image' && styles.imageMessage]}
+        >
           {type === 'image' ? (
             <TouchableOpacity onPress={handlePressImage}>
               <Image style={styles.image} source={{ uri: message }} />

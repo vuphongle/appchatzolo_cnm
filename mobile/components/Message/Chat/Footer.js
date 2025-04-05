@@ -1,4 +1,4 @@
-import React, { useState,useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   KeyboardAvoidingView,
   TextInput,
@@ -12,16 +12,16 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import { useWebSocket } from '../../../context/WebSocketService';
 import { UserContext } from '../../../context/UserContext';
-function FooterChat({receiverID}) {
+function FooterChat({ receiverID }) {
   // const userId="1";
   const user = useContext(UserContext);
-  const userId=user?.id||"1";
+  const userId = user?.id || '1';
   const { messages, sendMessage } = useWebSocket(userId, receiverID);
-  const [messageText, setMessageText] = useState("");
+  const [messageText, setMessageText] = useState('');
   const handleSendMessage = () => {
     if (messageText.trim()) {
       sendMessage(messageText, receiverID);
-      setMessageText("");
+      setMessageText('');
     }
   };
 
@@ -43,7 +43,7 @@ function FooterChat({receiverID}) {
         <MaterialIcons name="insert-emoticon" size={24} color="#0091ff" />
         <TextInput
           value={messageText}
-          onChangeText={(text)=>setMessageText(text)}
+          onChangeText={(text) => setMessageText(text)}
           style={styles.inputMessage}
           placeholder="Nhập tin nhắn..."
           placeholderTextColor="#999"
@@ -53,7 +53,7 @@ function FooterChat({receiverID}) {
         <TouchableOpacity>
           <MaterialIcons name="keyboard-voice" size={24} color="#0091ff" />
         </TouchableOpacity>
-        <TouchableOpacity >
+        <TouchableOpacity>
           <SimpleLineIcons name="picture" size={24} color="#0091ff" />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSendMessage}>
@@ -85,6 +85,5 @@ const styles = StyleSheet.create({
   inputMessage: {
     width: 210,
     marginLeft: 10,
-    
   },
 });

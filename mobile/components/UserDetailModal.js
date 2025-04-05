@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ScrollView
+  ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { AVATAR_URL_DEFAULT } from '@env';
@@ -14,9 +14,9 @@ import { AVATAR_URL_DEFAULT } from '@env';
 const UserDetailModal = ({
   visible,
   onClose,
-  friend,          // Dữ liệu của người bạn muốn hiển thị
-  onDeleteFriend,  // Hàm xóa bạn được truyền từ DanhBaScreen
-  onSendMessage    // Hàm nhắn tin (nếu cần)
+  friend, // Dữ liệu của người bạn muốn hiển thị
+  onDeleteFriend, // Hàm xóa bạn được truyền từ DanhBaScreen
+  onSendMessage, // Hàm nhắn tin (nếu cần)
 }) => {
   if (!friend) return null;
 
@@ -42,7 +42,10 @@ const UserDetailModal = ({
 
         <View style={styles.bottomSheetContainer}>
           <View style={styles.headerContainer}>
-            <Image source={{ uri: friend.avatar || AVATAR_URL_DEFAULT }} style={styles.avatar} />
+            <Image
+              source={{ uri: friend.avatar || AVATAR_URL_DEFAULT }}
+              style={styles.avatar}
+            />
             <View style={styles.headerText}>
               <Text style={styles.userName}>{friend.name}</Text>
               <Ionicons
@@ -56,32 +59,62 @@ const UserDetailModal = ({
 
           <ScrollView style={styles.bodyContainer}>
             <TouchableOpacity style={styles.optionRow}>
-              <Ionicons name="person-outline" size={20} color="#000" style={styles.icon} />
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color="#000"
+                style={styles.icon}
+              />
               <Text style={styles.optionText}>Xem trang cá nhân</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.optionRow}>
-              <Ionicons name="shield-checkmark-outline" size={20} color="#000" style={styles.icon} />
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={20}
+                color="#000"
+                style={styles.icon}
+              />
               <Text style={styles.optionText}>Quản lý chặn</Text>
             </TouchableOpacity>
 
             <View style={styles.optionRow}>
-              <Ionicons name="time-outline" size={20} color="#000" style={styles.icon} />
+              <Ionicons
+                name="time-outline"
+                size={20}
+                color="#000"
+                style={styles.icon}
+              />
               <Text style={styles.optionText}>Đã kết bạn 1 năm trước</Text>
             </View>
 
             <TouchableOpacity style={styles.optionRow}>
-              <Ionicons name="people-outline" size={20} color="#000" style={styles.icon} />
+              <Ionicons
+                name="people-outline"
+                size={20}
+                color="#000"
+                style={styles.icon}
+              />
               <Text style={styles.optionText}>Xem nhóm chung (9)</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.optionRow}>
-              <Ionicons name="book-outline" size={20} color="#000" style={styles.icon} />
+              <Ionicons
+                name="book-outline"
+                size={20}
+                color="#000"
+                style={styles.icon}
+              />
               <Text style={styles.optionText}>Xem nhật ký chung</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.optionRow}>
-              <Ionicons name="star-outline" size={20} color="#000" style={styles.icon} />
+              <Ionicons
+                name="star-outline"
+                size={20}
+                color="#000"
+                style={styles.icon}
+              />
               <Text style={styles.optionText}>Đánh dấu bạn thân</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -91,14 +124,18 @@ const UserDetailModal = ({
               style={[styles.footerButton, { backgroundColor: '#f2f2f2' }]}
               onPress={handleDelete}
             >
-              <Text style={[styles.footerButtonText, { color: 'red' }]}>Xóa bạn</Text>
+              <Text style={[styles.footerButtonText, { color: 'red' }]}>
+                Xóa bạn
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.footerButton, { backgroundColor: '#1e90ff' }]}
               onPress={onSendMessage}
             >
-              <Text style={[styles.footerButtonText, { color: '#fff' }]}>Nhắn tin</Text>
+              <Text style={[styles.footerButtonText, { color: '#fff' }]}>
+                Nhắn tin
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

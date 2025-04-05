@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { IPV4 } from '@env';
 import { UserContext } from '../context/UserContext';
 import SearchBar from '../components/SearchBar';
@@ -8,7 +15,7 @@ const FriendInvitesScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('received');
   const [friendRequests, setFriendRequests] = useState([]); // Lời mời đã nhận
-  const [sentRequests, setSentRequests] = useState([]);    // Lời mời đã gửi
+  const [sentRequests, setSentRequests] = useState([]); // Lời mời đã gửi
   const [sendersInfo, setSendersInfo] = useState({});
   const [receiversInfo, setReceiversInfo] = useState({});
   const { user, friendRequestsCount } = useContext(UserContext);
@@ -18,15 +25,19 @@ const FriendInvitesScreen = () => {
     if (activeSubTab === 'received') {
       const fetchReceived = async () => {
         try {
-          const response = await fetch(`${IPV4}/messages/invitations/received/${user?.id}`);
+          const response = await fetch(
+            `${IPV4}/messages/invitations/received/${user?.id}`,
+          );
           const data = await response.json();
           setFriendRequests(data);
 
           // Lấy info của người gửi
           for (let request of data) {
-            const senderRes = await fetch(`${IPV4}/user/findById/${request.senderID}`);
+            const senderRes = await fetch(
+              `${IPV4}/user/findById/${request.senderID}`,
+            );
             const senderData = await senderRes.json();
-            setSendersInfo(prev => ({ ...prev, [request.id]: senderData }));
+            setSendersInfo((prev) => ({ ...prev, [request.id]: senderData }));
           }
         } catch (error) {
           console.error('Error fetching received invites:', error);
@@ -41,14 +52,21 @@ const FriendInvitesScreen = () => {
     if (activeSubTab === 'sent') {
       const fetchSent = async () => {
         try {
-          const response = await fetch(`${IPV4}/messages/invitations/sent/${user?.id}`);
+          const response = await fetch(
+            `${IPV4}/messages/invitations/sent/${user?.id}`,
+          );
           const data = await response.json();
           setSentRequests(data);
 
           for (let request of data) {
-            const receiverRes = await fetch(`${IPV4}/user/findById/${request.receiverID}`);
+            const receiverRes = await fetch(
+              `${IPV4}/user/findById/${request.receiverID}`,
+            );
             const receiverData = await receiverRes.json();
-            setReceiversInfo(prev => ({ ...prev, [request.id]: receiverData }));
+            setReceiversInfo((prev) => ({
+              ...prev,
+              [request.id]: receiverData,
+            }));
           }
         } catch (error) {
           console.error('Error fetching sent invites:', error);
@@ -58,7 +76,12 @@ const FriendInvitesScreen = () => {
     }
   }, [activeSubTab, user?.id, friendRequestsCount]);
 
-  const handleRequestResponse = async (requestId, senderId, receiverId, action) => {
+  const handleRequestResponse = async (
+    requestId,
+    senderId,
+    receiverId,
+    action,
+  ) => {
     try {
       let url = '';
       let method = 'POST';
@@ -77,11 +100,15 @@ const FriendInvitesScreen = () => {
       const res = await fetch(url, { method });
       if (res.ok) {
         if (action === 'accept') {
-          setFriendRequests(friendRequests.filter(req => req.id !== requestId));
+          setFriendRequests(
+            friendRequests.filter((req) => req.id !== requestId),
+          );
         } else if (action === 'reject') {
-          setFriendRequests(friendRequests.filter(req => req.id !== requestId));
+          setFriendRequests(
+            friendRequests.filter((req) => req.id !== requestId),
+          );
         } else if (action === 'delete') {
-          setSentRequests(sentRequests.filter(req => req.id !== requestId));
+          setSentRequests(sentRequests.filter((req) => req.id !== requestId));
         }
       } else {
         console.error('Action failed:', action);
@@ -95,7 +122,7 @@ const FriendInvitesScreen = () => {
     return (
       <View style={styles.section}>
         {friendRequests.length > 0 ? (
-          friendRequests.map(request => (
+          friendRequests.map((request) => (
             <View key={request.id} style={styles.requestItem}>
               {/* Info người gửi */}
               {sendersInfo[request.id] && (
@@ -115,7 +142,12 @@ const FriendInvitesScreen = () => {
                 <TouchableOpacity
                   style={styles.acceptButton}
                   onPress={() =>
-                    handleRequestResponse(request.id, request.senderID, request.receiverID, 'accept')
+                    handleRequestResponse(
+                      request.id,
+                      request.senderID,
+                      request.receiverID,
+                      'accept',
+                    )
                   }
                 >
                   <Text style={styles.actionButtonText}>Đồng ý</Text>
@@ -123,7 +155,12 @@ const FriendInvitesScreen = () => {
                 <TouchableOpacity
                   style={styles.rejectButton}
                   onPress={() =>
-                    handleRequestResponse(request.id, request.senderID, request.receiverID, 'reject')
+                    handleRequestResponse(
+                      request.id,
+                      request.senderID,
+                      request.receiverID,
+                      'reject',
+                    )
                   }
                 >
                   <Text style={styles.actionButtonText}>Từ chối</Text>
@@ -143,7 +180,7 @@ const FriendInvitesScreen = () => {
     return (
       <View style={styles.section}>
         {sentRequests.length > 0 ? (
-          sentRequests.map(request => (
+          sentRequests.map((request) => (
             <View key={request.id} style={styles.requestItem}>
               {/* Info người nhận */}
               {receiversInfo[request.id] && (
@@ -165,7 +202,12 @@ const FriendInvitesScreen = () => {
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() =>
-                  handleRequestResponse(request.id, request.senderID, request.receiverID, 'delete')
+                  handleRequestResponse(
+                    request.id,
+                    request.senderID,
+                    request.receiverID,
+                    'delete',
+                  )
                 }
               >
                 <Text style={styles.actionButtonText}>Xóa lời mời</Text>
@@ -184,7 +226,10 @@ const FriendInvitesScreen = () => {
       {/* Thanh tab con */}
       <View style={styles.tabBar}>
         <TouchableOpacity
-          style={[styles.tabItem, activeSubTab === 'received' && styles.activeTab]}
+          style={[
+            styles.tabItem,
+            activeSubTab === 'received' && styles.activeTab,
+          ]}
           onPress={() => setActiveSubTab('received')}
         >
           <Text style={styles.tabText}>Đã nhận</Text>
@@ -200,7 +245,9 @@ const FriendInvitesScreen = () => {
 
       {/* Danh sách lời mời */}
       <ScrollView style={styles.listContainer}>
-        {activeSubTab === 'received' ? renderReceivedInvites() : renderSentInvites()}
+        {activeSubTab === 'received'
+          ? renderReceivedInvites()
+          : renderSentInvites()}
       </ScrollView>
     </View>
   );

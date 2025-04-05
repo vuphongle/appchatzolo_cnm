@@ -1,91 +1,110 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Alert ,ActivityIndicator} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import Icon from 'react-native-vector-icons/AntDesign';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-import { useFocusEffect } from '@react-navigation/native'; 
+import { useFocusEffect } from '@react-navigation/native';
 import ItemFriend from './ItemFriend';
 import CloudItem from './CloudItem';
 import axios from 'axios';
 import { IPV4 } from '@env';
 import UserService from '../../../services/UserService';
 import MessageService from '../../../services/MessageService';
-function ListFriend({userId}) {
-  const [openRow, setOpenRow] = useState(null); 
+function ListFriend({ userId }) {
+  const [openRow, setOpenRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [friends, setFriends] = useState([]);
 
   const fetchFriends = async () => {
     try {
-        setLoading(true);
-        const response = await UserService.getFriends(userId);
-        let friendsList = response;
+      setLoading(true);
+      const response = await UserService.getFriends(userId);
+      let friendsList = response;
 
-        // Lấy tin nhắn mới nhất của từng bạn
-        const friendsWithMessages = await Promise.all(
-            friendsList.map(async (friend) => {
-                try {
-                    const messageResponse = await MessageService.getLatestMessage(userId, friend.id);
-                    return {
-                        ...friend,
-                        lastMessage: messageResponse ? messageResponse.content : "Chưa có tin nhắn",
-                        sendDate: messageResponse ? new Date(messageResponse.sendDate) : null,
-                    };
-                } catch (error) {
-                    console.error("Lỗi khi lấy tin nhắn mới nhất:", error);
-                    return { ...friend, lastMessage: "Chưa có tin nhắn", sendDate: null };
-                }
-            })
-        );
+      // Lấy tin nhắn mới nhất của từng bạn
+      const friendsWithMessages = await Promise.all(
+        friendsList.map(async (friend) => {
+          try {
+            const messageResponse = await MessageService.getLatestMessage(
+              userId,
+              friend.id,
+            );
+            return {
+              ...friend,
+              lastMessage: messageResponse
+                ? messageResponse.content
+                : 'Chưa có tin nhắn',
+              sendDate: messageResponse
+                ? new Date(messageResponse.sendDate)
+                : null,
+            };
+          } catch (error) {
+            console.error('Lỗi khi lấy tin nhắn mới nhất:', error);
+            return {
+              ...friend,
+              lastMessage: 'Chưa có tin nhắn',
+              sendDate: null,
+            };
+          }
+        }),
+      );
 
-        // Sắp xếp bạn bè theo thời gian gửi tin nhắn mới nhất (gần nhất trước)
-        friendsWithMessages.sort((a, b) => {
-            return (b.sendDate?.getTime() || 0) - (a.sendDate?.getTime() || 0);
-        });
+      // Sắp xếp bạn bè theo thời gian gửi tin nhắn mới nhất (gần nhất trước)
+      friendsWithMessages.sort((a, b) => {
+        return (b.sendDate?.getTime() || 0) - (a.sendDate?.getTime() || 0);
+      });
 
-        setFriends(friendsWithMessages);
-        setError(null);
+      setFriends(friendsWithMessages);
+      setError(null);
     } catch (err) {
-        setError('Không có bạn trong danh sách');
-        Alert.alert('Error', "Không thể tải danh sách bạn bè.");
+      setError('Không có bạn trong danh sách');
+      Alert.alert('Error', 'Không thể tải danh sách bạn bè.');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
-useFocusEffect(
+  useFocusEffect(
     React.useCallback(() => {
-        fetchFriends();
-        return () => {};
-    }, [userId])
-);
-
+      fetchFriends();
+      return () => {};
+    }, [userId]),
+  );
 
   // Hàm xử lý ghim
   const pinFriend = (id) => {
     Alert.alert(
-      "Xác nhận",
-      "Bạn có muốn ghim người bạn này lên đầu danh sách?",
+      'Xác nhận',
+      'Bạn có muốn ghim người bạn này lên đầu danh sách?',
       [
         {
-          text: "Hủy",
-          style: "cancel",
+          text: 'Hủy',
+          style: 'cancel',
         },
         {
-          text: "Có",
+          text: 'Có',
           onPress: () => {
             setFriends((prevFriends) => {
-              const friendIndex = prevFriends.findIndex((friend) => friend.id === id);
+              const friendIndex = prevFriends.findIndex(
+                (friend) => friend.id === id,
+              );
               if (friendIndex === -1) return prevFriends; // Kiểm tra nếu không tìm thấy
-  
+
               const updatedFriends = [...prevFriends];
               const [pinnedFriend] = updatedFriends.splice(friendIndex, 1);
               return [pinnedFriend, ...updatedFriends];
             });
           },
         },
-      ]
+      ],
     );
   };
 
@@ -101,16 +120,18 @@ useFocusEffect(
           style: 'destructive',
           onPress: () => {
             setFriends((prevFriends) =>
-              prevFriends.filter((friend) => friend.id !== id)
+              prevFriends.filter((friend) => friend.id !== id),
             );
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
-  const renderItem = ({ item }) => <ItemFriend receiverID={item.id} name={item.name} avatar={item.avatar} />;
+  const renderItem = ({ item }) => (
+    <ItemFriend receiverID={item.id} name={item.name} avatar={item.avatar} />
+  );
 
   const renderHiddenItem = ({ item }) => {
     if (openRow !== item.id) return <View style={{ height: 0 }} />;
@@ -124,13 +145,15 @@ useFocusEffect(
           </View>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => pinFriend(item.id)}>
+            onPress={() => pinFriend(item.id)}
+          >
             <Icon name="pushpin" size={24} color="white" />
             <Text style={styles.actionText}>Ghim</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => deleteFriend(item.id)}>
+            onPress={() => deleteFriend(item.id)}
+          >
             <Icon name="delete" size={24} color="white" />
             <Text style={styles.actionText}>Xóa</Text>
           </TouchableOpacity>
@@ -138,12 +161,12 @@ useFocusEffect(
       </View>
     );
   };
-  
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color="#0000ff" />
-    </View>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
     );
   }
 
@@ -157,28 +180,27 @@ useFocusEffect(
 
   return (
     <View style={styles.container}>
-       <CloudItem timestamp="23 tiếng" />
-       {friends.length > 0 ? (
-      <SwipeListView
-        data={friends}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        renderHiddenItem={renderHiddenItem}
-        rightOpenValue={-230}
-        showsVerticalScrollIndicator={false}
-        closeOnRowPress={true}
-        disableRightSwipe={true}
-        previewOpenDelay={3000}
-        onRowOpen={(rowKey) => setOpenRow(rowKey)}
-        onRowClose={() => setOpenRow(null)}
-      />
-    ) : (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Không có bạn bè trong danh sách</Text>
-      </View>
-    )}
-  </View>
-  
+      <CloudItem timestamp="23 tiếng" />
+      {friends.length > 0 ? (
+        <SwipeListView
+          data={friends}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          renderHiddenItem={renderHiddenItem}
+          rightOpenValue={-230}
+          showsVerticalScrollIndicator={false}
+          closeOnRowPress={true}
+          disableRightSwipe={true}
+          previewOpenDelay={3000}
+          onRowOpen={(rowKey) => setOpenRow(rowKey)}
+          onRowClose={() => setOpenRow(null)}
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Không có bạn bè trong danh sách</Text>
+        </View>
+      )}
+    </View>
   );
 }
 

@@ -8,7 +8,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ImageCropPicker from 'react-native-image-crop-picker';
@@ -127,8 +127,8 @@ const EditPersonalInfoScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Chỉnh sửa thông tin cá nhân</Text>
-     
-      <TouchableOpacity style={styles.avatarContainer}  onPress={pickImage}>
+
+      <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
         <Image
           source={{ uri: avatarUri || AVATAR_URL_DEFAULT }}
           style={styles.avatar}

@@ -1,115 +1,131 @@
-import React,{useState,useEffect} from "react";
-import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
-import { useNavigation } from "@react-navigation/native";
-import { StackActions } from "@react-navigation/native";
-import UserService from "../../../services/UserService";
+import { useNavigation } from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native';
+import UserService from '../../../services/UserService';
 
 function Header({ name, id, avatar }) {
-    const navigation = useNavigation();
-    const [onlineStatus, setOnlineStatus] = useState(false);
+  const navigation = useNavigation();
+  const [onlineStatus, setOnlineStatus] = useState(false);
 
-    const handlePressBack = () => {
-        navigation.goBack();
-      };
+  const handlePressBack = () => {
+    navigation.goBack();
+  };
 
-    const handlePressMenu = () => {
-        navigation.navigate("DetailChat");
-    };
-    const getOnlineStatus = () => {
-        try{
-            const receiver = UserService.getUserById(id);
-            setOnlineStatus(receiver.isOnline);
-        }
-        catch(err){
-            console.log(err);
-            setOnlineStatus(false);
-        }
+  const handlePressMenu = () => {
+    navigation.navigate('DetailChat');
+  };
+  const getOnlineStatus = () => {
+    try {
+      const receiver = UserService.getUserById(id);
+      setOnlineStatus(receiver.isOnline);
+    } catch (err) {
+      console.log(err);
+      setOnlineStatus(false);
     }
-       
-    useEffect(() => {
-        getOnlineStatus();
-    },[]);
+  };
 
+  useEffect(() => {
+    getOnlineStatus();
+  }, []);
 
+  return (
+    <View style={styles.container}>
+      <View style={styles.container_left}>
+        <TouchableOpacity onPress={handlePressBack} style={styles.button}>
+          <Ionicons name="chevron-back-outline" size={32} color="white" />
+        </TouchableOpacity>
 
-
-
-
-    return (
-        <View style={styles.container}>
-
-            <View style={styles.container_left}>
-                <TouchableOpacity onPress={handlePressBack} style={styles.button}>
-                    <Ionicons name="chevron-back-outline" size={32} color="white" />
-                </TouchableOpacity>
-
-                <View style={styles.container_friend_Name}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.friend_Name}>{name}
-                    {onlineStatus ?   <Ionicons name="ellipse" size={10} color="green" style={{marginLeft:10}} /> : <Ionicons name="ellipse" size={10} color="grey" style={{marginLeft:10}}/>}
-                    </Text>
-                </View>
-                    {onlineStatus ? <Text style={{ color: 'white', fontSize: 12 }}>Hoạt động</Text>  :  <Text style={{ color: 'white', fontSize: 12 }}> Không hoạt động</Text>
-                  }
-                </View>
-            </View>
-
-
-            <View style={styles.container_right}>
-                <TouchableOpacity style={styles.container_right_icon}>
-                    <Feather name="phone" size={23} color="white" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.container_right_icon}>
-                    <Feather name="video" size={26} color="white" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.container_right_icon} onPress={handlePressMenu}>
-                    <Feather name="menu" size={26} color="white" />
-                </TouchableOpacity>
-            </View>
+        <View style={styles.container_friend_Name}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.friend_Name}>
+              {name}
+              {onlineStatus ? (
+                <Ionicons
+                  name="ellipse"
+                  size={10}
+                  color="green"
+                  style={{ marginLeft: 10 }}
+                />
+              ) : (
+                <Ionicons
+                  name="ellipse"
+                  size={10}
+                  color="grey"
+                  style={{ marginLeft: 10 }}
+                />
+              )}
+            </Text>
+          </View>
+          {onlineStatus ? (
+            <Text style={{ color: 'white', fontSize: 12 }}>Hoạt động</Text>
+          ) : (
+            <Text style={{ color: 'white', fontSize: 12 }}>
+              {' '}
+              Không hoạt động
+            </Text>
+          )}
         </View>
-    );
+      </View>
+
+      <View style={styles.container_right}>
+        <TouchableOpacity style={styles.container_right_icon}>
+          <Feather name="phone" size={23} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.container_right_icon}>
+          <Feather name="video" size={26} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.container_right_icon}
+          onPress={handlePressMenu}
+        >
+          <Feather name="menu" size={26} color="white" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
 
 export default Header;
 
 const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        backgroundColor: '#0091ff',
-        height: 60,
-        paddingHorizontal: 10,
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottomWidth: 1,
-        borderColor: '#ccc',
-    },
-    container_left: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '70%',
-    },
-    container_friend_Name: {
-        paddingLeft: 10,
-    },
-    friend_Name: {
-        color: 'white',
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    container_right: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '30%',
-        justifyContent: 'space-around',
-    },
-    container_right_icon: {
-        padding: 8,
-    },
-    button: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 5,
-    },
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#0091ff',
+    height: 60,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  container_left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '70%',
+  },
+  container_friend_Name: {
+    paddingLeft: 10,
+  },
+  friend_Name: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  container_right: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '30%',
+    justifyContent: 'space-around',
+  },
+  container_right_icon: {
+    padding: 8,
+  },
+  button: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 5,
+  },
 });

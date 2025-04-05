@@ -15,11 +15,16 @@ function MyMessageItem({ time, message, receiverID, isRead }) {
   const [StatusRead, setStatusRead] = useState(false);
 
   // Kiểm tra xem tin nhắn có phải là ảnh hay không
-  const isImageMessage = (url) => url && url.match(/\.(jpeg|jpg|gif|png)$/) != null;
-  
+  const isImageMessage = (url) =>
+    url && url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+
   // Kiểm tra xem tin nhắn có phải là URL của file hay không
-  const isFileMessage = (url) => url && url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/) != null;
-  
+  const isFileMessage = (url) =>
+    url &&
+    url.match(
+      /\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/,
+    ) != null;
+
   // Xác định loại tin nhắn
   const [typeIndex, setTypeIndex] = useState(() => {
     if (isImageMessage(message)) return 'image';
@@ -70,19 +75,20 @@ function MyMessageItem({ time, message, receiverID, isRead }) {
           <TouchableOpacity
             style={[
               styles.messageBox,
-              (typeIndex === 'image' || typeIndex === 'file') && styles.mediaMessage,
+              (typeIndex === 'image' || typeIndex === 'file') &&
+                styles.mediaMessage,
             ]}
             onLongPress={handleLongPress}
-            onPress={handlePressIcon}>
+            onPress={handlePressIcon}
+          >
             {typeIndex === 'image' ? (
-              <Image
-                style={styles.image}
-                source={{ uri: messIndex }}
-              />
+              <Image style={styles.image} source={{ uri: messIndex }} />
             ) : typeIndex === 'file' ? (
               <View style={styles.fileContainer}>
                 <Text style={styles.fileIcon}>📎</Text>
-                <Text style={styles.fileText}>{messIndex.split('/').pop()}</Text>
+                <Text style={styles.fileText}>
+                  {messIndex.split('/').pop()}
+                </Text>
               </View>
             ) : (
               <Text style={styles.messageText}>{messIndex}</Text>
@@ -99,7 +105,7 @@ function MyMessageItem({ time, message, receiverID, isRead }) {
             <Text style={styles.emoji}>{emojiIndex}</Text>
           </View>
         )}
-        
+
         {/* Trạng thái đọc */}
         {isRead !== undefined ? (
           isRead ? (

@@ -66,7 +66,7 @@ export const UserProvider = ({ children }) => {
         user,
         setUser,
         fetchUserProfile,
-        friendRequestsCount
+        friendRequestsCount,
       }}
     >
       {!loading && children}

@@ -1,15 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image,TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 const CloudItem = ({ timestamp }) => {
   const navigation = useNavigation();
   return (
-    <TouchableOpacity style={styles.container} onPress={()=>navigation.navigate("ScreenCloud")}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => navigation.navigate('ScreenCloud')}
+    >
       <View style={styles.iconContainer}>
         <View style={styles.cloudIcon}>
-
-          <Image source={{uri:'https://res-zalo.zadn.vn/upload/media/2021/6/4/2_1622800570007_369788.jpg'}} style={{height:40,width:40,borderRadius:50}}/>
+          <Image
+            source={{
+              uri: 'https://res-zalo.zadn.vn/upload/media/2021/6/4/2_1622800570007_369788.jpg',
+            }}
+            style={{ height: 40, width: 40, borderRadius: 50 }}
+          />
         </View>
       </View>
       <View style={styles.contentContainer}>
@@ -28,8 +35,7 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
-        borderBottomColor: "#ddd",
-      
+    borderBottomColor: '#ddd',
   },
   iconContainer: {
     marginRight: 12,
@@ -64,7 +70,7 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 14,
-     color: "#aaa",
+    color: '#aaa',
   },
 });
 

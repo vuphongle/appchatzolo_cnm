@@ -1,11 +1,23 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Pressable, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Pressable,
+  Alert,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import SearchBar from '../components/SearchBar';
 import { IPV4, AVATAR_URL_DEFAULT } from '@env';
 import { UserContext } from '../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import {
+  GestureHandlerRootView,
+  Swipeable,
+} from 'react-native-gesture-handler';
 import UserDetailModal from '../components/UserDetailModal';
 
 const DanhBaScreen = () => {
@@ -38,7 +50,9 @@ const DanhBaScreen = () => {
   useEffect(() => {
     const fetchReceivedCount = async () => {
       try {
-        const response = await fetch(`${IPV4}/messages/invitations/received/${user?.id}`);
+        const response = await fetch(
+          `${IPV4}/messages/invitations/received/${user?.id}`,
+        );
         const data = await response.json();
         setReceivedCount(data.length);
       } catch (error) {
@@ -62,7 +76,7 @@ const DanhBaScreen = () => {
         <Pressable
           style={({ pressed }) => [
             styles.actionButton,
-            { backgroundColor: pressed ? '#7D8590' : '#9199a4' }
+            { backgroundColor: pressed ? '#7D8590' : '#9199a4' },
           ]}
           onPress={() => handleAdd(contact)}
         >
@@ -74,7 +88,7 @@ const DanhBaScreen = () => {
         <Pressable
           style={({ pressed }) => [
             styles.actionButton,
-            { backgroundColor: pressed ? '#394296' : '#4752bb' }
+            { backgroundColor: pressed ? '#394296' : '#4752bb' },
           ]}
           onPress={() => handleJournal(contact)}
         >
@@ -86,7 +100,7 @@ const DanhBaScreen = () => {
         <Pressable
           style={({ pressed }) => [
             styles.actionButton,
-            { backgroundColor: pressed ? '#BE403C' : '#ed504b' }
+            { backgroundColor: pressed ? '#BE403C' : '#ed504b' },
           ]}
           onPress={() => handleDelete(contact)}
         >
@@ -109,20 +123,23 @@ const DanhBaScreen = () => {
 
   const handleDelete = (contact) => {
     Alert.alert(
-      "Xác nhận xóa",
+      'Xác nhận xóa',
       `Bạn có chắc chắn muốn xóa ${contact.name} khỏi danh sách bạn bè?`,
       [
         {
-          text: "Hủy",
-          style: "cancel",
+          text: 'Hủy',
+          style: 'cancel',
         },
         {
-          text: "Xóa",
+          text: 'Xóa',
           onPress: async () => {
             try {
-              const response = await fetch(`${IPV4}/user/${user.id}/removeFriend/${contact.id}`, {
-                method: 'DELETE',
-              });
+              const response = await fetch(
+                `${IPV4}/user/${user.id}/removeFriend/${contact.id}`,
+                {
+                  method: 'DELETE',
+                },
+              );
 
               if (!response.ok) {
                 const errorMessage = await response.text();
@@ -136,7 +153,10 @@ const DanhBaScreen = () => {
               setIsModalVisible(false);
 
               // Thông báo xóa thành công
-              Alert.alert('Xóa thành công', `${contact.name} đã được xóa khỏi danh sách bạn bè.`);
+              Alert.alert(
+                'Xóa thành công',
+                `${contact.name} đã được xóa khỏi danh sách bạn bè.`,
+              );
             } catch (error) {
               console.error('Lỗi khi xóa bạn bè:', error);
               alert('Lỗi khi xóa bạn bè. Vui lòng thử lại.');
@@ -144,7 +164,7 @@ const DanhBaScreen = () => {
           },
         },
       ],
-      { cancelable: false }
+      { cancelable: false },
     );
   };
 
@@ -171,7 +191,7 @@ const DanhBaScreen = () => {
         </View>
 
         <View style={styles.friendsHeader}>
-          <Text style={styles.friendsHeaderText}>Tất cả  {friends.length}</Text>
+          <Text style={styles.friendsHeaderText}>Tất cả {friends.length}</Text>
         </View>
 
         {friends.map((contact) => (
@@ -236,11 +256,18 @@ const DanhBaScreen = () => {
 
   return (
     <View style={styles.container}>
-      <SearchBar placeholder="Tìm kiếm" leftIcon="search" rightIcon="notifications" />
+      <SearchBar
+        placeholder="Tìm kiếm"
+        leftIcon="search"
+        rightIcon="notifications"
+      />
 
       <View style={styles.tabBar}>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'friends' && styles.activeTab]}
+          style={[
+            styles.tabButton,
+            activeTab === 'friends' && styles.activeTab,
+          ]}
           onPress={() => setActiveTab('friends')}
         >
           <Text style={styles.tabButtonText}>Bạn bè</Text>
@@ -257,12 +284,12 @@ const DanhBaScreen = () => {
       {activeTab === 'friends' ? renderFriendsTab() : renderGroupsTab()}
 
       {/* Show the UserDetailModal */}
-            <UserDetailModal
-              visible={isModalVisible}
-              onClose={() => setIsModalVisible(false)}
-              friend={selectedFriend}
-              onDeleteFriend={handleDelete} // Pass delete function
-            />
+      <UserDetailModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        friend={selectedFriend}
+        onDeleteFriend={handleDelete} // Pass delete function
+      />
     </View>
   );
 };

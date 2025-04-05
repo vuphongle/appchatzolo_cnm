@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Text,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -33,20 +27,13 @@ function ImageChat({ route }) {
           <TouchableOpacity onPress={handlePressClose}>
             <Ionicons name="chevron-back-outline" size={32} color="white" />
           </TouchableOpacity>
-          <Image
-            source={{ uri: avatar }}
-            style={styles.avatar}
-          />
+          <Image source={{ uri: avatar }} style={styles.avatar} />
           <Text style={styles.name}>{name}</Text>
         </View>
       </View>
 
-
       <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: image }}
-          style={styles.image}
-        />
+        <Image source={{ uri: image }} style={styles.image} />
       </View>
 
       <View style={styles.reactionContainer}>

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, IPV4 } from '@env';
 
@@ -36,14 +36,14 @@ const UserService = {
   },
 
   searchUserByName: async (name) => {
-     try {
-         const response = await axios.get(`${IPV4}/searchUserByName`, {
-             params: { name },
-         });
-         return response.data;
-     } catch (error) {
-         throw error.response ? error.response.data : error;
-     }
+    try {
+      const response = await axios.get(`${IPV4}/searchUserByName`, {
+        params: { name },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
   },
   getUserById: async (userId) => {
     try {
@@ -63,8 +63,6 @@ const UserService = {
       throw error.response ? error.response.data : error;
     }
   },
-
 };
-
 
 export default UserService;

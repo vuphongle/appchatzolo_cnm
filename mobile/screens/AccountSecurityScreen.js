@@ -1,10 +1,17 @@
-import React, {useContext} from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useContext } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../context/UserContext';
 import { AVATAR_URL_DEFAULT } from '@env';
 
-const AccountSecurityScreen = ({navigation}) => {
+const AccountSecurityScreen = ({ navigation }) => {
   const { user, setUser } = useContext(UserContext);
   return (
     <ScrollView style={styles.container}>
@@ -13,7 +20,10 @@ const AccountSecurityScreen = ({navigation}) => {
         <Text style={styles.sectionTitle}>Tài khoản</Text>
 
         {/* Thông tin cá nhân */}
-        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('PersonalInfoScreen')}>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => navigation.navigate('PersonalInfoScreen')}
+        >
           <View style={styles.itemLeft}>
             {/* Ảnh đại diện và thông tin */}
             <Image
@@ -22,7 +32,9 @@ const AccountSecurityScreen = ({navigation}) => {
             />
             <View style={styles.infoContainer}>
               <Text style={styles.itemTitle}>Thông tin cá nhân</Text>
-              <Text style={styles.name}>{user?.name || 'Người dùng vô danh'}</Text>
+              <Text style={styles.name}>
+                {user?.name || 'Người dùng vô danh'}
+              </Text>
             </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#888" />
@@ -72,7 +84,11 @@ const AccountSecurityScreen = ({navigation}) => {
         {/* Kiểm tra bảo mật */}
         <TouchableOpacity style={styles.item}>
           <View style={styles.itemLeft}>
-            <Ionicons name="shield-checkmark-outline" size={24} style={styles.icon} />
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={24}
+              style={styles.icon}
+            />
             <Text style={styles.itemText}>Kiểm tra bảo mật</Text>
           </View>
           <Text style={styles.warningText}>Cần xử lý</Text>
@@ -82,7 +98,11 @@ const AccountSecurityScreen = ({navigation}) => {
         {/* Khóa Zalo */}
         <TouchableOpacity style={styles.item}>
           <View style={styles.itemLeft}>
-            <Ionicons name="lock-closed-outline" size={24} style={styles.icon} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={24}
+              style={styles.icon}
+            />
             <Text style={styles.itemText}>Khóa Zalo</Text>
           </View>
           <Text style={styles.rightText}>Đang tắt</Text>
@@ -106,17 +126,28 @@ const AccountSecurityScreen = ({navigation}) => {
         {/* Thiết bị đăng nhập hiện tại */}
         <TouchableOpacity style={styles.item}>
           <View style={styles.itemLeft}>
-            <Ionicons name="phone-portrait-outline" size={24} style={styles.icon} />
+            <Ionicons
+              name="phone-portrait-outline"
+              size={24}
+              style={styles.icon}
+            />
             <Text style={styles.itemText}>Thiết bị đăng nhập hiện tại</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#888" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePasswordScreen')}>
-            <View style={styles.itemLeft}>
-                <Ionicons name="lock-closed-outline" size={24} style={styles.icon} />
-                <Text style={styles.itemText}>Mật khẩu</Text>
-            </View>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => navigation.navigate('ChangePasswordScreen')}
+        >
+          <View style={styles.itemLeft}>
+            <Ionicons
+              name="lock-closed-outline"
+              size={24}
+              style={styles.icon}
+            />
+            <Text style={styles.itemText}>Mật khẩu</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
