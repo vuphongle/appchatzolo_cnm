@@ -10,7 +10,8 @@ import {
   Platform,
   Dimensions,
   Keyboard, 
-  PermissionsAndroid
+  PermissionsAndroid,
+  Image
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -27,6 +28,7 @@ import DocumentPicker from 'react-native-document-picker';
 import MessageService from '../../../../services/MessageService';
 import S3Service from '../../../../services/S3Service';
 import moment from 'moment';
+
 const ChatScreen = ({ receiverID, name, avatar }) => {
   const { user } = useContext(UserContext);
   const userId = user?.id;
@@ -46,6 +48,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
+  
   useEffect(() => {
     if (!userId || !receiverID) return;
 
@@ -78,7 +81,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         .catch((err) => {
             console.error("Error fetching messages:", err);
         });
-}, [receiverID,userId]);
+  }, [receiverID, userId]);
 
   useEffect(() => {
     if (scrollViewRef.current) {
@@ -88,35 +91,31 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       }, 100);
     }
   }, [messages]);
+  
   const handleImageUpload = async () => {
-    // Kiểm tra quyền trước khi mở thư viện ảnh
     if (isMounted) {
-   
-    const options = {
-      mediaType: 'photo',
-      quality: 1,
-      includeBase64: false,
-    };
-    
-    try {
-      const response = await launchImageLibrary(options);
+      const options = {
+        mediaType: 'photo',
+        quality: 1,
+        includeBase64: false,
+      };
       
-      if (response.didCancel) {
-        console.log('Người dùng đã hủy chọn ảnh');
-      } else if (response.errorCode) {
-        console.log('Lỗi chọn ảnh: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        const selectedAsset = response.assets[0];
-        const fileName = selectedAsset.fileName || selectedAsset.uri.split('/').pop();
+      try {
+        const response = await launchImageLibrary(options);
         
-        setMessageText(messageText + " " + fileName);
-        setSelectedImages((prevFiles) => [...prevFiles, selectedAsset]);
-        console.log('Đã chọn ảnh:', selectedAsset);
+        if (response.didCancel) {
+          console.log('Người dùng đã hủy chọn ảnh');
+        } else if (response.errorCode) {
+          console.log('Lỗi chọn ảnh: ', response.errorMessage);
+        } else if (response.assets && response.assets.length > 0) {
+          const selectedAsset = response.assets[0];
+          setSelectedImages((prevFiles) => [...prevFiles, selectedAsset]);
+          console.log('Đã chọn ảnh:', selectedAsset);
+        }
+      } catch (error) {
+        console.log('Lỗi xử lý chọn ảnh:', error);
       }
-    } catch (error) {
-      console.log('Lỗi xử lý chọn ảnh:', error);
     }
-  }
   };
 
   const handleFileUpload = async () => {
@@ -128,7 +127,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       // DocumentPicker.pick có thể trả về một mảng trong các phiên bản mới
       const file = Array.isArray(result) ? result[0] : result;
       
-      setMessageText(messageText + " " + file.name);
       setSelectedFiles((prevFiles) => [...prevFiles, file]);
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
@@ -139,6 +137,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       }
     }
   };
+  
   // Handle keyboard hide to show emoji picker
   useEffect(() => {
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
@@ -178,7 +177,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           
           // Send message through WebSocket or your API
           sendMessage(message.content, receiverID);
-     
         }
         setSelectedImages([]); // Reset images
       } catch (error) {
@@ -210,9 +208,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           
           // Send message through WebSocket or your API
           sendMessage(url, receiverID);
-          
-          // Update message in chat list if needed
-       
         }
         setSelectedFiles([]); // Reset files
       } catch (error) {
@@ -223,24 +218,17 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     
     // Handle text message if exists
     if (messageText.trim()) {
-      // Remove file names if any in the message (optional)
-      const textMessage = messageText.replace(/(?:https?|ftp):\/\/[\n\S]+|(\S+\.\w{3,4})/g, "").trim();
+      const message = {
+        id: new Date().getTime().toString(),
+        senderID: userId,
+        receiverID: receiverID,
+        content: messageText.trim(), // Message content is text
+        sendDate: new Date().toISOString(),
+        isRead: false,
+      };
       
-      if (textMessage !== "") {
-        const message = {
-          id: new Date().getTime().toString(),
-          senderID: userId,
-          receiverID: receiverID,
-          content: textMessage, // Message content is text
-          sendDate: new Date().toISOString(),
-          isRead: false,
-        };
-        
-        // Send message through WebSocket or your API
-        sendMessage(message.content, receiverID);
-        
-        
-      }
+      // Send message through WebSocket or your API
+      sendMessage(message.content, receiverID);
     }
     
     // Reset input field and selected files/images
@@ -253,6 +241,15 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       setShowEmojiPicker(false);
     }
   };
+  
+  const removeImage = (index) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+  
   const todayFormatted = new Date().toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -273,7 +270,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     }
   };
 
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -288,62 +284,59 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         }}
       >
       {(() => {
-    let lastDate = null;
+        let lastDate = null;
 
-    // Tìm tin nhắn cuối cùng của bạn
-    const lastMyMessageIndex = messages
-        .map((msg, idx) => (msg.senderID === userId ? idx : -1))
-        .filter(idx => idx !== -1)
-        .pop(); // Lấy index cuối cùng của tin nhắn bạn gửi
+        // Tìm tin nhắn cuối cùng của bạn
+        const lastMyMessageIndex = messages
+            .map((msg, idx) => (msg.senderID === userId ? idx : -1))
+            .filter(idx => idx !== -1)
+            .pop(); // Lấy index cuối cùng của tin nhắn bạn gửi
 
-    return messages.map((message, index) => {
-        const isMyMessage = message.senderID === userId;
-        const messageDate = new Date(message.sendDate);
+        return messages.map((message, index) => {
+            const isMyMessage = message.senderID === userId;
+            const messageDate = new Date(message.sendDate);
 
-const formatMessageDate = (messageDate) => {
+            const formatMessageDate = (messageDate) => {
+              if (!messageDate) return null;
+              
+              try {
+                const date = new Date(messageDate);
+                if (isNaN(date.getTime())) {
+                  return null;
+                }
+                return date.toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  timeZone: 'Asia/Ho_Chi_Minh',
+                });
+              } catch (error) {
+                console.error('Error formatting date:', error);
+                return null;
+              }
+            };
 
-  if (!messageDate) return null;
-  
-  try {
-    
-    const date = new Date(messageDate);
-    if (isNaN(date.getTime())) {
-      return null;
-    }
-    return date.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      timeZone: 'Asia/Ho_Chi_Minh',
-    });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return null;
-  }
-};
+            // Use the function in your component
+            const formattedDate = formatMessageDate(message.sendDate);
+            const todayFormatted = formatMessageDate(new Date());
 
-// Use the function in your component
-const formattedDate = formatMessageDate(message.sendDate);
-const todayFormatted = formatMessageDate(new Date());
+            let showDateHeader = false;
+            if (formattedDate && lastDate !== formattedDate) {
+              showDateHeader = true;
+              lastDate = formattedDate;
+            }
 
-let showDateHeader = false;
-if (formattedDate && lastDate !== formattedDate) {
-  showDateHeader = true;
-  lastDate = formattedDate;
-}
+            const headerText = formattedDate === todayFormatted 
+              ? "Hôm nay" 
+              : formattedDate || "Hôm nay";
 
-const headerText = formattedDate === todayFormatted 
-  ? "Hôm nay" 
-  : formattedDate || "Không xác định";
-
-return (
-  <View key={message.id || `msg-${index}-${message.sendDate}`}>
-    {showDateHeader && formattedDate && (
-      <View style={styles.dateHeader}>
-        <Text style={styles.dateText}>{headerText}</Text>
-      </View>
-    )}
-    {/* Rest of your component */}
+            return (
+              <View key={message.id || `msg-${index}-${message.sendDate}`}>
+                {showDateHeader && formattedDate && (
+                  <View style={styles.dateHeader}>
+                    <Text style={styles.dateText}>{headerText}</Text>
+                  </View>
+                )}
                 {isMyMessage ? (
                     <MyMessageItem 
                         time={formatDate(message.sendDate)} 
@@ -360,11 +353,51 @@ return (
                     />
                 )}
             </View>
-        );
-    });
-})()}
-
+            );
+        });
+      })()}
       </ScrollView>
+      
+      {/* Media Preview Section */}
+      {(selectedImages.length > 0 || selectedFiles.length > 0) && (
+        <View style={styles.mediaPreviewContainer}>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+            {selectedImages.map((image, index) => (
+              <View key={`img-${index}`} style={styles.mediaPreviewItem}>
+                <Image 
+                  source={{ uri: image.uri }} 
+                  style={styles.previewImage} 
+                  resizeMode="cover"
+                />
+                <TouchableOpacity 
+                  style={styles.removeMediaButton}
+                  onPress={() => removeImage(index)}
+                >
+                  <MaterialIcons name="close" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ))}
+            
+            {selectedFiles.map((file, index) => (
+              <View key={`file-${index}`} style={styles.mediaPreviewItem}>
+                <View style={styles.filePreview}>
+                  <MaterialIcons name="description" size={24} color="#0091ff" />
+                  <Text style={styles.fileNameText} numberOfLines={1}>
+                    {file.name}
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.removeMediaButton}
+                  onPress={() => removeFile(index)}
+                >
+                  <MaterialIcons name="close" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+      
       <View style={styles.footerContainer}>
         <View style={styles.inputContainer}>
           <TouchableOpacity onPress={toggleEmojiPicker}>
@@ -380,13 +413,13 @@ return (
           />
         </View>
         <View style={styles.actionButtons}>
-        <TouchableOpacity onPress={handleFileUpload}>
-        <MaterialIcons name="description" size={24} color="#0091ff" />
-      </TouchableOpacity>
+          <TouchableOpacity onPress={handleFileUpload}>
+            <MaterialIcons name="description" size={24} color="#0091ff" />
+          </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleImageUpload}>
-        <SimpleLineIcons name="picture" size={24} color="#0091ff" />
-      </TouchableOpacity>
+          <TouchableOpacity onPress={handleImageUpload}>
+            <SimpleLineIcons name="picture" size={24} color="#0091ff" />
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleSendMessage}>
             <Ionicons name="send-outline" size={24} color="#0091ff" />
           </TouchableOpacity>
@@ -405,7 +438,6 @@ return (
       )}
     </KeyboardAvoidingView>
   );
-
 };
 
 export default ChatScreen;
@@ -465,5 +497,51 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ddd',
     backgroundColor: '#fff',
+  },
+  // New styles for media preview
+  mediaPreviewContainer: {
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  mediaPreviewItem: {
+    position: 'relative',
+    marginRight: 10,
+  },
+  previewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  filePreview: {
+    width: 100,
+    height: 60,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 5,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fileNameText: {
+    fontSize: 10,
+    color: '#333',
+    marginTop: 5,
+    maxWidth: 90,
+  },
+  removeMediaButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ff4d4d',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
