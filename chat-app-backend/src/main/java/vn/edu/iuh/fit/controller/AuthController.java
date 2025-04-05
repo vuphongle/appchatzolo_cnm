@@ -316,6 +316,7 @@ public class AuthController {
     @PostMapping("/forgot-password/send-otp")
     public ResponseEntity<?> sendOtpForPasswordReset(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
+        System.out.println("phoneNumber: " + phoneNumber);
 
         try {
             // Kiểm tra thông tin đầu vào
@@ -380,6 +381,8 @@ public class AuthController {
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
         String newPassword = request.get("newPassword");
+        System.out.println("phoneNumber: " + phoneNumber);
+        System.out.println("newPassword: " + newPassword);
 
         try {
             // Kiểm tra thông tin đầu vào

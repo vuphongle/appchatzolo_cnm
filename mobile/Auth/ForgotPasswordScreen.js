@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { isPasswordValid } from '../utils/passwordUtils';
 import { formatPhoneNumber } from '../utils/formatPhoneNumber';
+import {IPV4} from '@env';
 
 const ForgotPasswordScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -26,11 +27,28 @@ const ForgotPasswordScreen = ({ navigation }) => {
       Alert.alert('Lỗi', 'Số điện thoại không đúng. Vui lòng kiểm tra lại.');
       return;
     }
+    setPhoneNumber(formattedPhone);
+
     setIsLoading(true);
     try {
-      //            await Auth.forgotPassword(phoneNumber);  // Gửi yêu cầu gửi OTP
-      setStep(2); // Chuyển sang bước nhập OTP
-      Alert.alert('Thông báo', 'OTP đã được gửi đến số điện thoại của bạn.');
+      const response = await fetch(`${IPV4}/auth/forgot-password/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: formattedPhone,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setStep(2); // Chuyển sang bước xác thực OTP
+        Alert.alert('Thông báo', 'OTP đã được gửi đến số điện thoại của bạn.');
+      } else {
+        Alert.alert('Lỗi', data.message || 'Không thể gửi OTP. Vui lòng thử lại.');
+      }
     } catch (error) {
       console.error('Lỗi gửi OTP:', error);
       Alert.alert('Lỗi', 'Không thể gửi OTP. Vui lòng thử lại.');
@@ -46,24 +64,47 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     setIsLoading(true);
     try {
-      //            await Auth.forgotPasswordSubmit(phoneNumber, otp, newPassword);  // Thực hiện xác thực OTP và thay đổi mật khẩu sau khi xác thực
-      setStep(3); // Chuyển sang bước nhập mật khẩu mới
+      const response = await fetch(`${IPV4}/auth/forgot-password/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber,
+          otp: otp,
+        }),
+      });
+
+      // Đọc phản hồi dưới dạng văn bản thuần (text) hoặc JSON tùy theo trường hợp
+      const data = await response.text();
+
+      // Kiểm tra nếu phản hồi thành công
+      if (response.ok) {
+        // Phản hồi thành công chứa thông điệp JSON
+        const message = JSON.parse(data).message;
+        setStep(3); // Chuyển sang bước nhập mật khẩu mới
+        Alert.alert('Thông báo', 'OTP xác thực thành công. Vui lòng nhập mật khẩu mới.');
+      } else {
+        console.log('Error response:', data);
+        Alert.alert('Lỗi', data === 'Invalid OTP' ? 'Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.' : 'Có lỗi trong quá trình xác thực OTP.');
+      }
     } catch (error) {
       console.error('Lỗi xác thực OTP:', error);
-      Alert.alert(
-        'Lỗi',
-        'Mã OTP không đúng hoặc có lỗi trong quá trình thay đổi mật khẩu.',
-      );
+      Alert.alert('Lỗi', 'Mã OTP không đúng hoặc có lỗi trong quá trình thay đổi mật khẩu.');
     }
     setIsLoading(false);
   };
 
   const handleChangePassword = async () => {
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+
+    // Kiểm tra sự khớp giữa mật khẩu mới và xác nhận mật khẩu
     if (newPassword !== confirmNewPassword) {
       Alert.alert('Lỗi', 'Mật khẩu mới và xác nhận mật khẩu không khớp.');
       return;
     }
 
+    // Kiểm tra tính hợp lệ của mật khẩu mới
     if (!isPasswordValid(newPassword)) {
       Alert.alert(
         'Lỗi',
@@ -74,9 +115,29 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     setIsLoading(true);
     try {
-      //            await Auth.forgotPasswordSubmit(phoneNumber, otp, newPassword);  // Thực hiện thay đổi mật khẩu
-      Alert.alert('Thông báo', 'Mật khẩu đã được thay đổi thành công.');
-      navigation.navigate('Login'); // Quay lại màn hình Đăng nhập
+      const response = await fetch(`${IPV4}/auth/forgot-password/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: formattedPhone,
+          newPassword: newPassword,
+        }),
+      });
+
+      // Đọc phản hồi dưới dạng văn bản (text) hoặc JSON tùy theo trường hợp
+      const data = await response.text();  // Đọc dưới dạng văn bản
+
+      // Kiểm tra nếu phản hồi thành công (status 200)
+      if (response.ok) {
+        const message = JSON.parse(data).message;
+        Alert.alert('Thông báo', 'Mật khẩu đã được thay đổi thành công.');
+        navigation.navigate('Login');
+      } else {
+        console.log('Error response:', data);
+        Alert.alert('Lỗi', 'Có lỗi trong quá trình thay đổi mật khẩu.');
+      }
     } catch (error) {
       console.error('Lỗi thay đổi mật khẩu:', error);
       Alert.alert('Lỗi', 'Có lỗi trong quá trình thay đổi mật khẩu.');
