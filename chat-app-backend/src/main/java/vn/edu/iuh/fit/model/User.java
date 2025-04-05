@@ -93,12 +93,12 @@ public class User {
     }
 
     @DynamoDbAttribute("isOnline")
-    public boolean getIsOnline() {
+    public boolean isOnline() {
         return isOnline;
     }
 
-    public void setIsOnline(boolean isOnline) {
-        this.isOnline = isOnline;
+    public void setOnline(boolean online) {
+        isOnline = online;
     }
 
     public User() {

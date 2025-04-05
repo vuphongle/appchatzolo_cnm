@@ -208,7 +208,7 @@ public class AuthController {
             User my_user = userService.findUserByPhoneNumber(username); //username là phone number
             //set trạng thái online cho user
             if (my_user != null) {
-                my_user.setIsOnline(true); // Cập nhật trạng thái online
+                my_user.setOnline(true); // Cập nhật trạng thái online
                 userService.updateUser(my_user); // Lưu trạng thái online vào DB
             }
 
@@ -236,7 +236,7 @@ public class AuthController {
     public ResponseEntity<?> logoutUser(@PathVariable Long userId) {
         User user = userService.findUserById(String.valueOf(userId));
         if (user != null) {
-            user.setIsOnline(false);
+            user.setOnline(false);
             userService.updateUser(user);
             return ResponseEntity.ok("User logged out successfully");
         }
