@@ -179,6 +179,7 @@ public class UserController {
         }
     }
 
+
     @DeleteMapping("/{userId}/removeFriend/{friendId}")
     public ResponseEntity<?> removeFriend(@PathVariable String userId, @PathVariable String friendId) {
         boolean success = userService.removeFriend(userId, friendId);
@@ -189,4 +190,5 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng hoặc bạn bè để xóa.");
         }
     }
+
 }
