@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.CreateSmsSandboxPhoneNumberRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.GetUserRequest;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.VerifySmsSandboxPhoneNumberRequest;
 import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.service.UserService;
@@ -255,7 +256,148 @@ public class AuthController {
         }
     }
 
+    // Tạo, Random OTP ngẫu nhiên với 6 chữ số
     private String generateOtp() {
         return String.valueOf((int) (Math.random() * 900000) + 100000); // Tạo OTP 6 chữ số
     }
+
+    // Gửi OTP cho người dùng khi quên mật khẩu
+    @PostMapping("/forgot-password/send-otp")
+    public ResponseEntity<?> sendOtpForPasswordReset(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+
+        try {
+            // Kiểm tra thông tin đầu vào
+            if (phoneNumber == null || phoneNumber.isEmpty()) {
+                throw new IllegalArgumentException("Phone number must not be empty");
+            }
+
+            // Tạo OTP và lưu vào otpStore
+            String otp = generateOtp();
+            otpStore.put(phoneNumber, otp);  // Lưu OTP tạm thời
+
+            // Tạo tin nhắn để gửi OTP
+            String message = "Your OTP for password reset is: " + otp;
+
+            // Gửi OTP qua SNS
+            PublishRequest publishRequest = PublishRequest.builder()
+                    .phoneNumber(phoneNumber)  // Số điện thoại người nhận
+                    .message(message)           // Tin nhắn chứa OTP
+                    .build();
+
+            snsClient.publish(publishRequest);
+
+            return ResponseEntity.ok(Map.of("message", "OTP sent. Please check your SMS"));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid input: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error sending OTP: " + e.getMessage());
+        }
+    }
+
+    // Xác thực OTP khi người dùng quên mật khẩu
+    @PostMapping("/forgot-password/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+        String otp = request.get("otp");
+
+        try {
+            // Kiểm tra thông tin đầu vào
+            if (phoneNumber == null || otp == null || phoneNumber.isEmpty() || otp.isEmpty()) {
+                throw new IllegalArgumentException("Phone number and OTP must not be empty");
+            }
+
+            // Kiểm tra OTP (so với OTP đã lưu trong otpStore)
+            String storedOtp = otpStore.get(phoneNumber);
+            if (storedOtp == null || !storedOtp.equals(otp)) {
+                return ResponseEntity.badRequest().body("Invalid OTP");
+            }
+
+            // Nếu OTP hợp lệ, trả về thông báo xác nhận
+            return ResponseEntity.ok(Map.of("message", "OTP verified successfully. Please enter a new password"));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid input: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error verifying OTP: " + e.getMessage());
+        }
+    }
+
+    // Đặt lại mật khẩu mới cho người dùng khi quên mật khẩu
+    @PostMapping("/forgot-password/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+        String newPassword = request.get("newPassword");
+
+        try {
+            // Kiểm tra thông tin đầu vào
+            if (phoneNumber == null || newPassword == null || phoneNumber.isEmpty() || newPassword.isEmpty()) {
+                throw new IllegalArgumentException("Phone number and new password must not be empty");
+            }
+
+            // Cập nhật mật khẩu mới cho người dùng trên Cognito
+            AdminSetUserPasswordRequest setPasswordRequest = AdminSetUserPasswordRequest.builder()
+                    .userPoolId(userPoolId)
+                    .username(phoneNumber)
+                    .password(newPassword)
+                    .permanent(true)
+                    .build();
+            cognitoClient.adminSetUserPassword(setPasswordRequest);
+
+            // Xóa OTP sau khi thay đổi mật khẩu
+            otpStore.remove(phoneNumber);
+
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid input: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error resetting password: " + e.getMessage());
+        }
+    }
+
+//    // Thay đổi mật khẩu (Truyền mk cũ vào, gửi cho cognito xác thực, nếu đúng thì tạo mk mới cho user)
+//    @PostMapping("/change-password")
+//    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> requestData) {
+//        String username = requestData.get("username");
+//        String oldPassword = requestData.get("oldPassword");
+//        String newPassword = requestData.get("newPassword");
+//
+//        try {
+//            String secretHash = calculateSecretHash(clientId, clientSecret, username);
+//
+//            // Gửi yêu cầu xác thực mật khẩu cũ
+//            InitiateAuthRequest authRequest = InitiateAuthRequest.builder()
+//                    .authFlow(AuthFlowType.USER_PASSWORD_AUTH)
+//                    .clientId(clientId)
+//                    .authParameters(Map.of(
+//                            "USERNAME", username,
+//                            "PASSWORD", oldPassword,
+//                            "SECRET_HASH", secretHash
+//                    ))
+//                    .build();
+//
+//            InitiateAuthResponse authResponse = cognitoClient.initiateAuth(authRequest);
+//
+//            // Nếu mật khẩu cũ chính xác, tiếp tục thay đổi mật khẩu
+//            AdminSetUserPasswordRequest setPasswordRequest = AdminSetUserPasswordRequest.builder()
+//                    .userPoolId(userPoolId)
+//                    .username(username)
+//                    .password(newPassword)
+//                    .permanent(true)
+//                    .build();
+//            cognitoClient.adminSetUserPassword(setPasswordRequest);
+//
+//            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+//
+//        } catch (NotAuthorizedException e) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Mật khẩu cũ không chính xác");
+//        } catch (InvalidPasswordException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu mới không hợp lệ");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500).body("Lỗi khi thay đổi mật khẩu: " + e.getMessage());
+//        }
+//    }
+
 }

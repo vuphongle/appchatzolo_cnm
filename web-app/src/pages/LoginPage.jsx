@@ -131,7 +131,7 @@ const LoginPage = () => {
                 </form>
 
                 <div className="text-center">
-                    <a href="/" className="text-decoration-none">Quên mật khẩu?</a>
+                    <a href="/forgot-password" className="text-decoration-none">Quên mật khẩu?</a>
                     <br />
                 </div>
 

@@ -15,8 +15,10 @@ package vn.edu.iuh.fit.service.impl;
 
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -74,15 +76,23 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public String uploadImage(MultipartFile file) {
         try {
+            // Kiểm tra kích thước file không vượt quá 20MB
+            if (file.getSize() > 20 * 1024 * 1024) { // 20MB
+                throw new IllegalArgumentException("File không được vượt quá 20MB.");
+            }
 
+            // Đặt tên file
             String fileName = file.getOriginalFilename();
+            String timestamp = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
+            String newFileName = timestamp + "_" + fileName;
 
-            if (fileName == null || !fileName.matches(".*\\.(jpg|jpeg|png)$")) {
-                throw new IllegalArgumentException("Chỉ chấp nhận file (.jpg,.jpeg,.png)");
+
+            if (fileName == null || !fileName.matches(".*\\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$")) {
+                throw new IllegalArgumentException("Chỉ chấp nhận file (.jpg, .jpeg, .png, .gif, .bmp, .webp, .tiff, .heif, .heic)");
             }
 
             // Tạo đường dẫn file trong S3
-            String s3Key = "image/" + fileName;
+            String s3Key = "image/" + newFileName;
 
             // Tạo request để upload
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -95,6 +105,8 @@ public class S3ServiceImpl implements S3Service {
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
 
             return "https://" + bucketName + ".s3.amazonaws.com/" + s3Key;
+        }catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e); // Trả về lỗi với mã trạng thái 400
         } catch (IOException e) {
             throw new RuntimeException("File upload failed: " + e.getMessage(), e);
         }
@@ -103,15 +115,23 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public String uploadFile(MultipartFile file) {
         try {
-            // Lấy tên file gốc
+            // Kiểm tra kích thước file không vượt quá 20MB
+            if (file.getSize() > 20 * 1024 * 1024) { // 20MB
+                throw new IllegalArgumentException("File không được vượt quá 20MB.");
+            }
+
+            // Đặt tên file
             String fileName = file.getOriginalFilename();
+            String timestamp = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
+            String newFileName = timestamp + "_" + fileName;
+
 
             if (fileName == null) {
                 throw new IllegalArgumentException("File name is required.");
             }
 
             // Tạo đường dẫn file trong S3
-            String s3Key = "file/" + fileName;
+            String s3Key = "file/" + newFileName;
 
             // Tạo request để upload
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -126,6 +146,8 @@ public class S3ServiceImpl implements S3Service {
 
             // Trả về URL của file đã tải lên S3
             return "https://" + bucketName + ".s3.amazonaws.com/" + s3Key;
+        }catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e); // Trả về lỗi với mã trạng thái 400
         } catch (IOException e) {
             throw new RuntimeException("File upload failed: " + e.getMessage(), e);
         }
