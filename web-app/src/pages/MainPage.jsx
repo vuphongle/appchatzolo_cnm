@@ -332,7 +332,6 @@ const MainPage = () => {
 
 
 
-
     //cuộn xuống tin nhắn mới nhất
     useEffect(() => {
         const chatContainer = document.querySelector(".chat-messages");
@@ -1044,6 +1043,8 @@ const MainPage = () => {
             status: 'Chờ đồng ý',
         };
 
+        console.log("Ngày gửi:", message.sendDate);
+
         try {
 
             // Gửi yêu cầu kết bạn qua MessageService
@@ -1056,8 +1057,8 @@ const MainPage = () => {
             // Cập nhật trực tiếp trong state để danh sách luôn mới
             setFriendRequests((prevRequests) => [...prevRequests, message]);
 
-            // Sau khi gửi yêu cầu thành công, gửi thông báo qua WebSocket
-            sendFriendRequestToReceiver(user.id, message);
+            // Gửi WebSocket thông báo
+            sendMessage(message);
 
             console.log('Message sent successfully');
         } catch (error) {

@@ -12,29 +12,62 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
     const [sentRequests, setSentRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { sendMessage, onMessage } = useWebSocket();
+    // const { sendMessage, onMessage } = useWebSocket();
+    const [userInfoMap, setUserInfoMap] = useState({});
     const [data, setData] = useState([]);
     const [lastFetched, setLastFetched] = useState(null); // Lưu thời gian lấy dữ liệu
 
+    const { onMessage } = useWebSocket();
 
-    // Hàm chuyển đổi timestamp thành ngày tháng, chỉ đến giây
-    const formatDate = (timestampArray) => {
-        // Chuyển đổi thành đối tượng Date
-        let date = new Date(timestampArray);
+    // Lắng nghe khi có lời mời kết bạn mới
+    useEffect(() => {
+        const unsubscribe = onMessage((message) => {
 
-        // Cộng 7 giờ vào thời gian nhận từ DynamoDB để chuyển về múi giờ của bạn
-        date.setHours(date.getHours() + 7);
-
-        // Trả về định dạng ngày giờ theo múi giờ của bạn
-        return date.toLocaleString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
+            if (message.type !== "FRIEND_REQUEST") {
+                setReceivedRequests((prev) => [...prev, message]);
+            }
         });
+
+        return () => unsubscribe();
+    }, [onMessage]);
+
+
+    // Hàm chuyển đổi timestamp thành ngày tháng, chỉ đến phút
+    const formatDate = (timestampArray) => {
+        if (Array.isArray(timestampArray)) {
+            let date = new Date(
+                timestampArray[0],
+                timestampArray[1] - 1,
+                timestampArray[2],
+                timestampArray[3],
+                timestampArray[4],
+                timestampArray[5],
+                timestampArray[6] / 1000000
+            );
+
+            date.setHours(date.getHours() + 7);
+
+            return date.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        } else {
+            // Nếu là chuỗi ISO, trả về trực tiếp
+            let date = new Date(timestampArray);
+            date.setHours(date.getHours() + 7);
+            return date.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        }
     };
+
 
     const fetchRequests = () => {
         setLoading(true);
@@ -65,25 +98,41 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
         fetchRequests();
     }, [friendRequests]);
 
-    // useEffect(() => {
-    //     // Gọi hàm lấy dữ liệu lần đầu tiên khi component mount
-    //     fetchRequests();
-
-    //     // Polling: Gọi hàm fetchRequests mỗi 5 giây để kiểm tra dữ liệu mới
-    //     const interval = setInterval(() => {
-    //         fetchRequests();
-    //     }, 5000);
-
-    //     // Dọn dẹp khi component unmount
-    //     return () => clearInterval(interval);
-    // }, []);
-
-    // Hàm xử lý xóa, thu hồi lời mời kết bạn
-    const handleDeleteInvitation = (senderID, receiverID) => {
+    // Hàm xử lý từ chối lời mời kết bạn
+    const handleDeleteInvitation_refuse = (senderID, receiverID) => {
         MessageService.deleteInvitation(senderID, receiverID)
             .then(() => {
                 fetchRequests();  // Cập nhật lại danh sách sau khi xóa
-                alert("Lời mời đã bị thu hồi hoặc từ chối.");
+                alert("Lời mời đã bị từ chối.");
+
+                // Gửi thông báo qua WebSocket cho bên B
+                sendMessage({
+                    type: "INVITATION_DELETED",
+                    senderID,
+                    receiverID,
+                    message: "Lời mời kết bạn đã bị từ chối",
+                });
+            })
+            .catch((error) => {
+                console.error("Lỗi khi xóa lời mời:", error);
+                alert("Đã xảy ra lỗi khi xóa lời mời.");
+            });
+    };
+
+    // Hàm xử lý thu hồi lời mời kết bạn
+    const handleDeleteInvitation_revoke = (senderID, receiverID) => {
+        MessageService.deleteInvitation(senderID, receiverID)
+            .then(() => {
+                fetchRequests();  // Cập nhật lại danh sách sau khi xóa
+                alert("Lời mời đã bị thu hồi.");
+
+                // Gửi thông báo qua WebSocket cho bên B
+                sendMessage({
+                    type: "INVITATION_DELETED",
+                    senderID,
+                    receiverID,
+                    message: "Lời mời kết bạn đã bị thu hồi",
+                });
             })
             .catch((error) => {
                 console.error("Lỗi khi xóa lời mời:", error);
@@ -117,7 +166,7 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
                 };
 
                 // Gửi thông báo qua WebSocket đến bên A về việc đồng ý kết bạn
-                sendMessage(message);
+                // sendMessage(message);
 
             })
             .catch((error) => {
@@ -125,6 +174,57 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
                 alert(`Có lỗi xảy ra khi đồng ý kết bạn: ${error.response ? error.response.data : error.message}`);
             });
     };
+
+
+    const getUserInfoById = async (userId) => {
+        setLoading(true);
+        try {
+            const user = await UserService.getUserById(userId);
+            setUserInfoMap(prev => ({ ...prev, [userId]: user })); // Cập nhật thông tin người dùng vào map
+        } catch (error) {
+            console.error("Error fetching user info:", error);
+            setUserInfoMap(prev => ({ ...prev, [userId]: { name: "Người dùng không xác định", avatar: avatar_default } }));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        sentRequests.forEach(request => {
+            if (!userInfoMap[request.receiverID]) {
+                getUserInfoById(request.receiverID);
+            }
+        });
+    }, [sentRequests, userInfoMap]);
+
+    // console.log("sentRequests Requests:", sentRequests);
+
+    useEffect(() => {
+        receivedRequests.forEach(request => {
+            if (!userInfoMap[request.senderID]) {
+                getUserInfoById(request.senderID);
+            }
+        });
+    }, [receivedRequests, userInfoMap]);
+
+    // useEffect(() => {
+    //     const unsubscribe = onMessage((message) => {
+    //         console.log("Received message3:", message);
+    //         if (message.type !== "FRIEND_REQUEST") {
+    //             setReceivedRequests((prev) => {
+    //                 const exists = prev.some(req => req.id === message.id);
+    //                 return exists ? prev : [...prev, message];
+    //             });
+
+    //             // 🔁 Gọi fetch user info ngay khi nhận message
+    //             if (!userInfoMap[message.senderID]) {
+    //                 getUserInfoById(message.senderID);
+    //             }
+    //         }
+    //     });
+
+    //     return () => unsubscribe();
+    // }, [onMessage, userInfoMap]);
 
     // Kiểm tra nếu đang tải dữ liệu hoặc có lỗi
     if (loading) {
@@ -141,22 +241,25 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
             <h5 className="friend-request-header">Lời mời kết bạn đã nhận</h5>
             <div className="request-list">
                 {receivedRequests.length > 0 ? (
-                    receivedRequests.map((request) => (
-                        <div key={request.id} className="request-item">
-                            <div>
-                                <img src={request.avatar || avatar_default} alt="Avatar" />
-                                <span>{request.name}</span>
-                                <span>{formatDate(request.sendDate)}</span>
+                    receivedRequests.map((request) => {
+                        const sender = userInfoMap[request.senderID] || { name: "Đang tải...", avatar: avatar_default }; // Lấy thông tin người gửi từ map
+                        return (
+                            <div key={request.id} className="request-item">
+                                <div>
+                                    <img src={sender.avatar || avatar_default} alt="Avatar" />
+                                    <span>Từ: {sender.name}</span>
+                                    <span>{formatDate(request.sendDate)}</span>
+                                </div>
+                                <div className="request-content">
+                                    <span>{request.content}</span>
+                                </div>
+                                <div className="list-request-buttons-recieve">
+                                    <button className="request-button-ok" onClick={() => handleAcceptRequest(request.senderID, userId)}>Đồng ý</button>
+                                    <button className="request-button" onClick={() => handleDeleteInvitation_refuse(request.senderID, request.receiverID)} >Từ chối</button>
+                                </div>
                             </div>
-                            <div className="request-content">
-                                <span>{request.content}</span>
-                            </div>
-                            <div className="list-request-buttons-recieve">
-                                <button className="request-button-ok" onClick={() => handleAcceptRequest(request.senderID, userId)}>Đồng ý</button>
-                                <button className="request-button" onClick={() => handleDeleteInvitation(request.senderID, request.receiverID)} >Từ chối</button>
-                            </div>
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
                     <p>Không có lời mời kết bạn mới.</p>
                 )}
@@ -166,21 +269,24 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
             <h5 className="friend-request-header" style={{ marginTop: "10px" }}>Lời mời kết bạn đã gửi</h5>
             <div className="request-list">
                 {sentRequests.length > 0 ? (
-                    sentRequests.map((sentRequest) => (
-                        <div key={sentRequest.id} className="request-item">
-                            <div>
-                                <img src={sentRequest.avatar || avatar_default} alt="Avatar" />
-                                <span>{sentRequest.name}</span>
-                                <span>{formatDate(sentRequest.sendDate)}</span>
+                    sentRequests.map((sentRequest) => {
+                        const receiver = userInfoMap[sentRequest.receiverID] || { name: "Đang tải...", avatar: avatar_default };
+                        return (
+                            <div key={sentRequest.id} className="request-item">
+                                <div>
+                                    <img src={receiver.avatar || avatar_default} alt="Avatar" />
+                                    <span>{receiver.name}</span>
+                                    <span>{formatDate(sentRequest.sendDate)}</span>
+                                </div>
+                                <div className="request-content" style={{ backgroundColor: "#f0f0f0", padding: "5px", borderRadius: "5px" }}>
+                                    <span>{sentRequest.content}</span>
+                                </div>
+                                <div className="list-request-buttons-sent">
+                                    <button className="request-button" onClick={() => handleDeleteInvitation_revoke(sentRequest.senderID, sentRequest.receiverID)}>Thu hồi lời mời</button>
+                                </div>
                             </div>
-                            <div className="request-content">
-                                <span>{sentRequest.content}</span>
-                            </div>
-                            <div className="list-request-buttons-sent">
-                                <button className="request-button" onClick={() => handleDeleteInvitation(sentRequest.senderID, sentRequest.receiverID)}>Thu hồi lời mời</button>
-                            </div>
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
                     <p>Không có lời mời kết bạn đã gửi.</p>
                 )}

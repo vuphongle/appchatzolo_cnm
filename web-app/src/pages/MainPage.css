@@ -603,7 +603,7 @@ button {
   align-items: center;
   position: sticky; /* Để cố định khi cuộn */
   top: 0; /* Cố định ở đầu trang */
-  z-index: 100; /* Đảm bảo header luôn ở trên */
+  z-index: 10; /* Đảm bảo header luôn ở trên */
 }
 
 .profile {

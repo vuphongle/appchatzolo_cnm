@@ -1,4 +1,5 @@
 import React from "react";
+import { useWebSocket } from "../context/WebSocket";
 
 const FriendInfoModal = ({
     user,
@@ -15,6 +16,14 @@ const FriendInfoModal = ({
     sendFriendRequest,
     setIsFriendRequestModalOpen,
 }) => {
+    // const { sendFriendRequestToReceiver } = useWebSocket();
+
+    // const handleSendRequest = () => {
+    //     const message = "Lời mời kết bạn từ " + MyUser.name;
+    //     sendFriendRequestToReceiver(user.id, message); // Gửi qua WebSocket
+    //     sendFriendRequest(); // Cập nhật UI
+    // };
+
     if (!isUserInfoModalOpen || !user) return null;
 
     return (

@@ -50,17 +50,17 @@ export const WebSocketProvider = ({ children, userId }) => {
         };
     };
 
-    // Gửi thông báo yêu cầu kết bạn tới bên B
-    const sendFriendRequestToReceiver = (receiverID, friendRequestMessage) => {
-        sendMessage({
-            type: "friend_request_received",
-            receiverID,
-            message: friendRequestMessage,
-        });
-    };
+    // // Gửi thông báo yêu cầu kết bạn tới bên B
+    // const sendFriendRequestToReceiver = (receiverID, friendRequestMessage) => {
+    //     sendMessage({
+    //         type: "friend_request_received",
+    //         receiverID,
+    //         message: friendRequestMessage,
+    //     });
+    // };
 
     return (
-        <WebSocketContext.Provider value={{ sendMessage, onMessage, sendFriendRequestToReceiver }}>
+        <WebSocketContext.Provider value={{ sendMessage, onMessage }}>
             {children}
         </WebSocketContext.Provider>
     );
