@@ -40,6 +40,38 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [] }
             )}
         </div>
         {unreadCount > 0 && <span className="badge">{unreadCount}</span>}  {/* Hiển thị số tin nhắn chưa đọc */}
+        <div className="dropdown position-absolute top-0 end-0 mt-2 me-2">
+            <button
+                className="btn btn-light border-0 p-0"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    height: '30px', // Đặt chiều cao tùy ý
+                    padding: '5px 10px', // Thay đổi padding nếu cần
+                    lineHeight: '1', // Cân chỉnh chiều cao dòng văn bản
+                }}
+            >
+                <i className="fas fa-ellipsis-h"></i>
+            </button>
+            <ul className="dropdown-menu dropdown-menu-end text-end">
+                <li>
+                    <a className="dropdown-item" onClick={(e) => { e.stopPropagation(); document.body.click(); }}>
+                        Thêm vào nhóm
+                    </a>
+                </li>
+                <li>
+                    <hr className="dropdown-divider" />
+                </li>
+                <li>
+                    <a
+                        className="dropdown-item text-danger"
+                    >
+                        Xóa hội thoại
+                    </a>
+                </li>
+            </ul>
+        </div>
     </li>
 );
 

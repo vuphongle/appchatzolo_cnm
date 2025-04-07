@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AuthService from "../services/AuthService";
-
+import { toast } from 'react-toastify';
 
 const ChangePasswordModal = ({ user, onClose, logout }) => {
     const [currentPassword, setCurrentPassword] = useState('');
@@ -44,7 +44,10 @@ const ChangePasswordModal = ({ user, onClose, logout }) => {
         })
             .then(response => {
                 console.log("Password changed successfully:", response.data);
-                alert("Mật khẩu đã được thay đổi thành công!");
+                toast.success("Cập nhật mật khẩu thành công!", {
+                    position: "top-center",
+                    autoClose: 1000,
+                })
                 onClose();
                 logout();
             })

@@ -80,7 +80,7 @@ public class MessageController {
         }
     }
 
-// lấy lịch sử tin nhắn giữa hai người.
+    // lấy lịch sử tin nhắn giữa hai người.
     @GetMapping("/messages")
     public ResponseEntity<List<Message>> getMessages(
             @RequestParam String senderID,
@@ -126,8 +126,23 @@ public class MessageController {
         return ResponseEntity.ok(unreadCounts);
     }
 
-
-
-
-
+    // Xóa đoạn chat giữa hai người
+    @DeleteMapping("/delete-chat/{senderID}/{receiverID}")
+    public ResponseEntity<String> deleteChatBetweenUsers(
+            @PathVariable String senderID,
+            @PathVariable String receiverID) {
+        if (senderID == null || senderID.trim().isEmpty() || receiverID == null || receiverID.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("senderID và receiverID không được để trống.");
+        }
+        try {
+            List<Message> messages = service.getMessagesBetweenUsers(senderID, receiverID);
+            if (messages.isEmpty()) {
+                return ResponseEntity.ok("Không có tin nhắn nào để xóa giữa " + senderID + " và " + receiverID + ".");
+            }
+            service.deleteMessagesBetweenUsers(senderID, receiverID);
+            return ResponseEntity.ok("Đoạn chat đã được xóa thành công.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi khi xóa đoạn chat: " + e.getMessage());
+        }
+    }
 }

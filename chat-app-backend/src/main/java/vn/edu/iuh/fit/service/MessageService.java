@@ -20,5 +20,6 @@ public interface MessageService {
     void saveReadMess(List<Message> messages);
 
     List<UnreadMessagesCountDTO> getUnreadCountForAllFriends(String receiverID);
+    void deleteMessagesBetweenUsers(String senderID, String receiverID);
 
 }

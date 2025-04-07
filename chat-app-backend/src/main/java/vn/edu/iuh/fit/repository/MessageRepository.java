@@ -46,8 +46,6 @@ public class MessageRepository {
                 .collect(Collectors.toList());
     }
 
-
-
     //Tìm danh sách các lời mời đã gửi đi
     public List<Message> findSentInvitationsBySenderId(String receiverID) {
         return table.scan().items().stream()
@@ -190,5 +188,27 @@ public class MessageRepository {
     public List<String> getFriendsList(String receiverID) {
         User user = userTable.getItem(Key.builder().partitionValue(receiverID).build());
         return user.getFriendIds();
+    }
+
+    public void deleteMessagesBetweenUsers(String senderID, String receiverID) {
+        // Tìm tất cả tin nhắn giữa senderID và receiverID
+        List<Message> messagesToDelete = findMessagesBetweenUsers(senderID, receiverID);
+
+        if (messagesToDelete.isEmpty()) {
+            System.out.println("No messages to delete between " + senderID + " and " + receiverID);
+            return;
+        }
+
+        // Xóa từng tin nhắn
+        for (Message message : messagesToDelete) {
+            try {
+                Key key = Key.builder().partitionValue(message.getId()).build();
+                table.deleteItem(key);
+                System.out.println("Deleted message: " + message);
+            } catch (Exception e) {
+                System.err.println("Error deleting message: " + e.getMessage());
+                throw new RuntimeException("Lỗi khi xóa tin nhắn: " + e.getMessage());
+            }
+        }
     }
 }
