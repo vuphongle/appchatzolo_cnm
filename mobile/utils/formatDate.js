@@ -1,5 +1,6 @@
 const formatDate = (timestamp) => {
   try {
+    console.log('Timestamp in formatDate:', timestamp); // Log the timestamp for debugging
     if (typeof timestamp === 'string') {
       if (
         timestamp.includes('phút trước') ||
@@ -15,14 +16,14 @@ const formatDate = (timestamp) => {
 
     if (!timestamp) {
       console.log('Timestamp is empty');
-      return 'Không xác định';
+      return 'vừa xong';
     }
 
     let date = new Date(timestamp);
     date.setHours(date.getHours() + 7);
 
     if (isNaN(date.getTime())) {
-      return 'Không xác định';
+      return 'vừa xong';
     }
 
     let now = new Date();

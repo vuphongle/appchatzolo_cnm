@@ -49,46 +49,46 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     return () => setIsMounted(false);
   }, []);
 
-  useEffect(() => {
-    if (!userId || !receiverID) return;
+  // useEffect(() => {
+  //   if (!userId || !receiverID) return;
 
-    // Lấy tất cả tin nhắn giữa người gửi và người nhận
-    MessageService.get(
-      `/messages/messages?senderID=${userId}&receiverID=${receiverID}`,
-    )
-      .then((data) => {
-        // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
-        const sortedMessages = data.sort(
-          (a, b) => new Date(a.sendDate) - new Date(b.sendDate),
-        );
+  //   // Lấy tất cả tin nhắn giữa người gửi và người nhận
+  //   MessageService.get(
+  //     `/messages/messages?senderID=${userId}&receiverID=${receiverID}`,
+  //   )
+  //     .then((data) => {
+  //       // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+  //       const sortedMessages = data.sort(
+  //         (a, b) => new Date(a.sendDate) - new Date(b.sendDate),
+  //       );
 
-        // Cộng 7 giờ vào sendDate của mỗi tin nhắn
-        const updatedMessages = sortedMessages.map((msg) => ({
-          ...msg,
-          sendDate: moment(msg.sendDate)
-            .add(7, 'hours')
-            .format('YYYY-MM-DDTHH:mm:ssZ'), // Cộng 7 giờ vào sendDate
-        }));
+  //       // Cộng 7 giờ vào sendDate của mỗi tin nhắn
+  //       const updatedMessages = sortedMessages.map((msg) => ({
+  //         ...msg,
+  //         sendDate: moment(msg.sendDate)
+  //           .add(7, 'hours')
+  //           .format('YYYY-MM-DDTHH:mm:ssZ'), // Cộng 7 giờ vào sendDate
+  //       }));
 
-        // Lọc các tin nhắn chưa đọc
-        const unreadMessages = updatedMessages.filter(
-          (msg) => msg.isRead === false,
-        );
+  //       // Lọc các tin nhắn chưa đọc
+  //       const unreadMessages = updatedMessages.filter(
+  //         (msg) => msg.isRead === false,
+  //       );
 
-        // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
-        if (unreadMessages.length > 0) {
-          // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
-          MessageService.savereadMessages(userId, receiverID).catch((error) => {
-            console.error('Lỗi khi đánh dấu tin nhắn là đã đọc', error);
-          });
-        } else {
-          console.log('Không có tin nhắn chưa đọc');
-        }
-      })
-      .catch((err) => {
-        console.error('Error fetching messages:', err);
-      });
-  }, [receiverID, userId]);
+  //       // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
+  //       if (unreadMessages.length > 0) {
+  //         // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
+  //         MessageService.savereadMessages(userId, receiverID).catch((error) => {
+  //           console.error('Lỗi khi đánh dấu tin nhắn là đã đọc', error);
+  //         });
+  //       } else {
+  //         console.log('Không có tin nhắn chưa đọc');
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.error('Error fetching messages:', err);
+  //     });
+  // }, [receiverID, userId]);
 
   useEffect(() => {
     if (scrollViewRef.current) {
@@ -358,9 +358,9 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                     time={formatDate(message.sendDate)}
                     message={message.content}
                     receiverID={receiverID}
-                    isRead={
-                      index === lastMyMessageIndex ? message.isRead : undefined
-                    } // Chỉ thêm isRead nếu là tin nhắn cuối cùng của bạn
+                    // isRead={
+                    //   index === lastMyMessageIndex ? message.isRead : undefined
+                    // } // Chỉ thêm isRead nếu là tin nhắn cuối cùng của bạn
                   />
                 ) : (
                   <MessageItem

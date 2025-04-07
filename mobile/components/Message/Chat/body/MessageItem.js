@@ -7,14 +7,19 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
+import moment from 'moment';
 import { useNavigation } from '@react-navigation/native';
 import MessageService from '../../../../services/MessageService';
-
+import { formatDate } from '../../../../utils/formatDate';
 function MessageItem({ avatar, time, message }) {
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState(null);
   const [StatusRead, setStatusRead] = useState(false);
-
+  
+const messageTime = moment(time);
+const displayTime = messageTime.isValid()
+  ? messageTime.format("HH:mm")
+  : moment().format("HH:mm");
   // Kiểm tra xem tin nhắn có phải là ảnh hay không
   const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
 
@@ -83,7 +88,8 @@ function MessageItem({ avatar, time, message }) {
         </TouchableOpacity>
 
         {/* Thời gian tin nhắn */}
-        <Text style={styles.time}>{time}</Text>
+        <Text style={styles.time}>{displayTime}</Text>
+        {/* <Text style={styles.time}> */}
 
         {/* Emoji phản ứng */}
         {emojiIndex && (
@@ -105,7 +111,7 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flexDirection: 'column',
-    maxWidth: '75%',
+    maxWidth: '65%',
     padding: 12,
     borderRadius: 10,
     marginRight: 10,
@@ -124,7 +130,7 @@ const styles = StyleSheet.create({
   },
   messageBox: {
     backgroundColor: '#e0f7fa',
-    padding: 10,
+    padding: 5,
     borderRadius: 15,
     marginBottom: 5,
     alignItems: 'flex-end',
@@ -164,7 +170,7 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 10,
     color: '#C9D5D5',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   emojiContainer: {
     marginTop: 5,
