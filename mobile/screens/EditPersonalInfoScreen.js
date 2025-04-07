@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-// import ImageCropPicker from 'react-native-image-crop-picker';
+import ImageCropPicker from 'react-native-image-crop-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { UserContext } from '../context/UserContext';
 import { IPV4, AVATAR_URL_DEFAULT } from '@env';
@@ -29,59 +29,64 @@ const EditPersonalInfoScreen = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Mở thư viện ảnh và cho phép cắt ảnh
-  // const pickImage = async () => {
-  //   try {
-  //     const image = await ImageCropPicker.openPicker({
-  //       width: 300,
-  //       height: 300,
-  //       cropping: true,
-  //       compressImageQuality: 0.7,
-  //     });
-  //     if (image) {
-  //       setAvatarUri(image.path);
-  //     }
-  //   } catch (error) {
-  //     if (error.code !== 'E_PICKER_CANCELLED') {
-  //       Alert.alert('Lỗi', 'Không thể chọn ảnh');
-  //       console.error(error);
-  //     }
-  //   }
-  // };
+  const pickImage = async () => {
+    try {
+      const image = await ImageCropPicker.openPicker({
+        width: 300,
+        height: 300,
+        cropping: true,
+        compressImageQuality: 0.7,
+      });
+      if (image) {
+        setAvatarUri(image.path);
+      }
+    } catch (error) {
+      if (error.code !== 'E_PICKER_CANCELLED') {
+        Alert.alert('Lỗi', 'Không thể chọn ảnh');
+        console.error(error);
+      }
+    }
+  };
 
   // Upload avatar lên S3 và trả về URL của ảnh
   const uploadAvatar = async () => {
-    if (!avatarUri.startsWith('http')) {
-      const formData = new FormData();
-      formData.append('file', {
-        uri: avatarUri,
-        name: 'avatar.jpg',
-        type: 'image/jpeg',
+    // Nếu không có avatar được chọn (avatarUri rỗng), trả về URL mặc định
+    if (!avatarUri) {
+      return '';
+    }
+    // Nếu avatarUri đã là URL (đã upload) thì trả về luôn
+    if (avatarUri.startsWith('http')) {
+      return avatarUri;
+    }
+
+    // Nếu avatarUri là đường dẫn từ thư viện ảnh, thực hiện upload
+    const formData = new FormData();
+    formData.append('file', {
+      uri: avatarUri,
+      name: 'avatar.jpg',
+      type: 'image/jpeg',
+    });
+    formData.append('userId', user.id);
+
+    try {
+      const response = await fetch(`${IPV4}/s3/avatar`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-
-      formData.append('userId', user.id);
-
-      try {
-        const response = await fetch(`${IPV4}/s3/avatar`, {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        const data = await response.json();
-        if (data.url) {
-          return data.url;
-        } else {
-          Alert.alert('Lỗi', data.error || 'Upload avatar thất bại');
-          return null;
-        }
-      } catch (error) {
-        console.error('Upload avatar error:', error);
-        Alert.alert('Lỗi', 'Upload avatar thất bại');
+      const data = await response.json();
+      if (data.url) {
+        return data.url;
+      } else {
+        Alert.alert('Lỗi', data.error || 'Upload avatar thất bại');
         return null;
       }
-    } else {
-      return avatarUri;
+    } catch (error) {
+      console.error('mUpload avatar error:', error);
+      Alert.alert('Lỗi', 'Upload avatar thất bại');
+      return null;
     }
   };
 
@@ -127,8 +132,8 @@ const EditPersonalInfoScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Chỉnh sửa thông tin cá nhân</Text>
-      {/* onPress={pickImage} */}
-      <TouchableOpacity style={styles.avatarContainer} >
+
+      <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
         <Image
           source={{ uri: avatarUri || AVATAR_URL_DEFAULT }}
           style={styles.avatar}

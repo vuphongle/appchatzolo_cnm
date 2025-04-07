@@ -14,6 +14,7 @@ import axios from 'axios';
 import { IPV4 } from '@env';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AWS from 'aws-sdk';
+import { formatPhoneNumber } from '../utils/formatPhoneNumber';
 import {
   REGION,
   ACCESS_KEY_ID,
@@ -32,8 +33,7 @@ AWS.config.update({
 
 const sns = new AWS.SNS();
 
-const resendOTP = async () => {
-  setIsLoading(true);
+const verifyPhoneNumber = async (phoneNumber) => {
   try {
     const result = await sns
       .createSMSSandboxPhoneNumber({
@@ -41,16 +41,13 @@ const resendOTP = async () => {
         LanguageCode: 'en-US',
       })
       .promise();
-
-    Alert.alert(
-      'Thành công',
-      'Mã OTP mới đã được gửi đến số điện thoại của bạn.',
-    );
   } catch (error) {
-    console.error('Lỗi khi gửi lại OTP:', error);
-    Alert.alert('Lỗi', error.message || 'Không thể gửi lại mã OTP.');
+    console.error('Lỗi thêm số điện thoại vào sandbox:', error);
+    Alert.alert(
+      'Lỗi',
+      error.message || 'Không thể thêm số điện thoại vào sandbox.',
+    );
   }
-  setIsLoading(false);
 };
 
 const ConfirmSignUpScreen = () => {
@@ -60,6 +57,16 @@ const ConfirmSignUpScreen = () => {
 
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const resendOTP = async () => {
+    await verifyPhoneNumber(phoneNumber);
+    setIsLoading(true);
+    Alert.alert(
+        'Thành công',
+        'Mã xác thực đã được gửi đến số điện thoại của bạn.',
+    );
+    setIsLoading(false);
+  };
 
   const handleConfirm = async () => {
     if (!code) {
@@ -155,7 +162,7 @@ const ConfirmSignUpScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Xác nhận Đăng ký</Text>
+      <Text style={styles.title}>Xác nhận đăng ký</Text>
       <Text style={styles.instructions}>
         Mã xác thực đã được gửi đến số điện thoại của bạn.
       </Text>

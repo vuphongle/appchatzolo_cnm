@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import UserService from "../services/UserService";
 import S3Service from "../services/S3Service";
 import { useAuth } from "../context/AuthContext";
-import { toast } from 'react-toastify';
+import showToast from "../utils/AppUtils";
 
 const UserInfoModal = ({ user: initialUser, onClose }) => {
     const { MyUser, setMyUser, updateUserInfo } = useAuth();
@@ -76,19 +76,13 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             setMyUser(newUserData);
             localStorage.setItem("my_user", JSON.stringify(newUserData)); // Cập nhật ngay
 
-            toast.success("Cập nhật thông tin thành công!", {
-                position: "top-center",
-                autoClose: 1000,
-            })
+            showToast("Cập nhật thông tin thành công!", "success");
 
             setIsEditing(false);
             // onClose();
         } catch (error) {
             console.error("Lỗi khi cập nhật user:", error);
-            toast.error("Cập nhật thông tin thất bại! " + (error.message || JSON.stringify(error)), {
-                position: "top-center",
-                autoClose: 1000,
-            });
+            showToast("Cập nhật thông tin thất bại! " + (error.message || JSON.stringify(error)), "error");
         }
     };
 
@@ -141,15 +135,10 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             // Reset trạng thái isChanged vì ảnh đã được cập nhật
             setOriginalAvatar(url);
 
-            toast.success("Cập nhập avatar thành công!", {
-                position: "top-center",
-                autoClose: 1000,
-            })
+            showToast("Cập nhật ảnh đại diện thành công!", "success");
         } catch (error) {
-            toast.error("Xóa bạn bè thất bại! " + (error.message || JSON.stringify(error)), {
-                position: "top-center",
-                autoClose: 1000,
-            });
+            console.error("Lỗi khi upload ảnh đại diện:", error);
+            showToast("Cập nhật ảnh đại diện thất bại! " + (error.message || JSON.stringify(error)), "error");
         }
     };
 

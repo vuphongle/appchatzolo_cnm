@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
-import '../css/RegisterPage.css'; // Import CSS
+import { formatPhoneNumber } from "../utils/formatPhoneNumber"; // Import hàm formatPhoneNumber
+import '../css/RegisterPage.css';
+import showToast from "../utils/AppUtils";
 
 const RegistePage = () => {
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -11,15 +13,9 @@ const RegistePage = () => {
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [isOtpSent, setIsOtpSent] = useState(false);
-    const [name, setName] = useState("");  // State for name
-    const [dob, setDob] = useState("");    // State for date of birth
-    const [showPassword, setShowPassword] = useState(false);
+    const [name, setName] = useState("");
+    const [dob, setDob] = useState("");
     const navigate = useNavigate();
-
-    const validatePhoneNumber = (phone) => {
-        const phoneRegex = /^\+84\d{9,10}$/;
-        return phoneRegex.test(phone);
-    };
 
     const validatePassword = (pass) => {
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -28,17 +24,16 @@ const RegistePage = () => {
 
     // Kiểm tra người dùng có đủ 12 tuổi
     const validateAge = (dobString) => {
-        const dobDate = new Date(dobString);  // Chuyển đổi chuỗi ngày sinh thành đối tượng Date
-        const today = new Date();  // Lấy ngày hiện tại
-        const age = today.getFullYear() - dobDate.getFullYear();  // Tính tuổi
-
-        // Nếu ngày sinh trong năm nay chưa qua, giảm tuổi xuống 1
-        if (today.getMonth() < dobDate.getMonth() ||
-            (today.getMonth() === dobDate.getMonth() && today.getDate() < dobDate.getDate())) {
-            return age - 1;
+        const dobDate = new Date(dobString);
+        const today = new Date();
+        let age = today.getFullYear() - dobDate.getFullYear();
+        if (
+            today.getMonth() < dobDate.getMonth() ||
+            (today.getMonth() === dobDate.getMonth() && today.getDate() < dobDate.getDate())
+        ) {
+            age--;
         }
-
-        return age;  // Trả về tuổi
+        return age;
     };
 
     const handleSendOtp = async () => {
@@ -50,19 +45,22 @@ const RegistePage = () => {
             return;
         }
 
-        // Kiểm tra tuổi nếu nhỏ hơn 12
         if (validateAge(dob) < 12) {
             setErrorMessage("Bạn phải ít nhất 12 tuổi để đăng ký.");
             return;
         }
 
-        if (!validatePhoneNumber(phoneNumber)) {
-            setErrorMessage("Số điện thoại không đúng định dạng +84...");
+        // Định dạng số điện thoại trước khi kiểm tra
+        const formattedPhone = formatPhoneNumber(phoneNumber);
+        if (!formattedPhone) {
+            setErrorMessage("Số điện thoại không đúng định dạng.");
             return;
         }
+        // Cập nhật lại state với số điện thoại đã được định dạng
+        setPhoneNumber(formattedPhone);
 
         if (!validatePassword(password)) {
-            setErrorMessage("Mật khẩu phải có chữ hoa, chữ thường, số và kí tự đặc biệt.");
+            setErrorMessage("Mật khẩu phải có ý nhất 8 ký tự, chữ hoa, chữ thường, số và kí tự đặc biệt.");
             return;
         }
 
@@ -72,7 +70,7 @@ const RegistePage = () => {
         }
 
         try {
-            await AuthService.post("/send-otp", { phoneNumber, password });
+            await AuthService.post("/send-otp", { phoneNumber: formattedPhone, password });
             setSuccessMessage("OTP đã được gửi thành công. Vui lòng kiểm tra điện thoại của bạn.");
             setIsOtpSent(true);
         } catch (error) {
@@ -100,11 +98,12 @@ const RegistePage = () => {
             const requestData = {
                 phoneNumber: phoneNumber,
                 verificationCode: verificationCode,
-                user: user // Gửi cả đối tượng user đi
+                user: user,
             };
 
             await AuthService.post("/verify-phone-and-create-user", requestData);
             setSuccessMessage("Tạo người dùng thành công. Bạn có thể đăng nhập ngay.");
+            showToast("Tạo người dùng thành công. Bạn có thể đăng nhập ngay.", "success");
             setTimeout(() => {
                 navigate("/");
             }, 2000);
@@ -121,13 +120,15 @@ const RegistePage = () => {
         <div className="d-flex justify-content-center align-items-center flex-column vh-100">
             <div className="text-center mb-4">
                 <h1 className="text-primary fw-bold">Zolo</h1>
-                <p>Đăng ký tài khoản Zolo <br /> để kết nối với ứng dụng Zolo Web</p>
+                <p>
+                    Đăng ký tài khoản Zolo <br /> để kết nối với ứng dụng Zolo Web
+                </p>
             </div>
             <div className="card p-4" style={{ width: "500px", borderRadius: "20px" }}>
                 <h1>{isOtpSent ? "Xác minh OTP" : "Đăng ký Tài khoản"}</h1>
                 {errorMessage && <div className="error-message">{errorMessage}</div>}
                 {successMessage && <div className="success-message">{successMessage}</div>}
-                {!isOtpSent && (
+                {!isOtpSent ? (
                     <div>
                         <div className="input-group-info">
                             <input
@@ -164,7 +165,6 @@ const RegistePage = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
-
                         <div className="input-group">
                             <input
                                 id="confirm-password"
@@ -174,12 +174,11 @@ const RegistePage = () => {
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                             />
                         </div>
-
-                        <button className="btn btn-primary w-100 mb-3" onClick={handleSendOtp} >Đăng ký</button>
+                        <button className="btn btn-primary w-100 mb-3" onClick={handleSendOtp}>
+                            Đăng ký
+                        </button>
                     </div>
-                )}
-
-                {isOtpSent && (
+                ) : (
                     <div>
                         <label htmlFor="verificationCode">🔢 Nhập OTP</label>
                         <input
@@ -203,4 +202,5 @@ const RegistePage = () => {
         </div>
     );
 };
+
 export default RegistePage;

@@ -54,8 +54,8 @@ const AuthScreen = () => {
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('+84812411942');
-  const [password, setPassword] = useState('123Abc456@');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 

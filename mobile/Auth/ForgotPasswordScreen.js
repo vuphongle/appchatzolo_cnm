@@ -150,7 +150,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
       if (response.ok) {
         const message = JSON.parse(data).message;
         Alert.alert('Thông báo', 'Mật khẩu đã được thay đổi thành công.');
-        navigation.navigate('Login');
+        navigation.navigate('AuthScreen');
       } else {
         console.log('Error response:', data);
         Alert.alert('Lỗi', 'Có lỗi trong quá trình thay đổi mật khẩu.');

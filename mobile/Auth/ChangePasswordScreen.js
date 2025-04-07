@@ -23,7 +23,7 @@ const ChangePasswordScreen = ({ navigation }) => {
   const changePassword = async (currentPassword, newPassword, username) => {
     // Validate password
     if (!isPasswordValid(newPassword)) {
-      alert('Mật khẩu mới không hợp lệ. Vui lòng kiểm tra lại.');
+      Alert.alert('Lỗi','Mật khẩu mới không hợp lệ. Vui lòng kiểm tra lại.');
       return;
     }
     try {
@@ -64,7 +64,7 @@ const ChangePasswordScreen = ({ navigation }) => {
 
   const handleUpdatePassword = () => {
     if (newPassword !== confirmPassword) {
-      alert('Mật khẩu mới và mật khẩu xác nhận không khớp');
+      Alert.alert('Lỗi','Mật khẩu mới và mật khẩu xác nhận không khớp');
       return;
     }
 
