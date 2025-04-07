@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useWebSocket } from "../context/WebSocket";
 import UserService from "../services/UserService";
 
-const FriendRequestsTab = ({ userId, friendRequests }) => {
+const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
     const { MyUser, updateUserInfo } = useAuth();
     const [receivedRequests, setReceivedRequests] = useState([]);
     const [sentRequests, setSentRequests] = useState([]);
@@ -17,13 +17,13 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
     const [data, setData] = useState([]);
     const [lastFetched, setLastFetched] = useState(null); // Lưu thời gian lấy dữ liệu
 
-    const { onMessage } = useWebSocket();
+    const { sendMessage, onMessage } = useWebSocket();
 
     // Lắng nghe khi có lời mời kết bạn mới
     useEffect(() => {
         const unsubscribe = onMessage((message) => {
 
-            if (message.type !== "FRIEND_REQUEST") {
+            if (message.type === "WAITING_APPROVED") {
                 setReceivedRequests((prev) => [...prev, message]);
             }
         });
@@ -31,6 +31,49 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
         return () => unsubscribe();
     }, [onMessage]);
 
+    // Lắng nghe tín hiệu thu hồi/từ chối lời mời kết bạn
+    useEffect(() => {
+        const unsubscribe = onMessage((message) => {
+            console.log("invitaiton message:", message);
+            if (message.type === "INVITATION_REVOKE") {
+                // Xử lý khi nhận thông báo xóa lời mời
+                setReceivedRequests((prev) =>
+                    prev.filter(
+                        (request) =>
+                            request.senderID !== message.senderID ||
+                            request.receiverID !== message.receiverID
+                    )
+                );
+                setSentRequests((prev) =>
+                    prev.filter(
+                        (request) =>
+                            request.senderID !== message.senderID ||
+                            request.receiverID !== message.receiverID
+                    )
+                );
+            }
+
+            if (message.type === "INVITATION_REFUSE") {
+                setReceivedRequests((prev) =>
+                    prev.filter(
+                        (request) =>
+                            request.senderID !== message.receiverID &&
+                            request.receiverID !== message.senderID
+                    )
+                );
+
+                setSentRequests((prev) =>
+                    prev.filter(
+                        (request) =>
+                            request.senderID !== message.receiverID ||
+                            request.receiverID !== message.senderID
+                    )
+                );
+            }
+        });
+
+        return () => unsubscribe();
+    }, [onMessage]);
 
     // Hàm chuyển đổi timestamp thành ngày tháng, chỉ đến phút
     const formatDate = (timestampArray) => {
@@ -105,12 +148,11 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
                 fetchRequests();  // Cập nhật lại danh sách sau khi xóa
                 alert("Lời mời đã bị từ chối.");
 
-                // Gửi thông báo qua WebSocket cho bên B
+                // Gửi thông báo qua WebSocket cho bên A
                 sendMessage({
-                    type: "INVITATION_DELETED",
-                    senderID,
-                    receiverID,
-                    message: "Lời mời kết bạn đã bị từ chối",
+                    type: "INVITATION_REFUSE",
+                    senderID: receiverID,
+                    receiverID: senderID,
                 });
             })
             .catch((error) => {
@@ -128,10 +170,9 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
 
                 // Gửi thông báo qua WebSocket cho bên B
                 sendMessage({
-                    type: "INVITATION_DELETED",
+                    type: "INVITATION_REVOKE",
                     senderID,
                     receiverID,
-                    message: "Lời mời kết bạn đã bị thu hồi",
                 });
             })
             .catch((error) => {
@@ -163,10 +204,14 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
                     content: "Tôi đã chấp nhận lời mời kết bạn của bạn.",
                     sendDate: new Date().toISOString(),
                     isRead: false,
+                    type: "SUBMIT_FRIEND_REQUEST",
                 };
 
-                // Gửi thông báo qua WebSocket đến bên A về việc đồng ý kết bạn
-                // sendMessage(message);
+                //Gửi thông báo qua WebSocket đến bên A về việc đồng ý kết bạn
+                sendMessage(message);
+
+                const sender = userInfoMap[senderId]
+                onSelectChat(sender); // Chuyển đến cuộc trò chuyện với người bạn mới
 
             })
             .catch((error) => {
@@ -255,7 +300,7 @@ const FriendRequestsTab = ({ userId, friendRequests }) => {
                                 </div>
                                 <div className="list-request-buttons-recieve">
                                     <button className="request-button-ok" onClick={() => handleAcceptRequest(request.senderID, userId)}>Đồng ý</button>
-                                    <button className="request-button" onClick={() => handleDeleteInvitation_refuse(request.senderID, request.receiverID)} >Từ chối</button>
+                                    <button className="request-button" onClick={() => handleDeleteInvitation_refuse(request.senderID, request.receiverID)}>Từ chối</button>
                                 </div>
                             </div>
                         );

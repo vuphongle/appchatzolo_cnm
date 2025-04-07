@@ -40,6 +40,12 @@ export const WebSocketProvider = ({ children, userId }) => {
         }
     };
 
+    const returnMessage = (message) => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify(message));
+        }
+    };
+
     // Đăng ký lắng nghe tin nhắn
     const onMessage = (listener) => {
         listenersRef.current.push(listener);
@@ -60,7 +66,7 @@ export const WebSocketProvider = ({ children, userId }) => {
     // };
 
     return (
-        <WebSocketContext.Provider value={{ sendMessage, onMessage }}>
+        <WebSocketContext.Provider value={{ sendMessage, returnMessage, onMessage }}>
             {children}
         </WebSocketContext.Provider>
     );

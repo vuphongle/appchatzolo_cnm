@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.model;
 
+import lombok.Getter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
@@ -18,6 +19,7 @@ public class Message {
     private Boolean isRead;
     private Media media;
     private String status;
+    private String type;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -94,5 +96,14 @@ public class Message {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    @DynamoDbAttribute("type")
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

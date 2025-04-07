@@ -103,6 +103,8 @@ const MainPage = () => {
         updateUserInfo(updatedUserData);
     };
 
+    // console.log("Friend list", friendList);
+
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
     const handleSelectChat = async (user) => {
@@ -264,7 +266,10 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+            // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+            if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
+                updateFriendList(incomingMessage.senderID);
+            }
             if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
                 // Cập nhật tin nhắn mới
                 const validSendDate = moment(incomingMessage.sendDate).isValid()
@@ -634,10 +639,10 @@ const MainPage = () => {
                                                 const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
-                                                const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+                                                const isImageMessage = (url) => url?.match(/\.(jpeg|jpg|gif|png)$/) != null;
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
-                                                const isFileMessage = (url) => url.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml|sql|wmv|java|ypynb)$/) != null;
+                                                const isFileMessage = (url) => url?.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml|sql|wmv|java|ypynb)$/) != null;
 
                                                 return (
                                                     <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
@@ -1041,9 +1046,8 @@ const MainPage = () => {
             isRead: false,
             sendDate: new Date().toISOString(),
             status: 'Chờ đồng ý',
+            type: "WAITING_APPROVED"
         };
-
-        console.log("Ngày gửi:", message.sendDate);
 
         try {
 
