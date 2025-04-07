@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import "./MainPage.css"; // CSS riêng cho giao diện
+import "../css/MainPage.css"; // CSS riêng cho giao diện
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
 import flag from "../image/icon_VN.png";

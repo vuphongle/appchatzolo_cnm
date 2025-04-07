@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
-import './RegisterPage.css'; // Import CSS
+import '../css/RegisterPage.css'; // Import CSS
 
 const RegistePage = () => {
     const [phoneNumber, setPhoneNumber] = useState("");
