@@ -107,7 +107,7 @@ function MyMessageItem({ time, message, receiverID, isRead }) {
         )}
 
         {/* Trạng thái đọc */}
-        {isRead !== undefined ? (
+        {/* {isRead !== undefined ? (
           isRead ? (
             <View style={styles.statusContainer}>
               <Text style={styles.statusText}>Đã xem</Text>
@@ -117,7 +117,7 @@ function MyMessageItem({ time, message, receiverID, isRead }) {
               <Text style={styles.statusText}>✔✔ Đã gửi</Text>
             </View>
           )
-        ) : null}
+        ) : null} */}
       </View>
     </View>
   );
