@@ -74,10 +74,6 @@ public class Message {
         this.isRead = isRead;
     }
 
-
-
-
-
     @DynamoDbAttribute("media")
     public Media getMedia() {
         return media;

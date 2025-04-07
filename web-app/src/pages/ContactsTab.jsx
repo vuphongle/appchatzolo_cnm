@@ -6,6 +6,7 @@ import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import FriendRequestsTab from "./ListFriend_RequestTab";
 import FriendInfoModal from "./FriendInfoModal";
+import { toast } from 'react-toastify';
 
 const FriendItem = ({
     userId,
@@ -33,12 +34,18 @@ const FriendItem = ({
     const handleRemoveFriend = async () => {
         try {
             await UserService.delete(`/${userId}/removeFriend/${friendId}`);
-            alert("Xóa bạn thành công!");
+            toast.success("Xóa bạn bè thành công!", {
+                position: "top-center",
+                autoClose: 1000,
+            })
             if (onFriendRemoved) {
                 onFriendRemoved(friendId);
             }
         } catch (error) {
-            alert("Lỗi khi xóa bạn bè: " + error.message);
+            toast.error("Xóa bạn bè thất bại! " + (error.message || JSON.stringify(error)), {
+                position: "top-center",
+                autoClose: 1000,
+            });
         }
     };
 
@@ -99,7 +106,8 @@ const FriendItem = ({
                                 className="dropdown-item text-danger"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleRemoveFriend(); document.body.click();
+                                    handleRemoveFriend();
+                                    document.body.click();
                                 }}
                             >
                                 Xóa bạn
@@ -137,23 +145,48 @@ const groupList = [
     { id: 4, groupName: "Nhóm 4 PTUD JAVA", member: 30, img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg" },
 ];
 
-const GroupItem = ({ img, groupName, member }) => (
-    <button type="button" className="btn btn-outline-secondary" style={{ outline: "none", border: "none" }}>
-        <div className="group-item d-flex align-items-center mb-3">
-            <img src={img} alt="Group Avatar" className="avatar me-3" style={{ width: 50, height: 50, borderRadius: "50%" }} />
-            <div className="d-flex flex-column align-items-start">
-                <h4 className="mb-0 text-dark fw-bold">{groupName}</h4>
-                <small className="text-muted">{member} thành viên</small>
+const GroupItem = ({ img, groupName, member }) => {
+
+    return (
+        <>
+            <div
+                className="d-flex align-items-center justify-content-between p-2 border-bottom mb-3"
+                style={{ transition: "background-color 0.3s ease" }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            >
+                <div className="d-flex align-items-center ms-3 me-2">
+                    <img
+                        src={img}
+                        alt="Avatar"
+                        className="rounded-circle border"
+                        style={{ width: 50, height: 50, objectFit: "cover" }}
+                    />
+                    {/* <h5 className="mb-0 ms-2">{groupName}</h5> */}
+                    <div className="d-flex flex-column align-items-start mb-0 ms-3">
+                        <h4 className="mb-0 text-dark fw-bold">{groupName}</h4>
+                        <small className="text-muted">{member} thành viên</small>
+                    </div>
+                </div>
+                <div className="dropdown">
+                    <button
+                        className="btn btn-light border-0 p-2"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <i className="fas fa-ellipsis-h"></i>
+                    </button>
+                    <ul className="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a className="dropdown-item text-danger">Rời nhóm</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <i className="fas fa-ellipsis-h ms-auto" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false"></i>
-            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                <li><a className="dropdown-item" href="#">Xem thông tin</a></li>
-                <li><hr className="dropdown-divider" /></li>
-                <li><a className="dropdown-item text-danger" href="#">Rời nhóm</a></li>
-            </ul>
-        </div>
-    </button>
-);
+        </>
+    )
+};
 
 function ContactsTab({ userId,
     friendRequests,
@@ -317,9 +350,9 @@ function ContactsTab({ userId,
                         <h4 className="mb-0">Danh sách nhóm</h4>
                     </div>
                     <hr />
-                    <div className="vh-100">
+                    <div className="vh-100 container">
                         <h6>Nhóm ({groupList.length})</h6>
-                        <div className="search-bar d-flex align-items-center mb-3">
+                        <div className="d-flex align-items-center gap-2 mb-3">
                             <input type="text" className="form-control me-2" placeholder="Tìm kiếm..." />
                             <select className="form-select">
                                 <option value="name-asc">Tên (A-Z)</option>
@@ -365,7 +398,7 @@ function ContactsTab({ userId,
 
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

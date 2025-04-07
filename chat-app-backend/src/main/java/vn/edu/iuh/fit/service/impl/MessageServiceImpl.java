@@ -133,5 +133,8 @@ public class MessageServiceImpl implements MessageService {
         return unreadCounts;
     }
 
-
+    @Override
+    public void deleteMessagesBetweenUsers(String senderID, String receiverID) {
+        repository.deleteMessagesBetweenUsers(senderID, receiverID);
+    }
 }

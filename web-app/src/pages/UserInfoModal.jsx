@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import UserService from "../services/UserService";
 import S3Service from "../services/S3Service";
 import { useAuth } from "../context/AuthContext";
+import { toast } from 'react-toastify';
 
 const UserInfoModal = ({ user: initialUser, onClose }) => {
     const { MyUser, setMyUser, updateUserInfo } = useAuth();
@@ -75,12 +76,19 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             setMyUser(newUserData);
             localStorage.setItem("my_user", JSON.stringify(newUserData)); // Cập nhật ngay
 
-            alert("Cập nhật thông tin thành công!");
+            toast.success("Cập nhật thông tin thành công!", {
+                position: "top-center",
+                autoClose: 1000,
+            })
+
             setIsEditing(false);
             // onClose();
         } catch (error) {
             console.error("Lỗi khi cập nhật user:", error);
-            alert("Cập nhật thất bại! " + (error.message || JSON.stringify(error)));
+            toast.error("Cập nhật thông tin thất bại! " + (error.message || JSON.stringify(error)), {
+                position: "top-center",
+                autoClose: 1000,
+            });
         }
     };
 
@@ -133,10 +141,15 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
             // Reset trạng thái isChanged vì ảnh đã được cập nhật
             setOriginalAvatar(url);
 
-            alert("Cập nhật avatar thành công!");
+            toast.success("Cập nhập avatar thành công!", {
+                position: "top-center",
+                autoClose: 1000,
+            })
         } catch (error) {
-            console.error("Upload avatar failed:", error);
-            alert("Upload thất bại!");
+            toast.error("Xóa bạn bè thất bại! " + (error.message || JSON.stringify(error)), {
+                position: "top-center",
+                autoClose: 1000,
+            });
         }
     };
 
