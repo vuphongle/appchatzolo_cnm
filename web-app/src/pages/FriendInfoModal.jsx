@@ -14,9 +14,13 @@ const FriendInfoModal = ({
     setMessageContent,
     sendFriendRequest,
     setIsFriendRequestModalOpen,
+    openChat,
 }) => {
     if (!isUserInfoModalOpen || !user) return null;
-
+    const handleMessageClick = () => {
+        openChat(user); // Gọi hàm mở chat và truyền thông tin bạn bè
+        setIsUserInfoModalOpen(false); // Đóng modal thông tin
+    };
     return (
         <div className="overlay" onClick={closeAllModal}>
             <div className="modal-e" onClick={(e) => e.stopPropagation()}>
@@ -38,7 +42,7 @@ const FriendInfoModal = ({
                                     {isFriendRequestSent ? 'Hủy lời mời' : 'Kết bạn'}
                                 </button>
                             )}
-                            <button className="message-button">Nhắn tin</button>
+                            <button className="message-button" onClick={handleMessageClick}>Nhắn tin</button>
                         </div>
 
                         {isFriendRequestModalOpen && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import "./MainPage.css"; // CSS riêng cho giao diện
+import "../css/MainPage.css"; // CSS riêng cho giao diện
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
 import flag from "../image/icon_VN.png";
@@ -82,6 +82,7 @@ const MainPage = () => {
     const [isUserChangePWVisible, setIsUserChangePWVisible] = useState(false);
 
 
+
     const handleUserInfoToggle = () => {
         setIsUserInfoVisible(true);
         setIsSettingsOpen(false)
@@ -145,11 +146,12 @@ const MainPage = () => {
             // Cập nhật thông tin người bạn và trạng thái online
             setSelectedChat({
                 ...user,
-                isOnline: updatedUser.isOnline,  // Cập nhật trạng thái online từ backend
+                isOnline: updatedUser.online,  // Cập nhật trạng thái online từ backend
                 username: updatedUser.name,
                 avatar: updatedUser.avatar,
             });
-            console.log("User status", updatedUser.isOnline);
+            //console.log("Selected user", updatedUser);
+            //console.log("User status", updatedUser.isOnline);
             // Gọi API hoặc xử lý thêm các bước cần thiết, ví dụ như lấy tin nhắn chưa đọc
             const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser?.my_user?.id, user.id);
             if (unreadMsgs.length > 0) {
@@ -287,9 +289,11 @@ const MainPage = () => {
             .then((data) => {
                 // Cập nhật dữ liệu tin nhắn
                 setMessages(data);
+
             })
             .catch((err) => {
                 console.error("Error fetching messages:", err);
+                // console.log("Messages data là gì:", messages); // Kiểm tra dữ liệu tin nhắn
             });
     }, []); // Chỉ chạy một lần khi component được mount
 
@@ -571,6 +575,18 @@ const MainPage = () => {
         }
     };
 
+    // Hàm mở giao diện chat
+    // Hàm mở giao diện chat
+    const openChat = (user) => {
+        setSelectedChat({
+            ...user,  // Cập nhật tất cả thông tin từ user vào selectedChat
+            isOnline: user.online,
+            username: user.name,
+            avatar: user.avatar || avatar_default, // Nếu không có avatar, sử dụng ảnh mặc định
+        });
+        setActiveTab("chat");   // Chuyển sang tab chat
+        setIsModalOpen(false);   // Đóng modal kết bạn
+    };
 
     const handleEmojiClick = (emoji) => {
         setMessageInput(messageInput + emoji); // Thêm emoji vào tin nhắn
@@ -1234,6 +1250,7 @@ const MainPage = () => {
                 {/* Sidebar tabs hiển thị trong tab "chat" */}
                 {activeTab === "chat" && (
                     <>
+
                         <div className="sidebar-tabs">
                             <button className="tab active">Tất cả</button>
                             <button className="tab active">Chưa đọc</button>
@@ -1395,6 +1412,7 @@ const MainPage = () => {
                     setMessageContent={setMessageContent}
                     sendFriendRequest={sendFriendRequest}
                     setIsFriendRequestModalOpen={setIsFriendRequestModalOpen}
+                    openChat={openChat}
                 />
             )}
 

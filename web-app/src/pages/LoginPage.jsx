@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/AuthService';
 import { useAuth } from '../context/AuthContext';
-import "./LoginPage.css";
+import "../css/LoginPage.css";
 
 const LoginPage = () => {
     const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import MessageService from "../services/MessageService";
 import avatar_default from '../image/avatar_user.jpg';
-import './ListFriend_RequestTab.css';
+import '../css/ListFriend_RequestTab.css';
 import { useAuth } from "../context/AuthContext";
 import { useWebSocket } from "../context/WebSocket";
 import UserService from "../services/UserService";

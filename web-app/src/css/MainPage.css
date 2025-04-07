@@ -1,0 +1,999 @@
+/* Tổng quan */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%; /* Đảm bảo chiếm đủ chiều cao màn hình */
+  width: 100%;
+  overflow: auto; /* Loại bỏ cuộn không mong muốn */
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  flex: 1;
+  margin: 0 5px; /* Khoảng cách giữa các nút */
+  height: 45px;
+}
+
+.main-container {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+/* Thanh bên trái */
+.sidebar-nav {
+  width: 60px;
+  background-color: #2d80fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 20px;
+}
+
+.nav-item {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.3s;
+}
+
+.nav-item:hover {
+  background-color: #0051cc;
+  border-radius: 10px;
+}
+
+.nav-item .avatar-img {
+  width: 55px;
+  height: 55px;
+  display: flex;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  object-fit: cover;
+  resize: both;
+}
+
+.settings-menu {
+  position: absolute;
+  left: 70px;
+  top: 220px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  width: 200px;
+  z-index: 100;
+}
+
+.settings-menu ul {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+}
+
+.settings-menu li {
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.settings-menu li:hover {
+  background-color: #f1f5fc;
+}
+
+.settings-menu .logout {
+  color: red;
+  font-weight: bold;
+}
+
+.settings-menu .cat-dat {
+  color: black;
+  font-weight: bold;
+}
+
+/* Sidebar danh sách tin nhắn */
+.sidebar {
+  width: 300px;
+  background-color: #f1f5fc;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ddd;
+}
+
+.sidebar-header {
+  display: flex;
+  margin: 5px;
+  align-items: center;
+}
+
+.search-container {
+  display: flex;
+  /* Hiển thị input và nút cạnh nhau */
+  flex-direction: row;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+  /* Đảm bảo bo góc áp dụng cho cả input và nút */
+}
+
+.search-bar {
+  flex-grow: 1;
+  margin-right: 1;
+  width: 200px;
+}
+
+.search-button {
+  background-color: #ffffff;
+  border: none;
+  padding: 6px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 35px;
+  height: 35px;
+  position: relative;
+  right: 42px;
+}
+
+.search-button:hover {
+  background-color: #3a88fc;
+  /* Hiệu ứng hover cho nút tìm kiếm */
+}
+
+.sidebar-tabs {
+  display: flex;
+  justify-content: space-around;
+  margin: 10px 0;
+}
+
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Thêm hiệu ứng chuyển màu nền */
+}
+
+/* Khi hover vào tab, thay đổi màu nền */
+.tab:hover {
+  background-color: #3a88fc; /* Chuyển màu nền khi hover (màu xanh da trời) */
+  color: white; /* Thay đổi màu chữ khi hover */
+}
+
+/* Màu nền cho tab active */
+.tab.active {
+  background-color: #6eabff; /* Màu nền mặc định cho tab active */
+  color: black; /* Màu chữ cho tab active */
+}
+
+/* Khi hover trên tab active, đảm bảo màu nền không thay đổi */
+.tab.active:hover {
+  background-color: #1c77ff; /* Giữ màu xanh da trời cho tab active */
+  color: black;
+}
+
+.tab {
+  padding: 5px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: white;
+  border: 1px solid #ddd;
+  color: black;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.tab.active :hover {
+  background-color: #0068ff;
+  color: white;
+}
+
+/* Danh sách tin nhắn */
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.message-item {
+  display: flex;
+  position: relative;
+  right: 10px;
+  align-items: center;
+  padding: 10px 0;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover khi di chuột qua */
+.message-item:hover {
+  background-color: #7fc2fc; /* Màu xanh da trời nhạt khi hover */
+}
+
+/* Giữ hover khi mục được chọn */
+.message-item.selected,
+.message-item.selected:hover {
+  background-color: #349ffd; /* Giữ màu nền khi hover trên mục đã chọn */
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.message-info h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.message-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.badge {
+  background-color: #ff3b3b;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+/* Nội dung chính */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  padding-bottom: 0px;
+  background-color: #fff;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Search-model-header {
+  padding: 8px;
+  margin-bottom: 10px;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: #d9d9d9;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 10px;
+  width: 400px;
+  max-height: 580px;
+  /* overflow-y: auto;  */
+  padding: 20px;
+}
+
+.country-code {
+  width: 100px;
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  height: 40px;
+  margin-top: 5px;
+}
+
+.phone-number {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  height: 40px;
+}
+
+.user-info-modal {
+  text-align: center;
+}
+
+.user-info-modal {
+  padding: 5px;
+  text-align: center;
+}
+
+.user-info-modal img {
+  border-radius: 50%;
+  width: 100px; /* Kích thước hình ảnh */
+  height: 100px; /* Kích thước hình ảnh */
+  margin-bottom: 10px;
+  border: 1px solid #007bff; /* Đường viền cho hình ảnh */
+}
+
+.user-info-modal h2 {
+  margin: 10px 0;
+  font-size: 24px;
+}
+
+.user-info-modal p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+/* nút thêm bạn và nhóm */
+/* Nút hành động */
+.action-button {
+  position: relative; /* Để tooltip hiển thị theo vị trí nút */
+  right: 35px;
+  margin-right: 5px;
+  height: 35px;
+  width: 35px;
+  color: white;
+  border: none;
+  border-radius: 1px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.3s;
+  display: flex; /* Sử dụng Flexbox */
+  justify-content: center; /* Căn giữa theo chiều ngang */
+  align-items: center;
+  background: none;
+}
+
+.action-button:hover {
+  background-color: #71b6f7; /* Màu nền xanh lá cây khi hover */
+  transform: scale(1.1); /* Tăng kích thước một chút khi hover */
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  height: 45px;
+}
+
+.search-modal {
+  background-color: #007bff;
+  color: white;
+}
+
+.close-modal {
+  /* width: 200px; */
+  background-color: #d3d3dc;
+  color: black;
+}
+
+.close-modal:hover {
+  background-color: #c6cad2;
+  color: black;
+}
+
+/* css Modal thông tin cá nhân */
+.user-info-modal {
+  text-align: center;
+}
+
+.user-info-modal {
+  text-align: center;
+}
+
+.user-info-modal img {
+  border-radius: 50%;
+  width: 100px; /* Kích thước hình ảnh */
+  height: 100px; /* Kích thước hình ảnh */
+  margin-bottom: 10px;
+  border: 1px solid #007bff; /* Đường viền cho hình ảnh */
+}
+
+.user-info-modal h2 {
+  margin: 10px 0;
+  font-size: 24px;
+}
+
+.user-info-modal p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  align-items: center;
+}
+
+.message-button {
+  background-color: #d3d3dc;
+  color: black;
+  height: 45px;
+}
+
+.message-button:hover {
+  background-color: #c6cad2;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.modal-body {
+  overflow-y: auto;
+}
+
+.modal-header h2 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+}
+
+.modal-header i {
+  font-size: 24px;
+  padding: 7px 12px;
+  border-radius: 50%;
+}
+
+.modal-header i:hover {
+  cursor: pointer;
+  background-color: #f1f1f1;
+}
+
+.personal-info {
+  margin-top: 20px;
+  padding: 10px;
+  border-top: 5px solid #ccc;
+  text-align: left;
+}
+
+.personal-info p {
+  margin: 5px 0;
+}
+
+.list-container {
+  border-top: 5px solid #ccc;
+  padding-top: 10px;
+}
+
+/* Thêm một chút phong cách cho các mục trong danh sách */
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.list-item i {
+  margin-right: 10px; /* Khoảng cách giữa biểu tượng và văn bản */
+}
+
+/* Css modal gửi yêu cầu kết bạn */
+.message-sendRequest {
+  height: 100px;
+  width: 330px;
+  padding: 5px;
+}
+.sendRequest-class {
+  display: grid;
+  align-items: center;
+  justify-content: flex-end;
+  grid-template-columns: 150px 55px;
+  gap: 5px;
+}
+.sendRequest-button {
+  background-color: #d4e7ff;
+  color: #0045ad;
+  height: 35px;
+  text-align: "center";
+  padding: 0px;
+  width: 150px;
+  justify-self: end;
+}
+
+.sendRequest-button:hover {
+  background-color: #c7e0ff;
+}
+
+.closeSendRequest-button {
+  background-color: #d3d3dc;
+  color: black;
+  height: 35px;
+  text-align: "center";
+  padding: 0px;
+  width: 55px;
+  justify-self: end;
+}
+
+.closeSendRequest-button:hover {
+  background-color: #c6cad2;
+}
+
+/* Hộp thông báo gửi yêu cầu kết bạn-THÀNH CÔNG */
+.notification-box {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 9999; /* Đảm bảo thông báo luôn nằm trên các modal */
+}
+
+.notification-box button {
+  /* background-color: #c7e0ff;
+    color: #0045ad; */
+  width: 65px;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.notification-box button:hover {
+  background-color: #357c38;
+}
+
+.action-button-img {
+  width: 32px;
+  height: 32px;
+}
+.-headercontent {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.content-header .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.content-header {
+  padding: 10px;
+  background-color: #f1f5fc;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  position: sticky; /* Để cố định khi cuộn */
+  top: 0; /* Cố định ở đầu trang */
+  z-index: 100; /* Đảm bảo header luôn ở trên */
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+}
+
+.profile .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+.profile .username {
+  position: relative;
+  left: 10px;
+  bottom: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.chat-section {
+  flex: 1;
+  display: flex;
+  height: 650px;
+  flex-direction: column;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto; /* Thêm thanh cuộn khi nội dung dài */
+  max-height: 600px; /* Giới hạn chiều cao tối đa của phần tin nhắn */
+  background-color: #f2f3f7;
+  display: flex;
+  flex-direction: column; /* Sắp xếp tin nhắn theo chiều dọc */
+}
+.chat-message {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 5px;
+  max-width: 70%;
+  word-wrap: break-word; /* Đảm bảo nội dung tin nhắn không bị tràn */
+}
+
+/* 📌 Căn chỉnh tin nhắn gửi (phải) */
+.chat-message.sent {
+  background-color: #d1e5ff;
+  align-self: flex-end;
+  text-align: left; /* Chỉnh về trái */
+  border-radius: 10px 10px 0 10px;
+  max-width: 60%;
+  padding: 10px;
+  margin: 5px 0;
+  border: 1px solid #66a6ff;
+  position: relative;
+}
+
+/* 📌 Căn chỉnh tin nhắn nhận (trái) */
+.chat-message.received {
+  background-color: #ffffff;
+  align-self: flex-start;
+  text-align: left;
+  border-radius: 10px 10px 10px 0;
+  max-width: 60%;
+  padding: 10px;
+  margin: 5px 0;
+  border: 1px solid #576684;
+  position: relative;
+}
+
+.chat-input-container {
+  display: flex;
+  align-items: center; /* Căn giữa các phần tử theo chiều dọc */
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  background-color: #fff;
+}
+
+.input-container {
+  position: relative;
+  width: 100%;
+}
+
+.chat-input {
+  /* flex: 1; Thanh nhập chiếm toàn bộ không gian còn lại */
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  outline: none;
+  margin-right: 10px; /* Tạo khoảng cách giữa thanh nhập và icon */
+}
+
+.icon-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-65%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  width: 27px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button:hover {
+  background-color: #ebecf0;
+}
+
+.send-button {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.chat-icons {
+  display: flex;
+  align-items: center; /* Căn giữa các icon theo chiều dọc */
+}
+
+.chat-icons button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 5px; /* Tạo khoảng cách giữa các icon */
+  transition: transform 0.2s ease;
+}
+
+.chat-icons button:hover {
+  transform: scale(1.2); /* Phóng to khi hover */
+  background-color: #ebecf0;
+}
+
+/* Hiệu ứng loading khi hành động */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Biểu tượng bánh răng xoay */
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 6px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Văn bản "Đang đăng nhập..." và "Đang đăng xuất..." */
+.loading-text {
+  color: white;
+  font-size: 20px;
+  margin-top: 10px;
+}
+
+/* Keyframes cho hiệu ứng xoay */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hộp thoại thông báo hết phiên đăng nhập (không hoạt động > 20 phút) */
+.session-expired-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.session-expired-box {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  width: 320px;
+}
+
+.session-expired-box p {
+  font-size: 18px;
+  color: #333;
+}
+
+.session-expired-box button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: none;
+  background: #0c6dfc;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  transition: 0.3s;
+  width: 70px;
+}
+
+.session-expired-box button:hover {
+  background: #084baf;
+}
+
+/* phần trạng thái online/offline*/
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.status-dot.online {
+  background-color: green;
+}
+
+.status-dot.offline {
+  background-color: gray;
+}
+.user-status {
+  position: absolute;
+  left: 70px;
+  top: 10px;
+  margin-top: 30px;
+  font-size: 14px;
+}
+/* Phần trạng thái đã/chưa đọc tin nhắn */
+.message-date {
+  text-align: center;
+  font-size: 10px;
+  color: #888;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.message-image {
+  max-width: 100%;
+  max-height: 350px;
+  object-fit: contain;
+}
+
+/* 📌 Trạng thái tin nhắn */
+.message-status {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  color: #28a745; /* Màu xanh lá */
+  gap: 4px;
+  white-space: nowrap; /* 🔥 Ngăn chữ xuống dòng */
+  position: absolute;
+  bottom: -15px; /* 🔥 Đưa sát xuống dưới */
+  right: 10px; /* 🔥 Căn về phải trong khung tin nhắn */
+}
+
+.read-status {
+  font-weight: bold;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap; /* 🔥 Ngăn chữ xuống dòng */
+}
+
+.unread-status {
+  color: #dc3545; /* Đỏ cho "Chưa đọc" */
+  font-weight: bold;
+}
+
+/* 📌 Hiển thị ngày giữa màn hình chat */
+.message-date-center {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  background: #ccc;
+  padding: 5px 10px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 10px auto;
+}
+
+/* 📌 Căn chỉnh thời gian bên dưới nội dung tin nhắn */
+.message-time {
+  width: 30px;
+  font-size: 10px;
+  color: #020202;
+  margin-top: 3px;
+  display: block;
+  text-align: right;
+  background-color: transparent;
+}
+
+/* css cho Bảng biểu tượng cảm xúc */
+.chat-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-icons button {
+  margin-left: 10px;
+  position: relative;
+}
+
+.emoji-picker {
+  position: fixed;
+  bottom: 60px; /* Điều chỉnh để emoji picker nằm ngay trên biểu tượng */
+  left: 0; /* Đặt lại vị trí trái cho emoji picker */
+  width: 330px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  z-index: 10000; /* Đảm bảo bảng emoji hiển thị trên các phần tử khác */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  opacity: 0; /* Mặc định ẩn bảng emoji */
+  pointer-events: none; /* Không thể tương tác khi ẩn */
+  transition: opacity 0.3s ease-in-out;
+}
+
+.emoji-picker.visible {
+  opacity: 1; /* Hiển thị bảng emoji khi có class `visible` */
+  pointer-events: auto; /* Cho phép tương tác khi bảng emoji hiển thị */
+  overflow-y: auto;
+}
+
+.emoji-picker span {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.emoji-picker span:hover {
+  transform: scale(1.2);
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Màu mờ tối */
+    display: flex;
+    /* z-index: 1; */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-e {
+    background-color: white;
+    /* padding: 20px; */
+    border-radius: 10px;
+    width: 400px;
+    
+}
+
+.setting-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent; /* Overlay mờ */
+    z-index: 1; /* Để overlay ở phía trước modal */
+    cursor: default;
+}
