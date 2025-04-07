@@ -40,6 +40,12 @@ export const WebSocketProvider = ({ children, userId }) => {
         }
     };
 
+    const returnMessage = (message) => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify(message));
+        }
+    };
+
     // Đăng ký lắng nghe tin nhắn
     const onMessage = (listener) => {
         listenersRef.current.push(listener);
@@ -50,17 +56,17 @@ export const WebSocketProvider = ({ children, userId }) => {
         };
     };
 
-    // Gửi thông báo yêu cầu kết bạn tới bên B
-    const sendFriendRequestToReceiver = (receiverID, friendRequestMessage) => {
-        sendMessage({
-            type: "friend_request_received",
-            receiverID,
-            message: friendRequestMessage,
-        });
-    };
+    // // Gửi thông báo yêu cầu kết bạn tới bên B
+    // const sendFriendRequestToReceiver = (receiverID, friendRequestMessage) => {
+    //     sendMessage({
+    //         type: "friend_request_received",
+    //         receiverID,
+    //         message: friendRequestMessage,
+    //     });
+    // };
 
     return (
-        <WebSocketContext.Provider value={{ sendMessage, onMessage, sendFriendRequestToReceiver }}>
+        <WebSocketContext.Provider value={{ sendMessage, returnMessage, onMessage }}>
             {children}
         </WebSocketContext.Provider>
     );

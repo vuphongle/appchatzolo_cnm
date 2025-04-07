@@ -53,7 +53,7 @@ const FriendItem = ({
         <>
             <div
                 className="d-flex align-items-center justify-content-between p-2 border-bottom mb-3"
-                style={{ transition: "background-color 0.3s ease" }}
+                style={{ transition: "background-color 0.3s ease", cursor: "pointer" }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 onClick={() => onSelectChat(user)}
@@ -374,7 +374,7 @@ function ContactsTab({ userId,
 
                 {/* Tab lời mời kết bạn */}
                 <div className="tab-pane fade" id="v-pills-friend" role="tabpanel" aria-labelledby="v-pills-messages-friend">
-                    <FriendRequestsTab key={userId} userId={userId} friendRequests={friendRequests} /> {/* Gọi FriendRequestsTab */}
+                    <FriendRequestsTab key={userId} userId={userId} friendRequests={friendRequests} onSelectChat={onSelectChat} /> {/* Gọi FriendRequestsTab */}
                 </div>
 
                 {/* Tab lời mời vào nhóm */}
