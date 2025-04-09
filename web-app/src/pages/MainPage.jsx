@@ -308,7 +308,7 @@ const MainPage = () => {
         const unsubscribe = onMessage((incomingMessage) => {
             // Tin nhắn đồng ý kết bạn (SUBMIT_FRIEND_REQUEST)
             console.log("Incoming message:", incomingMessage); // Kiểm tra tin nhắn đến
-            if (incomingMessage.type === "FRIEND_REQUEST") {
+            if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
 
                 // Kiểm tra nếu người gửi không phải là selectedChat
@@ -355,6 +355,8 @@ const MainPage = () => {
                                     return count;
                                 });
                                 setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                                // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
+
                             })
                             .catch((error) => {
                                 console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
@@ -624,6 +626,12 @@ const MainPage = () => {
                     // Cập nhật trực tiếp trong state để danh sách luôn mới
                     setFriendRequests((prevRequests) => [...prevRequests.filter((req) => req.senderID !== user.id)]);
                     setIsFriendRequestSent(false);
+                    //gửi thông báo bên B
+                    sendMessage({
+                        type: "INVITATION_REVOKE",
+                        senderID: MyUser?.my_user?.id,
+                        receiverID: user.id,
+                    });
                 } else {
                     console.error('Không thể xóa lời mời');
                 }
