@@ -117,6 +117,7 @@ const MainPage = () => {
     const [friendList, setFriendList] = useState([]);
 
     const updateFriendList = (friendId) => {
+        const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
         setFriendList((prevList) => {
             // Kiểm tra xem bạn đã có trong danh sách chưa
             if (!prevList.includes(friendId)) {
@@ -130,7 +131,7 @@ const MainPage = () => {
             ...MyUser,
             my_user: {
                 ...MyUser.my_user,
-                friendIds: [...MyUser.my_user.friendIds, friendId],
+                friendIds: [...friendIds, friendId],
             },
         };
         updateUserInfo(updatedUserData);
