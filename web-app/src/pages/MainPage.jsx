@@ -304,7 +304,7 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+            // Tin nhắn socket đồng ý kết bạn
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.senderID);
 
@@ -364,6 +364,8 @@ const MainPage = () => {
 
                 return;
             }
+
+            //Tin nhắn bình thường
             if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
                 // Cập nhật tin nhắn mới
                 const validSendDate = moment(incomingMessage.sendDate).isValid()
