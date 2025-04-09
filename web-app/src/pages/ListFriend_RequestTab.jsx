@@ -204,7 +204,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
                     receiverID: senderId,
                     content: "Tôi đã chấp nhận lời mời kết bạn của bạn.",
                     sendDate: new Date().toISOString(),
-                    isRead: false,
+                    isRead: true,
                     type: "SUBMIT_FRIEND_REQUEST",
                 };
 

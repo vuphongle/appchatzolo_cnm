@@ -302,44 +302,45 @@ const MainPage = () => {
 
     console.log("Messages data là gì:", selectedChat); // Kiểm tra dữ liệu tin nhắn
 
+
+
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            // Tin nhắn socket đồng ý kết bạn
-            if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
-                updateFriendList(incomingMessage.senderID);
+            // Tin nhắn đồng ý kết bạn (SUBMIT_FRIEND_REQUEST)
+            console.log("Incoming message:", incomingMessage); // Kiểm tra tin nhắn đến
+            if (incomingMessage.type === "FRIEND_REQUEST") {
+                updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
 
-                console.log("Friend list updated:", selectedChat);
-
-                // Tăng unreadCount nếu người gửi không phải là selectedChat hiện tại
+                // Kiểm tra nếu người gửi không phải là selectedChat
                 if (incomingMessage.senderID !== selectedChat?.id) {
+                    // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
                     const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
                         if (count.friendId === incomingMessage.senderID) {
                             return {
                                 ...count,
-                                unreadCount: count.unreadCount + 1,
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
                             };
                         }
                         return count;
                     });
-                    setUnreadMessagesCounts(updatedUnreadCounts);
-                }
-                else if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
-                    // Cập nhật tin nhắn mới
+                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                } else {
+                    // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
                     const validSendDate = moment(incomingMessage.sendDate).isValid()
                         ? moment(incomingMessage.sendDate).toISOString()
                         : new Date().toISOString();
 
-                    // Cập nhật tin nhắn vào chatMessages
+                    // Cập nhật tin nhắn mới vào chatMessages
                     setChatMessages((prevMessages) => [
                         ...prevMessages,
                         { ...incomingMessage, sendDate: validSendDate },
                     ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
 
-                    // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
+                    // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
                     if (incomingMessage.isRead === false) {
                         MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
                             .then(() => {
-                                // Cập nhật trạng thái của tin nhắn trong chatMessages
+                                // Cập nhật trạng thái tin nhắn là đã đọc
                                 setChatMessages((prevMessages) =>
                                     prevMessages.map((msg) =>
                                         msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
@@ -357,15 +358,12 @@ const MainPage = () => {
                             })
                             .catch((error) => {
                                 console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
-                            }
-                            );
+                            });
                     }
                 }
-
-                return;
             }
 
-            //Tin nhắn bình thường
+            // Tin nhắn bình thường
             if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
                 // Cập nhật tin nhắn mới
                 const validSendDate = moment(incomingMessage.sendDate).isValid()
@@ -403,28 +401,24 @@ const MainPage = () => {
                         });
                 }
             } else {
-                // Chỉ cập nhật số lượng tin nhắn chưa đọc khi có tin nhắn mới từ người chưa được chọn
+                // Tăng số lượng tin nhắn chưa đọc nếu tin nhắn không thuộc cuộc trò chuyện đã chọn
                 if (incomingMessage.isRead === false) {
                     const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
                         if (count.friendId === incomingMessage.senderID) {
                             return {
                                 ...count,
-                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc lên
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
                             };
                         }
                         return count;
                     });
-
-                    // Cập nhật lại số lượng tin nhắn chưa đọc
-                    setUnreadMessagesCounts(updatedUnreadCounts);
+                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
                 }
             }
         });
 
-        return () => {
-            unsubscribe(); // Hủy lắng nghe khi component unmount
-        };
-    }, [selectedChat, unreadMessagesCounts, onMessage]);  // Khi selectedChat thay đổi
+        return () => unsubscribe(); // Hủy lắng nghe khi component unmount
+    }, [selectedChat, unreadMessagesCounts, onMessage]);
 
 
 
