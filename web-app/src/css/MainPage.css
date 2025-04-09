@@ -82,7 +82,7 @@ button {
 
 .settings-menu ul {
   list-style: none;
-  padding: 10px;
+  padding-top: 10px;
   margin: 0;
 }
 
@@ -210,8 +210,15 @@ button {
 .message-list {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
+
+.message-list ul{
+    border-radius: 10%;
+    padding-left: -32px;
+    left: 0;
+  }
 
 .message-item {
   display: flex;
