@@ -17,19 +17,19 @@ const FriendInfoModal = ({
     setIsFriendRequestModalOpen,
     openChat,
 }) => {
-    // const { sendFriendRequestToReceiver } = useWebSocket();
 
-    // const handleSendRequest = () => {
-    //     const message = "Lời mời kết bạn từ " + MyUser.name;
-    //     sendFriendRequestToReceiver(user.id, message); // Gửi qua WebSocket
-    //     sendFriendRequest(); // Cập nhật UI
-    // };
 
     if (!isUserInfoModalOpen || !user) return null;
     const handleMessageClick = () => {
         openChat(user); // Gọi hàm mở chat và truyền thông tin bạn bè
         setIsUserInfoModalOpen(false); // Đóng modal thông tin
     };
+
+    const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
+
+    console.log("friendIds", friendIds);
+    console.log("user", user.id);
+
     return (
         <div className="overlay" onClick={closeAllModal}>
             <div className="modal-e" onClick={(e) => e.stopPropagation()}>
@@ -46,7 +46,7 @@ const FriendInfoModal = ({
                         </div>
 
                         <div className="action-buttons">
-                            {!MyUser?.my_user?.friendIds.includes(user.id) && (
+                            {!friendIds.includes(user.id) && (
                                 <button onClick={handleUserInfoModalOpen}>
                                     {isFriendRequestSent ? 'Hủy lời mời' : 'Kết bạn'}
                                 </button>
@@ -99,12 +99,12 @@ const FriendInfoModal = ({
                                 <span>Báo xấu</span>
                             </div>
                             <div
-                                className={`list-item ${MyUser?.my_user?.friendIds.includes(user.id) ? "" : "disabled"}`}
+                                className={`list-item ${friendIds.includes(user.id) ? "" : "disabled"}`}
                                 style={{
-                                    color: MyUser?.my_user?.friendIds.includes(user.id) ? "black" : "gray",
-                                    cursor: MyUser?.my_user?.friendIds.includes(user.id) ? "pointer" : "not-allowed",
-                                    opacity: MyUser?.my_user?.friendIds.includes(user.id) ? 1 : 0.5,
-                                    pointerEvents: MyUser?.my_user?.friendIds.includes(user.id) ? "auto" : "none"
+                                    color: friendIds.includes(user.id) ? "black" : "gray",
+                                    cursor: friendIds.includes(user.id) ? "pointer" : "not-allowed",
+                                    opacity: friendIds.includes(user.id) ? 1 : 0.5,
+                                    pointerEvents: friendIds.includes(user.id) ? "auto" : "none"
                                 }}
                             >
                                 <i className="fas fa-trash-alt me-2"></i>
