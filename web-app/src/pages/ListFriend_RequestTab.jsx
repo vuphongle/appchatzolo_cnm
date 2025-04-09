@@ -53,7 +53,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
                 );
             }
 
-            if (message.type === "INVITATION_REFUSE") {
+            if (message.type === "INVITATION_REFUSE" || message.type === "SUBMIT_FRIEND_REQUEST") {
                 setReceivedRequests((prev) =>
                     prev.filter(
                         (request) =>
@@ -210,6 +210,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
 
                 //Gửi thông báo qua WebSocket đến bên A về việc đồng ý kết bạn
                 sendMessage(message);
+
 
                 const sender = userInfoMap[senderId]
                 onSelectChat(sender); // Chuyển đến cuộc trò chuyện với người bạn mới

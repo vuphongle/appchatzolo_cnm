@@ -82,7 +82,7 @@ button {
 
 .settings-menu ul {
   list-style: none;
-  padding-top: 10px;
+  padding: 10px;
   margin: 0;
 }
 
@@ -214,11 +214,6 @@ button {
   padding-bottom: 10px;
 }
 
-.message-list ul{
-    border-radius: 10%;
-    padding-left: -32px;
-    left: 0;
-  }
 
 .message-item {
   display: flex;
@@ -264,8 +259,14 @@ button {
   background-color: #ff3b3b;
   color: white;
   border-radius: 50%;
+  height: 22px;
+  width: 22px;
   padding: 2px 10px;
   font-size: 12px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  display: flex;
 }
 
 /* Nội dung chính */
