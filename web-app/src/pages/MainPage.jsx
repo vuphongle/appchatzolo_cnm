@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import "../css/MainPage.css"; // CSS riêng cho giao diện
+import "../css/ModelTimkiem_TinNhan.css"; // CSS riêng cho giao diện
+import SearchModal from './SearchModal';
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
 import flag from "../image/icon_VN.png";
@@ -703,6 +705,65 @@ const MainPage = () => {
         }
     };
 
+    //Hàm xử lý tìm tin nhắn giữa 2 user
+    const [searchQueryMessage, setSearchQueryMessage] = useState('');
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);  // Toggle modal state
+    const [resultsCount, setResultsCount] = useState(0);  // Số lượng kết quả tìm thấy
+    const [filteredMessages, setFilteredMessages] = useState(chatMessages); // Khai báo state filteredMessages
+
+    // Handle searching messages
+    const handleSearchMessages = () => {
+        if (searchQueryMessage === '') {
+            // Nếu không có từ khóa tìm kiếm, đặt lại chatMessages về danh sách ban đầu
+            setFilteredMessages(chatMessages);
+            setResultsCount(0);  // Đặt kết quả trùng khớp là 0 khi không có từ khóa tìm kiếm
+            return;
+        }
+
+        // Kiểm tra xem có tin nhắn nào khớp với từ khóa không
+        const filteredMessages = chatMessages.filter((msg) =>
+            msg.content.toLowerCase().includes(searchQueryMessage.toLowerCase())
+        );
+
+        // Cập nhật filteredMessages và số lượng kết quả tìm thấy
+        setFilteredMessages(filteredMessages);
+        setResultsCount(filteredMessages.length); // Cập nhật số lượng kết quả tìm thấy
+    };
+
+
+    // Toggle the search modal
+    const toggleSearchModal = () => {
+        setIsSearchModalOpen((prev) => !prev);
+    };
+    // Hàm hiển thị phần tin nhắn có từ khóa tìm kiếm, làm nổi bật phần tìm được
+    const highlightText = (text) => {
+        if (!searchQuery) return text;  // Nếu không có từ khóa tìm kiếm, trả lại văn bản ban đầu
+        const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));  // Chia văn bản thành các phần nhỏ
+        return parts.map((part, index) =>
+            part.toLowerCase() === searchQuery.toLowerCase() ? (
+                <span key={index} className="highlight">{part}</span>  // Tô màu vàng nếu là từ khóa
+            ) : (
+                part // Nếu không phải từ khóa, trả lại phần đó
+            )
+        );
+    };
+
+    useEffect(() => {
+        if (searchQueryMessage === '') {
+            setFilteredMessages(chatMessages);  // Trả về toàn bộ tin nhắn khi không có từ khóa tìm kiếm
+            setResultsCount(0);  // Đặt lại kết quả trùng khớp là 0
+        } else {
+            const result = chatMessages.filter((msg) =>
+                msg.content.toLowerCase().includes(searchQueryMessage.toLowerCase())
+            );
+            setFilteredMessages(result);
+            setResultsCount(result.length); // Cập nhật số lượng kết quả tìm thấy
+        }
+    }, [searchQueryMessage, chatMessages]);  // Theo dõi sự thay đổi của searchQueryMessage
+
+
+
+
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (activeTab) {
@@ -724,12 +785,41 @@ const MainPage = () => {
                                             {selectedChat.isOnline ? " Đang hoạt động" : " Không hoạt động"}
                                         </span>
                                     </div>
+                                    {/* Thêm nút tìm kiếm và gọi video vào header */}
+                                    <div className="header-actions">
+                                        {/* Nút tìm kiếm */}
+                                        <button
+                                            className="search-btn"
+                                            onClick={toggleSearchModal}
+                                        >
+                                            <i className="fas fa-search"></i>
+                                        </button>
+
+                                        {/* Nút gọi video */}
+                                        <button
+                                            className="video-call-btn"
+                                            onClick={() => console.log("Gọi video được nhấn")}
+                                        >
+                                            <i className="fas fa-video"></i>
+                                        </button>
+                                    </div>
                                 </header>
+                                {/* Modal tìm kiếm tin nhắn */}
+                                <SearchModal
+                                    isSearchModalOpen={isSearchModalOpen}
+                                    setIsSearchModalOpen={setIsSearchModalOpen}
+                                    chatMessages={chatMessages}
+                                    searchQuery={searchQueryMessage} // Truyền vào searchQuery
+                                    setSearchQuery={setSearchQueryMessage} // Truyền vào setSearchQuery
+                                    handleSearchMessages={handleSearchMessages}
+                                />
+
                                 <section className="chat-section">
                                     <div className="chat-messages">
                                         {chatMessages.length > 0 ? (
                                             chatMessages.map((msg, index) => {
                                                 const isSentByMe = msg.senderID === MyUser?.my_user?.id;
+
                                                 const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
 
                                                 // 📌 Lấy thời gian gửi tin nhắn và chuyển đổi sang múi giờ Việt Nam
@@ -753,9 +843,8 @@ const MainPage = () => {
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
                                                 const isFileMessage = (url) => url?.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml|sql|wmv|java|ypynb)$/) != null;
-
                                                 return (
-                                                    <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
+                                                    <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}>
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
@@ -791,7 +880,7 @@ const MainPage = () => {
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <p>{msg.content}</p>
+                                                                <p>{highlightText(msg.content)}</p>
                                                             )}
 
                                                             {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}

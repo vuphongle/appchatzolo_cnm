@@ -1,0 +1,89 @@
+/* Style cho modal tìm kiếm */
+.search-modal {
+  position: fixed;
+  top: 100px; /* Adjust this so it’s not at the top of the screen */
+  right: 150px; /* Center the modal horizontally */
+  transform: translateX(-50%); /* Center horizontally */
+  background: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Ensure modal is always in front */
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 300px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-modal .modal-content {
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 300px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-modal input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 5px;
+  border: 1px solid #e4e3e3;
+  border-radius: 5px;
+}
+
+.search-modal button {
+  padding: 10px 20px;
+  background-color: #68affa;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.search-modal button:hover {
+  background-color: #4991dd;
+}
+
+/* Màu vàng cho phần từ khóa tìm thấy */
+.highlight p {
+  background-color: yellow;
+  /* Tô màu vàng */
+}
+
+/* CSS cho phần đếm số lượng kết quả tìm kiếm */
+.message-count {
+  font-size: 14px;
+  color: #333;
+  margin-top: 5px;
+  text-align: center;
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.navigation-buttons button {
+  padding: 2px 4px; /* Giảm padding tối thiểu để nút nhỏ nhất */
+  background-color: #68affa;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 10%; /* Giảm bớt chiều rộng của nút */
+  font-size: 14px; /* Giảm font size để nút nhỏ hơn */
+}
+
+.navigation-buttons button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.navigation-buttons button:hover:not(:disabled) {
+  background-color: #4991dd;
+}
