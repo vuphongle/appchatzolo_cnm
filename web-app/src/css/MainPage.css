@@ -1004,3 +1004,38 @@ button {
     z-index: 1; /* Để overlay ở phía trước modal */
     cursor: default;
 }
+
+.message-options-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  z-index: 10;
+  background-color: white;
+  width: max-content;
+  min-width: 140px;
+  font-size: 0.75rem;
+  padding: 0.3rem;
+  border-radius: 0.4rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-options-menu.scale-down {
+  transform: scale(0.85);
+  transform-origin: top right;
+}
+
+/* Tin nhắn bên phải (của mình) -> align về phải */
+.message-options-menu.mine {
+  right: 0;
+  left: auto;
+}
+
+/* Tin nhắn bên trái -> align về trái */
+.message-options-menu.theirs {
+  left: 0;
+  right: auto;
+}
+
+
+
+
+

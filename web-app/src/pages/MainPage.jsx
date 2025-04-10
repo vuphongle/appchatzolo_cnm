@@ -24,7 +24,7 @@ import ChangePasswordModal from "./ChangePasswordModal";
 
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
-const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [] }) => (
+const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
     <li className="message-item" onClick={onClick}>
         <img src={img} alt="Avatar" className="avatar" />
         <div className="message-info">
@@ -66,6 +66,11 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [] }
                 <li>
                     <a
                         className="dropdown-item text-danger"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            document.body.click();
+                            onDeleteChat && onDeleteChat(); // Gọi hàm xóa
+                        }}
                     >
                         Xóa hội thoại
                     </a>
@@ -75,13 +80,112 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [] }
     </li>
 );
 
+const MessageOptionsMenu = ({ onRecall, onForward, isOwner, isMine }) => {
+    return (
+        <div
+            className={`p-1 shadow rounded-3 message-options-menu scale-down ${isMine ? 'mine' : 'theirs'}`}
+        >
+            <button className="dropdown-item" onClick={onForward}>
+                <i className="bi bi-share me-2"></i> Chia sẻ
+            </button>
+            <div className="dropdown-divider"></div>
+            {isOwner && (
+                <button className="dropdown-item text-danger" onClick={onRecall}>
+                    <i className="bi bi-arrow-counterclockwise me-2"></i> Thu hồi
+                </button>
+            )}
+        </div>
+    );
+};
+
+
+
+const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, messageContent }) => {
+    const [selected, setSelected] = useState([]);
+    const [isForwarding, setIsForwarding] = useState(false);
+
+
+    const toggleSelect = (userId) => {
+        setSelected((prev) =>
+            prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+        );
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal show d-flex align-items-center justify-content-center" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered modal-md">
+                <div className="modal-content" style={{ maxHeight: "90vh", overflow: "hidden" }}>
+
+                    {/* Header */}
+                    <div className="modal-header">
+                        <h5 className="modal-title fw-bold">Chia sẻ tin nhắn</h5>
+                        <i className="fas fa-times" onClick={onClose} style={{ cursor: "pointer" }}></i>
+                    </div>
+
+                    {/* Body */}
+                    <div className="modal-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                        <div className="mb-3">
+                            <label className="form-label fw-semibold">Chọn bạn bè:</label>
+                            {friends.length === 0 ? (
+                                <p className="text-muted">Không có bạn bè để chia sẻ.</p>
+                            ) : (
+                                <div className="form-check-group">
+                                    {friends.map((friend) => (
+                                        <div key={friend.id} className="form-check mb-2">
+                                            <input
+                                                className="form-check-input"
+                                                type="checkbox"
+                                                value={friend.id}
+                                                checked={selected.includes(friend.id)}
+                                                onChange={() => toggleSelect(friend.id)}
+                                                id={`friend-${friend.id}`}
+                                            />
+                                            <label className="form-check-label" htmlFor={`friend-${friend.id}`}>
+                                                {friend.name}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-3 bg-light border rounded">
+                            <strong className="d-block mb-2">Tin nhắn cần chia sẻ:</strong>
+                            <div>{messageContent}</div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-secondary" onClick={onClose}>Hủy</button>
+                        <button
+                            type="button"
+                            className="btn btn-primary"
+                            disabled={selected.length === 0 || isForwarding}
+                            onClick={async () => {
+                                setIsForwarding(true);
+                                await onForward(selected);
+                                setIsForwarding(false);
+                            }}
+                        >
+                            Chia sẻ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+
 // Component chính
 const MainPage = () => {
     const navigate = useNavigate();
     const [isUserInfoVisible, setIsUserInfoVisible] = useState(false);
     const [isUserChangePWVisible, setIsUserChangePWVisible] = useState(false);
-
-
 
     const handleUserInfoToggle = () => {
         setIsUserInfoVisible(true);
@@ -115,6 +219,7 @@ const MainPage = () => {
     const [unreadMessages, setUnreadMessages] = useState([]); // Danh sách tin nhắn chưa đọc
 
     const [friendList, setFriendList] = useState([]);
+    const selectedChatIdAtShareRef = useRef(null);
 
     const updateFriendList = (friendId) => {
         const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
@@ -181,6 +286,56 @@ const MainPage = () => {
         }
     };
 
+    const handleDeleteChat = async (senderID, receiverID) => {
+        if (!window.confirm("Bạn có chắc muốn xóa toàn bộ hội thoại này không?")) return;
+
+        try {
+            // 1. Gọi API để xóa tin nhắn trong DB (cho cả 2 bên)
+            const result = await MessageService.deleteChat(senderID, receiverID);
+            alert(result);
+
+            // 2. Nếu đang chat với người đó thì xóa khỏi UI
+            if (selectedChat && selectedChat.id === receiverID) {
+                setSelectedChat(null);
+                setChatMessages([]);
+            }
+
+            // 3. (Tùy chọn) Cập nhật lại danh sách cuộc trò chuyện nếu cần
+            // setConversations(prev => prev.filter(conv => conv.userId !== receiverID));
+
+            // Chú ý: Không cần gửi thông báo WebSocket từ FE,
+            // Backend sẽ tự gửi thông báo xóa chat cho người bên kia.
+        } catch (error) {
+            console.error("Lỗi khi xóa hội thoại:", error);
+            alert("Không thể xóa hội thoại.");
+        }
+    };
+
+    const [showForwardModal, setShowForwardModal] = useState(false);
+    const [forwardMessageId, setForwardMessageId] = useState(null);
+
+    // Gọi API chia sẻ
+    const handleForward = async (selectedUserIds) => {
+        try {
+            if (!forwardMessageId) return;
+            const uniqueUserIds = [...new Set(selectedUserIds)];
+
+            await MessageService.forwardMessage(forwardMessageId, MyUser.my_user.id, uniqueUserIds);
+
+            alert("Chia sẻ thành công!");
+            setShowForwardModal(false);
+            setForwardMessageId(null);
+
+        } catch (err) {
+            alert("Chia sẻ thất bại!");
+            console.error("Lỗi chia sẻ:", err);
+        }
+    };
+
+
+    const [showMenuForMessageId, setShowMenuForMessageId] = useState(null);
+
+
     // State để lưu số lượng tin nhắn chưa đọc cho từng bạn
     const [unreadMessagesCounts, setUnreadMessagesCounts] = useState([]);
     const [friends, setFriends] = useState([]); // Danh sách bạn bè
@@ -206,10 +361,6 @@ const MainPage = () => {
 
         fetchUnreadMessagesCountForAllFriends();
     }, [MyUser]);
-
-
-
-
 
     // useEffect(() => {
     //     const unsubscribe = onMessage((message) => {
@@ -303,6 +454,54 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
+            if (incomingMessage.type === "DELETE_MESSAGE") {
+                // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
+                // thì xóa luôn phần hiển thị
+                if (selectedChat && (selectedChat.id === incomingMessage.from || selectedChat.id === incomingMessage.to)) {
+                    setSelectedChat(null);
+                    setChatMessages([]);
+                }
+                // Bạn có thể cập nhật danh sách tin nhắn chưa đọc hoặc danh sách cuộc trò chuyện ở đây nếu cần
+                return; // Kết thúc xử lý cho thông báo xóa
+            }
+            if (incomingMessage.type === "RECALL_MESSAGE") {
+                const recalledMessageId = incomingMessage.messageId;
+                // Giả sử chatMessages được lưu ở state, bạn xoá tin nhắn có id vừa recall
+                setChatMessages((prevMessages) =>
+                    prevMessages.map((msg) =>
+                        msg.id === recalledMessageId ? { ...msg, content: "Tin nhắn đã được thu hồi" } : msg
+                    )
+                );
+                return; // Kết thúc xử lý cho RECALL_MESSAGE
+            }
+
+            if (incomingMessage.type === "CHAT") {
+                const msg = incomingMessage.message;
+
+                // Nếu cuộc trò chuyện đang mở là đúng chiều người gửi/nhận
+                if (
+                    selectedChat &&
+                    (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id)
+                ) {
+                    setChatMessages((prev) =>
+                        [...prev, msg].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
+                    );
+                } else {
+                    // Nếu không phải, tăng unread
+                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                        if (count.friendId === msg.senderID) {
+                            return {
+                                ...count,
+                                unreadCount: count.unreadCount + 1,
+                            };
+                        }
+                        return count;
+                    });
+                    setUnreadMessagesCounts(updatedUnreadCounts);
+                }
+            }
+
+
             // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.senderID);
@@ -642,6 +841,7 @@ const MainPage = () => {
         }
     };
 
+
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (activeTab) {
@@ -694,7 +894,12 @@ const MainPage = () => {
                                                 const isFileMessage = (url) => url?.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml|sql|wmv|java|ypynb)$/) != null;
 
                                                 return (
-                                                    <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
+                                                    <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}
+                                                        onContextMenu={(e) => {
+                                                            e.preventDefault();
+                                                            setShowMenuForMessageId(msg.id);
+                                                        }}
+                                                        onClick={() => setShowMenuForMessageId(null)}>
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
@@ -708,7 +913,6 @@ const MainPage = () => {
                                                                     : "Invalid date"}
                                                             </div>
                                                         )}
-
 
                                                         <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
                                                             {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
@@ -740,7 +944,40 @@ const MainPage = () => {
                                                             {isLastMessageByMe && isSentByMe && msg.isRead && (
                                                                 <span className="message-status read-status">✔✔ Đã nhận</span>
                                                             )}
+                                                            {showMenuForMessageId === msg.id && (
+                                                                <MessageOptionsMenu
+                                                                    isOwner={msg.senderID === MyUser.my_user.id}
+                                                                    isMine={msg.senderID === MyUser.my_user.id}
+                                                                    onRecall={async () => {
+                                                                        setShowMenuForMessageId(null);
+                                                                        try {
+                                                                            await MessageService.recallMessage(msg.id, MyUser.my_user.id, selectedChat.id);
+                                                                            // Cập nhật lại danh sách tin nhắn
+                                                                            setChatMessages((prev) => prev.map((m) =>
+                                                                                m.id === msg.id ? { ...m, content: "Tin nhắn đã được thu hồi" } : m
+                                                                            ));
+                                                                            // Gửi thông báo WebSocket nếu có
+                                                                        } catch (err) {
+                                                                            console.error("Lỗi thu hồi:", err);
+                                                                        }
+                                                                    }}
+                                                                    onForward={() => {
+                                                                        // selectedChatIdAtShareRef.current = selectedChat?.id;
+                                                                        setShowMenuForMessageId(null);
+                                                                        setForwardMessageId(msg.id); // Gán ID tin nhắn đang muốn chia sẻ
+                                                                        setShowForwardModal(true);   // Hiện modal chia sẻ
+                                                                    }}
+                                                                    onClose={() => setShowMenuForMessageId(null)}
+                                                                />
+                                                            )}
                                                         </div>
+                                                        <ForwardMessageModal
+                                                            isOpen={showForwardModal}
+                                                            onClose={() => setShowForwardModal(false)}
+                                                            onForward={handleForward}
+                                                            friends={friends}
+                                                            messageContent={chatMessages.find(m => m.id === forwardMessageId)?.content}
+                                                        />
                                                     </div>
                                                 );
                                             })
@@ -1275,6 +1512,7 @@ const MainPage = () => {
                                                 unreadCount={item.unreadCount}
                                                 img={item.img || avatar_default}
                                                 onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
+                                                onDeleteChat={() => handleDeleteChat(MyUser?.my_user.id, item.id)}
                                             />
                                         ))
                                 ) : filteredFriends.length > 0 ? (

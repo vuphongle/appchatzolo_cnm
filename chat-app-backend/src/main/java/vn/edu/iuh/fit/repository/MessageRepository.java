@@ -184,7 +184,6 @@ public class MessageRepository {
         return unreadMessages.size();
     }
 
-
     public List<String> getFriendsList(String receiverID) {
         User user = userTable.getItem(Key.builder().partitionValue(receiverID).build());
         return user.getFriendIds();
@@ -211,4 +210,35 @@ public class MessageRepository {
             }
         }
     }
+
+    public void recallMessage(String messageId) {
+        try {
+            Key key = Key.builder().partitionValue(messageId).build();
+
+            // Đọc tin nhắn cũ
+            Message oldMessage = table.getItem(r -> r.key(key));
+            if (oldMessage != null) {
+                // Cập nhật lại nội dung
+                oldMessage.setContent("Tin nhắn đã được thu hồi");
+                table.updateItem(oldMessage);
+                System.out.println("Recalled message (content updated): " + messageId);
+            } else {
+                System.err.println("Không tìm thấy tin nhắn để thu hồi");
+            }
+        } catch (Exception e) {
+            System.err.println("Error recalling message: " + e.getMessage());
+            throw new RuntimeException("Error recalling message: " + e.getMessage());
+        }
+    }
+
+    public Message getMessageById(String messageId) {
+        try {
+            Key key = Key.builder().partitionValue(messageId).build();
+            return table.getItem(key);
+        } catch (Exception e) {
+            System.err.println("Error retrieving message by ID: " + e.getMessage());
+            return null;
+        }
+    }
+
 }

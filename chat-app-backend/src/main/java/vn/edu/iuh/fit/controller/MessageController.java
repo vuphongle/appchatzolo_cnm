@@ -2,9 +2,11 @@ package vn.edu.iuh.fit.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
+import vn.edu.iuh.fit.model.DTO.ForwardRequest;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.service.MessageService;
@@ -145,4 +147,31 @@ public class MessageController {
             return ResponseEntity.status(500).body("Lỗi khi xóa đoạn chat: " + e.getMessage());
         }
     }
+
+    // Thu hồi tin nhắn
+    @DeleteMapping("/recall/{messageId}/{senderID}/{receiverID}")
+    public ResponseEntity<String> recallMessage(@PathVariable String messageId,
+                                                @PathVariable String senderID,
+                                                @PathVariable String receiverID) {
+        try {
+            service.recallMessage(messageId, senderID, receiverID);
+            return ResponseEntity.ok("Tin nhắn được thu hồi thành công.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi khi thu hồi tin nhắn: " + e.getMessage());
+        }
+    }
+
+    // chia sẻ tin nhắn
+    @PostMapping("/forward")
+    public ResponseEntity<String> forwardMessage(@RequestBody ForwardRequest request) {
+        try {
+            service.forwardMessage(request.getOriginalMessageId(), request.getSenderID(), request.getReceiverIDs());
+            return ResponseEntity.ok("Chia sẻ thành công.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi khi chia sẻ tin nhắn: " + e.getMessage());
+        }
+    }
+
 }

@@ -21,5 +21,6 @@ public interface MessageService {
 
     List<UnreadMessagesCountDTO> getUnreadCountForAllFriends(String receiverID);
     void deleteMessagesBetweenUsers(String senderID, String receiverID);
-
+    void recallMessage(String messageId, String senderID, String receiverID);
+    void forwardMessage(String originalMessageId, String senderID, List<String> receiverIDs);
 }
