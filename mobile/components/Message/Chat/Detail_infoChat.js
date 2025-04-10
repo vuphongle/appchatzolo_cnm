@@ -21,38 +21,14 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
-// Mock Data
-const MOCK_USER = {
-  _id: '123',
-  name: 'John Doe',
-  avatar: 'https://example.com/avatar.jpg',
-};
 
-const MOCK_CHAT_DATA = {
-  id: '456',
-  name: 'NguyenVan B',
-  image: 'https://randomuser.me/api/portraits/women/43.jpg',
-  owner: '123',
-  members: [
-    { id: '123', name: 'John Doe', avatar: 'https://example.com/john.jpg' },
-    { id: '456', name: 'Jane Smith', avatar: 'https://example.com/jane.jpg' },
-  ],
-  files: [
-    { id: '1', url: 'https://example.com/image1.jpg', type: 'image' },
-    { id: '2', url: 'https://example.com/image2.jpg', type: 'image' },
-  ],
-};
-
-const Detail_infoChat = ({ navigation }) => {
-  // State
-  const [chatData, setChatData] = useState(MOCK_CHAT_DATA);
-  const [nameChange, setNameChange] = useState(chatData.name);
+const Detail_infoChat = ({ route, navigation }) => {
+  const { user } = route.params;
+  const [nameChange, setNameChange] = useState(user?.name);
   const [isBFF, setIsBFF] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
 
-  // Handlers
   const updateName = () => {
-    setChatData((prev) => ({ ...prev, name: nameChange }));
     Alert.alert('Thông báo', 'Đổi tên thành công!');
     setIsDialogVisible(false);
   };
@@ -65,12 +41,12 @@ const Detail_infoChat = ({ navigation }) => {
     });
 
     if (!result.didCancel && result.assets) {
-      setChatData((prev) => ({ ...prev, image: result.assets[0].uri }));
       Alert.alert('Thành công', 'Cập nhật ảnh thành công');
     }
   };
 
   const handleDeleteGroup = () => {
+    console.log('user', user);
     Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
       {
         text: 'Hủy',
@@ -98,8 +74,8 @@ const Detail_infoChat = ({ navigation }) => {
 
   const ProfileSection = () => (
     <View style={styles.profileSection}>
-      <Image source={{ uri: chatData.image }} style={styles.profileImage} />
-      <Text style={styles.profileName}>{nameChange}</Text>
+      <Image source={{ uri: user?.avatar }} style={styles.profileImage} />
+      <Text style={styles.profileName}>{user?.name}</Text>
       <View style={styles.quickActions}>
         <QuickActionButton
           icon="search"
@@ -110,20 +86,18 @@ const Detail_infoChat = ({ navigation }) => {
           icon="user"
           label="Xem trang cá nhân"
           onPress={() =>
-            Alert.alert('Thành viên', `${chatData.members.length} thành viên`)
+            Alert.alert('Thông báo', 'Chức năng đang phát triển')
           }
         />
-        {MOCK_USER._id === chatData.owner && (
           <QuickActionButton
             icon="image"
             label="Đổi hình nền"
             onPress={handleImagePicker}
           />
-        )}
         <QuickActionButton
           icon="bell"
           label="Tắt thông báo"
-          onPress={() => Alert.alert('Thông báo', `Tắt thành công`)}
+          onPress={() => Alert.alert('Thông báo', 'Chức năng đang phát triển')}
         />
       </View>
     </View>
@@ -147,7 +121,6 @@ const Detail_infoChat = ({ navigation }) => {
           <ProfileSection />
 
           {/* Settings Items */}
-          {MOCK_USER._id === chatData.owner && (
             <TouchableOpacity
               style={styles.settingsItem}
               onPress={() => setIsDialogVisible(true)}
@@ -155,7 +128,6 @@ const Detail_infoChat = ({ navigation }) => {
               <Ionicons name="pencil" size={24} color="#828282" />
               <Text style={styles.settingsItemText}>Đổi tên gợi nhớ</Text>
             </TouchableOpacity>
-          )}
 
           <TouchableOpacity
             style={styles.settingsItem}
@@ -176,7 +148,6 @@ const Detail_infoChat = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.settingsItem}
-            onPress={() => setIsBFF(!isBFF)}
           >
             <MaterialCommunityIcons
               name="clock-outline"
@@ -191,9 +162,9 @@ const Detail_infoChat = ({ navigation }) => {
               style={{ marginLeft: 200 }}
             />
           </TouchableOpacity>
-          {MOCK_USER._id === chatData.owner && (
+
             <TouchableOpacity
-              style={[styles.settingsItem, { marginTop: 20 }]}
+              style={[styles.settingsItem]}
               onPress={handleDeleteGroup}
             >
               <Ionicons name="trash" size={24} color="#FF0000" />
@@ -201,7 +172,6 @@ const Detail_infoChat = ({ navigation }) => {
                 Xóa cuộc trò chuyện
               </Text>
             </TouchableOpacity>
-          )}
         </ScrollView>
 
         {/* Name Change Dialog */}
