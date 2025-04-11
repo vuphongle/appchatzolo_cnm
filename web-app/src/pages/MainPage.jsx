@@ -598,60 +598,61 @@ const MainPage = () => {
                         }
                     }
                 }
+            }
 
-                // Tin nhắn bình thường
-                if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
-                    // Cập nhật tin nhắn mới
-                    const validSendDate = moment(incomingMessage.sendDate).isValid()
-                        ? moment(incomingMessage.sendDate).toISOString()
-                        : new Date().toISOString();
+            // Tin nhắn bình thường
+            if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
+                // Cập nhật tin nhắn mới
+                const validSendDate = moment(incomingMessage.sendDate).isValid()
+                    ? moment(incomingMessage.sendDate).toISOString()
+                    : new Date().toISOString();
 
-                    // Cập nhật tin nhắn vào chatMessages
-                    setChatMessages((prevMessages) => [
-                        ...prevMessages,
-                        { ...incomingMessage, sendDate: validSendDate },
-                    ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                // Cập nhật tin nhắn vào chatMessages
+                setChatMessages((prevMessages) => [
+                    ...prevMessages,
+                    { ...incomingMessage, sendDate: validSendDate },
+                ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
 
-                    // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
-                    if (incomingMessage.isRead === false) {
-                        MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
-                            .then(() => {
-                                // Cập nhật trạng thái của tin nhắn trong chatMessages
-                                setChatMessages((prevMessages) =>
-                                    prevMessages.map((msg) =>
-                                        msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
-                                    )
-                                );
+                // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
+                if (incomingMessage.isRead === false) {
+                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                        .then(() => {
+                            // Cập nhật trạng thái của tin nhắn trong chatMessages
+                            setChatMessages((prevMessages) =>
+                                prevMessages.map((msg) =>
+                                    msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
+                                )
+                            );
 
-                                // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
-                                const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                                    if (count.friendId === selectedChat.id) {
-                                        return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
-                                    }
-                                    return count;
-                                });
-                                setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                            })
-                            .catch((error) => {
-                                console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                            // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
+                            const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                if (count.friendId === selectedChat.id) {
+                                    return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
+                                }
+                                return count;
                             });
-                    }
-                } else {
-                    // Tăng số lượng tin nhắn chưa đọc nếu tin nhắn không thuộc cuộc trò chuyện đã chọn
-                    if (incomingMessage.isRead === false) {
-                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                            if (count.friendId === incomingMessage.senderID) {
-                                return {
-                                    ...count,
-                                    unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
-                                };
-                            }
-                            return count;
+                            setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                        })
+                        .catch((error) => {
+                            console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
                         });
-                        setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                    }
                 }
-            });
+            } else {
+                // Tăng số lượng tin nhắn chưa đọc nếu tin nhắn không thuộc cuộc trò chuyện đã chọn
+                if (incomingMessage.isRead === false) {
+                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                        if (count.friendId === incomingMessage.senderID) {
+                            return {
+                                ...count,
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
+                            };
+                        }
+                        return count;
+                    });
+                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                }
+            }
+        });
 
         return () => unsubscribe(); // Hủy lắng nghe khi component unmount
     }, [selectedChat, unreadMessagesCounts, onMessage]);
