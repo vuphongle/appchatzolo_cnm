@@ -66,7 +66,7 @@ const Detail_infoChat = ({ route, navigation }) => {
   const Header = ({ onBack }) => (
     <View style={styles.header}>
       <TouchableOpacity onPress={onBack} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={30} color="#fff" />
+        <Ionicons name="chevron-back-outline" size={30} color="#fff" />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Tùy chọn</Text>
     </View>
