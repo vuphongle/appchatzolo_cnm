@@ -183,6 +183,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
 
     // Hàm xử lý chấp nhận lời mời kết bạn
     const handleAcceptRequest = (senderId, receiverId) => {
+        const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
         MessageService.post(`/acceptFriendRequest/${senderId}/${receiverId}`)
             .then((response) => {
                 alert(response);
@@ -192,7 +193,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
                     ...MyUser,
                     my_user: {
                         ...MyUser.my_user,
-                        friendIds: [...MyUser.my_user.friendIds, senderId],
+                        friendIds: [...friendIds, senderId],
                     },
                 };
                 updateUserInfo(updatedUserData_receiver);

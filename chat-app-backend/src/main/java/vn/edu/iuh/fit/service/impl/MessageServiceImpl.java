@@ -10,8 +10,10 @@ import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.service.MessageService;
 
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MessageServiceImpl implements MessageService {
@@ -136,5 +138,65 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void deleteMessagesBetweenUsers(String senderID, String receiverID) {
         repository.deleteMessagesBetweenUsers(senderID, receiverID);
+        try {
+            MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+            if (myWebSocketHandler != null) {
+                myWebSocketHandler.sendDeleteMessageNotification(senderID, receiverID);
+                myWebSocketHandler.sendDeleteMessageNotification(receiverID, senderID);
+            } else {
+                System.err.println("MyWebSocketHandler bean is not available.");
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void recallMessage(String messageId, String senderID, String receiverID) {
+        // Xóa tin nhắn khỏi DynamoDB
+        repository.recallMessage(messageId);
+
+        // Gửi thông báo thu hồi tin nhắn qua WebSocket cho cả hai bên
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                // Gửi thông báo đến người nhận
+                myWebSocketHandler.sendRecallMessageNotification(receiverID, senderID, messageId);
+                // Gửi thông báo đến người gửi (để cập nhật UI nếu cần)
+                myWebSocketHandler.sendRecallMessageNotification(senderID, senderID, messageId);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("MyWebSocketHandler bean is not available.");
+        }
+    }
+
+    @Override
+    public void forwardMessage(String originalMessageId, String senderID, List<String> receiverIDs) {
+        Message original = repository.getMessageById(originalMessageId);
+        if (original == null) throw new RuntimeException("Không tìm thấy tin nhắn gốc");
+        for (String receiverId : receiverIDs) {
+            Message newMsg = new Message();
+            newMsg.setId(UUID.randomUUID().toString());
+            newMsg.setSenderID(senderID);
+            newMsg.setReceiverID(receiverId);
+            newMsg.setContent(original.getContent());
+            newMsg.setSendDate(LocalDateTime.now(ZoneOffset.UTC));
+            newMsg.setIsRead(false);
+
+            repository.save(newMsg);
+
+            // ✅ Gửi tin nhắn kiểu CHAT luôn để render trực tiếp
+            MyWebSocketHandler handler = myWebSocketHandlerProvider.getIfAvailable();
+            if (handler != null) {
+                try {
+                    handler.sendChatMessage(newMsg); // gửi cho người nhận
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

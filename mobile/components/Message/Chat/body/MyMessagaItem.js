@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Image,
@@ -8,22 +8,26 @@ import {
   StyleSheet,
 } from 'react-native';
 import { formatDate } from '../../../../utils/formatDate';
+import MessageService from '../../../../services/MessageService';
+import ForwardMessageModal from '../ForwardMessageModal';
 
-function MyMessageItem({ time, message, receiverID, isRead }) {
+function MyMessageItem({ messageId, userId, receiverId, time, message,showForwardRecall = true }) {
   const [messIndex, setMessIndex] = useState(message);
   const [emojiIndex, setEmojiIndex] = useState(null);
-  const [StatusRead, setStatusRead] = useState(false);
+  const [isRecalled, setIsRecalled] = useState(false);
+  const [forwardModalVisible, setForwardModalVisible] = useState(false);
 
   // Kiểm tra xem tin nhắn có phải là ảnh hay không
   const isImageMessage = (url) =>
     url && url.match(/\.(jpeg|jpg|gif|png)$/) != null;
 
   // Kiểm tra xem tin nhắn có phải là URL của file hay không
-  const isFileMessage = (url) =>
-    url &&
-    url.match(
-      /\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/,
-    ) != null;
+  const isFileMessage = (url) => {
+    const extRegex = /\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/i;
+    const s3FileRegex = /^https:\/\/nhom3-cmn-chatappzolo-s3\.s3\.amazonaws\.com\/file/;
+    return url && (extRegex.test(url) || s3FileRegex.test(url));
+  };
+  
 
   // Xác định loại tin nhắn
   const [typeIndex, setTypeIndex] = useState(() => {
@@ -37,22 +41,61 @@ function MyMessageItem({ time, message, receiverID, isRead }) {
     setEmojiIndex(reaction);
   };
 
-  // Hàm gỡ tin nhắn
-  const handleUnsendMessage = () => {
-    setMessIndex('Tin nhắn đã được gỡ');
-    setTypeIndex('unsend');
+  // Xác định loại tin nhắn hiện tại (cho modal chuyển tiếp)
+  const type = isRecalled ? 'unsend' : 
+               isImageMessage(messIndex) ? 'image' :
+               isFileMessage(messIndex) ? 'file' : 'text';
+
+  // Hàm thu hồi tin nhắn
+  const recallMessage = async () => {
+    try {
+      await MessageService.recallMessage(messageId, userId, receiverId);
+      setMessIndex('Tin nhắn đã thu hồi');
+      setTypeIndex('unsend');
+      setIsRecalled(true);
+    } catch (error) {
+      console.error('Lỗi khi thu hồi tin nhắn:', error);
+      Alert.alert('Lỗi', 'Không thể thu hồi tin nhắn. Vui lòng thử lại sau.');
+    }
   };
 
-  // Hiển thị thông báo khi nhấn giữ tin nhắn
+  // Hàm hiển thị modal chuyển tiếp tin nhắn
+  const forwardMessage = () => {
+    setForwardModalVisible(true);
+  };
+
+  // Hiển thị menu tùy chọn khi nhấn giữ tin nhắn
   const handleLongPress = () => {
-    Alert.alert('Thông báo', 'Bạn muốn xóa tin nhắn này?', [
-      { text: 'Thoát', style: 'cancel' },
-      { text: 'Xóa', onPress: handleUnsendMessage },
-    ]);
+    // Nếu tin nhắn đã thu hồi, không hiển thị menu
+    if (!showForwardRecall) return;
+
+    const options = [
+      { text: 'Chuyển tiếp', onPress: forwardMessage },
+      { text: 'Thu hồi', onPress: () => {
+        Alert.alert(
+          'Thu hồi tin nhắn',
+          'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
+          [
+            { text: 'Hủy', style: 'cancel' },
+            { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
+          ]
+        );
+      }}
+    ];
+
+    // Hiển thị Alert với các tùy chọn
+    Alert.alert('Tùy chọn tin nhắn', '', options.map(option => ({
+      text: option.text,
+      onPress: option.onPress,
+      style: option.style
+    })));
   };
 
   // Hiển thị danh sách emoji
   const handlePressIcon = () => {
+    // Nếu tin nhắn đã thu hồi, không hiển thị emoji
+    if (isRecalled) return;
+
     Alert.alert('Chọn cảm xúc của bạn:', '', [
       { text: '❤', onPress: () => reactMessage('❤') },
       { text: '👍', onPress: () => reactMessage('👍') },
@@ -64,62 +107,70 @@ function MyMessageItem({ time, message, receiverID, isRead }) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.messageContainer}>
-        {/* Tin nhắn */}
-        {typeIndex === 'unsend' ? (
-          <View style={styles.unsendMessage}>
-            <Text style={styles.unsendText}>{messIndex}</Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.messageBox,
-              (typeIndex === 'image' || typeIndex === 'file') &&
-                styles.mediaMessage,
-            ]}
-            onLongPress={handleLongPress}
-            onPress={handlePressIcon}
-          >
-            {typeIndex === 'image' ? (
-              <Image style={styles.image} source={{ uri: messIndex }} />
-            ) : typeIndex === 'file' ? (
-              <View style={styles.fileContainer}>
-                <Text style={styles.fileIcon}>📎</Text>
-                <Text style={styles.fileText}>
-                  {messIndex.split('/').pop()}
-                </Text>
-              </View>
-            ) : (
-              <Text style={styles.messageText}>{messIndex}</Text>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {/* Thời gian */}
-        <Text style={styles.time}>{time}</Text>
-
-        {/* Emoji */}
-        {emojiIndex && (
-          <View style={styles.emojiContainer}>
-            <Text style={styles.emoji}>{emojiIndex}</Text>
-          </View>
-        )}
-
-        {/* Trạng thái đọc */}
-        {/* {isRead !== undefined ? (
-          isRead ? (
-            <View style={styles.statusContainer}>
-              <Text style={styles.statusText}>Đã xem</Text>
+    <>
+      <View style={styles.container}>
+        <View style={styles.messageContainer}>
+          {/* Tin nhắn */}
+          {typeIndex === 'unsend' ? (
+            <View style={styles.unsendMessage}>
+              <Text style={styles.unsendText}>{messIndex}</Text>
             </View>
           ) : (
-            <View style={styles.statusContainer}>
-              <Text style={styles.statusText}>✔✔ Đã gửi</Text>
+            <TouchableOpacity
+              style={[
+                styles.messageBox,
+                (typeIndex === 'image' || typeIndex === 'file') &&
+                  styles.mediaMessage,
+              ]}
+              onLongPress={handleLongPress}
+              // onPress={handlePressIcon}
+            >
+              {typeIndex === 'image' ? (
+                <Image style={styles.image} source={{ uri: messIndex }} />
+              ) : typeIndex === 'file' ? (
+                <View style={styles.fileContainer}>
+                  <Text style={styles.fileIcon}>📎</Text>
+                  <Text style={styles.fileText}>
+                    {messIndex.split('/').pop()}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.messageText}>{messIndex}</Text>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {/* Thời gian */}
+          <Text style={styles.time}>{time}</Text>
+
+          {/* Emoji */}
+          {emojiIndex && (
+            <View style={styles.emojiContainer}>
+              <Text style={styles.emoji}>{emojiIndex}</Text>
             </View>
-          )
-        ) : null} */}
+          )}
+
+          {/* Trạng thái đọc */}
+          {/* {isRead !== undefined && !isRecalled ? (
+            <View style={styles.statusContainer}>
+              <Text style={styles.statusText}>
+                {isRead ? "Đã xem" : "✔✔ Đã gửi"}
+              </Text>
+            </View>
+          ) : null} */}
+        </View>
       </View>
-    </View>
+
+      {/* Modal chuyển tiếp tin nhắn */}
+      <ForwardMessageModal
+        visible={forwardModalVisible}
+        onClose={() => setForwardModalVisible(false)}
+        originalMessageId={messageId}
+        senderID={userId}
+        message={messIndex}
+        type={type}
+      />
+    </>
   );
 }
 
@@ -196,16 +247,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   statusContainer: {
-    borderRadius: 10,
-    backgroundColor: 'lightgray',
-    padding: 5,
     marginTop: 5,
-    width: 80,
   },
   statusText: {
-    color: 'white',
+    color: '#999',
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: 'right',
   },
 });
 

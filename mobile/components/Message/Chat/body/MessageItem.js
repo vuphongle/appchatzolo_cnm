@@ -11,30 +11,38 @@ import moment from 'moment';
 import { useNavigation } from '@react-navigation/native';
 import MessageService from '../../../../services/MessageService';
 import { formatDate } from '../../../../utils/formatDate';
-function MessageItem({ avatar, time, message }) {
+import ForwardMessageModal from '../ForwardMessageModal'; // Import the modal component
+
+function MessageItem({ avatar, time, message, messageId, userId, receiverId, showForwardRecall = true }) {
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState(null);
   const [StatusRead, setStatusRead] = useState(false);
+  const [isRecalled, setIsRecalled] = useState(false);
+  const [forwardModalVisible, setForwardModalVisible] = useState(false);
   
-const messageTime = moment(time);
-const displayTime = messageTime.isValid()
-  ? messageTime.format("HH:mm")
-  : moment().format("HH:mm");
+  const messageTime = moment(time);
+  const displayTime = messageTime.isValid()
+    ? messageTime.format("HH:mm")
+    : moment().format("HH:mm");
+
   // Kiểm tra xem tin nhắn có phải là ảnh hay không
-  const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+  const isImageMessage = (url) => {
+    if (typeof url !== 'string') return false;
+    return url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+  };
 
   // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
-  const isFileMessage = (url) =>
-    url.match(
-      /\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/,
-    ) != null;
+  const isFileMessage = (url) => {
+    const extRegex = /\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/i;
+    const s3FileRegex = /^https:\/\/nhom3-cmn-chatappzolo-s3\.s3\.amazonaws\.com\/file/;
+    return url && (extRegex.test(url) || s3FileRegex.test(url));
+  };
+  
 
   // Xác định loại tin nhắn
-  const type = isImageMessage(message)
-    ? 'image'
-    : isFileMessage(message)
-    ? 'file'
-    : 'text';
+  const type = isRecalled ? 'unsend' : 
+               isImageMessage(message) ? 'image' :
+               isFileMessage(message) ? 'file' : 'text';
 
   // Hàm xử lý nhấn vào ảnh
   const handlePressImage = () => {
@@ -44,61 +52,107 @@ const displayTime = messageTime.isValid()
     });
   };
 
+  // Hàm thu hồi tin nhắn
+  const recallMessage = async () => {
+    try {
+      await MessageService.recallMessage(messageId, userId, receiverId);
+      setIsRecalled(true);
+    } catch (error) {
+      console.error('Lỗi khi thu hồi tin nhắn:', error);
+      Alert.alert('Lỗi', 'Không thể thu hồi tin nhắn. Vui lòng thử lại sau.');
+    }
+  };
+
+  // Hàm hiển thị modal chuyển tiếp tin nhắn
+  const forwardMessage = () => {
+    setForwardModalVisible(true);
+  };
+
   // Hàm phản ứng emoji
   const reactMessage = (reaction) => {
     setEmojiIndex(reaction);
   };
 
-  // Hiển thị danh sách emoji
-  const handlePressIcon = () => {
-    Alert.alert('Chọn cảm xúc của bạn:', '', [
-      { text: '❤', onPress: () => reactMessage('❤') },
-      { text: '👍', onPress: () => reactMessage('👍') },
-      { text: '😀', onPress: () => reactMessage('😀') },
-      { text: '😭', onPress: () => reactMessage('😭') },
-      { text: '😡', onPress: () => reactMessage('😡') },
-      { text: 'Thoát', style: 'cancel' },
-    ]);
+  // Hiển thị menu tùy chọn khi nhấn giữ
+  const handleLongPress = () => {
+    if (!showForwardRecall) return;
+    
+    const options = [
+      // { text: '❤', onPress: () => reactMessage('❤') },
+      // { text: '👍', onPress: () => reactMessage('👍') },
+      // { text: '😀', onPress: () => reactMessage('😀') },
+      // { text: '😭', onPress: () => reactMessage('😭') },
+      // { text: '😡', onPress: () => reactMessage('😡') },
+      { text: 'Chuyển tiếp', onPress: forwardMessage },
+      { text: 'Thu hồi', onPress: () => {
+        Alert.alert(
+          'Thu hồi tin nhắn',
+          'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
+          [
+            { text: 'Hủy', style: 'cancel' },
+            { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
+          ]
+        );
+      }}
+    ];
+
+    // Hiển thị Alert với các tùy chọn
+    Alert.alert('Tùy chọn tin nhắn', '', options.map(option => ({
+      text: option.text,
+      onPress: option.onPress,
+      style: option.style
+    })));
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.avatarContainer}>
-        <Image style={styles.avatar} source={{ uri: avatar }} />
-      </View>
-      <View style={styles.messageContainer}>
-        {/* Nội dung tin nhắn */}
-        <TouchableOpacity
-          onLongPress={handlePressIcon}
-          style={[styles.messageBox, type === 'image' && styles.imageMessage]}
-        >
-          {type === 'image' ? (
-            <TouchableOpacity onPress={handlePressImage}>
-              <Image style={styles.image} source={{ uri: message }} />
-            </TouchableOpacity>
-          ) : type === 'file' ? (
-            <View style={styles.fileContainer}>
-              <Text style={styles.fileText}>📎 {message.split('/').pop()}</Text>
+    <>
+      <View style={styles.container}>
+        <View style={styles.avatarContainer}>
+          <Image style={styles.avatar} source={{ uri: avatar }} />
+        </View>
+        <View style={styles.messageContainer}>
+          {/* Nội dung tin nhắn */}
+          <TouchableOpacity
+            onLongPress={handleLongPress}
+            style={[styles.messageBox, type === 'image' && styles.imageMessage]}
+          >
+            {type === 'image' ? (
+              <TouchableOpacity onPress={handlePressImage}>
+                <Image style={styles.image} source={{ uri: message }} />
+              </TouchableOpacity>
+            ) : type === 'file' ? (
+              <View style={styles.fileContainer}>
+                <Text style={styles.fileText}>📎 {message.split('/').pop()}</Text>
+              </View>
+            ) : type === 'unsend' ? (
+              <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>
+            ) : (
+              <Text style={styles.messageText}>{message}</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Thời gian tin nhắn */}
+          <Text style={styles.time}>{displayTime}</Text>
+
+          {/* Emoji phản ứng */}
+          {emojiIndex && (
+            <View style={styles.emojiContainer}>
+              <Text style={styles.emoji}>{emojiIndex}</Text>
             </View>
-          ) : type === 'unsend' ? (
-            <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>
-          ) : (
-            <Text style={styles.messageText}>{message}</Text>
           )}
-        </TouchableOpacity>
-
-        {/* Thời gian tin nhắn */}
-        <Text style={styles.time}>{displayTime}</Text>
-        {/* <Text style={styles.time}> */}
-
-        {/* Emoji phản ứng */}
-        {emojiIndex && (
-          <View style={styles.emojiContainer}>
-            <Text style={styles.emoji}>{emojiIndex}</Text>
-          </View>
-        )}
+        </View>
       </View>
-    </View>
+      
+      {/* Modal chuyển tiếp tin nhắn */}
+      <ForwardMessageModal
+        visible={forwardModalVisible}
+        onClose={() => setForwardModalVisible(false)}
+        originalMessageId={messageId}
+        senderID={userId}
+        message={message}
+        type={type}
+      />
+    </>
   );
 }
 
