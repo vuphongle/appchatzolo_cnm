@@ -1064,12 +1064,7 @@ const MainPage = () => {
                                                     url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql)$/i);
 
                                                 return (
-                                                    <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}
-                                                        onContextMenu={(e) => {
-                                                            e.preventDefault();
-                                                            setShowMenuForMessageId(msg.id);
-                                                        }}
-                                                        onClick={() => setShowMenuForMessageId(null)}>
+                                                    <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}>
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
@@ -1873,7 +1868,7 @@ const MainPage = () => {
                             {error && <div className="error">{error}</div>}
 
                             <div className="action-buttons">
-                                <button className="search-modal" onClick={handleSearchFriend} disabled={loading}>
+                                <button className="search-modal-button" onClick={handleSearchFriend} disabled={loading}>
                                     {loading ? "Đang tìm kiếm..." : "Tìm kiếm"}
                                 </button>
                                 <button className="close-modal" onClick={() => setIsModalOpen(false)}>Hủy</button>
