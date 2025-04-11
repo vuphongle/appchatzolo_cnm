@@ -82,6 +82,58 @@ const MainPage = () => {
     const [isUserChangePWVisible, setIsUserChangePWVisible] = useState(false);
     const [messageInputKey, setMessageInputKey] = useState(Date.now());
 
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState(null);
+    const [audioChunks, setAudioChunks] = useState([]);
+
+    const [invitationCount, setInvitationCount] = useState(0);
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            setMediaRecorder(recorder);
+            setIsRecording(true);
+            const chunks = [];
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            recorder.onstop = async () => {
+                const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                const audioFile = new File([audioBlob], `record-${Date.now()}.webm`, { type: 'audio/webm' });
+
+                // Gửi lên S3 hoặc API upload
+                const url = await S3Service.uploadFile(audioFile); // dùng chung như uploadFile/image
+                const message = {
+                    id: new Date().getTime().toString(),
+                    senderID: MyUser?.my_user?.id,
+                    receiverID: selectedChat.id,
+                    content: url,
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                };
+                sendMessage(message);
+                setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+            };
+
+            recorder.start();
+        } catch (err) {
+            console.error("Lỗi khi truy cập microphone:", err);
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            setIsRecording(false);
+        }
+    };
+
+
 
 
     const handleUserInfoToggle = () => {
@@ -104,6 +156,7 @@ const MainPage = () => {
     const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
     const { sendFriendRequestToReceiver } = useWebSocket();
     const [activeTab, setActiveTab] = useState("chat"); // State quản lý tab
+    const [activeSubTab, setActiveSubTab] = useState("friends");
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isFriendRequestSent, setIsFriendRequestSent] = useState(false);
 
@@ -270,10 +323,14 @@ const MainPage = () => {
             });
     }, []); // Chỉ chạy một lần khi component được mount
 
-    console.log("Messages data là gì:", selectedChat); // Kiểm tra dữ liệu tin nhắn
+    // console.log("Messages data là gì:", selectedChat); // Kiểm tra dữ liệu tin nhắn
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
+            if (incomingMessage.type === "WAITING_APPROVED") {
+                // Cập nhật số lời mời kết bạn chưa đọc
+                setInvitationCount((prev) => prev + (incomingMessage.count || 1));
+            }
             // Tin nhắn socket đồng ý kết bạn
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.senderID);
@@ -513,6 +570,11 @@ const MainPage = () => {
     };
 
     const handleFriendTab = () => {
+        if (invitationCount > 0) {
+            // Nếu có lời mời kết bạn chưa đọc, chuyển sang tab bạn bè
+            setActiveSubTab("requests");
+            setInvitationCount(0);
+        }
         setActiveTab("contacts");
         setSelectedChat(null); // Đặt lại selectedChat khi chuyển sang tab bạn bè
     }
@@ -805,33 +867,24 @@ const MainPage = () => {
                                                     <i className="fas fa-paperclip" style={{ fontSize: "24px", color: '#47546c' }}></i> {/* Biểu tượng đính kèm từ Font Awesome */}
                                                 </span>
                                             </button>
-                                            <button title="Record">
-                                                <span><i className="fas fa-microphone" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
+                                            <button
+                                                title={isRecording ? "Dừng ghi âm" : "Bắt đầu ghi âm"}
+                                                onClick={isRecording ? stopRecording : startRecording}
+                                            >
+                                                <span>
+                                                    <i
+                                                        className="fas fa-microphone"
+                                                        style={{
+                                                            fontSize: "24px",
+                                                            color: isRecording ? 'red' : '#47546c'
+                                                        }}
+                                                    ></i>
+                                                </span>
                                             </button>
                                             <button title="Thumbs Up">
                                                 <span><i className="fas fa-volume-up" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
                                             </button>
                                         </div>
-                                        {/* <div className="input-container">
-                                            <input
-                                                type="text"
-                                                className="chat-input"
-                                                value={messageInput}
-                                                onChange={(e) => setMessageInput(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") {
-                                                        handleSendMessage();
-                                                    }
-                                                }}
-                                                placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
-                                            />
-                                            <button
-                                                className="icon-button"
-                                                onClick={toggleEmojiPicker}
-                                            >
-                                                <i className="fas fa-smile" style={{ color: 'gray', fontSize: '20px' }}></i>
-                                            </button>
-                                        </div> */}
                                         <div className="input-container">
                                             <div
                                                 key={messageInputKey}
@@ -1270,6 +1323,7 @@ const MainPage = () => {
                     <i className="icon">
                         <img src="/MainPage/friends.png" alt="friends Icon" />
                     </i>
+                    {invitationCount > 0 && <span className="badge">{invitationCount}</span>}
                 </div>
                 <div className="nav-item settings" onClick={toggleSettingsMenu}>
                     <i className="icon">
@@ -1399,6 +1453,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-friendlist"
                                         aria-selected="true"
+                                        onClick={() => setActiveSubTab("friends")}
                                     >
                                         <i className="fas fa-user-friends me-2"></i>
                                         Danh sách bạn bè
@@ -1412,6 +1467,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-grouplist"
                                         aria-selected="false"
+                                        onClick={() => setActiveSubTab("groups")}
                                     >
                                         <i className="fas fa-users me-2"></i>
                                         Danh sách nhóm
@@ -1425,6 +1481,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-friend"
                                         aria-selected="false"
+                                        onClick={() => setActiveSubTab("requests")}
                                     >
                                         <i className="fas fa-user-plus me-2"></i>
                                         Lời mời kết bạn
@@ -1438,6 +1495,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-group"
                                         aria-selected="false"
+                                        onClick={() => setActiveSubTab("requestsGroup")}
                                     >
                                         <i className="fas fa-users me-2"></i>
                                         Lời mời vào nhóm
@@ -1530,6 +1588,14 @@ const MainPage = () => {
                 <div className="loading-overlay">
                     <div className="spinner"></div>
                     <p className="loading-text">Đang đăng xuất...</p>
+                </div>
+            )}
+
+            {/* Hiển thị đang ghi âm */}
+            {isRecording && (
+                <div className="recording-modal">
+                    <i className="fas fa-microphone" style={{ color: "red", fontSize: "32px", marginRight: "10px" }}></i>
+                    <span>Đang ghi âm...</span>
                 </div>
             )}
         </div>
