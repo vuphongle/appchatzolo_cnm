@@ -952,6 +952,7 @@ const MainPage = () => {
                                                                         setShowMenuForMessageId(null);
                                                                         try {
                                                                             await MessageService.recallMessage(msg.id, MyUser.my_user.id, selectedChat.id);
+                                                                            console.log("id message là :", msg.id);
                                                                             // Cập nhật lại danh sách tin nhắn
                                                                             setChatMessages((prev) => prev.map((m) =>
                                                                                 m.id === msg.id ? { ...m, content: "Tin nhắn đã được thu hồi" } : m

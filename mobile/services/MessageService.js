@@ -35,7 +35,7 @@ const MessageService = {
 
   // Phương thức xóa lời mời
   deleteInvitation: (senderID, receiverID) => {
-    return axios.delete(`${IPV4}/invitations/${senderID}/${receiverID}`);
+    return axios.delete(`${IPV4}/messages/invitations/${senderID}/${receiverID}`);
   },
   getUnreadMessages: async (receiverID, senderID) => {
     try {
@@ -51,7 +51,7 @@ const MessageService = {
   getUnreadMessagesCountForAllFriends: async (receiverID) => {
     try {
       const response = await axios.get(
-        `${IPV4}/messages/unread-count/${receiverID}`,
+        `${IPV4}/messages/messages/unread-count/${receiverID}`,
       );
       return response.data;
     } catch (error) {
@@ -62,7 +62,7 @@ const MessageService = {
   //lưu trạng thái đánh dấu tin nhắn là "Đã đọc"
   savereadMessages: async (receiverID, senderID) => {
     try {
-      await axios.put(`${IPV4}/messages/read/${receiverID}/${senderID}`);
+      await axios.put(`${IPV4}/messages/messages/read/${receiverID}/${senderID}`);
     } catch (error) {
       console.error('Lỗi khi cập nhật trạng thái tin nhắn đã đọc:', error);
     }
@@ -78,6 +78,30 @@ const MessageService = {
       console.error('Error fetching unread messages:', error);
       return [];
     }
+  },
+    // Thu hồi tin nhắn
+    recallMessage: async (messageId, userId, receiverId) => {
+      try {
+          const response = await axios.delete(`${IPV4}/messages/recall/${messageId}/${userId}/${receiverId}`);
+          return response.data;
+      } catch (error) {
+          console.error("Lỗi khi thu hồi tin nhắn:", error.response || error);
+          throw error.response ? error.response.data : error;
+      }
+  },
+  // Chia sẻ tin nhắn
+  forwardMessage: async (originalMessageId, senderID, receiverIDs) => {
+      try {
+          const response = await axios.post(`${IPV4}/messages/forward`, {
+              originalMessageId,
+              senderID,
+              receiverIDs
+          });
+          return response.data;
+      } catch (error) {
+          console.error("Lỗi khi chia sẻ tin nhắn:", error.response || error);
+          throw error.response ? error.response.data : error;
+      }
   },
 };
 

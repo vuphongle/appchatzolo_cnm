@@ -47,23 +47,30 @@ const S3Service = {
     }
   },
 
-uploadFile: async (file) => {
-  // Tạo tên file an toàn - chỉ sử dụng ký tự Latin cơ bản, số và dấu gạch dưới
-  const timestamp = Date.now();
-  const safeFileName = `file_${timestamp}`;
+  uploadFile: async (file) => {
+    const timestamp = Date.now();
   
-  // Lấy phần mở rộng từ tên file gốc (nếu có)
-  const fileExtension = file.fileName 
-    ? file.fileName.split('.').pop().toLowerCase() 
-    : file.uri.split('.').pop().toLowerCase();
+    // Lấy tên gốc hoặc tạo tên mặc định
+    let originalName = file.fileName || `file_${timestamp}`;
+    // let fileExtension = 'doc'; // fallback mặc định
   
-  // Tạo tên file hoàn chỉnh và an toàn
-  const finalFileName = `${safeFileName}.${fileExtension}`;
+    // // Nếu tên gốc không có đuôi, thêm luôn đuôi mặc định
+    // if (!originalName.includes('.')) {
+    //   originalName += '.doc';
+    // }
   
-  // Xác định đúng mimeType dựa trên phần mở rộng
-  let mimeType = file.type;
-  if (!mimeType) {
-    // Xác định mimeType dựa trên phần mở rộng phổ biến
+    // Tách đuôi file
+    fileExtension = originalName.split('.').pop().toLowerCase();
+  
+    // Làm sạch tên file (bỏ phần đuôi và thay ký tự đặc biệt)
+    const sanitizedBaseName = originalName
+      .replace(/\.[^/.]+$/, '') // bỏ phần đuôi
+      .replace(/[^a-zA-Z0-9-_]/g, '_'); // thay ký tự đặc biệt bằng "_"
+  
+    // Tên file cuối cùng
+    const finalFileName = `${timestamp}.${file.name}`;
+  
+    // Map mime types
     const mimeTypes = {
       'jpg': 'image/jpeg',
       'jpeg': 'image/jpeg',
@@ -73,40 +80,44 @@ uploadFile: async (file) => {
       'doc': 'application/msword',
       'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     };
-    mimeType = mimeTypes[fileExtension] || `image/${fileExtension}`;
-  }
-
-  const formData = new FormData();
-  formData.append('file', {
-    uri: Platform.OS === 'android' ? file.uri : file.uri.replace('file://', ''),
-    name: finalFileName,  // Sử dụng tên file an toàn
-    type: mimeType,
-  });
-
-  console.log('Uploading file:', {
-    uri: file.uri,
-    safeName: finalFileName,
-    type: mimeType
-  });
-
-  try {
-    const response = await axios.post(`${IPV4}/s3/file`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Accept': 'application/json',
-      },
+    const mimeType = file.type || mimeTypes[fileExtension] || 'application/octet-stream';
+  
+    // FormData
+    const formData = new FormData();
+    formData.append('file', {
+      uri: Platform.OS === 'android' ? file.uri : file.uri.replace('file://', ''),
+      name: finalFileName,
+      type: mimeType,
     });
-    console.log('Upload success:', response.data);
-    return response.data.url; // Trả về URL ảnh mới
-  } catch (error) {
-    console.error('Upload failed:', error);
-    if (error.response) {
-      console.error('Error status:', error.response.status);
-      console.error('Error data:', error.response.data);
+  
+    console.log('Uploading file:', {
+      originalName,
+      finalFileName,
+      mimeType,
+      uri: file.uri
+    });
+  
+    try {
+      const response = await axios.post(`${IPV4}/s3/file`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
+        },
+        transformRequest: (data) => data,
+      });
+      console.log('Upload success:', response.data);
+      return response.data.url;
+    } catch (error) {
+      console.error('Upload failed:', error);
+      if (error.response) {
+        console.error('Error status:', error.response.status);
+        console.error('Error data:', error.response.data);
+      }
+      throw error.response ? error.response.data : error;
     }
-    throw error.response ? error.response.data : error;
   }
-},
+  
+  
 };
 
 export default S3Service;

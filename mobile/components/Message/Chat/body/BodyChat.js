@@ -35,6 +35,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const { height: windowHeight } = Dimensions.get('window');
   const [selectedImages, setSelectedImages] = useState([]); // Lưu trữ các ảnh đã chọn
   const [selectedFiles, setSelectedFiles] = useState([]); // Lưu trữ các file đã chọn
+  const [localMessages, setLocalMessages] = useState([]);
+  const [refreshMessages, setRefreshMessages] = useState(false);
 
   const { messages, sendMessage } = useWebSocket(userId, receiverID);
   const scrollViewRef = useRef(null);
@@ -49,55 +51,86 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     return () => setIsMounted(false);
   }, []);
 
-  // useEffect(() => {
-  //   if (!userId || !receiverID) return;
+  // Effect để cập nhật localMessages khi messages thay đổi
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      setLocalMessages(messages);
+    }
+  }, [messages]);
 
-  //   // Lấy tất cả tin nhắn giữa người gửi và người nhận
-  //   MessageService.get(
-  //     `/messages/messages?senderID=${userId}&receiverID=${receiverID}`,
-  //   )
-  //     .then((data) => {
-  //       // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
-  //       const sortedMessages = data.sort(
-  //         (a, b) => new Date(a.sendDate) - new Date(b.sendDate),
-  //       );
+  // Effect để load lại tin nhắn khi có tin nhắn bị xóa
+  useEffect(() => {
+    if (refreshMessages && userId && receiverID) {
+      // Tải lại tin nhắn từ server
+      fetchMessages();
+      setRefreshMessages(false);
+    }
+  }, [refreshMessages, userId, receiverID]);
 
-  //       // Cộng 7 giờ vào sendDate của mỗi tin nhắn
-  //       const updatedMessages = sortedMessages.map((msg) => ({
-  //         ...msg,
-  //         sendDate: moment(msg.sendDate)
-  //           .add(7, 'hours')
-  //           .format('YYYY-MM-DDTHH:mm:ssZ'), // Cộng 7 giờ vào sendDate
-  //       }));
+  // Hàm để tải lại tin nhắn từ server
+  const fetchMessages = async () => {
+    try {
+      const data = await MessageService.get(
+        `/messages/messages?senderID=${userId}&receiverID=${receiverID}`
+      );
+      
+      // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+      const sortedMessages = data.sort(
+        (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+      );
 
-  //       // Lọc các tin nhắn chưa đọc
-  //       const unreadMessages = updatedMessages.filter(
-  //         (msg) => msg.isRead === false,
-  //       );
+      // Cập nhật localMessages
+      setLocalMessages(sortedMessages);
+      
+      // Đánh dấu tin nhắn là đã đọc
+      const unreadMessages = sortedMessages.filter(
+        (msg) => msg.isRead === false && msg.senderID === receiverID
+      );
+      
+      if (unreadMessages.length > 0) {
+        await MessageService.savereadMessages(userId, receiverID);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
 
-  //       // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
-  //       if (unreadMessages.length > 0) {
-  //         // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
-  //         MessageService.savereadMessages(userId, receiverID).catch((error) => {
-  //           console.error('Lỗi khi đánh dấu tin nhắn là đã đọc', error);
-  //         });
-  //       } else {
-  //         console.log('Không có tin nhắn chưa đọc');
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       console.error('Error fetching messages:', err);
-  //     });
-  // }, [receiverID, userId]);
+  // Triển khai hàm xử lý khi tin nhắn bị xóa
+  const handleMessageDeleted = (messageId) => {
+    // Lọc ra tin nhắn bị xóa khỏi localMessages
+    setLocalMessages(prevMessages => 
+      prevMessages.filter(msg => msg.id !== messageId)
+    );
+    
+    // Đánh dấu cần tải lại tin nhắn
+    setRefreshMessages(true);
+  };
+
+  useEffect(() => {
+    if (!userId || !receiverID) return;
+
+    // Tải tin nhắn ban đầu
+    fetchMessages();
+    
+    // Thiết lập interval để tải lại tin nhắn định kỳ (ví dụ: mỗi 30 giây)
+    const intervalId = setInterval(() => {
+      if (isMounted) {
+        fetchMessages();
+      }
+    }, 100);
+
+    return () => clearInterval(intervalId);
+  }, [receiverID, userId]);
 
   useEffect(() => {
     if (scrollViewRef.current) {
       // Add a small delay to ensure the message is rendered before scrolling
       setTimeout(() => {
-        scrollViewRef.current.scrollToEnd({ animated: true });
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+
       }, 100);
     }
-  }, [messages]);
+  }, [localMessages]);
 
   const handleImageUpload = async () => {
     if (isMounted) {
@@ -207,6 +240,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         // Upload all files
         for (let file of selectedFiles) {
           const fileUrl = await S3Service.uploadFile(file); // Upload file to S3
+          console.log('url of file :', fileUrl);
           uploadedFiles.push(fileUrl);
         }
 
@@ -222,7 +256,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           };
 
           // Send message through WebSocket or your API
-          sendMessage(url, receiverID);
+          sendMessage(message.content, receiverID);
         }
         setSelectedFiles([]); // Reset files
       } catch (error) {
@@ -255,6 +289,11 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     if (showEmojiPicker) {
       setShowEmojiPicker(false);
     }
+    
+    // Đánh dấu cần tải lại tin nhắn sau khi gửi
+    setTimeout(() => {
+      setRefreshMessages(true);
+    }, 500);
   };
 
   const removeImage = (index) => {
@@ -302,12 +341,12 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           let lastDate = null;
 
           // Tìm tin nhắn cuối cùng của bạn
-          const lastMyMessageIndex = messages
+          const lastMyMessageIndex = localMessages
             .map((msg, idx) => (msg.senderID === userId ? idx : -1))
             .filter((idx) => idx !== -1)
             .pop(); // Lấy index cuối cùng của tin nhắn bạn gửi
 
-          return messages.map((message, index) => {
+          return localMessages.map((message, index) => {
             const isMyMessage = message.senderID === userId;
             const messageDate = new Date(message.sendDate);
 
@@ -357,10 +396,13 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                   <MyMessageItem
                     time={formatDate(message.sendDate)}
                     message={message.content}
-                    receiverID={receiverID}
+                    messageId={message.id}
+                    userId={userId}
+                    receiverId={receiverID}
+                    // onDeleteMessage={handleMessageDeleted}
                     // isRead={
                     //   index === lastMyMessageIndex ? message.isRead : undefined
-                    // } // Chỉ thêm isRead nếu là tin nhắn cuối cùng của bạn
+                    // } 
                   />
                 ) : (
                   <MessageItem
@@ -368,6 +410,10 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                     name={name}
                     time={formatDate(message.sendDate)}
                     message={message.content}
+                    messageId={message.id}
+                    userId={userId}
+                    receiverId={receiverID}
+                    // onDeleteMessage={handleMessageDeleted}
                   />
                 )}
               </View>
