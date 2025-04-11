@@ -1005,3 +1005,55 @@ button {
     z-index: 1; /* Để overlay ở phía trước modal */
     cursor: default;
 }
+
+/* ------------------------------ */
+.chat-input {
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 8px;
+    min-height: 40px;
+    max-height: 100px;
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  .file-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #d1d8e0;
+    border-radius: 16px;
+    padding: 2px 5px;
+    margin-right: 5px;
+    margin-bottom: 2px;
+    font-size: 14px;
+    height: 35px;
+  }
+  
+  .remove-file {
+    margin: 0px;
+    margin-left: 5px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    height: 22px;
+  }
+
+  .remove-file:hover {
+    background-color: #0045ad;
+  }
+
+  .chat-input:empty:before {
+    content: attr(data-placeholder);
+    color: gray;
+    pointer-events: none;
+    position: absolute;
+    left: 8px;
+    top: 8px;
+}
+
+  

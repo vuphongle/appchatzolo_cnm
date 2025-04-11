@@ -30,6 +30,19 @@ const FriendInfoModal = ({
     console.log("friendIds", friendIds);
     console.log("user", user.id);
 
+    const formatPhoneNumber = (phone) => {
+        // Giữ nguyên dấu +
+        const countryCode = phone.startsWith('+') ? '+84' : '';
+        const numberOnly = phone.replace(/^\+84/, ''); // loại bỏ +84 nếu có
+
+        // Chia phần còn lại thành nhóm 3-3-3
+        const part1 = numberOnly.slice(0, 3);
+        const part2 = numberOnly.slice(3, 6);
+        const part3 = numberOnly.slice(6);
+
+        return `${countryCode} ${part1} ${part2} ${part3}`.trim();
+    };
+
     return (
         <div className="overlay" onClick={closeAllModal}>
             <div className="modal-e" onClick={(e) => e.stopPropagation()}>
