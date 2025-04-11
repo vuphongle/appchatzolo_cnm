@@ -43,6 +43,14 @@ const FriendInfoModal = ({
         return `${countryCode} ${part1} ${part2} ${part3}`.trim();
     };
 
+    const formatDate = (isoDate) => {
+        const date = new Date(isoDate);
+        const year = date.getFullYear();
+        const month = `${date.getMonth() + 1}`.padStart(2, '0'); // cộng 1 vì getMonth() từ 0-11
+        const day = `${date.getDate()}`.padStart(2, '0');
+        return `${day}, tháng ${month}, ${year}`;
+    };
+
     return (
         <div className="overlay" onClick={closeAllModal}>
             <div className="modal-e" onClick={(e) => e.stopPropagation()}>
@@ -90,8 +98,8 @@ const FriendInfoModal = ({
 
                         <div className="personal-info">
                             <p>Giới tính: {user.gender}</p>
-                            <p>Ngày sinh: {user.dob}</p>
-                            <p>Điện thoại: {user.phoneNumber}</p>
+                            <p>Ngày sinh: {formatDate(user.dob)}</p>
+                            <p>Điện thoại: {formatPhoneNumber(user.phoneNumber)}</p>
                         </div>
 
                         <div className="list-container">
