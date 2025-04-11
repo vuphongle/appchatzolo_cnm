@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { toast } from 'react-toastify'; // Thêm vào import react-toastify
+import showToast from '../utils/AppUtils';
 
 const API_BASE_URL = 'http://localhost:8080/s3';
 
@@ -29,10 +29,10 @@ const S3Service = {
 
             // Kiểm tra lỗi 400 (vượt quá kích thước)
             if (error.response && error.response.status === 400) {
-                toast.error("Lỗi: Kích thước file vượt quá 20MB.");
+                showToast("Kích thước file vượt quá 20MB.", "error")
             } else {
                 // Thông báo lỗi chung nếu không phải lỗi 400
-                toast.error(`Lỗi: ${error.response ? error.response.data.message : "Có lỗi xảy ra khi tải lên."}`);
+                showToast("Kích thước file vượt quá 20MB.", "error")
             }
 
             throw error.response ? error.response.data : error;
@@ -51,10 +51,10 @@ const S3Service = {
         } catch (error) {
             // Kiểm tra lỗi 400 (vượt quá kích thước)
             if (error.response && error.response.status === 400) {
-                toast.error("Lỗi: Kích thước file vượt quá 20MB.");
+                showToast("Kích thước file vượt quá 20MB.", "error")
             } else {
                 // Thông báo lỗi chung nếu không phải lỗi 400
-                toast.error(`Lỗi: ${error.response ? error.response.data.message : "Kích thước file vượt quá 20MB."}`);
+                showToast("Kích thước file vượt quá 20MB.", "error")
             }
             throw error.response ? error.response.data : error;
         }
@@ -72,10 +72,10 @@ const S3Service = {
         } catch (error) {
             // Kiểm tra lỗi 400 (vượt quá kích thước)
             if (error.response && error.response.status === 400) {
-                toast.error("Lỗi: Kích thước file vượt quá 20MB.");
+                showToast("Kích thước file vượt quá 20MB.", "error")
             } else {
                 // Thông báo lỗi chung nếu không phải lỗi 400
-                toast.error(`Lỗi: ${error.response ? error.response.data.message : "Kích thước file vượt quá 20MB."}`);
+                showToast("Kích thước file vượt quá 20MB.", "error")
             }
             throw error.response ? error.response.data : error;
         }

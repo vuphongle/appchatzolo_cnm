@@ -22,7 +22,7 @@ import { se } from "date-fns/locale";
 import CreateGroupModal from "./CreateGroupModal";
 import FriendInfoModal from "./FriendInfoModal";
 import ChangePasswordModal from "./ChangePasswordModal";
-
+import { v4 as uuidv4 } from 'uuid';
 
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
@@ -188,6 +188,59 @@ const MainPage = () => {
     const navigate = useNavigate();
     const [isUserInfoVisible, setIsUserInfoVisible] = useState(false);
     const [isUserChangePWVisible, setIsUserChangePWVisible] = useState(false);
+    const [messageInputKey, setMessageInputKey] = useState(Date.now());
+
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState(null);
+    const [audioChunks, setAudioChunks] = useState([]);
+
+    const [invitationCount, setInvitationCount] = useState(0);
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            setMediaRecorder(recorder);
+            setIsRecording(true);
+            const chunks = [];
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            recorder.onstop = async () => {
+                const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                const audioFile = new File([audioBlob], `record-${Date.now()}.webm`, { type: 'audio/webm' });
+
+                // Gửi lên S3 hoặc API upload
+                const url = await S3Service.uploadFile(audioFile); // dùng chung như uploadFile/image
+                const message = {
+                    id: new Date().getTime().toString(),
+                    senderID: MyUser?.my_user?.id,
+                    receiverID: selectedChat.id,
+                    content: url,
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                };
+                sendMessage(message);
+                setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+            };
+
+            recorder.start();
+        } catch (err) {
+            console.error("Lỗi khi truy cập microphone:", err);
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            setIsRecording(false);
+        }
+    };
+
 
     const handleUserInfoToggle = () => {
         setIsUserInfoVisible(true);
@@ -209,6 +262,7 @@ const MainPage = () => {
     const { sendMessage, onMessage } = useWebSocket(); // Lấy hàm gửi tin nhắn từ context
     const { sendFriendRequestToReceiver } = useWebSocket();
     const [activeTab, setActiveTab] = useState("chat"); // State quản lý tab
+    const [activeSubTab, setActiveSubTab] = useState("friends");
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isFriendRequestSent, setIsFriendRequestSent] = useState(false);
 
@@ -243,8 +297,6 @@ const MainPage = () => {
         };
         updateUserInfo(updatedUserData);
     };
-
-    // console.log("Friend list", friendList);
 
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
@@ -364,29 +416,6 @@ const MainPage = () => {
         fetchUnreadMessagesCountForAllFriends();
     }, [MyUser]);
 
-    // useEffect(() => {
-    //     const unsubscribe = onMessage((message) => {
-    //         if (message.type === "USER_STATUS_UPDATE") {
-    //             setFriends((prevFriends) =>
-    //                 prevFriends.map((friend) =>
-    //                     friend.id === message.userId ? { ...friend, isOnline: message.isOnline } : friend
-    //                 )
-    //             );
-
-    //             if (selectedChat && selectedChat.id === message.userId) {
-    //                 setSelectedChat((prevChat) => ({
-    //                     ...prevChat,
-    //                     isOnline: message.isOnline,
-    //                 }));
-    //             }
-    //         }
-    //     });
-
-    //     return () => {
-    //         unsubscribe(); // Hủy lắng nghe khi unmount
-    //     };
-    // }, [selectedChat, onMessage]);
-
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
@@ -435,8 +464,6 @@ const MainPage = () => {
             });
     }, [selectedChat, MyUser?.my_user?.id]);  // Khi selectedChat hoặc MyUser thay đổi
 
-
-
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
     useEffect(() => {
@@ -453,7 +480,7 @@ const MainPage = () => {
             });
     }, []); // Chỉ chạy một lần khi component được mount
 
-    console.log("Messages data là gì:", selectedChat); // Kiểm tra dữ liệu tin nhắn
+    // console.log("Messages data là gì:", selectedChat); // Kiểm tra dữ liệu tin nhắn
 
 
 
@@ -479,68 +506,117 @@ const MainPage = () => {
                 );
                 return; // Kết thúc xử lý cho RECALL_MESSAGE
             }
-
-            if (incomingMessage.type === "CHAT") {
-                const msg = incomingMessage.message;
-
-                // Nếu cuộc trò chuyện đang mở là đúng chiều người gửi/nhận
-                if (
-                    selectedChat &&
-                    (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id)
-                ) {
-                    setChatMessages((prev) =>
-                        [...prev, msg].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
-                    );
-                } else {
-                    // Nếu không phải, tăng unread
-                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                        if (count.friendId === msg.senderID) {
-                            return {
-                                ...count,
-                                unreadCount: count.unreadCount + 1,
-                            };
-                        }
-                        return count;
-                    });
-                    setUnreadMessagesCounts(updatedUnreadCounts);
-                }
+            if (incomingMessage.type === "WAITING_APPROVED") {
+                // Cập nhật số lời mời kết bạn chưa đọc
+                setInvitationCount((prev) => prev + (incomingMessage.count || 1));
             }
-
-
-            // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+            // Tin nhắn socket đồng ý kết bạn
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
-                updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+                updateFriendList(incomingMessage.senderID);
 
-                // Kiểm tra nếu người gửi không phải là selectedChat
-                if (incomingMessage.senderID !== selectedChat?.id) {
-                    // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
-                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                        if (count.friendId === incomingMessage.senderID) {
-                            return {
-                                ...count,
-                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
-                            };
+                if (incomingMessage.type === "CHAT") {
+                    const msg = incomingMessage.message;
+
+                    // Nếu cuộc trò chuyện đang mở là đúng chiều người gửi/nhận
+                    if (
+                        selectedChat &&
+                        (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id)
+                    ) {
+                        setChatMessages((prev) =>
+                            [...prev, msg].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
+                        );
+                    } else {
+                        // Nếu không phải, tăng unread
+                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                            if (count.friendId === msg.senderID) {
+                                return {
+                                    ...count,
+                                    unreadCount: count.unreadCount + 1,
+                                };
+                            }
+                            return count;
+                        });
+                        setUnreadMessagesCounts(updatedUnreadCounts);
+                    }
+                }
+
+
+                // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+                if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
+                    updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+
+                    // Kiểm tra nếu người gửi không phải là selectedChat
+                    if (incomingMessage.senderID !== selectedChat?.id) {
+                        // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
+                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                            if (count.friendId === incomingMessage.senderID) {
+                                return {
+                                    ...count,
+                                    unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
+                                };
+                            }
+                            return count;
+                        });
+                        setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                    } else {
+                        // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
+                        const validSendDate = moment(incomingMessage.sendDate).isValid()
+                            ? moment(incomingMessage.sendDate).toISOString()
+                            : new Date().toISOString();
+
+                        // Cập nhật tin nhắn mới vào chatMessages
+                        setChatMessages((prevMessages) => [
+                            ...prevMessages,
+                            { ...incomingMessage, sendDate: validSendDate },
+                        ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                        // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
+                        if (incomingMessage.isRead === false) {
+                            MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                                .then(() => {
+                                    // Cập nhật trạng thái tin nhắn là đã đọc
+                                    setChatMessages((prevMessages) =>
+                                        prevMessages.map((msg) =>
+                                            msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
+                                        )
+                                    );
+
+                                    // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
+                                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                        if (count.friendId === selectedChat.id) {
+                                            return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
+                                        }
+                                        return count;
+                                    });
+                                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                                    // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
+
+                                })
+                                .catch((error) => {
+                                    console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                                });
                         }
-                        return count;
-                    });
-                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                } else {
-                    // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
+                    }
+                }
+
+                // Tin nhắn bình thường
+                if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
+                    // Cập nhật tin nhắn mới
                     const validSendDate = moment(incomingMessage.sendDate).isValid()
                         ? moment(incomingMessage.sendDate).toISOString()
                         : new Date().toISOString();
 
-                    // Cập nhật tin nhắn mới vào chatMessages
+                    // Cập nhật tin nhắn vào chatMessages
                     setChatMessages((prevMessages) => [
                         ...prevMessages,
                         { ...incomingMessage, sendDate: validSendDate },
                     ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
 
-                    // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
+                    // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
                     if (incomingMessage.isRead === false) {
                         MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
                             .then(() => {
-                                // Cập nhật trạng thái tin nhắn là đã đọc
+                                // Cập nhật trạng thái của tin nhắn trong chatMessages
                                 setChatMessages((prevMessages) =>
                                     prevMessages.map((msg) =>
                                         msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
@@ -555,79 +631,30 @@ const MainPage = () => {
                                     return count;
                                 });
                                 setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                                // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
-
                             })
                             .catch((error) => {
                                 console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
                             });
                     }
-                }
-            }
-
-            // Tin nhắn bình thường
-            if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
-                // Cập nhật tin nhắn mới
-                const validSendDate = moment(incomingMessage.sendDate).isValid()
-                    ? moment(incomingMessage.sendDate).toISOString()
-                    : new Date().toISOString();
-
-                // Cập nhật tin nhắn vào chatMessages
-                setChatMessages((prevMessages) => [
-                    ...prevMessages,
-                    { ...incomingMessage, sendDate: validSendDate },
-                ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
-
-                // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
-                if (incomingMessage.isRead === false) {
-                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
-                        .then(() => {
-                            // Cập nhật trạng thái của tin nhắn trong chatMessages
-                            setChatMessages((prevMessages) =>
-                                prevMessages.map((msg) =>
-                                    msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
-                                )
-                            );
-
-                            // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
-                            const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                                if (count.friendId === selectedChat.id) {
-                                    return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
-                                }
-                                return count;
-                            });
-                            setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                        })
-                        .catch((error) => {
-                            console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                } else {
+                    // Tăng số lượng tin nhắn chưa đọc nếu tin nhắn không thuộc cuộc trò chuyện đã chọn
+                    if (incomingMessage.isRead === false) {
+                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                            if (count.friendId === incomingMessage.senderID) {
+                                return {
+                                    ...count,
+                                    unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
+                                };
+                            }
+                            return count;
                         });
+                        setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                    }
                 }
-            } else {
-                // Tăng số lượng tin nhắn chưa đọc nếu tin nhắn không thuộc cuộc trò chuyện đã chọn
-                if (incomingMessage.isRead === false) {
-                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                        if (count.friendId === incomingMessage.senderID) {
-                            return {
-                                ...count,
-                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
-                            };
-                        }
-                        return count;
-                    });
-                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                }
-            }
-        });
+            });
 
         return () => unsubscribe(); // Hủy lắng nghe khi component unmount
     }, [selectedChat, unreadMessagesCounts, onMessage]);
-
-
-
-
-
-
-
 
     //cuộn xuống tin nhắn mới nhất
     useEffect(() => {
@@ -655,109 +682,105 @@ const MainPage = () => {
         const progress = document.getElementById('uploadProgress');
         const status = document.getElementById('status');
 
-        if (messageInput.trim() === "" && selectedFiles.length === 0 && selectedImages.length === 0) return; // Nếu không có nội dung và không có file
+        const textContent = messageInputRef.current?.innerText.trim();
 
-        // Xử lý ảnh đã chọn
-        if (selectedImages.length > 0) {
+        if (!textContent && attachedFiles.length === 0) return;
+
+
+        const isFileNameOnly = attachedFiles.some(file => {
+            return file.name === textContent || textContent.includes(file.name);
+        });
+
+
+        // Xử lý file là ảnh (image/*)
+        const imageFiles = attachedFiles.filter(file => file.type.startsWith("image/"));
+        const otherFiles = attachedFiles.filter(file => !file.type.startsWith("image/"));
+
+        // Upload và gửi ảnh
+        if (imageFiles.length > 0) {
             try {
                 const uploadedImages = [];
-                // Tải lên tất cả các ảnh
-                for (let file of selectedImages) {
-                    const fileUrl = await S3Service.uploadImage(file); // Tải ảnh lên S3
+                for (let file of imageFiles) {
+                    const fileUrl = await S3Service.uploadImage(file);
                     uploadedImages.push(fileUrl);
                 }
 
-                // Gửi tin nhắn cho mỗi ảnh
                 for (let url of uploadedImages) {
                     const message = {
-                        id: new Date().getTime().toString(),
+                        id: uuidv4(),
                         senderID: MyUser?.my_user?.id,
                         receiverID: selectedChat.id,
-                        content: url, // Nội dung là URL của ảnh đã tải lên
+                        content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
                     };
-
-                    // Gửi tin nhắn qua WebSocket hoặc API của bạn
                     sendMessage(message);
-
-                    // Cập nhật tin nhắn vào danh sách chat
-                    setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                    setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
                 }
-                setSelectedImages([]); // Reset images
             } catch (error) {
                 console.error("Upload image failed", error);
                 return;
             }
         }
 
-        // Xử lý các tệp đã chọn
-        if (selectedFiles.length > 0) {
+        // Upload và gửi file thường
+        if (otherFiles.length > 0) {
             try {
                 const uploadedFiles = [];
-                // Tải lên tất cả các tệp
-                for (let file of selectedFiles) {
-                    const fileUrl = await S3Service.uploadFile(file); // Tải tệp lên S3
+                for (let file of otherFiles) {
+                    const fileUrl = await S3Service.uploadFile(file);
                     uploadedFiles.push(fileUrl);
                 }
 
-                // Gửi tin nhắn cho mỗi tệp
                 for (let url of uploadedFiles) {
                     const message = {
-                        id: new Date().getTime().toString(),
+                        id: uuidv4(),
                         senderID: MyUser?.my_user?.id,
                         receiverID: selectedChat.id,
-                        content: url, // Nội dung là URL của tệp đã tải lên
+                        content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
                     };
-
-                    // Gửi tin nhắn qua WebSocket hoặc API của bạn
                     sendMessage(message);
-
-                    // Cập nhật tin nhắn vào danh sách chat
-                    setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
-
+                    setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
                 }
-                setSelectedFiles([]);
             } catch (error) {
                 console.error("Upload file failed", error);
                 return;
             }
         }
 
-        //Xử lý tin nhắn văn bản nếu có
-        if (messageInput.trim()) {
-            //Loại bỏ tên file nếu có trong tin nhắn
-            const textMessage = messageInput.replace(/(?:https?|ftp):\/\/[\n\S]+|(\S+\.\w{3,4})/g, "").trim();
-
-            if (textMessage === "") {
-                setMessageInput("");
-                return
-            }; // Nếu tin nhắn chỉ chứa URL hoặc tên file
-
+        // Gửi tin nhắn văn bản nếu có
+        if (textContent && !isFileNameOnly) {
             const message = {
-                id: new Date().getTime().toString(),
+                id: uuidv4(),
                 senderID: MyUser?.my_user?.id,
                 receiverID: selectedChat.id,
-                content: textMessage, // Nội dung tin nhắn là văn bản
+                content: textContent,
                 sendDate: new Date().toISOString(),
                 isRead: false,
             };
-
-            // Gửi tin nhắn qua WebSocket hoặc API của bạn
             sendMessage(message);
-
-            // Cập nhật tin nhắn vào danh sách chat
-            setChatMessages((prev) => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+            setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
         }
 
-        // Reset lại danh sách file và nội dung tin nhắn
-        setMessageInput(""); // Xóa ô input
-        setSelectedFiles([]); // Reset images
-        setSelectedImages([]); // Reset images
+        // Reset mọi thứ
+        setAttachedFiles([]);
+        // if (messageInputRef.current) {
+        //     messageInputRef.current.innerHTML = ""; // Xoá nội dung ô nhập
+        // }
+        setMessageInputKey(Date.now()); // Đặt lại key để làm mới ô nhập
     };
 
+    const handleFriendTab = () => {
+        if (invitationCount > 0) {
+            // Nếu có lời mời kết bạn chưa đọc, chuyển sang tab bạn bè
+            setActiveSubTab("requests");
+            setInvitationCount(0);
+        }
+        setActiveTab("contacts");
+        setSelectedChat(null); // Đặt lại selectedChat khi chuyển sang tab bạn bè
+    }
 
 
     const toggleSettingsMenu = () => {
@@ -802,18 +825,6 @@ const MainPage = () => {
         }) : []),
     ];
 
-    // const [countInvitations, setCountInvitations] = useState(0);
-
-    // useEffect(async () => {
-    //     const response = await MessageService.countInvitations(MyUser?.my_user?.id, user.id);
-    //     if (response > 0) {
-    //         setIsFriendRequestSent(true);
-    //     }
-    //     else if (response === 0) {
-    //         setIsFriendRequestSent(false);
-    //     }
-    // }, [countInvitations]);
-
     const handleUserInfoModalOpen = async () => {
         if (isFriendRequestSent === false) {
             setIsFriendRequestModalOpen(true);
@@ -842,7 +853,6 @@ const MainPage = () => {
     };
 
     // Hàm mở giao diện chat
-    // Hàm mở giao diện chat
     const openChat = (user) => {
         setSelectedChat({
             ...user,  // Cập nhật tất cả thông tin từ user vào selectedChat
@@ -855,7 +865,10 @@ const MainPage = () => {
     };
 
     const handleEmojiClick = (emoji) => {
-        setMessageInput(messageInput + emoji); // Thêm emoji vào tin nhắn
+        messageInputRef.current?.focus();
+
+        // Chèn emoji tại vị trí con trỏ
+        document.execCommand("insertText", false, emoji);
         setEmojiPickerVisible(false); // Ẩn bảng cảm xúc sau khi chọn
     };
 
@@ -869,38 +882,28 @@ const MainPage = () => {
         setEmojiPickerVisible(!emojiPickerVisible);
     };
 
-    // const handleImageUpload = (event) => {
-    //     const file = event.target.files[0];
-    //     if (!file) return;
-    //     setMessageInput(messageInput + file.name); // Thêm URL ảnh vào tin nhắn
-    // };
+    const [attachedFiles, setAttachedFiles] = useState([]);
+    const messageInputRef = useRef(null);
 
-    // const handleFileChange = (event) => {
-    //     const file = event.target.files[0]; // Lấy file người dùng chọn
-    //     if (!file) return;
-    //     setMessageInput(messageInput + file.name); // Thêm URL ảnh vào tin nhắn
-
-    // };
-
-    const [selectedImages, setSelectedImages] = useState([]); // Lưu trữ các file đã chọn
-    const [selectedFiles, setSelectedFiles] = useState([]); // Lưu trữ các file đã chọn
-
-    // Hàm xử lý khi chọn ảnh
     const handleImageUpload = (event) => {
-        const file = event.target.files[0]; // Chỉ lấy 1 file mỗi lần
-        if (file) {
-            setMessageInput(messageInput + " " + file.name); // Thêm URL ảnh vào tin nhắn
-            setSelectedImages((prevFiles) => [...prevFiles, file]); // Thêm file vào danh sách
+        const files = Array.from(event.target.files);
+        const imageFiles = files.filter(file => file.type.startsWith("image/"));
+        if (imageFiles.length > 0) {
+            setAttachedFiles((prev) => [...prev, ...imageFiles]);
         }
+        setTimeout(() => {
+            messageInputRef.current?.focus();
+        }, 0);
     };
 
-    // Hàm xử lý khi chọn file
     const handleFileUpload = (event) => {
-        const file = event.target.files[0]; // Chỉ lấy 1 file mỗi lần
-        if (file) {
-            setMessageInput(messageInput + " " + file.name); // Thêm URL ảnh vào tin nhắn
-            setSelectedFiles((prevFiles) => [...prevFiles, file]); // Thêm file vào danh sách
+        const files = Array.from(event.target.files);
+        if (files.length > 0) {
+            setAttachedFiles((prev) => [...prev, ...files]);
         }
+        setTimeout(() => {
+            messageInputRef.current?.focus();
+        }, 0);
     };
 
     //Hàm xử lý tìm tin nhắn giữa 2 user
@@ -960,6 +963,19 @@ const MainPage = () => {
     }, [searchQueryMessage, chatMessages]);  // Theo dõi sự thay đổi của searchQueryMessage
 
 
+    const removeFile = (fileToRemove) => {
+        setAttachedFiles((prev) => prev.filter((f) => f !== fileToRemove));
+    };
+
+    const handleInputChange = () => {
+        // Nếu cần lưu nội dung dạng text để gửi đi
+        const content = messageInputRef.current.innerText;
+        setMessageInput(content);
+    };
+
+    const getPureFileUrl = (url) => {
+        return url.replace(/(file|image)\/[^_]+_/, "$1/");
+    }
 
 
     // Hàm render nội dung theo tab
@@ -1037,10 +1053,15 @@ const MainPage = () => {
                                                 const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
-                                                const isImageMessage = (url) => url?.match(/\.(jpeg|jpg|gif|png)$/) != null;
+                                                const isImageMessage = (url) => url?.match(/\.(jjpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
 
-                                                // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
-                                                const isFileMessage = (url) => url?.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml|sql|wmv|java|ypynb)$/) != null;
+                                                const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i);
+
+                                                const isAudioMessage = (url) => url?.match(/\.(mp3|wav|ogg)$/i);
+
+                                                const isDocumentFile = (url) =>
+                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql)$/i);
+
                                                 return (
                                                     <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}>
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
@@ -1061,16 +1082,23 @@ const MainPage = () => {
                                                             {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
                                                             {isImageMessage(msg.content) ? (
                                                                 <img src={msg.content} alt="Image" className="message-image" />
-                                                            ) : isFileMessage(msg.content) ? (
+                                                            ) : isVideoMessage(msg.content) ? (
+                                                                <video controls className="message-video">
+                                                                    <source src={msg.content} type="video/mp4" />
+                                                                    Trình duyệt không hỗ trợ video.
+                                                                </video>
+                                                            ) : isAudioMessage(msg.content) ? (
+                                                                <audio controls className="message-audio">
+                                                                    <source src={msg.content} type="audio/mp3" />
+                                                                    Trình duyệt không hỗ trợ audio.
+                                                                </audio>
+                                                            ) : isDocumentFile(msg.content) ? (
                                                                 <div className="file-message">
-                                                                    {/* Hiển thị biểu tượng file FontAwesome */}
                                                                     <span className="file-icon">
-                                                                        <i className="fa fa-file-alt"></i> {/* Bạn có thể thay đổi theo loại file, ví dụ: fa-file-pdf, fa-file-word */}
+                                                                        <i className="fa fa-file-alt"></i>
                                                                     </span>
-                                                                    <span className="file-name">{msg.content.split('/').pop()}</span>
-
+                                                                    <span className="file-name"> {getPureFileUrl(msg.content).split('/').pop()}</span>
                                                                     <div>
-                                                                        {/* Nút tải xuống dưới dạng button màu xanh */}
                                                                         <a href={msg.content} download className="btn btn-blue">
                                                                             <button className="download-btn">Tải xuống</button>
                                                                         </a>
@@ -1140,6 +1168,7 @@ const MainPage = () => {
                                                 <input
                                                     type="file"
                                                     accept="image/*"
+                                                    multiple
                                                     onChange={handleImageUpload} // Gọi hàm handleImageUpload khi có thay đổi
                                                     style={{ display: 'none' }} // Ẩn input khỏi giao diện
                                                     id="image-input"
@@ -1156,42 +1185,76 @@ const MainPage = () => {
                                                 {/* Ẩn input nhưng vẫn giữ nó kích hoạt khi nhấn vào */}
                                                 <input
                                                     type="file"
-                                                    accept="file/*" // Cho phép chọn tất cả các loại file (có thể thay đổi nếu cần)
-                                                    onChange={handleFileUpload} // Gọi hàm handleFileChange khi có thay đổi
-                                                    style={{ display: 'none' }} // Ẩn input khỏi giao diện
+                                                    accept="file/*"
+                                                    multiple
+                                                    onChange={handleFileUpload}
+                                                    style={{ display: 'none' }}
                                                     id="file-input"
                                                 />
                                                 <span>
                                                     <i className="fas fa-paperclip" style={{ fontSize: "24px", color: '#47546c' }}></i> {/* Biểu tượng đính kèm từ Font Awesome */}
                                                 </span>
                                             </button>
-                                            <button title="Record">
-                                                <span><i className="fas fa-microphone" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
+                                            <button
+                                                title={isRecording ? "Dừng ghi âm" : "Bắt đầu ghi âm"}
+                                                onClick={isRecording ? stopRecording : startRecording}
+                                            >
+                                                <span>
+                                                    <i
+                                                        className="fas fa-microphone"
+                                                        style={{
+                                                            fontSize: "24px",
+                                                            color: isRecording ? 'red' : '#47546c'
+                                                        }}
+                                                    ></i>
+                                                </span>
                                             </button>
                                             <button title="Thumbs Up">
                                                 <span><i className="fas fa-volume-up" style={{ fontSize: "24px", color: '#47546c' }}></i></span>
                                             </button>
                                         </div>
                                         <div className="input-container">
-                                            <input
-                                                type="text"
+                                            <div
+                                                key={messageInputKey}
                                                 className="chat-input"
-                                                value={messageInput}
-                                                onChange={(e) => setMessageInput(e.target.value)}
+                                                contentEditable
+                                                suppressContentEditableWarning={true}
+                                                ref={messageInputRef}
+                                                onInput={handleInputChange}
+                                                tabIndex={0}
                                                 onKeyDown={(e) => {
                                                     if (e.key === "Enter") {
+                                                        e.preventDefault(); // tránh xuống dòng
                                                         handleSendMessage();
                                                     }
                                                 }}
-                                                placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
-                                            />
+                                                data-placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
+                                            >
+                                                {attachedFiles.map((file, index) => (
+                                                    <span key={index} contentEditable={false} className="file-tag">
+                                                        {file.name}
+                                                        <button
+                                                            className="remove-file"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                removeFile(file);
+                                                            }}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+
                                             <button
                                                 className="icon-button"
                                                 onClick={toggleEmojiPicker}
+                                                style={{ marginLeft: '8px', background: 'none', border: 'none', cursor: 'pointer' }}
                                             >
                                                 <i className="fas fa-smile" style={{ color: 'gray', fontSize: '20px' }}></i>
                                             </button>
                                         </div>
+
                                         <button onClick={handleSendMessage} className="send-button">
                                             Gửi
                                         </button>
@@ -1412,16 +1475,39 @@ const MainPage = () => {
     const handleSearchFriend = async () => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.phoneNumber) return;
 
-        if (phoneNumber === MyUser?.my_user?.phoneNumber) {
+        if (!phoneNumber || phoneNumber.trim() === "") {
+            setError("Vui lòng nhập số điện thoại.");
+            return;
+        }
+
+        // Chuẩn hóa số điện thoại trước khi gửi
+        let formattedPhoneNumber = phoneNumber.trim();
+
+        // Nếu bắt đầu bằng '+84' => giữ nguyên
+        if (formattedPhoneNumber.startsWith('+84')) {
+            // không cần làm gì
+        }
+        // Nếu bắt đầu bằng '0' => thay bằng '+84'
+        else if (formattedPhoneNumber.startsWith('0')) {
+            formattedPhoneNumber = '+84' + formattedPhoneNumber.substring(1);
+        }
+        // Nếu chỉ là 9 chữ số không đầu '0', ví dụ: '344387030'
+        else if (/^\d{9}$/.test(formattedPhoneNumber)) {
+            formattedPhoneNumber = '+84' + formattedPhoneNumber;
+        }
+        // Trường hợp sai định dạng
+        else {
+            setError("Số điện thoại không hợp lệ.");
+            return;
+        }
+
+        if (formattedPhoneNumber === MyUser?.my_user?.phoneNumber) {
             setError("Bạn không thể tìm kiếm chính mình.");
             return;
         }
 
         setLoading(true);
         try {
-            // Trước khi gửi, thay thế %2B thành dấu +
-            const formattedPhoneNumber = phoneNumber.replace(/%2B/g, '+');
-
             const response = await UserService.get("/searchFriend", { phoneNumber: formattedPhoneNumber });
 
             setUser(response); // Cập nhật thông tin người dùng
@@ -1561,10 +1647,11 @@ const MainPage = () => {
                         <img src="/MainPage/chat.png" alt="Chat Icon" />
                     </i>
                 </div>
-                <div className="nav-item" onClick={() => setActiveTab("contacts")}>
+                <div className="nav-item" onClick={handleFriendTab}>
                     <i className="icon">
                         <img src="/MainPage/friends.png" alt="friends Icon" />
                     </i>
+                    {invitationCount > 0 && <span className="badge">{invitationCount}</span>}
                 </div>
                 <div className="nav-item settings" onClick={toggleSettingsMenu}>
                     <i className="icon">
@@ -1695,6 +1782,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-friendlist"
                                         aria-selected="true"
+                                        onClick={() => setActiveSubTab("friends")}
                                     >
                                         <i className="fas fa-user-friends me-2"></i>
                                         Danh sách bạn bè
@@ -1708,6 +1796,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-grouplist"
                                         aria-selected="false"
+                                        onClick={() => setActiveSubTab("groups")}
                                     >
                                         <i className="fas fa-users me-2"></i>
                                         Danh sách nhóm
@@ -1721,6 +1810,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-friend"
                                         aria-selected="false"
+                                        onClick={() => setActiveSubTab("requests")}
                                     >
                                         <i className="fas fa-user-plus me-2"></i>
                                         Lời mời kết bạn
@@ -1734,6 +1824,7 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-group"
                                         aria-selected="false"
+                                        onClick={() => setActiveSubTab("requestsGroup")}
                                     >
                                         <i className="fas fa-users me-2"></i>
                                         Lời mời vào nhóm
@@ -1770,6 +1861,7 @@ const MainPage = () => {
                                     placeholder="Số điện thoại"
                                     value={phoneNumber}
                                     onChange={(e) => setPhoneNumber(e.target.value)}
+                                    required
                                 />
                             </div>
                             {error && <div className="error">{error}</div>}
@@ -1825,6 +1917,14 @@ const MainPage = () => {
                 <div className="loading-overlay">
                     <div className="spinner"></div>
                     <p className="loading-text">Đang đăng xuất...</p>
+                </div>
+            )}
+
+            {/* Hiển thị đang ghi âm */}
+            {isRecording && (
+                <div className="recording-modal">
+                    <i className="fas fa-microphone" style={{ color: "red", fontSize: "32px", marginRight: "10px" }}></i>
+                    <span>Đang ghi âm...</span>
                 </div>
             )}
         </div>
