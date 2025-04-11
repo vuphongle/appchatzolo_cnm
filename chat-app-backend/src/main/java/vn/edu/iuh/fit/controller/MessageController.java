@@ -28,7 +28,7 @@ public class MessageController {
         this.messageServiceImpl = messageServiceImpl;
     }
 
-    //Gửi lời mời kết bạn
+    //Gửi lời mời kết bạn và lưu tin nhắn người dùng gửi
     @PostMapping("/addFriend")
     public void sendMessage(@RequestBody Message message) throws JsonProcessingException {
         System.out.println("Received message: " + message);

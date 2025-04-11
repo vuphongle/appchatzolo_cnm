@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import "../css/MainPage.css"; // CSS riêng cho giao diện
+import "../css/ModelTimkiem_TinNhan.css"; // CSS riêng cho giao diện
+import SearchModal from './SearchModal';
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
 import flag from "../image/icon_VN.png";
@@ -451,6 +453,9 @@ const MainPage = () => {
             });
     }, []); // Chỉ chạy một lần khi component được mount
 
+    console.log("Messages data là gì:", selectedChat); // Kiểm tra dữ liệu tin nhắn
+
+
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
@@ -504,8 +509,63 @@ const MainPage = () => {
 
             // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
-                updateFriendList(incomingMessage.senderID);
+                updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
+
+                // Kiểm tra nếu người gửi không phải là selectedChat
+                if (incomingMessage.senderID !== selectedChat?.id) {
+                    // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
+                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                        if (count.friendId === incomingMessage.senderID) {
+                            return {
+                                ...count,
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
+                            };
+                        }
+                        return count;
+                    });
+                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                } else {
+                    // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
+                    const validSendDate = moment(incomingMessage.sendDate).isValid()
+                        ? moment(incomingMessage.sendDate).toISOString()
+                        : new Date().toISOString();
+
+                    // Cập nhật tin nhắn mới vào chatMessages
+                    setChatMessages((prevMessages) => [
+                        ...prevMessages,
+                        { ...incomingMessage, sendDate: validSendDate },
+                    ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                    // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
+                    if (incomingMessage.isRead === false) {
+                        MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                            .then(() => {
+                                // Cập nhật trạng thái tin nhắn là đã đọc
+                                setChatMessages((prevMessages) =>
+                                    prevMessages.map((msg) =>
+                                        msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
+                                    )
+                                );
+
+                                // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
+                                const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                    if (count.friendId === selectedChat.id) {
+                                        return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
+                                    }
+                                    return count;
+                                });
+                                setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                                // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
+
+                            })
+                            .catch((error) => {
+                                console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                            });
+                    }
+                }
             }
+
+            // Tin nhắn bình thường
             if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
                 // Cập nhật tin nhắn mới
                 const validSendDate = moment(incomingMessage.sendDate).isValid()
@@ -543,28 +603,24 @@ const MainPage = () => {
                         });
                 }
             } else {
-                // Chỉ cập nhật số lượng tin nhắn chưa đọc khi có tin nhắn mới từ người chưa được chọn
+                // Tăng số lượng tin nhắn chưa đọc nếu tin nhắn không thuộc cuộc trò chuyện đã chọn
                 if (incomingMessage.isRead === false) {
                     const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
                         if (count.friendId === incomingMessage.senderID) {
                             return {
                                 ...count,
-                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc lên
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
                             };
                         }
                         return count;
                     });
-
-                    // Cập nhật lại số lượng tin nhắn chưa đọc
-                    setUnreadMessagesCounts(updatedUnreadCounts);
+                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
                 }
             }
         });
 
-        return () => {
-            unsubscribe(); // Hủy lắng nghe khi component unmount
-        };
-    }, [selectedChat, unreadMessagesCounts, onMessage]);  // Khi selectedChat thay đổi
+        return () => unsubscribe(); // Hủy lắng nghe khi component unmount
+    }, [selectedChat, unreadMessagesCounts, onMessage]);
 
 
 
@@ -770,6 +826,12 @@ const MainPage = () => {
                     // Cập nhật trực tiếp trong state để danh sách luôn mới
                     setFriendRequests((prevRequests) => [...prevRequests.filter((req) => req.senderID !== user.id)]);
                     setIsFriendRequestSent(false);
+                    //gửi thông báo bên B
+                    sendMessage({
+                        type: "INVITATION_REVOKE",
+                        senderID: MyUser?.my_user?.id,
+                        receiverID: user.id,
+                    });
                 } else {
                     console.error('Không thể xóa lời mời');
                 }
@@ -841,6 +903,64 @@ const MainPage = () => {
         }
     };
 
+    //Hàm xử lý tìm tin nhắn giữa 2 user
+    const [searchQueryMessage, setSearchQueryMessage] = useState('');
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);  // Toggle modal state
+    const [resultsCount, setResultsCount] = useState(0);  // Số lượng kết quả tìm thấy
+    const [filteredMessages, setFilteredMessages] = useState(chatMessages); // Khai báo state filteredMessages
+
+    // Handle searching messages
+    const handleSearchMessages = () => {
+        if (searchQueryMessage === '') {
+            // Nếu không có từ khóa tìm kiếm, đặt lại chatMessages về danh sách ban đầu
+            setFilteredMessages(chatMessages);
+            setResultsCount(0);  // Đặt kết quả trùng khớp là 0 khi không có từ khóa tìm kiếm
+            return;
+        }
+
+        // Kiểm tra xem có tin nhắn nào khớp với từ khóa không
+        const filteredMessages = chatMessages.filter((msg) =>
+            msg.content.toLowerCase().includes(searchQueryMessage.toLowerCase())
+        );
+
+        // Cập nhật filteredMessages và số lượng kết quả tìm thấy
+        setFilteredMessages(filteredMessages);
+        setResultsCount(filteredMessages.length); // Cập nhật số lượng kết quả tìm thấy
+    };
+
+
+    // Toggle the search modal
+    const toggleSearchModal = () => {
+        setIsSearchModalOpen((prev) => !prev);
+    };
+    // Hàm hiển thị phần tin nhắn có từ khóa tìm kiếm, làm nổi bật phần tìm được
+    const highlightText = (text) => {
+        if (!searchQuery) return text;  // Nếu không có từ khóa tìm kiếm, trả lại văn bản ban đầu
+        const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));  // Chia văn bản thành các phần nhỏ
+        return parts.map((part, index) =>
+            part.toLowerCase() === searchQuery.toLowerCase() ? (
+                <span key={index} className="highlight">{part}</span>  // Tô màu vàng nếu là từ khóa
+            ) : (
+                part // Nếu không phải từ khóa, trả lại phần đó
+            )
+        );
+    };
+
+    useEffect(() => {
+        if (searchQueryMessage === '') {
+            setFilteredMessages(chatMessages);  // Trả về toàn bộ tin nhắn khi không có từ khóa tìm kiếm
+            setResultsCount(0);  // Đặt lại kết quả trùng khớp là 0
+        } else {
+            const result = chatMessages.filter((msg) =>
+                msg.content.toLowerCase().includes(searchQueryMessage.toLowerCase())
+            );
+            setFilteredMessages(result);
+            setResultsCount(result.length); // Cập nhật số lượng kết quả tìm thấy
+        }
+    }, [searchQueryMessage, chatMessages]);  // Theo dõi sự thay đổi của searchQueryMessage
+
+
+
 
     // Hàm render nội dung theo tab
     const renderContent = () => {
@@ -863,12 +983,41 @@ const MainPage = () => {
                                             {selectedChat.isOnline ? " Đang hoạt động" : " Không hoạt động"}
                                         </span>
                                     </div>
+                                    {/* Thêm nút tìm kiếm và gọi video vào header */}
+                                    <div className="header-actions">
+                                        {/* Nút tìm kiếm */}
+                                        <button
+                                            className="search-btn"
+                                            onClick={toggleSearchModal}
+                                        >
+                                            <i className="fas fa-search"></i>
+                                        </button>
+
+                                        {/* Nút gọi video */}
+                                        <button
+                                            className="video-call-btn"
+                                            onClick={() => console.log("Gọi video được nhấn")}
+                                        >
+                                            <i className="fas fa-video"></i>
+                                        </button>
+                                    </div>
                                 </header>
+                                {/* Modal tìm kiếm tin nhắn */}
+                                <SearchModal
+                                    isSearchModalOpen={isSearchModalOpen}
+                                    setIsSearchModalOpen={setIsSearchModalOpen}
+                                    chatMessages={chatMessages}
+                                    searchQuery={searchQueryMessage} // Truyền vào searchQuery
+                                    setSearchQuery={setSearchQueryMessage} // Truyền vào setSearchQuery
+                                    handleSearchMessages={handleSearchMessages}
+                                />
+
                                 <section className="chat-section">
                                     <div className="chat-messages">
                                         {chatMessages.length > 0 ? (
                                             chatMessages.map((msg, index) => {
                                                 const isSentByMe = msg.senderID === MyUser?.my_user?.id;
+
                                                 const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
 
                                                 // 📌 Lấy thời gian gửi tin nhắn và chuyển đổi sang múi giờ Việt Nam
@@ -892,14 +1041,8 @@ const MainPage = () => {
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
                                                 const isFileMessage = (url) => url?.match(/\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml|sql|wmv|java|ypynb)$/) != null;
-
                                                 return (
-                                                    <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}
-                                                        onContextMenu={(e) => {
-                                                            e.preventDefault();
-                                                            setShowMenuForMessageId(msg.id);
-                                                        }}
-                                                        onClick={() => setShowMenuForMessageId(null)}>
+                                                    <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}>
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
@@ -934,7 +1077,7 @@ const MainPage = () => {
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <p>{msg.content}</p>
+                                                                <p>{highlightText(msg.content)}</p>
                                                             )}
 
                                                             {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}
