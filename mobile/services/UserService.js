@@ -47,7 +47,7 @@ const UserService = {
   },
   getUserById: async (userId) => {
     try {
-      const response = await axios.get(`${IPV4}/findById/${userId}`);
+      const response = await axios.get(`${IPV4}/user/findById/${userId}`);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error;
