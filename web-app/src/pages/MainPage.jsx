@@ -871,7 +871,7 @@ const MainPage = () => {
 
         // Chèn emoji tại vị trí con trỏ
         document.execCommand("insertText", false, emoji);
-        setEmojiPickerVisible(false); // Ẩn bảng cảm xúc sau khi chọn
+        // setEmojiPickerVisible(false); // Ẩn bảng cảm xúc sau khi chọn
     };
 
     const toggleEmojiPicker = (e) => {
