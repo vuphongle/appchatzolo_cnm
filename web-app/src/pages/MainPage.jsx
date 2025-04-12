@@ -1696,6 +1696,7 @@ const MainPage = () => {
                     <input type="text" className="search-bar" placeholder="Tìm kiếm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+
                     />
                     <button className="search-button">
                         <img src="/MainPage/search.png" alt="Chat Icon" />
