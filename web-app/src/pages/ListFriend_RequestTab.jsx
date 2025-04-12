@@ -23,7 +23,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
     useEffect(() => {
         const unsubscribe = onMessage((message) => {
 
-            if (message.type === "WAITING_APPROVED") {
+            if (message.typeWeb === "WAITING_APPROVED") {
                 setReceivedRequests((prev) => [...prev, message]);
             }
         });

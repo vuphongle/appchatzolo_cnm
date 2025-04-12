@@ -39,7 +39,7 @@ const TinNhanScreen = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { fetchUserProfile, user } = useContext(UserContext);
+  const { fetchUserProfile, user, setUser } = useContext(UserContext);
   const [friendRequestStatus, setFriendRequestStatus] = useState('Kết bạn');
 
   useEffect(() => {
@@ -72,6 +72,11 @@ const TinNhanScreen = () => {
     const formattedPhone = formatPhoneNumber(searchText);
     if (!formattedPhone) {
       return;
+    }
+
+    const userNew = await fetchUserProfile(user?.phoneNumber);
+    if (userNew) {
+      setUser(userNew);
     }
 
     setLoading(true);

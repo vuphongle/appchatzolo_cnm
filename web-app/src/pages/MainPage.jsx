@@ -506,7 +506,7 @@ const MainPage = () => {
                 );
                 return; // Kết thúc xử lý cho RECALL_MESSAGE
             }
-            if (incomingMessage.type === "WAITING_APPROVED") {
+            if (incomingMessage.typeWeb === "WAITING_APPROVED") {
                 // Cập nhật số lời mời kết bạn chưa đọc
                 setInvitationCount((prev) => prev + (incomingMessage.count || 1));
             }
@@ -1563,7 +1563,7 @@ const MainPage = () => {
             isRead: false,
             sendDate: new Date().toISOString(),
             status: 'Chờ đồng ý',
-            type: "WAITING_APPROVED"
+            typeWeb: "WAITING_APPROVED"
         };
 
         try {
