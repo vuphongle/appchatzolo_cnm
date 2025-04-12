@@ -1,15 +1,15 @@
 package vn.edu.iuh.fit.handler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.service.MessageService;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -121,4 +121,62 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    public void sendDeleteMessageNotification(String receiverId, String fromUserId) throws JsonProcessingException {
+        WebSocketSession receiverSession = sessions.get(receiverId);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "DELETE_MESSAGE");
+            payload.put("from", fromUserId); // Người gửi lệnh xóa
+            payload.put("to", receiverId);   // Người nhận thông báo
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent DELETE_MESSAGE notification to " + receiverId);
+            } catch (IOException e) {
+                System.err.println("Error sending DELETE_MESSAGE notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("Receiver session is null or closed for user: " + receiverId);
+        }
+    }
+
+    public void sendRecallMessageNotification(String receiverId, String fromUserId, String messageId) throws JsonProcessingException {
+        WebSocketSession receiverSession = sessions.get(receiverId);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "RECALL_MESSAGE");
+            payload.put("from", fromUserId);     // Ai gọi thu hồi tin nhắn
+            payload.put("messageId", messageId);   // ID của tin nhắn cần thu hồi
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent RECALL_MESSAGE notification to " + receiverId);
+            } catch (IOException e) {
+                System.err.println("Error sending RECALL_MESSAGE notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("Receiver session is null or closed for user: " + receiverId);
+        }
+    }
+
+    public void sendChatMessage(Message message) {
+        WebSocketSession session = sessions.get(message.getReceiverID());
+        if (session != null && session.isOpen()) {
+            try {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "CHAT");
+                payload.put("message", message); // nguyên message
+
+                String jsonPayload = objectMapper.writeValueAsString(payload);
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent CHAT message to " + message.getReceiverID());
+            } catch (IOException e) {
+                System.err.println("Error sending chat message: " + e.getMessage());
+            }
+        }
+    }
+
 }

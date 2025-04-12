@@ -64,7 +64,41 @@ const MessageService = {
         } catch (error) {
             console.error("Lỗi khi cập nhật trạng thái tin nhắn đã đọc:", error);
         }
-    }
+    },
+    // Xóa đoạn chat giữa 2 người dùng
+    deleteChat: async (senderID, receiverID) => {
+        try {
+            const response = await axios.delete(`${API_BASE_URL}/delete-chat/${senderID}/${receiverID}`);
+            return response.data;
+        } catch (error) {
+            console.error("Lỗi khi xóa đoạn chat:", error.response || error);
+            throw error.response ? error.response.data : error;
+        }
+    },
+    // Thu hồi tin nhắn
+    recallMessage: async (messageId, senderID, receiverID) => {
+        try {
+            const response = await axios.delete(`${API_BASE_URL}/recall/${messageId}/${senderID}/${receiverID}`);
+            return response.data;
+        } catch (error) {
+            console.error("Lỗi khi thu hồi tin nhắn:", error.response || error);
+            throw error.response ? error.response.data : error;
+        }
+    },
+    // Chia sẻ tin nhắn
+    forwardMessage: async (originalMessageId, senderID, receiverIDs) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/forward`, {
+                originalMessageId,
+                senderID,
+                receiverIDs
+            });
+            return response.data;
+        } catch (error) {
+            console.error("Lỗi khi chia sẻ tin nhắn:", error.response || error);
+            throw error.response ? error.response.data : error;
+        }
+    },
 
 };
 

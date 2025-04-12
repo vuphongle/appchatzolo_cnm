@@ -117,7 +117,7 @@ const DanhBaScreen = () => {
   };
 
   const handleJournal = (contact) => {
-    alert('Chưa phát triển tính năng này');
+    Alert.alert('Thông báo','Chưa phát triển tính năng này');
     console.log('Nhật ký', contact.name);
   };
 

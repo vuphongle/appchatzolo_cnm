@@ -3,33 +3,39 @@ import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
-import { StackActions } from '@react-navigation/native';
 import UserService from '../../../services/UserService';
 
 function Header({ name, id, avatar }) {
   const navigation = useNavigation();
   const [onlineStatus, setOnlineStatus] = useState(false);
+  const [user, setUser] = useState(null); // Lưu dữ liệu người dùng
 
   const handlePressBack = () => {
     navigation.goBack();
   };
 
   const handlePressMenu = () => {
-    navigation.navigate('DetailChat');
+    console.log('User:', user); // Kiểm tra dữ liệu người dùng
+    if (user) {
+      navigation.navigate('DetailChat', { user });
+    }
   };
-  const getOnlineStatus = () => {
+
+  const getOnlineStatus = async () => {
     try {
-      const receiver = UserService.getUserById(id);
+      const receiver = await UserService.getUserById(id);
       setOnlineStatus(receiver.isOnline);
+      setUser(receiver);
     } catch (err) {
       console.log(err);
       setOnlineStatus(false);
+      setUser(null);
     }
   };
 
   useEffect(() => {
     getOnlineStatus();
-  }, []);
+  }, [id]);
 
   return (
     <View style={styles.container}>
@@ -62,10 +68,7 @@ function Header({ name, id, avatar }) {
           {onlineStatus ? (
             <Text style={{ color: 'white', fontSize: 12 }}>Hoạt động</Text>
           ) : (
-            <Text style={{ color: 'white', fontSize: 12 }}>
-              {' '}
-              Không hoạt động
-            </Text>
+            <Text style={{ color: 'white', fontSize: 12 }}> Không hoạt động</Text>
           )}
         </View>
       </View>
@@ -79,7 +82,7 @@ function Header({ name, id, avatar }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.container_right_icon}
-          onPress={handlePressMenu}
+          onPress={handlePressMenu} // Truyền dữ liệu người dùng ở đây
         >
           <Feather name="menu" size={26} color="white" />
         </TouchableOpacity>

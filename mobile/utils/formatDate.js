@@ -1,6 +1,6 @@
 const formatDate = (timestamp) => {
   try {
-    console.log('Timestamp in formatDate:', timestamp); // Log the timestamp for debugging
+    // console.log('Timestamp in formatDate:', timestamp); // Log the timestamp for debugging
     if (typeof timestamp === 'string') {
       if (
         timestamp.includes('phút trước') ||
