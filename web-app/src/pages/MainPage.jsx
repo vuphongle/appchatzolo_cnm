@@ -758,14 +758,14 @@ const MainPage = () => {
                                                 const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
-                                                const isImageMessage = (url) => url?.match(/\.(jjpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
+                                                const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
 
                                                 const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i);
 
                                                 const isAudioMessage = (url) => url?.match(/\.(mp3|wav|ogg)$/i);
 
                                                 const isDocumentFile = (url) =>
-                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql)$/i);
+                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql|mobileprovision)$/i);
 
                                                 return (
                                                     <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
