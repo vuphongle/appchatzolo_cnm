@@ -218,7 +218,8 @@ button {
 .message-item {
   display: flex;
   position: relative;
-  right: 10px;
+  width: 300px;
+  left: -10px;
   align-items: center;
   padding: 10px 0;
   cursor: pointer;
@@ -241,6 +242,7 @@ button {
   height: 40px;
   border-radius: 50%;
   margin-right: 10px;
+  margin-left: 10px;
   object-fit: cover;
 }
 
@@ -1074,6 +1076,21 @@ button {
     font-weight: bold;
     z-index: 1000;
   }
+
+  /* focus thẻ li khi click vào */
+  li:focus {
+    background-color: lightblue;
+    outline: none;
+    border-radius: 5px;
+  }
+
+  ul{
+    list-style: none;
+    margin-left: 10px;
+    padding: 0px;
+  }
+  
+  
   
 
   

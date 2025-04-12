@@ -25,7 +25,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [] }) => (
-    <li className="message-item" onClick={onClick}>
+    <li className="message-item" tabIndex={0} onClick={onClick}>
         <img src={img} alt="Avatar" className="avatar" />
         <div className="message-info">
             <h4>{groupName}</h4>
@@ -765,7 +765,7 @@ const MainPage = () => {
                                                 const isAudioMessage = (url) => url?.match(/\.(mp3|wav|ogg)$/i);
 
                                                 const isDocumentFile = (url) =>
-                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql|mobileprovision)$/i);
+                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql|.mobileprovision)$/i);
 
                                                 return (
                                                     <div key={msg.id} style={{ display: "flex", flexDirection: "column" }}>
