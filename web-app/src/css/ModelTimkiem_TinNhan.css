@@ -2,7 +2,7 @@
 .search-modal {
   position: fixed;
   top: 100px; /* Adjust this so it’s not at the top of the screen */
-  right: 150px; /* Center the modal horizontally */
+  right: 10px; /* Center the modal horizontally */
   transform: translateX(-50%); /* Center horizontally */
   background: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
   display: flex;
@@ -10,9 +10,8 @@
   justify-content: center;
   align-items: center;
   z-index: 9999; /* Ensure modal is always in front */
-  padding: 20px;
   border-radius: 10px;
-  max-width: 300px;
+  max-width: 250px;
   width: 100%;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -21,7 +20,7 @@
   background: white;
   padding: 10px;
   border-radius: 10px;
-  max-width: 300px;
+  max-width: 250px;
   width: 100%;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -32,6 +31,7 @@
   margin-bottom: 5px;
   border: 1px solid #e4e3e3;
   border-radius: 5px;
+  font-size: 15px;
 }
 
 .search-modal button {
@@ -64,6 +64,7 @@
 
 .navigation-buttons {
   display: flex;
+  width: 150px;
   justify-content: space-between;
   margin-top: 10px;
 }
@@ -86,4 +87,33 @@
 
 .navigation-buttons button:hover:not(:disabled) {
   background-color: #4991dd;
+}
+.result-navigation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0;
+  gap: 8px;
+}
+
+.result-navigation-row .message-count {
+  flex-grow: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.result-navigation-row button {
+  padding: 4px 4px;
+  font-size: 14px;
+  width: 32px;
+  height: 32px;
+}
+
+/* Tùy chỉnh riêng nút Tìm kiếm */
+.search-button {
+  position: relative;
+  left: 0px;
+  width: 100%;
+  height: 35px !important;
+  font-size: 13px;
 }

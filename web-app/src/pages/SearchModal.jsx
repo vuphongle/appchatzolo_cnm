@@ -96,23 +96,23 @@ const SearchModal = ({ isSearchModalOpen, setIsSearchModalOpen, chatMessages, se
                         type="text"
                         placeholder="Tìm kiếm tin nhắn..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)} // Cập nhật search query
-                        onKeyDown={handleKeyDown} // Gọi hàm khi nhấn Enter
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleKeyDown}
                     />
-                    <div className="message-count">
-                        {resultsCount > 0 ? (
-                            <span>kết quả trùng khớp: {resultsCount}</span>  // Hiển thị số lượng kết quả tìm thấy
-                        ) : (
-                            <span>0 kết qủa</span>  // Nếu không có kết quả
-                        )}
-                    </div>
-                    <div className="navigation-buttons">
+
+                    {/* Đặt tất cả trong cùng một dòng */}
+                    <div className="result-navigation-row">
+                        <span className="message-count">
+                            {resultsCount > 0 ? `Kết quả: ${resultsCount}` : '0 kết quả'}
+                        </span>
                         <button onClick={handlePrevious} disabled={currentResultIndex <= 0}>↑</button>
                         <button onClick={handleNext} disabled={currentResultIndex >= filteredMessages.length - 1}>↓</button>
                     </div>
-                    <button onClick={handleSearch}>Tìm kiếm</button> {/* Nút tìm kiếm */}
+                    {/* càn hiện nút tìm kiếm thì mở lại ! */}
+                    {/* <button className="search-button" onClick={handleSearch}>Tìm kiếm</button> */}
                 </div>
             </div>
+
         )
     );
 };
