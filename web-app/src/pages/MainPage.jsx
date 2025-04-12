@@ -24,6 +24,7 @@ import FriendInfoModal from "./FriendInfoModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import { v4 as uuidv4 } from 'uuid';
 
+import VideoCallComponent from '../context/VideoCallComponent';  // Import VideoCallComponent
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
@@ -962,7 +963,12 @@ const MainPage = () => {
             setResultsCount(result.length); // Cập nhật số lượng kết quả tìm thấy
         }
     }, [searchQueryMessage, chatMessages]);  // Theo dõi sự thay đổi của searchQueryMessage
-
+    // hàm call video
+    // hàm call video
+    const [isVideoCallVisible, setIsVideoCallVisible] = useState(false);
+    const toggleSearchModalCall = () => {
+        setIsVideoCallVisible((prev) => !prev);
+    };
 
     const removeFile = (fileToRemove) => {
         setAttachedFiles((prev) => prev.filter((f) => f !== fileToRemove));
@@ -1013,7 +1019,7 @@ const MainPage = () => {
                                         {/* Nút gọi video */}
                                         <button
                                             className="video-call-btn"
-                                            onClick={() => console.log("Gọi video được nhấn")}
+                                            onClick={toggleSearchModalCall}
                                         >
                                             <i className="fas fa-video"></i>
                                         </button>
@@ -1028,7 +1034,14 @@ const MainPage = () => {
                                     setSearchQuery={setSearchQueryMessage} // Truyền vào setSearchQuery
                                     handleSearchMessages={handleSearchMessages}
                                 />
+                                {/*truyền vào các biến này   remoteUserId, userId, isVideoCallVisible, setIsVideoCallVisible  để call*/}
+                                <VideoCallComponent
+                                    remoteUserId={selectedChat.id} // Truyền ID người nhận vào VideoCallComponent
+                                    userId={MyUser.my_user.id} // Truyền ID người gửi vào VideoCallComponent
+                                    isVideoCallVisible={isVideoCallVisible} // Truyền trạng thái gọi video
+                                    setIsVideoCallVisible={setIsVideoCallVisible} // Truyền hàm để đóng VideoCallComponent
 
+                                />
                                 <section className="chat-section">
                                     <div className="chat-messages">
                                         {chatMessages.length > 0 ? (
