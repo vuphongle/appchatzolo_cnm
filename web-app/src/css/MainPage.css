@@ -174,19 +174,19 @@ button {
 
 /* Khi hover vào tab, thay đổi màu nền */
 .tab:hover {
-  background-color: #3a88fc; /* Chuyển màu nền khi hover (màu xanh da trời) */
-  color: white; /* Thay đổi màu chữ khi hover */
+  background-color: #7fc2fc; /* Chuyển màu nền khi hover (màu xanh da trời) */
+  color: black; /* Thay đổi màu chữ khi hover */
 }
 
 /* Màu nền cho tab active */
 .tab.active {
-  background-color: #6eabff; /* Màu nền mặc định cho tab active */
+  background-color: white; /* Màu nền mặc định cho tab active */
   color: black; /* Màu chữ cho tab active */
 }
 
 /* Khi hover trên tab active, đảm bảo màu nền không thay đổi */
 .tab.active:hover {
-  background-color: #1c77ff; /* Giữ màu xanh da trời cho tab active */
+  background-color: #7fc2fc; /* Giữ màu xanh da trời cho tab active */
   color: black;
 }
 
@@ -1146,6 +1146,11 @@ button {
     list-style: none;
     margin-left: 10px;
     padding: 0px;
+  }
+
+  .tab.active:focus {
+    /* outline: 1px solid #4da6f4; */
+    background-color: #7fc2fc;
   }
   
   

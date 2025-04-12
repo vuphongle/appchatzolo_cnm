@@ -276,6 +276,7 @@ const MainPage = () => {
 
     const [friendList, setFriendList] = useState([]);
     const selectedChatIdAtShareRef = useRef(null);
+    const [selectedTab, setSelectedTab] = useState("all");
 
     const updateFriendList = (friendId) => {
         const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
@@ -1705,6 +1706,7 @@ const MainPage = () => {
                             className="action-button-img"
                             src="/MainPage/add-friend.png"
                             alt="Add Friend"
+                            style={{ width: "35px", height: "35px" }}
 
                         />
                     </button>
@@ -1727,9 +1729,27 @@ const MainPage = () => {
                     <>
 
                         <div className="sidebar-tabs">
-                            <button className="tab active">Tất cả</button>
-                            <button className="tab active">Chưa đọc</button>
-                            <button className="tab active">Phân loại</button>
+                            <button
+                                tabIndex={0}
+                                className={`tab ${selectedTab === "all" ? "active" : ""}`}
+                                onClick={() => setSelectedTab("all")}
+                            >
+                                Tất cả
+                            </button>
+                            <button
+                                tabIndex={0}
+                                className={`tab ${selectedTab === "unread" ? "active" : ""}`}
+                                onClick={() => setSelectedTab("unread")}
+                            >
+                                Chưa đọc
+                            </button>
+                            <button
+                                tabIndex={0}
+                                className={`tab ${selectedTab === "categorized" ? "active" : ""}`}
+                                onClick={() => setSelectedTab("categorized")}
+                            >
+                                Phân loại
+                            </button>
                         </div>
                         <div className="message-list">
                             <ul>
