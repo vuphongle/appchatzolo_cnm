@@ -515,90 +515,59 @@ const MainPage = () => {
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.senderID);
 
-                if (incomingMessage.type === "CHAT") {
-                    const msg = incomingMessage.message;
-
-                    // Nếu cuộc trò chuyện đang mở là đúng chiều người gửi/nhận
-                    if (
-                        selectedChat &&
-                        (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id)
-                    ) {
-                        setChatMessages((prev) =>
-                            [...prev, msg].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
-                        );
-                    } else {
-                        // Nếu không phải, tăng unread
-                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                            if (count.friendId === msg.senderID) {
-                                return {
-                                    ...count,
-                                    unreadCount: count.unreadCount + 1,
-                                };
-                            }
-                            return count;
-                        });
-                        setUnreadMessagesCounts(updatedUnreadCounts);
-                    }
-                }
-
-
-                // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
-                if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
-                    updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
-
-                    // Kiểm tra nếu người gửi không phải là selectedChat
-                    if (incomingMessage.senderID !== selectedChat?.id) {
-                        // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
-                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                            if (count.friendId === incomingMessage.senderID) {
-                                return {
-                                    ...count,
-                                    unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
-                                };
-                            }
-                            return count;
-                        });
-                        setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                    } else {
-                        // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
-                        const validSendDate = moment(incomingMessage.sendDate).isValid()
-                            ? moment(incomingMessage.sendDate).toISOString()
-                            : new Date().toISOString();
-
-                        // Cập nhật tin nhắn mới vào chatMessages
-                        setChatMessages((prevMessages) => [
-                            ...prevMessages,
-                            { ...incomingMessage, sendDate: validSendDate },
-                        ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
-
-                        // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
-                        if (incomingMessage.isRead === false) {
-                            MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
-                                .then(() => {
-                                    // Cập nhật trạng thái tin nhắn là đã đọc
-                                    setChatMessages((prevMessages) =>
-                                        prevMessages.map((msg) =>
-                                            msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
-                                        )
-                                    );
-
-                                    // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
-                                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                                        if (count.friendId === selectedChat.id) {
-                                            return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
-                                        }
-                                        return count;
-                                    });
-                                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                                    // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
-
-                                })
-                                .catch((error) => {
-                                    console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
-                                });
+                // Kiểm tra nếu người gửi không phải là selectedChat
+                if (incomingMessage.senderID !== selectedChat?.id) {
+                    // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
+                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                        if (count.friendId === incomingMessage.senderID) {
+                            return {
+                                ...count,
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
+                            };
                         }
+                        return count;
+                    });
+                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                } else {
+                    // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
+                    const validSendDate = moment(incomingMessage.sendDate).isValid()
+                        ? moment(incomingMessage.sendDate).toISOString()
+                        : new Date().toISOString();
+
+                    // Cập nhật tin nhắn mới vào chatMessages
+                    setChatMessages((prevMessages) => [
+                        ...prevMessages,
+                        { ...incomingMessage, sendDate: validSendDate },
+                    ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                    // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
+                    if (incomingMessage.isRead === false) {
+                        MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                            .then(() => {
+                                // Cập nhật trạng thái tin nhắn là đã đọc
+                                setChatMessages((prevMessages) =>
+                                    prevMessages.map((msg) =>
+                                        msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
+                                    )
+                                );
+
+                                // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
+                                const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                    if (count.friendId === selectedChat.id) {
+                                        return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
+                                    }
+                                    return count;
+                                });
+                                setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                                // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
+
+                            })
+                            .catch((error) => {
+                                console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                            });
                     }
                 }
+
             }
 
             // Tin nhắn bình thường
@@ -775,11 +744,6 @@ const MainPage = () => {
     };
 
     const handleFriendTab = () => {
-        if (invitationCount > 0) {
-            // Nếu có lời mời kết bạn chưa đọc, chuyển sang tab bạn bè
-            setActiveSubTab("requests");
-            setInvitationCount(0);
-        }
         setActiveTab("contacts");
         setSelectedChat(null); // Đặt lại selectedChat khi chuyển sang tab bạn bè
     }
@@ -1630,7 +1594,10 @@ const MainPage = () => {
         navigate('/');
     };
 
-
+    const handleClickFriendRequests = () => {
+        setActiveSubTab("requests");
+        setInvitationCount(0); // Reset badge về 0 khi người dùng đã bấm tab
+    };
 
     return (
         <div className="main-container">
@@ -1795,7 +1762,7 @@ const MainPage = () => {
                             <div className="d-flex align-items-start w-100">
                                 <div className="nav flex-column nav-pills me-3 w-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                                     <button
-                                        className="nav-link active d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "friends" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-friendlist-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-friendlist"
@@ -1809,7 +1776,7 @@ const MainPage = () => {
                                         Danh sách bạn bè
                                     </button>
                                     <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "groups" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-grouplist-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-grouplist"
@@ -1823,7 +1790,7 @@ const MainPage = () => {
                                         Danh sách nhóm
                                     </button>
                                     <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "requests" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-friend-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-friend"
@@ -1831,13 +1798,16 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-friend"
                                         aria-selected="false"
-                                        onClick={() => setActiveSubTab("requests")}
+                                        onClick={handleClickFriendRequests}
                                     >
                                         <i className="fas fa-user-plus me-2"></i>
-                                        Lời mời kết bạn
+                                        Lời mời kết bạn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        {invitationCount > 0 && activeSubTab !== "requests" && (
+                                            <span className="badge">{invitationCount}</span>
+                                        )}
                                     </button>
                                     <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "requestsGroup" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-group-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-group"
