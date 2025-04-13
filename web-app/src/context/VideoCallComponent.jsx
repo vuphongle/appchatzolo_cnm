@@ -19,6 +19,7 @@ class VideoCall {
         this.isCalling = true;
 
         try {
+            // Lấy media từ user
             this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             this.displayLocalStream(); // Hiển thị local stream
         } catch (err) {
@@ -26,7 +27,14 @@ class VideoCall {
             return;
         }
 
-        this.peerConnection = new RTCPeerConnection();
+        // Tạo một đối tượng peer connection với STUN server
+        this.peerConnection = new RTCPeerConnection({
+            iceServers: [
+                {
+                    urls: 'stun:stun.l.google.com:19302' // Sử dụng Google STUN server
+                }
+            ]
+        });
 
         // Thêm local stream vào peer connection
         this.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.localStream));
@@ -59,7 +67,8 @@ class VideoCall {
             to: remoteUserId,
         });
     }
-    // video người gọi
+
+    // Video người gọi
     displayLocalStream() {
         const localVideoElement = document.getElementById("local-video");
         if (localVideoElement && this.localStream) {
@@ -88,6 +97,7 @@ class VideoCall {
         this.isCalling = false;
     }
 }
+
 const VideoCallComponent = ({ remoteUserId, userId, isVideoCallVisible, setIsVideoCallVisible }) => {
     const { sendMessage } = useWebSocket(); // Lấy sendMessage từ WebSocket context
     const videoCallRef = useRef(null); // Sử dụng useRef để tránh re-render không cần thiết
@@ -98,12 +108,22 @@ const VideoCallComponent = ({ remoteUserId, userId, isVideoCallVisible, setIsVid
         videoCallRef.current = new VideoCall(userId, sendMessage); // Khởi tạo đối tượng VideoCall
     }, [userId, sendMessage]);
 
+    // Trong hàm startCall
     const startCall = () => {
         if (videoCallRef.current) {
             videoCallRef.current.startCall(remoteUserId);
             setIsCalling(true);
+
+            // Gửi thông báo cuộc gọi đến qua WebSocket
+            sendMessage({
+                type: "video_call_request",
+                from: userId,
+                to: remoteUserId,
+                message: "Bạn có cuộc gọi video đến!",
+            });
         }
     };
+
 
     const endCall = () => {
         if (videoCallRef.current) {

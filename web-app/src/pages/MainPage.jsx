@@ -963,12 +963,33 @@ const MainPage = () => {
             setResultsCount(result.length); // Cập nhật số lượng kết quả tìm thấy
         }
     }, [searchQueryMessage, chatMessages]);  // Theo dõi sự thay đổi của searchQueryMessage
-    // hàm call video
+
     // hàm call video
     const [isVideoCallVisible, setIsVideoCallVisible] = useState(false);
+    const [isCalling, setIsCalling] = useState(false);
+    const videoCallRef = useRef(null);
     const toggleSearchModalCall = () => {
         setIsVideoCallVisible((prev) => !prev);
     };
+    useEffect(() => {
+        const unsubscribe = onMessage((message) => {
+            if (message.type === "video_call_request" && message.to === MyUser.my_user.id) {
+                // Hiển thị modal cuộc gọi đến
+                const userResponse = window.confirm(`Cuộc gọi video đến từ ${message.from}, bạn có muốn nhận không?`);
+                if (userResponse) {
+                    // Chấp nhận cuộc gọi
+                    videoCallRef.current.startCall(message.from);
+                    setIsCalling(true);  // Đánh dấu người dùng đang gọi video
+                    setIsVideoCallVisible(true);  // Hiển thị modal cuộc gọi video
+                }
+            }
+        });
+
+        return () => {
+            unsubscribe(); // Hủy đăng ký khi component unmount
+        };
+    }, [onMessage, MyUser.my_user.id]);
+
 
     const removeFile = (fileToRemove) => {
         setAttachedFiles((prev) => prev.filter((f) => f !== fileToRemove));
