@@ -204,7 +204,7 @@ const ForwardMessageModal = ({ visible, onClose, originalMessageId, senderID, me
         {renderMessagePreview()}
         
         {/* Search */}
-        <View style={styles.searchContainer}>
+        {/* <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
@@ -217,7 +217,7 @@ const ForwardMessageModal = ({ visible, onClose, originalMessageId, senderID, me
               <Ionicons name="close-circle" size={20} color="#666" />
             </TouchableOpacity>
           )}
-        </View>
+        </View> */}
         
         {/* Selected count */}
         {selectedFriends.length > 0 && (

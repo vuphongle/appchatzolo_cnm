@@ -464,7 +464,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
 
       <View style={styles.footerContainer}>
         <View style={styles.inputContainer}>
-          <TouchableOpacity onPress={toggleEmojiPicker}>
+        {/* onPress={toggleEmojiPicker} */}
+          <TouchableOpacity >
             <MaterialIcons name="insert-emoticon" size={24} color="#0091ff" />
           </TouchableOpacity>
           <TextInput
