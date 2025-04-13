@@ -39,7 +39,7 @@ const TinNhanScreen = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { fetchUserProfile, user } = useContext(UserContext);
+  const { fetchUserProfile, user, setUser } = useContext(UserContext);
   const [friendRequestStatus, setFriendRequestStatus] = useState('Kết bạn');
 
   useEffect(() => {
@@ -71,8 +71,12 @@ const TinNhanScreen = () => {
     // Định dạng số điện thoại trước khi tìm kiếm
     const formattedPhone = formatPhoneNumber(searchText);
     if (!formattedPhone) {
-      Alert.alert('Lỗi', 'Số điện thoại không đúng định dạng.');
       return;
+    }
+
+    const userNew = await fetchUserProfile(user?.phoneNumber);
+    if (userNew) {
+      setUser(userNew);
     }
 
     setLoading(true);
@@ -168,19 +172,25 @@ const TinNhanScreen = () => {
     if (!searchResult) return;
 
     try {
-      const response = await fetch(
-        IPV4 + '/messages/invitations/sent/' + user?.id,
-      );
-      const invitations = await response.json();
-
-      const sentInvitation = invitations.find(
-        (invitation) => invitation.receiverID === searchResult.id,
-      );
-
-      if (sentInvitation) {
-        setFriendRequestStatus('Hoàn tác');
+      // Kiểm tra nếu searchResult.id đã có trong friendIds
+      if (user?.friendIds.includes(searchResult.id)) {
+        setFriendRequestStatus('Bạn bè');
       } else {
-        setFriendRequestStatus('Kết bạn');
+        // Kiểm tra xem có phải đã gửi lời mời kết bạn không
+        const response = await fetch(
+          IPV4 + '/messages/invitations/sent/' + user?.id,
+        );
+        const invitations = await response.json();
+
+        const sentInvitation = invitations.find(
+          (invitation) => invitation.receiverID === searchResult.id,
+        );
+
+        if (sentInvitation) {
+          setFriendRequestStatus('Hoàn tác');
+        } else {
+          setFriendRequestStatus('Kết bạn');
+        }
       }
     } catch (error) {
       console.error('Có lỗi xảy ra khi kiểm tra lời mời:', error);

@@ -22,6 +22,7 @@ public class Message {
     private String type;
     private boolean deletedBySender = false;
     private boolean deletedByReceiver = false;
+    private String typeWeb;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -99,6 +100,15 @@ public class Message {
     @DynamoDbAttribute("type")
     public String getType() {
         return type;
+    }
+
+    @DynamoDbAttribute("typeWeb")
+    public String getTypeWeb() {
+        return typeWeb;
+    }
+
+    public void setTypeWeb(String typeWeb) {
+        this.typeWeb = typeWeb;
     }
 
     public void setType(String type) {
