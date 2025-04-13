@@ -24,6 +24,7 @@ import FriendInfoModal from "./FriendInfoModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import { v4 as uuidv4 } from 'uuid';
 
+import VideoCallComponent from '../context/VideoCallComponent';  // Import VideoCallComponent
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
@@ -425,7 +426,7 @@ const MainPage = () => {
             if (!forwardMessageId) return;
             const uniqueUserIds = [...new Set(selectedUserIds)];
 
-            await MessageService.forwardMessage(forwardMessageId, MyUser.my_user.id, uniqueUserIds);
+            await MessageService.forwardMessage(forwardMessageId, MyUser?.my_user?.id, uniqueUserIds);
 
             alert("Chia sẻ thành công!");
             setShowForwardModal(false);
@@ -627,7 +628,7 @@ const MainPage = () => {
 
                     // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
                     if (incomingMessage.isRead === false) {
-                        MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                        MessageService.savereadMessages(MyUser?.my_user?.id, selectedChat.id)
                             .then(() => {
                                 // Cập nhật trạng thái tin nhắn là đã đọc
                                 setChatMessages((prevMessages) =>
@@ -669,7 +670,7 @@ const MainPage = () => {
 
                 // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
                 if (incomingMessage.isRead === false) {
-                    MessageService.savƯereadMessages(MyUser.my_user.id, selectedChat.id)
+                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
                         .then(() => {
                             // Cập nhật trạng thái của tin nhắn trong chatMessages
                             setChatMessages((prevMessages) =>
@@ -1012,6 +1013,32 @@ const MainPage = () => {
         }
     }, [searchQueryMessage, chatMessages]);  // Theo dõi sự thay đổi của searchQueryMessage
 
+    // hàm call video
+    const [isVideoCallVisible, setIsVideoCallVisible] = useState(false);
+    const [isCalling, setIsCalling] = useState(false);
+    const videoCallRef = useRef(null);
+    const toggleSearchModalCall = () => {
+        setIsVideoCallVisible((prev) => !prev);
+    };
+    useEffect(() => {
+        const unsubscribe = onMessage((message) => {
+            if (message.type === "video_call_request" && message.to === MyUser?.my_user?.id) {
+                // Hiển thị modal cuộc gọi đến
+                const userResponse = window.confirm(`Cuộc gọi video đến từ ${message.from}, bạn có muốn nhận không?`);
+                if (userResponse) {
+                    // Chấp nhận cuộc gọi
+                    videoCallRef.current.startCall(message.from);
+                    setIsCalling(true);  // Đánh dấu người dùng đang gọi video
+                    setIsVideoCallVisible(true);  // Hiển thị modal cuộc gọi video
+                }
+            }
+        });
+
+        return () => {
+            unsubscribe(); // Hủy đăng ký khi component unmount
+        };
+    }, [onMessage, MyUser?.my_user?.id]);
+
 
     const removeFile = (fileToRemove) => {
         setAttachedFiles((prev) => prev.filter((f) => f !== fileToRemove));
@@ -1062,7 +1089,7 @@ const MainPage = () => {
                                         {/* Nút gọi video */}
                                         <button
                                             className="video-call-btn"
-                                            onClick={() => console.log("Gọi video được nhấn")}
+                                            onClick={toggleSearchModalCall}
                                         >
                                             <i className="fas fa-video"></i>
                                         </button>
@@ -1077,7 +1104,14 @@ const MainPage = () => {
                                     setSearchQuery={setSearchQueryMessage} // Truyền vào setSearchQuery
                                     handleSearchMessages={handleSearchMessages}
                                 />
+                                {/*truyền vào các biến này   remoteUserId, userId, isVideoCallVisible, setIsVideoCallVisible  để call*/}
+                                <VideoCallComponent
+                                    remoteUserId={selectedChat.id} // Truyền ID người nhận vào VideoCallComponent
+                                    userId={MyUser?.my_user?.id} // Truyền ID người gửi vào VideoCallComponent
+                                    isVideoCallVisible={isVideoCallVisible} // Truyền trạng thái gọi video
+                                    setIsVideoCallVisible={setIsVideoCallVisible} // Truyền hàm để đóng VideoCallComponent
 
+                                />
                                 <section className="chat-section">
                                     <div className="chat-messages">
                                         {chatMessages.length > 0 ? (
@@ -1172,13 +1206,13 @@ const MainPage = () => {
                                                             )}
                                                             {showMenuForMessageId === msg.id && (
                                                                 <MessageOptionsMenu
-                                                                    isOwner={msg.senderID === MyUser.my_user.id}
-                                                                    isMine={msg.senderID === MyUser.my_user.id}
+                                                                    isOwner={msg.senderID === MyUser?.my_user?.id}
+                                                                    isMine={msg.senderID === MyUser?.my_user?.id}
                                                                     isRecalled={msg.content === "Tin nhắn đã được thu hồi"}
                                                                     onRecall={async () => {
                                                                         setShowMenuForMessageId(null);
                                                                         try {
-                                                                            await MessageService.recallMessage(msg.id, MyUser.my_user.id, selectedChat.id);
+                                                                            await MessageService.recallMessage(msg.id, MyUser?.my_user?.id, selectedChat.id);
                                                                             setChatMessages((prev) => prev.map((m) =>
                                                                                 m.id === msg.id ? { ...m, content: "Tin nhắn đã được thu hồi" } : m
                                                                             ));
@@ -1195,7 +1229,7 @@ const MainPage = () => {
                                                                     onDeleteForMe={async () => {
                                                                         setShowMenuForMessageId(null);
                                                                         try {
-                                                                            await MessageService.deleteSingleMessageForUser(msg.id, MyUser.my_user.id);
+                                                                            await MessageService.deleteSingleMessageForUser(msg.id, MyUser?.my_user?.id);
                                                                             setChatMessages((prev) => prev.filter(m => m.id !== msg.id));
                                                                         } catch (err) {
                                                                             console.error("Lỗi khi xóa ở phía tôi:", err);
@@ -1762,6 +1796,7 @@ const MainPage = () => {
                     <input type="text" className="search-bar" placeholder="Tìm kiếm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+
                     />
                     <button className="search-button">
                         <img src="/MainPage/search.png" alt="Chat Icon" />
@@ -1829,7 +1864,7 @@ const MainPage = () => {
                                                 unreadCount={item.unreadCount}
                                                 img={item.img || avatar_default}
                                                 onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
-                                                onDeleteChat={() => handleDeleteChat(MyUser?.my_user.id, item.id)}
+                                                onDeleteChat={() => handleDeleteChat(MyUser?.my_user?.id, item.id)}
                                             />
                                         ))
                                 ) : filteredFriends.length > 0 ? (

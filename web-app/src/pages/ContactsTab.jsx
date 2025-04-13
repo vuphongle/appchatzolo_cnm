@@ -6,7 +6,7 @@ import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
 import FriendRequestsTab from "./ListFriend_RequestTab";
 import FriendInfoModal from "./FriendInfoModal";
-import { toast } from 'react-toastify';
+import showToast from "../utils/AppUtils";
 
 const FriendItem = ({
     userId,
@@ -31,21 +31,42 @@ const FriendItem = ({
     const [showModalFriend, setShowModalFriend] = useState(false); // Trạng thái riêng cho mỗi FriendItem
     user = { id: friendId, avatar, name, phoneNumber, dob };
 
+    const { updateUserInfo } = useAuth(); // Sử dụng custom hook để lấy hàm updateUserInfo từ context
+    const [friendList, setFriendList] = useState([]);
+
+    const updateFriendList = (friendId) => {
+        const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
+        setFriendList((prevList) => {
+            // Kiểm tra xem bạn đã có trong danh sách chưa
+            if (!prevList.includes(friendId)) {
+                return [...prevList, friendId];  // Thêm bạn mới vào danh sách
+            }
+            return prevList;
+        });
+
+        // Cập nhật lại thông tin người dùng nếu cần
+        const updatedUserData = {
+            ...MyUser,
+            my_user: {
+                ...MyUser.my_user,
+                friendIds: [...friendIds, friendId],
+            },
+        };
+        updateUserInfo(updatedUserData);
+    };
+
     const handleRemoveFriend = async () => {
         try {
             await UserService.delete(`/${userId}/removeFriend/${friendId}`);
-            toast.success("Xóa bạn bè thành công!", {
-                position: "top-center",
-                autoClose: 1000,
-            })
+            showToast("Xóa bạn bè thành công!", "success");
             if (onFriendRemoved) {
                 onFriendRemoved(friendId);
             }
+            // Cập nhật lại danh sách bạn bè trong context
+            updateFriendList(MyUser?.my_user?.id);
+
         } catch (error) {
-            toast.error("Xóa bạn bè thất bại! " + (error.message || JSON.stringify(error)), {
-                position: "top-center",
-                autoClose: 1000,
-            });
+            showToast("Xóa bạn bè thất bại!", "error");
         }
     };
 

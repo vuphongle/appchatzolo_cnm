@@ -1,0 +1,66 @@
+.video-call-modal-container {
+  position: fixed; /* Giữ video ở trên cùng của màn hình */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Căn giữa modal */
+  z-index: 9999; /* Đảm bảo video luôn hiển thị trên các phần khác */
+  background-color: rgba(0, 0, 0, 0.85); /* Nền mờ tối */
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Hiệu ứng đổ bóng */
+  width: 700px;
+  max-width: 90%; /* Đảm bảo không vượt quá màn hình */
+  color: white;
+}
+
+.video-call-modal-header {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 10px;
+}
+
+.video-call-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* Khoảng cách giữa các nút */
+  margin-bottom: 20px;
+}
+
+.video-call-modal-buttons button {
+  padding: 10px 25px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.video-call-modal-buttons button:hover {
+  background-color: #0056b3; /* Màu khi hover */
+}
+
+.video-call-modal-buttons button:disabled {
+  background-color: #555; /* Màu khi bị vô hiệu hóa */
+  cursor: not-allowed;
+}
+
+.video-call-modal-streams {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px; /* Khoảng cách giữa các video */
+}
+
+.video-call-modal-streams video {
+  flex: 1;
+  max-width: 48%; /* Đảm bảo hai video không vượt quá container */
+  height: auto;
+  background-color: black;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); /* Hiệu ứng đổ bóng */
+}
