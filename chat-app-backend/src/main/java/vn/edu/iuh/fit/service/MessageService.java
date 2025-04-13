@@ -23,4 +23,5 @@ public interface MessageService {
     void deleteMessagesBetweenUsers(String senderID, String receiverID);
     void recallMessage(String messageId, String senderID, String receiverID);
     void forwardMessage(String originalMessageId, String senderID, List<String> receiverIDs);
+    void deleteMessageForUser(String messageId, String userId);
 }

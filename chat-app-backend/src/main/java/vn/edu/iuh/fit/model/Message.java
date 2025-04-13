@@ -20,6 +20,8 @@ public class Message {
     private Media media;
     private String status;
     private String type;
+    private boolean deletedBySender = false;
+    private boolean deletedByReceiver = false;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -101,5 +103,23 @@ public class Message {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    @DynamoDbAttribute("deletedBySender")
+    public boolean isDeletedBySender() {
+        return deletedBySender;
+    }
+
+    public void setDeletedBySender(boolean deletedBySender) {
+        this.deletedBySender = deletedBySender;
+    }
+
+    @DynamoDbAttribute("deletedByReceiver")
+    public boolean isDeletedByReceiver() {
+        return deletedByReceiver;
+    }
+
+    public void setDeletedByReceiver(boolean deletedByReceiver) {
+        this.deletedByReceiver = deletedByReceiver;
     }
 }

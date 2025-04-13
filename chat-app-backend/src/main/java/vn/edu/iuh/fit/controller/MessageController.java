@@ -174,4 +174,15 @@ public class MessageController {
         }
     }
 
+    // xóa chat 1 bên
+    @DeleteMapping("/delete-single/{messageId}/{userId}")
+    public ResponseEntity<String> deleteMessageForUser(@PathVariable String messageId, @PathVariable String userId) {
+        try {
+            service.deleteMessageForUser(messageId, userId);
+            return ResponseEntity.ok("Tin nhắn đã được xóa thành công cho người dùng " + userId);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi khi xóa tin nhắn: " + e.getMessage());
+        }
+    }
 }
