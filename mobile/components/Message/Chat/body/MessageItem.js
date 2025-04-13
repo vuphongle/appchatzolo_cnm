@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Alert,
   Image,
@@ -7,11 +7,15 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
+import Video from 'react-native-video';
+import Sound from 'react-native-sound';
 import moment from 'moment';
 import { useNavigation } from '@react-navigation/native';
 import MessageService from '../../../../services/MessageService';
 import { formatDate } from '../../../../utils/formatDate';
-import ForwardMessageModal from '../ForwardMessageModal'; // Import the modal component
+import ForwardMessageModal from '../ForwardMessageModal';
+import RNFS from 'react-native-fs';
+import FileViewer from 'react-native-file-viewer';
 
 function MessageItem({ avatar, time, message, messageId, userId, receiverId, showForwardRecall = true }) {
   const navigation = useNavigation();
@@ -19,30 +23,142 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   const [StatusRead, setStatusRead] = useState(false);
   const [isRecalled, setIsRecalled] = useState(false);
   const [forwardModalVisible, setForwardModalVisible] = useState(false);
+  const [sound, setSound] = useState(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   const messageTime = moment(time);
   const displayTime = messageTime.isValid()
     ? messageTime.format("HH:mm")
     : moment().format("HH:mm");
 
-  // Kiểm tra xem tin nhắn có phải là ảnh hay không
-  const isImageMessage = (url) => {
-    if (typeof url !== 'string') return false;
-    return url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+  // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
+  const isImageMessage = (url) => url?.match(/\.(jjpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
+  
+  // Kiểm tra xem tin nhắn có phải là URL của video hay không
+  const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i) != null;
+  
+  // Kiểm tra xem tin nhắn có phải là URL của audio hay không
+  const isAudioMessage = (url) => url?.match(/\.(mp3|wav|ogg)$/i) != null;
+  
+  // Kiểm tra xem tin nhắn có phải là URL của document hay không
+  const isDocumentFile = (url) => 
+    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql)$/i) != null;
+
+  // Kiểm tra xem tin nhắn có phải là URL của file bất kỳ hay không
+  const isFileMessage = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    return isDocumentFile(url) || isVideoMessage(url) || isAudioMessage(url) || isImageMessage(url);
   };
 
-  // Kiểm tra xem tin nhắn có phải là URL của file hay không (bao gồm nhiều đuôi file)
-  const isFileMessage = (url) => {
-    const extRegex = /\.(pdf|docx|xlsx|txt|zip|rar|mp3|mp4|pptx|csv|json|html|xml)$/i;
-    const s3FileRegex = /^https:\/\/nhom3-cmn-chatappzolo-s3\.s3\.amazonaws\.com\/file/;
-    return url && (extRegex.test(url) || s3FileRegex.test(url));
+  // Tải và mở file
+  const downloadAndOpenFile = async (fileUrl) => {
+    try {
+      const fileName = fileUrl.split('/').pop();
+      const localFile = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+  
+      const options = {
+        fromUrl: fileUrl,
+        toFile: localFile,
+      };
+  
+      // Tải file về
+      await RNFS.downloadFile(options).promise;
+      console.log('File downloaded to:', localFile);
+  
+      // // Mở file bằng app mặc định
+      // await FileViewer.open(localFile);
+    } catch (error) {
+      console.error('Lỗi khi mở file:', error);
+      Alert.alert('Lỗi', 'Không thể tải hoặc mở file.');
+    }
   };
   
+  // Phát/dừng audio với react-native-sound
+  const playAudio = async (audioUrl) => {
+    try {
+      if (sound && isAudioPlaying) {
+        sound.pause();
+        setIsAudioPlaying(false);
+      } else if (sound) {
+        sound.play((success) => {
+          if (success) {
+            console.log('Phát audio thành công');
+            setIsAudioPlaying(false);
+          } else {
+            console.log('Phát audio thất bại');
+          }
+        });
+        setIsAudioPlaying(true);
+      } else {
+        // Nếu sound chưa được tạo, tải và tạo mới
+        Sound.setCategory('Playback');
+        
+        // Kiểm tra xem file đã được tải về chưa
+        const fileName = audioUrl.split('/').pop();
+        const localFile = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+        
+        // Kiểm tra xem file đã tồn tại chưa
+        const fileExists = await RNFS.exists(localFile);
+        
+        if (!fileExists) {
+          // Tải file về nếu chưa tồn tại
+          const options = {
+            fromUrl: audioUrl,
+            toFile: localFile,
+          };
+          
+          await RNFS.downloadFile(options).promise;
+          console.log('Audio downloaded to:', localFile);
+        }
+        
+        // Tạo đối tượng Sound từ file đã tải
+        const newSound = new Sound(localFile, '', (error) => {
+          if (error) {
+            console.error('Lỗi khi tải audio:', error);
+            Alert.alert('Lỗi', 'Không thể tải audio này.');
+            return;
+          }
+          
+          // Phát audio
+          newSound.play((success) => {
+            if (success) {
+              console.log('Phát audio thành công');
+              setIsAudioPlaying(false);
+            } else {
+              console.log('Phát audio thất bại');
+            }
+          });
+          
+          setSound(newSound);
+          setIsAudioPlaying(true);
+        });
+      }
+    } catch (error) {
+      console.error('Lỗi khi phát audio:', error);
+      Alert.alert('Lỗi', 'Không thể phát audio này.');
+    }
+  };
+
+  // Giải phóng tài nguyên audio khi component unmount
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.release();
+      }
+    };
+  }, [sound]);
 
   // Xác định loại tin nhắn
-  const type = isRecalled ? 'unsend' : 
-               isImageMessage(message) ? 'image' :
-               isFileMessage(message) ? 'file' : 'text';
+  const getMessageType = () => {
+    if (isRecalled) return 'unsend';
+    if (isImageMessage(message)) return 'image';
+    if (isVideoMessage(message)) return 'video';
+    if (isAudioMessage(message)) return 'audio';
+    if (isDocumentFile(message)) return 'document';
+    return 'text';
+  };
+
+  const type = getMessageType();
 
   // Hàm xử lý nhấn vào ảnh
   const handlePressImage = () => {
@@ -93,7 +209,12 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
             { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
           ]
         );
-      }}
+      }},
+      {
+        text: 'Hủy',
+        onPress: () => {},
+        style: 'cancel'
+      }
     ];
 
     // Hiển thị Alert với các tùy chọn
@@ -104,6 +225,73 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
     })));
   };
 
+  // Lấy tên file từ URL
+  const getFileNameFromUrl = (url) => {
+    if (!url) return 'File';
+    return url.split('/').pop();
+  };
+
+  // Lấy icon phù hợp cho loại file
+  const getFileIcon = (url) => {
+    if (isImageMessage(url)) return '🖼️';
+    if (isVideoMessage(url)) return '🎬';
+    if (isAudioMessage(url)) return '🎵';
+    
+    // Icons cho các loại document khác nhau
+    if (url?.match(/\.(pdf)$/i)) return '📄';
+    if (url?.match(/\.(doc|docx|odt|txt)$/i)) return '📝';
+    if (url?.match(/\.(xls|xlsx|csv|ods)$/i)) return '📊';
+    if (url?.match(/\.(ppt|pptx|odp)$/i)) return '📑';
+    if (url?.match(/\.(zip|rar|tar|gz|7z)$/i)) return '🗜️';
+    
+    return '📎';
+  };
+
+  // Render nội dung tin nhắn dựa trên loại
+  const renderMessageContent = () => {
+    switch (type) {
+      case 'image':
+        return (
+          <TouchableOpacity onPress={handlePressImage}>
+            <Image style={styles.image} source={{ uri: message }} />
+          </TouchableOpacity>
+        );
+      case 'video':
+        return (
+          <View style={styles.videoContainer}>
+            <Video
+              source={{ uri: message }}
+              style={styles.video}
+              controls={true}
+              resizeMode="contain"
+              repeat={false}
+              paused={true} // Video bị tạm dừng ban đầu
+            />
+          </View>
+        );
+      case 'audio':
+        return (
+          <TouchableOpacity onPress={() => playAudio(message)} style={styles.audioContainer}>
+            <View style={styles.audioPlayer}>
+              <Text style={styles.audioIcon}>{isAudioPlaying ? '⏸️' : '▶️'}</Text>
+              <Text style={styles.audioText}>{getFileNameFromUrl(message)}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      case 'document':
+        return (
+          <View style={styles.fileContainer}>
+            <Text style={styles.fileIcon}>{getFileIcon(message)}</Text>
+            <Text style={styles.fileText}>{getFileNameFromUrl(message)}</Text>
+          </View>
+        );
+      case 'unsend':
+        return <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>;
+      default:
+        return <Text style={styles.messageText}>{message}</Text>;
+    }
+  };
+
   return (
     <>
       <View style={styles.container}>
@@ -111,24 +299,26 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
           <Image style={styles.avatar} source={{ uri: avatar }} />
         </View>
         <View style={styles.messageContainer}>
-          {/* Nội dung tin nhắn */}
           <TouchableOpacity
             onLongPress={handleLongPress}
-            style={[styles.messageBox, type === 'image' && styles.imageMessage]}
+            onPress={() => {
+              if (type === 'image') handlePressImage();
+              else if (type === 'document') downloadAndOpenFile(message);
+              else if (type === 'audio') playAudio(message);
+              else if (type === 'video') {
+                // Mở video trong trình xem mặc định
+                downloadAndOpenFile(message);
+              }
+            }}
+            style={[
+              styles.messageBox, 
+              type === 'image' && styles.imageMessage,
+              type === 'video' && styles.videoMessage,
+              type === 'audio' && styles.audioMessage,
+              type === 'document' && styles.documentMessage
+            ]}
           >
-            {type === 'image' ? (
-              <TouchableOpacity onPress={handlePressImage}>
-                <Image style={styles.image} source={{ uri: message }} />
-              </TouchableOpacity>
-            ) : type === 'file' ? (
-              <View style={styles.fileContainer}>
-                <Text style={styles.fileText}>📎 {message.split('/').pop()}</Text>
-              </View>
-            ) : type === 'unsend' ? (
-              <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>
-            ) : (
-              <Text style={styles.messageText}>{message}</Text>
-            )}
+            {renderMessageContent()}
           </TouchableOpacity>
 
           {/* Thời gian tin nhắn */}
@@ -200,26 +390,76 @@ const styles = StyleSheet.create({
   },
   imageMessage: {
     padding: 0,
+    overflow: 'hidden',
+  },
+  videoContainer: {
+    width: 160,
+    height: 160,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+  },
+  videoMessage: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  audioContainer: {
+    minWidth: 120,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  audioPlayer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  audioIcon: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  audioText: {
+    fontSize: 14,
+    color: '#333',
+    maxWidth: 130,
+  },
+  audioMessage: {
+    padding: 0,
   },
   fileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  fileIcon: {
+    fontSize: 18,
+    marginRight: 6,
   },
   fileText: {
     fontSize: 14,
     color: '#0066cc',
     textDecorationLine: 'underline',
+    maxWidth: 130,
+  },
+  documentMessage: {
+    padding: 5,
   },
   messageText: {
     fontSize: 14,
     color: '#333',
     marginBottom: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   unsendText: {
     fontSize: 14,
     color: '#aaa',
     fontStyle: 'italic',
     marginBottom: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   time: {
     fontSize: 10,
