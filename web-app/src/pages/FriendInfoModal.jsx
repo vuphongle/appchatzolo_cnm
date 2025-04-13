@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useWebSocket } from "../context/WebSocket";
+import { useAuth } from "../context/AuthContext";
 
 const FriendInfoModal = ({
     user,
@@ -17,13 +18,6 @@ const FriendInfoModal = ({
     setIsFriendRequestModalOpen,
     openChat,
 }) => {
-
-
-    if (!isUserInfoModalOpen || !user) return null;
-    const handleMessageClick = () => {
-        openChat(user); // Gọi hàm mở chat và truyền thông tin bạn bè
-        setIsUserInfoModalOpen(false); // Đóng modal thông tin
-    };
 
     const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
 
@@ -47,6 +41,42 @@ const FriendInfoModal = ({
         const day = `${date.getDate()}`.padStart(2, '0');
         return `${day}, tháng ${month}, ${year}`;
     };
+
+    const { updateUserInfo } = useAuth(); // Sử dụng custom hook để lấy hàm updateUserInfo từ context
+    const [friendList, setFriendList] = useState([]);
+
+    const updateFriendList = (friendId) => {
+        const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
+        setFriendList((prevList) => {
+            // Kiểm tra xem bạn đã có trong danh sách chưa
+            if (!prevList.includes(friendId)) {
+                return [...prevList, friendId];  // Thêm bạn mới vào danh sách
+            }
+            return prevList;
+        });
+
+        // Cập nhật lại thông tin người dùng nếu cần
+        const updatedUserData = {
+            ...MyUser,
+            my_user: {
+                ...MyUser.my_user,
+                friendIds: [...friendIds, friendId],
+            },
+        };
+        updateUserInfo(updatedUserData);
+    };
+
+    useState(() => {
+        updateFriendList(MyUser?.my_user?.friendIds); // Cập nhật danh sách bạn bè khi modal mở
+    }, [MyUser?.my_user?.friendIds]);
+
+    if (!isUserInfoModalOpen || !user) return null;
+    const handleMessageClick = () => {
+        openChat(user); // Gọi hàm mở chat và truyền thông tin bạn bè
+        setIsUserInfoModalOpen(false); // Đóng modal thông tin
+    };
+
+    console.log("FriendInfoModal", MyUser?.my_user?.friendIds);
 
     return (
         <div className="overlay" onClick={closeAllModal}>
