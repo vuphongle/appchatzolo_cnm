@@ -487,6 +487,7 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
+
             if (incomingMessage.type === "DELETE_MESSAGE") {
                 // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
                 // thì xóa luôn phần hiển thị
@@ -511,6 +512,7 @@ const MainPage = () => {
                 // Cập nhật số lời mời kết bạn chưa đọc
                 setInvitationCount((prev) => prev + (incomingMessage.count || 1));
             }
+            console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
             // Tin nhắn socket đồng ý kết bạn
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.senderID);
@@ -528,7 +530,7 @@ const MainPage = () => {
                         return count;
                     });
                     setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                } else {
+                } else if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
                     // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
                     const validSendDate = moment(incomingMessage.sendDate).isValid()
                         ? moment(incomingMessage.sendDate).toISOString()
@@ -553,13 +555,12 @@ const MainPage = () => {
 
                                 // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
                                 const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                                    if (count.friendId === selectedChat.id) {
+                                    if (count.friendId === incomingMessage.senderID) {
                                         return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
                                     }
                                     return count;
                                 });
                                 setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                                // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
 
                             })
                             .catch((error) => {
@@ -1620,7 +1621,9 @@ const MainPage = () => {
                     <i className="icon">
                         <img src="/MainPage/friends.png" alt="friends Icon" />
                     </i>
-                    {invitationCount > 0 && <span className="badge">{invitationCount}</span>}
+                    {invitationCount > 0 && activeSubTab !== "requests" && (
+                        <span className="badge">{invitationCount}</span>
+                    )}
                 </div>
                 <div className="nav-item settings" onClick={toggleSettingsMenu}>
                     <i className="icon">

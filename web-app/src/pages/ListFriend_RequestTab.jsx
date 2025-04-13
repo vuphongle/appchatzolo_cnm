@@ -34,7 +34,6 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
     // Lắng nghe tín hiệu thu hồi/từ chối lời mời kết bạn
     useEffect(() => {
         const unsubscribe = onMessage((message) => {
-            console.log("invitaiton message:", message);
             if (message.type === "INVITATION_REVOKE") {
                 // Xử lý khi nhận thông báo xóa lời mời
                 setReceivedRequests((prev) =>

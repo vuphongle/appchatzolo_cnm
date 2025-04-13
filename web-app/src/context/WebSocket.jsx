@@ -18,7 +18,6 @@ export const WebSocketProvider = ({ children, userId }) => {
 
         socketRef.current.onmessage = (event) => {
             const message = JSON.parse(event.data);
-            console.log("Received message:", message);
 
             // Gọi tất cả các listener đã đăng ký
             listenersRef.current.forEach((listener) => listener(message));

@@ -27,9 +27,6 @@ const FriendInfoModal = ({
 
     const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
 
-    console.log("friendIds", friendIds);
-    console.log("user", user.id);
-
     const formatPhoneNumber = (phone) => {
         // Giữ nguyên dấu +
         const countryCode = phone.startsWith('+') ? '+84' : '';

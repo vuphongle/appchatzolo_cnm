@@ -171,6 +171,17 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
         onClose();
     };
 
+    const formatDate = (isoDate) => {
+        const date = new Date(isoDate);
+        const year = date.getFullYear();
+        const month = `${date.getMonth() + 1}`.padStart(2, '0'); // cộng 1 vì getMonth() từ 0-11
+        const day = `${date.getDate()}`.padStart(2, '0');
+        return `${day}, tháng ${month}, ${year}`;
+    };
+
+    console.log("MyUser:", MyUser.dob, "initialUser:", initialUser.dob);
+
+
     return (
         <div className="modal show d-block d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-lg">
