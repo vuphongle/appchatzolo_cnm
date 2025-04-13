@@ -49,9 +49,9 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], 
                 aria-expanded="false"
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                    height: '30px', // Đặt chiều cao tùy ý
-                    padding: '5px 10px', // Thay đổi padding nếu cần
-                    lineHeight: '1', // Cân chỉnh chiều cao dòng văn bản
+                    height: '30px',
+                    padding: '5px 10px',
+                    lineHeight: '1',
                 }}
             >
                 <i className="fas fa-ellipsis-h"></i>
@@ -82,25 +82,45 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], 
     </li>
 );
 
-const MessageOptionsMenu = ({ onRecall, onForward, isOwner, isMine }) => {
+const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, isOwner, isMine, isRecalled }) => {
+    const menuRef = useRef(null);
+    const [menuDirection, setMenuDirection] = useState('open-up'); // Mặc định mở lên trên
+
+    useEffect(() => {
+        if (menuRef.current) {
+            // Lấy vị trí của menu so với cửa sổ
+            const menuRect = menuRef.current.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            if (menuRect.top < windowHeight / 2) {
+                setMenuDirection('open-down');
+            } else {
+                setMenuDirection('open-up');
+            }
+        }
+    }, []);
+
     return (
         <div
-            className={`p-1 shadow rounded-3 message-options-menu scale-down ${isMine ? 'mine' : 'theirs'}`}
+            ref={menuRef}
+            className={`p-1 shadow rounded-3 message-options-menu scale-down ${isMine ? 'mine' : 'theirs'} ${menuDirection}`}
         >
-            <button className="dropdown-item" onClick={onForward}>
-                <i className="bi bi-share me-2"></i> Chia sẻ
-            </button>
+            {!isRecalled && (
+                <button className="dropdown-item" onClick={onForward}>
+                    <i className="bi bi-share me-2"></i> Chia sẻ
+                </button>
+            )}
             <div className="dropdown-divider"></div>
-            {isOwner && (
+            {isOwner && !isRecalled && (
                 <button className="dropdown-item text-danger" onClick={onRecall}>
                     <i className="bi bi-arrow-counterclockwise me-2"></i> Thu hồi
                 </button>
             )}
+            <button className="dropdown-item text-danger" onClick={onDeleteForMe}>
+                <i className="bi bi-trash me-2"></i> Chỉ xóa ở phía tôi
+            </button>
         </div>
     );
 };
-
-
 
 const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, messageContent }) => {
     const [selected, setSelected] = useState([]);
@@ -116,9 +136,9 @@ const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, messageConte
     if (!isOpen) return null;
 
     return (
-        <div className="modal show d-flex align-items-center justify-content-center" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered modal-md">
-                <div className="modal-content" style={{ maxHeight: "90vh", overflow: "hidden" }}>
+        <div className="modal show d-flex align-items-center justify-content-center" tabIndex="-1" style={{ backgroundColor: 'transparent' }}>
+            <div className="modal-dialog modal-dialog-centered modal-xl">
+                <div className="modal-content" style={{ width: "500px", maxHeight: "90vh", overflow: "hidden" }}>
 
                     {/* Header */}
                     <div className="modal-header">
@@ -127,36 +147,66 @@ const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, messageConte
                     </div>
 
                     {/* Body */}
-                    <div className="modal-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                    <div className="modal-body" style={{ flexGrow: 1, overflowY: "auto" }}>
                         <div className="mb-3">
-                            <label className="form-label fw-semibold">Chọn bạn bè:</label>
-                            {friends.length === 0 ? (
-                                <p className="text-muted">Không có bạn bè để chia sẻ.</p>
-                            ) : (
-                                <div className="form-check-group">
-                                    {friends.map((friend) => (
-                                        <div key={friend.id} className="form-check mb-2">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                value={friend.id}
-                                                checked={selected.includes(friend.id)}
-                                                onChange={() => toggleSelect(friend.id)}
-                                                id={`friend-${friend.id}`}
-                                            />
-                                            <label className="form-check-label" htmlFor={`friend-${friend.id}`}>
-                                                {friend.name}
-                                            </label>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="input-group">
+                                <input
+                                    type="text"
+                                    className="form-control rounded-pill "
+                                    placeholder="Tìm kiếm..."
+                                />
+                            </div>
+                        </div>
+                        <hr />
+                        <div className="mb-3">
+                            <div className="friend-list" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                                {friends.length === 0 ? (
+                                    <p className="text-muted">Không có bạn bè để chia sẻ.</p>
+                                ) : (
+                                    <div className="form-check-group" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                                        {friends.map((friend) => (
+                                            <div key={friend.id} className="form-check mb-2 me-3 d-flex align-items-center">
+                                                <input
+                                                    className="form-check-input me-2 "
+                                                    type="checkbox"
+                                                    value={friend.id}
+                                                    checked={selected.includes(friend.id)}
+                                                    onChange={() => toggleSelect(friend.id)}
+                                                    id={`friend-${friend.id}`}
+                                                />
+                                                <label className="form-check-label d-flex align-items-center" htmlFor={`friend-${friend.id}`}>
+                                                    <img
+                                                        src={friend.avatar}
+                                                        alt={friend.name}
+                                                        className="rounded-circle me-2 ms-2"
+                                                        style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                                                    />
+                                                    <span>{friend.name}</span>
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <hr />
+                        <div className="mb-3">
+                            <div
+                                className="p-3 bg-secondary text-white border rounded"
+                                style={{
+                                    wordBreak: "break-word",
+                                    whiteSpace: "pre-wrap",
+                                    overflowY: "auto",
+                                    overflowX: "hidden",
+                                    maxHeight: "100px",
+                                    backgroundColor: "#f0f0f0"
+                                }}
+                            >
+                                <strong className="d-block mb-2 fw-bold fs-5">Chia sẻ tin nhắn</strong>
+                                <p className="mb-0">{messageContent}</p>
+                            </div>
                         </div>
 
-                        <div className="p-3 bg-light border rounded">
-                            <strong className="d-block mb-2">Tin nhắn cần chia sẻ:</strong>
-                            <div>{messageContent}</div>
-                        </div>
                     </div>
 
                     {/* Footer */}
@@ -506,6 +556,39 @@ const MainPage = () => {
                 );
                 return; // Kết thúc xử lý cho RECALL_MESSAGE
             }
+
+            if (incomingMessage.type === "CHAT") {
+                const msg = incomingMessage.message;
+                if (
+                    selectedChat &&
+                    (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id)
+                ) {
+                    const validSendDate = moment(incomingMessage.sendDate).isValid()
+                        ? moment(incomingMessage.sendDate).toISOString()
+                        : new Date().toISOString();
+
+                    const message = {
+                        ...msg,
+                        sendDate: validSendDate
+                    };
+                    setChatMessages((prev) =>
+                        [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
+                    );
+                } else {
+                    // Nếu không phải, tăng unread
+                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                        if (count.friendId === msg.senderID) {
+                            return {
+                                ...count,
+                                unreadCount: count.unreadCount + 1,
+                            };
+                        }
+                        return count;
+                    });
+                    setUnreadMessagesCounts(updatedUnreadCounts);
+                }
+            }
+
             if (incomingMessage.type === "WAITING_APPROVED") {
                 // Cập nhật số lời mời kết bạn chưa đọc
                 setInvitationCount((prev) => prev + (incomingMessage.count || 1));
@@ -615,7 +698,7 @@ const MainPage = () => {
 
                 // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
                 if (incomingMessage.isRead === false) {
-                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                    MessageService.savƯereadMessages(MyUser.my_user.id, selectedChat.id)
                         .then(() => {
                             // Cập nhật trạng thái của tin nhắn trong chatMessages
                             setChatMessages((prevMessages) =>
@@ -1064,7 +1147,12 @@ const MainPage = () => {
                                                     url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql)$/i);
 
                                                 return (
-                                                    <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}>
+                                                    <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}
+                                                        onContextMenu={(e) => {
+                                                            e.preventDefault();
+                                                            setShowMenuForMessageId(msg.id);
+                                                        }}
+                                                        onClick={() => setShowMenuForMessageId(null)}>
                                                         {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
                                                         {shouldShowDate && (
                                                             <div className="message-date-center">
@@ -1120,16 +1208,14 @@ const MainPage = () => {
                                                                 <MessageOptionsMenu
                                                                     isOwner={msg.senderID === MyUser.my_user.id}
                                                                     isMine={msg.senderID === MyUser.my_user.id}
+                                                                    isRecalled={msg.content === "Tin nhắn đã được thu hồi"}
                                                                     onRecall={async () => {
                                                                         setShowMenuForMessageId(null);
                                                                         try {
                                                                             await MessageService.recallMessage(msg.id, MyUser.my_user.id, selectedChat.id);
-                                                                            console.log("id message là :", msg.id);
-                                                                            // Cập nhật lại danh sách tin nhắn
                                                                             setChatMessages((prev) => prev.map((m) =>
                                                                                 m.id === msg.id ? { ...m, content: "Tin nhắn đã được thu hồi" } : m
                                                                             ));
-                                                                            // Gửi thông báo WebSocket nếu có
                                                                         } catch (err) {
                                                                             console.error("Lỗi thu hồi:", err);
                                                                         }
@@ -1139,6 +1225,15 @@ const MainPage = () => {
                                                                         setShowMenuForMessageId(null);
                                                                         setForwardMessageId(msg.id); // Gán ID tin nhắn đang muốn chia sẻ
                                                                         setShowForwardModal(true);   // Hiện modal chia sẻ
+                                                                    }}
+                                                                    onDeleteForMe={async () => {
+                                                                        setShowMenuForMessageId(null);
+                                                                        try {
+                                                                            await MessageService.deleteSingleMessageForUser(msg.id, MyUser.my_user.id);
+                                                                            setChatMessages((prev) => prev.filter(m => m.id !== msg.id));
+                                                                        } catch (err) {
+                                                                            console.error("Lỗi khi xóa ở phía tôi:", err);
+                                                                        }
                                                                     }}
                                                                     onClose={() => setShowMenuForMessageId(null)}
                                                                 />

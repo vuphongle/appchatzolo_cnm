@@ -134,13 +134,21 @@ public class MessageRepository {
     }
 
     // Lấy tất cả tin nhắn giữa người gửi và người nhận
-    public List<Message> findMessagesBetweenUsers(String senderID, String receiverID) {
+    public List<Message> findMessagesBetweenUsers(String currentUserId, String otherUserId) {
         return table.scan().items().stream()
                 .filter(message ->
-                        (message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID)) ||
-                                (message.getSenderID().equals(receiverID) && message.getReceiverID().equals(senderID)))
+                        (
+                                message.getSenderID().equals(currentUserId) && message.getReceiverID().equals(otherUserId)
+                                        && !message.isDeletedBySender()
+                        ) ||
+                                (
+                                        message.getSenderID().equals(otherUserId) && message.getReceiverID().equals(currentUserId)
+                                                && !message.isDeletedByReceiver()
+                                )
+                )
                 .collect(Collectors.toList());
     }
+
 
 
     //hàm tăng tốc độ lấy tin nhắn
@@ -215,13 +223,12 @@ public class MessageRepository {
         try {
             Key key = Key.builder().partitionValue(messageId).build();
 
-            // Đọc tin nhắn cũ
             Message oldMessage = table.getItem(r -> r.key(key));
             if (oldMessage != null) {
-                // Cập nhật lại nội dung
                 oldMessage.setContent("Tin nhắn đã được thu hồi");
+                oldMessage.setType("RECALL_MESSAGE");
                 table.updateItem(oldMessage);
-                System.out.println("Recalled message (content updated): " + messageId);
+                System.out.println("Recalled message (content updated): " + oldMessage);
             } else {
                 System.err.println("Không tìm thấy tin nhắn để thu hồi");
             }
@@ -241,4 +248,21 @@ public class MessageRepository {
         }
     }
 
+    public void deleteMessageForUser(String messageId, String userId) {
+        Message message = getMessageById(messageId);
+        if (message == null) {
+            System.out.println("Message not found");
+            return;
+        }
+
+        if (userId.equals(message.getSenderID())) {
+            message.setDeletedBySender(true);
+        } else if (userId.equals(message.getReceiverID())) {
+            message.setDeletedByReceiver(true);
+        } else {
+            System.out.println("User is neither sender nor receiver");
+            return;
+        }
+        table.putItem(message);
+    }
 }

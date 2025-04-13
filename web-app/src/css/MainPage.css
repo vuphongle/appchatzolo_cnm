@@ -1032,7 +1032,6 @@ button {
 
 .message-options-menu {
   position: absolute;
-  top: calc(100% + 4px);
   z-index: 10;
   background-color: white;
   width: max-content;
@@ -1043,9 +1042,23 @@ button {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+
+/* Mở lên trên (tin nhắn ở dưới màn hình) */
+.message-options-menu.open-up {
+  bottom: calc(100% + 4px); /* Đặt menu phía trên tin nhắn */
+  top: auto;
+  transform-origin: bottom left right; /* Mở từ phía dưới */
+}
+
+/* Mở xuống dưới (tin nhắn ở trên màn hình) */
+.message-options-menu.open-down {
+  top: calc(100% + 4px); /* Đặt menu phía dưới tin nhắn */
+  bottom: auto;
+  transform-origin: top left right; /* Mở từ phía trên */
+}
+
 .message-options-menu.scale-down {
   transform: scale(0.85);
-  transform-origin: top right;
 }
 
 /* Tin nhắn bên phải (của mình) -> align về phải */
@@ -1059,10 +1072,6 @@ button {
   left: 0;
   right: auto;
 }
-
-
-
-
 
 /* ------------------------------ */
 .chat-input {

@@ -187,7 +187,6 @@ public class MessageServiceImpl implements MessageService {
 
             repository.save(newMsg);
 
-            // ✅ Gửi tin nhắn kiểu CHAT luôn để render trực tiếp
             MyWebSocketHandler handler = myWebSocketHandlerProvider.getIfAvailable();
             if (handler != null) {
                 try {
@@ -198,5 +197,10 @@ public class MessageServiceImpl implements MessageService {
                 }
             }
         }
+    }
+
+    @Override
+    public void deleteMessageForUser(String messageId, String userId) {
+        repository.deleteMessageForUser(messageId, userId);
     }
 }
