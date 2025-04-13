@@ -28,6 +28,7 @@ import DocumentPicker from 'react-native-document-picker';
 import MessageService from '../../../../services/MessageService';
 import S3Service from '../../../../services/S3Service';
 import moment from 'moment';
+import AudioRecord from 'react-native-audio-record';
 
 const ChatScreen = ({ receiverID, name, avatar }) => {
   const { user } = useContext(UserContext);
@@ -45,11 +46,117 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const [wantToShowEmojiPicker, setWantToShowEmojiPicker] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioFile, setAudioFile] = useState(null);
 
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
+
+  useEffect(() => {
+    const options = {
+      sampleRate: 16000,
+      channels: 1,
+      bitsPerSample: 16,
+      audioSource: 6,
+      format: 'wav',
+      encoder: 'pcm',
+      rawData: false,
+    };
+
+    AudioRecord.init(options);
+    console.log('AudioRecord initialized');
+  }, []);
+
+  useEffect(() => {
+    const requestPermissions = async () => {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Quyền ghi âm',
+            message: 'Ứng dụng cần quyền ghi âm để gửi tin nhắn âm thanh',
+          }
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          setHasPermission(true);
+          console.log('Quyền ghi âm đã được cấp');
+        } else {
+          console.log('Quyền ghi âm bị từ chối');
+        }
+      } catch (err) {
+        console.warn(err);
+      }
+    };
+    requestPermissions();
+  }, []);
+
+  const startRecording = async () => {
+    try {
+      await AudioRecord.start();
+      setIsRecording(true);
+      console.log('Đang ghi âm...');
+    } catch (error) {
+      console.error('Lỗi khi bắt đầu ghi âm:', error);
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      const audioPath = await AudioRecord.stop(); // Dừng ghi âm và lấy đường dẫn tệp âm thanh
+      setAudioFile(audioPath); // Lưu đường dẫn tệp âm thanh
+      setIsRecording(false); // Cập nhật trạng thái dừng ghi âm
+      console.log('Tệp âm thanh được lưu tại:', audioPath);  // Log đường dẫn tệp âm thanh
+
+      const file = {
+        uri: audioPath,   // Đường dẫn tệp
+        name: 'audio.wav', // Tên tệp
+        type: 'audio/wav', // Loại tệp
+      };
+
+      console.log('Đối tượng file sẽ được truyền:', file); // Log đối tượng file để kiểm tra
+      handleSendAudioMessage(file); // Gửi tệp âm thanh lên S3
+    } catch (error) {
+      console.error('Lỗi khi dừng ghi âm:', error);
+    }
+  };
+
+  const handleSendAudioMessage = async (file) => {
+    if (!file) {
+      console.error('Không có tệp âm thanh để gửi.');
+      return;
+    }
+
+    console.log('Đang tải lên âm thanh:', file); // Log file trước khi gửi
+
+    try {
+      const audioUrl = await S3Service.uploadAudio(file); // Gửi tệp âm thanh lên S3
+
+      if (!audioUrl) {
+        console.error('Tải lên tệp âm thanh thất bại.');
+        return;
+      }
+
+      console.log('URL tệp âm thanh sau khi tải lên:', audioUrl); // Log URL sau khi tải lên thành công
+
+      const message = {
+        id: new Date().getTime().toString(),
+        senderID: userId,
+        receiverID: receiverID,
+        content: audioUrl,
+        sendDate: new Date().toISOString(),
+        isRead: false,
+      };
+
+      console.log('Gửi tin nhắn âm thanh:', message); // Log thông tin tin nhắn
+      sendMessage(message.content, receiverID); // Gửi tin nhắn
+      setAudioFile(null);
+    } catch (error) {
+      console.error('Lỗi khi tải lên tệp âm thanh:', error);
+      Alert.alert('Lỗi', 'Có lỗi khi tải lên tệp âm thanh, vui lòng thử lại.');
+    }
+  };
 
   // Effect để cập nhật localMessages khi messages thay đổi
   useEffect(() => {
@@ -485,6 +592,11 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           <TouchableOpacity onPress={handleImageUpload}>
             <SimpleLineIcons name="picture" size={24} color="#0091ff" />
           </TouchableOpacity>
+
+          <TouchableOpacity onPress={isRecording ? stopRecording : startRecording}>
+            <FontAwesome name={isRecording ? 'stop' : 'microphone'} size={24} color="#0091ff" />
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={handleSendMessage}>
             <Ionicons name="send-outline" size={24} color="#0091ff" />
           </TouchableOpacity>

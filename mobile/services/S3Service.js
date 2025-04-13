@@ -28,6 +28,38 @@ const S3Service = {
     }
   },
 
+  uploadAudio: async (file) => {
+      const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/m4a'];
+      if (!allowedTypes.includes(file.type)) {
+          console.log('Định dạng âm thanh không hợp lệ. Chỉ hỗ trợ mp3, wav, mp4 và m4a.');
+          return; // Dừng nếu định dạng không hợp lệ
+      }
+
+      console.log('Đang chuẩn bị gửi tệp âm thanh:', file);
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      });
+
+      try {
+          const response = await axios.post(`${IPV4}/s3/file`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json',
+            },
+            transformRequest: (data) => data,
+          });
+          console.log('Upload success:', response.data);
+          return response.data.url;
+      } catch (error) {
+          console.log('Lỗi upload âm thanh:', error);
+          throw error;
+      }
+  },
+
   uploadImage: async (file) => {
     const formData = new FormData();
 
@@ -49,27 +81,27 @@ const S3Service = {
 
   uploadFile: async (file) => {
     const timestamp = Date.now();
-  
+
     // Lấy tên gốc hoặc tạo tên mặc định
     let originalName = file.fileName || `file_${timestamp}`;
     // let fileExtension = 'doc'; // fallback mặc định
-  
+
     // // Nếu tên gốc không có đuôi, thêm luôn đuôi mặc định
     // if (!originalName.includes('.')) {
     //   originalName += '.doc';
     // }
-  
+
     // Tách đuôi file
     fileExtension = originalName.split('.').pop().toLowerCase();
-  
+
     // Làm sạch tên file (bỏ phần đuôi và thay ký tự đặc biệt)
     const sanitizedBaseName = originalName
       .replace(/\.[^/.]+$/, '') // bỏ phần đuôi
       .replace(/[^a-zA-Z0-9-_]/g, '_'); // thay ký tự đặc biệt bằng "_"
-  
+
     // Tên file cuối cùng
     const finalFileName = `${timestamp}.${file.name}`;
-  
+
     // Map mime types
     const mimeTypes = {
       'jpg': 'image/jpeg',
@@ -81,7 +113,7 @@ const S3Service = {
       'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     };
     const mimeType = file.type || mimeTypes[fileExtension] || 'application/octet-stream';
-  
+
     // FormData
     const formData = new FormData();
     formData.append('file', {
@@ -89,14 +121,14 @@ const S3Service = {
       name: finalFileName,
       type: mimeType,
     });
-  
+
     console.log('Uploading file:', {
       originalName,
       finalFileName,
       mimeType,
       uri: file.uri
     });
-  
+
     try {
       const response = await axios.post(`${IPV4}/s3/file`, formData, {
         headers: {
@@ -116,8 +148,8 @@ const S3Service = {
       throw error.response ? error.response.data : error;
     }
   }
-  
-  
+
+
 };
 
 export default S3Service;
