@@ -245,7 +245,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   // }, [localMessages]);
   useEffect(() => {
     if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true });
+//        scrollViewRef.current.scrollToEnd({ animated: true });
     }
 }, [localMessages]);
 
