@@ -130,8 +130,10 @@ function ListFriend({ userId }) {
   };
 
   const renderItem = ({ item }) => (
-    <ItemFriend receiverID={item.id} name={item.name} avatar={item.avatar} />
-  );
+    
+        <ItemFriend receiverID={item.id} name={item.name} avatar={item.avatar} />
+     
+    );
 
   const renderHiddenItem = ({ item }) => {
     if (openRow !== item.id) return <View style={{ height: 0 }} />;

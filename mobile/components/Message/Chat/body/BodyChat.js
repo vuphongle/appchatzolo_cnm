@@ -180,20 +180,24 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       const data = await MessageService.get(
         `/messages/messages?senderID=${userId}&receiverID=${receiverID}`
       );
-      
+  
+      // Lọc bỏ tin nhắn đã bị xóa bởi người gửi hoặc người nhận
+      const filteredMessages = data.filter(
+        (msg) => !msg.deletedBySender && !msg.deletedByReceiver
+      );
+  
       // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
-      const sortedMessages = data.sort(
+      const sortedMessages = filteredMessages.sort(
         (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
       );
-
+  
       // Cập nhật localMessages
       setLocalMessages(sortedMessages);
-      
+  
       // // Đánh dấu tin nhắn là đã đọc
       // const unreadMessages = sortedMessages.filter(
       //   (msg) => msg.isRead === false && msg.senderID === receiverID
       // );
-      
       // if (unreadMessages.length > 0) {
       //   await MessageService.savereadMessages(userId, receiverID);
       // }
@@ -201,6 +205,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       // console.error('Error fetching messages:', error);
     }
   };
+  
 
   // Triển khai hàm xử lý khi tin nhắn bị xóa
   const handleMessageDeleted = (messageId) => {
@@ -498,40 +503,45 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                 ? 'Hôm nay'
                 : formattedDate || 'Hôm nay';
 
-            return (
-              <View key={message.id || `msg-${index}-${message.sendDate}`}>
-                {showDateHeader && formattedDate && (
-                  <View style={styles.dateHeader}>
-                    <Text style={styles.dateText}>{headerText}</Text>
+                return (
+                  <View key={message.id || `msg-${index}-${message.sendDate}`}>
+                    {showDateHeader && formattedDate && (
+                      <View style={styles.dateHeader}>
+                        <Text style={styles.dateText}>{headerText}</Text>
+                      </View>
+                    )}
+                    
+                    {/* Only show sender's messages if not deleted by sender */}
+                    {isMyMessage && !message.deletedBySender ? (
+                      <MyMessageItem
+                        time={formatDate(message.sendDate)}
+                        message={message.content}
+                        messageId={message.id}
+                        userId={userId}
+                        receiverId={receiverID}
+                        avatar={user?.avatar}
+                        // onDeleteMessage={handleMessageDeleted}
+                        // isRead={
+                        //   index === lastMyMessageIndex ? message.isRead : undefined
+                        // }
+                      />
+                    ) : null}
+                    
+                    {/* Only show receiver's messages if not deleted by receiver */}
+                    {!isMyMessage && !message.deletedByReceiver ? (
+                      <MessageItem
+                        avatar={avatar}
+                        name={name}
+                        time={message.sendDate}
+                        message={message.content}
+                        messageId={message.id}
+                        userId={userId}
+                        receiverId={receiverID}
+                        // onDeleteMessage={handleMessageDeleted}
+                      />
+                    ) : null}
                   </View>
-                )}
-                {isMyMessage ? (
-                  <MyMessageItem
-                    time={formatDate(message.sendDate)}
-                    message={message.content}
-                    messageId={message.id}
-                    userId={userId}
-                    receiverId={receiverID}
-                    avatar={user?.avatar}
-                    // onDeleteMessage={handleMessageDeleted}
-                    // isRead={
-                    //   index === lastMyMessageIndex ? message.isRead : undefined
-                    // } 
-                  />
-                ) : (
-                  <MessageItem
-                    avatar={avatar}
-                    name={name}
-                    time={message.sendDate}
-                    message={message.content}
-                    messageId={message.id}
-                    userId={userId}
-                    receiverId={receiverID}
-                    // onDeleteMessage={handleMessageDeleted}
-                  />
-                )}
-              </View>
-            );
+                );
           });
         })()}
       </ScrollView>

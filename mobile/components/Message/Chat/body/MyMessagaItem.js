@@ -25,6 +25,7 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
   const [sound, setSound] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
    const navigation = useNavigation();
   // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
   const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
@@ -160,6 +161,17 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
       Alert.alert('Lỗi', 'Không thể phát audio này.');
     }
   };
+  // xóa tin nhắn ở phía tôi
+  const deleteMessageForMe = async () => {
+    try {
+      await MessageService.deleteSingleMessageForUser(messageId, userId);
+      setIsDeleted(true); // Mark message as deleted locally
+    } catch (error) {
+      console.error('Lỗi khi xóa tin nhắn:', error);
+      Alert.alert('Lỗi', 'Không thể xóa tin nhắn. Vui lòng thử lại sau.');
+    }
+  };
+
 
   // Giải phóng tài nguyên audio khi component unmount
   useEffect(() => {
@@ -195,6 +207,44 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
   const forwardMessage = () => {
     setForwardModalVisible(true);
   };
+  const handleDeleteOrRecall = () => {
+    Alert.alert(
+      'Hành động với tin nhắn',
+      'Bạn muốn thực hiện hành động nào?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa ở phía tôi',
+          onPress: () => {
+            Alert.alert(
+              'Xóa tin nhắn',
+              'Tin nhắn sẽ bị xóa ở phía bạn. Bạn có chắc chắn muốn xóa?',
+              [
+                { text: 'Hủy', style: 'cancel' },
+                { text: 'Xóa', onPress: deleteMessageForMe, style: 'destructive' }
+              ]
+            );
+          },
+          style: 'default',
+        },
+        {
+          text: 'Thu hồi',
+          onPress: () => {
+            Alert.alert(
+              'Thu hồi tin nhắn',
+              'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
+              [
+                { text: 'Hủy', style: 'cancel' },
+                { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
+              ]
+            );
+          },
+          style: 'default',
+        },
+       
+      ]
+    );
+  };
 
   // Hiển thị menu tùy chọn khi nhấn giữ tin nhắn
   const handleLongPress = () => {
@@ -202,23 +252,15 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
     if (!showForwardRecall) return;
 
     const options = [
-      { text: 'Tải xuống', onPress: () => downloadAndOpenFile(messIndex) },
-      { text: 'Chuyển tiếp', onPress: forwardMessage },
-      { text: 'Thu hồi', onPress: () => {
-        Alert.alert(
-          'Thu hồi tin nhắn',
-          'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
-          [
-            { text: 'Hủy', style: 'cancel' },
-            { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
-          ]
-        );
-      }},
       {
         text: 'Hủy',
         onPress: () => {},
         style: 'cancel'
-      }
+      },
+      // { text: 'Tải xuống', onPress: () => downloadAndOpenFile(messIndex) },
+      { text: 'Chuyển tiếp', onPress: forwardMessage },
+      { text: 'Xóa hoặc Thu hồi', onPress: handleDeleteOrRecall },
+     
     ];
 
     // Hiển thị Alert với các tùy chọn
@@ -391,7 +433,7 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
             <View style={styles.boxMessagemedia}>
             <View style={styles.iconHandlemedia}>
           <TouchableOpacity 
-              onPress={() => downloadAndOpenFile(message)} 
+              // onPress={() => downloadAndOpenFile(message)} 
               style={styles.smallDownloadButtonContainer}
               disabled={isDownloading}
             >
@@ -421,7 +463,7 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
       case 'unsend':
         return null; // Xử lý riêng bên ngoài
       default:
-        return <Text style={styles.messageText}>{messIndex}</Text>;
+        return <View style={{backgroundColor:'#e0f7fa' , borderRadius:15}}><Text style={styles.messageText}>{messIndex}</Text></View>
     }
   };
 
@@ -438,7 +480,9 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
         break;
     }
   };
-
+  if (isDeleted) {
+    return null;
+  }
   return (
     <>
       <View style={styles.container}>
@@ -526,8 +570,10 @@ const styles = StyleSheet.create({
     borderRadius:15
   },
   videoContainer: {
-    width: 280, // Tăng kích thước video
-    height: 240,
+    width: 240, // Tăng kích thước video
+    height: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#000',
    borderRadius: 15,
   },
@@ -579,6 +625,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 15,
+   
     backgroundColor: '#e3f2d3',
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,

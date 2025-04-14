@@ -28,7 +28,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   const [sound, setSound] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  
+  const [isDeleted, setIsDeleted] = useState(false);
   const messageTime = moment(time);
   const displayTime = messageTime.isValid()
     ? messageTime.add(7, 'hour').format("HH:mm")
@@ -171,6 +171,16 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
       }
     };
   }, [sound]);
+  // hàm xóa tin nhắn ở phía tôi
+  const deleteMessageForMe = async () => {
+    try {
+      await MessageService.deleteSingleMessageForUser(messageId, userId);
+      setIsDeleted(true); // Mark message as deleted locally
+    } catch (error) {
+      console.error('Lỗi khi xóa tin nhắn:', error);
+      Alert.alert('Lỗi', 'Không thể xóa tin nhắn. Vui lòng thử lại sau.');
+    }
+  };
 
   // Xác định loại tin nhắn
   const getMessageType = () => {
@@ -223,23 +233,24 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
       // { text: '😀', onPress: () => reactMessage('😀') },
       // { text: '😭', onPress: () => reactMessage('😭') },
       // { text: '😡', onPress: () => reactMessage('😡') },
-      { text: 'Tải xuống', onPress: () => downloadAndOpenFile(message) },
-      { text: 'Chuyển tiếp', onPress: forwardMessage },
-      // { text: 'Thu hồi', onPress: () => {
-      //   Alert.alert(
-      //     'Thu hồi tin nhắn',
-      //     'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
-      //     [
-      //       { text: 'Hủy', style: 'cancel' },
-      //       { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
-      //     ]
-      //   );
-      // }},
       {
         text: 'Hủy',
         onPress: () => {},
         style: 'cancel'
-      }
+      },
+      // { text: 'Tải xuống', onPress: () => downloadAndOpenFile(message) },
+      { text: 'Chuyển tiếp', onPress: forwardMessage },
+     { text: 'Xóa ở phía tôi', onPress: () => {
+        Alert.alert(
+          'Xóa tin nhắn',
+          'Tin nhắn sẽ bị xóa ở phía bạn. Bạn có chắc chắn muốn xóa?',
+          [
+            { text: 'Hủy', style: 'cancel' },
+            { text: 'Xóa', onPress: deleteMessageForMe, style: 'destructive' }
+          ]
+        );
+      }},
+     
     ];
 
     // Hiển thị Alert với các tùy chọn
@@ -413,10 +424,12 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
       case 'unsend':
         return <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>;
       default:
-        return <Text style={styles.messageText}>{message}</Text>;
+        return <View style={{backgroundColor:'#e0f7fa', borderRadius:15}}><Text style={styles.messageText}>{message}</Text></View>
     }
   };
-
+  if (isDeleted) {
+    return null;
+  }
   return (
     <>
       <View style={styles.container}>
@@ -478,6 +491,7 @@ const styles = StyleSheet.create({
     maxWidth: '80%', // Tăng kích thước để hiển thị nội dung to hơn
     marginRight: 10,
     position: 'relative',
+    // backgroundColor:''
   },
   avatarContainer: {
     justifyContent: 'flex-start',
@@ -516,6 +530,7 @@ const styles = StyleSheet.create({
   imageMessage: {
     padding: 0,
     overflow: 'hidden',
+    // backgroundColor: '#fff'
   },
   videoContainer: {
     width: 200, // Tăng kích thước video
@@ -554,6 +569,8 @@ const styles = StyleSheet.create({
   },
   audioInfoContainer: {
     flex: 1,
+    width: '100%',
+    // justifyContent: 'center',
   },
   audioText: {
     fontSize: 14,
@@ -563,13 +580,15 @@ const styles = StyleSheet.create({
   },
   audioProgressBar: {
     height: 4,
-    width: '100%',
+    width: '80%',
     backgroundColor: '#d0d0d0',
+
     borderRadius: 2,
   },
   audioProgress: {
     height: '100%',
     backgroundColor: '#4a86e8',
+    width: '80%',
     borderRadius: 2,
   },
   audioMessage: {

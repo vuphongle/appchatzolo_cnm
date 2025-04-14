@@ -15,6 +15,7 @@ const ItemFriend = ({ receiverID, name, avatar }) => {
   const senderID = user?.id; // ID của người dùng hiện tại
   const [lastMessage, setLastMessage] = useState('');
   const [time, setTime] = useState('');
+  const [isDeleted, setIsDeleted] = useState(true);
 
   // Functions to determine message type
   const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
@@ -30,6 +31,9 @@ const ItemFriend = ({ receiverID, name, avatar }) => {
           senderID,
           receiverID,
         );
+        if(!message.deletedBySender && !message.deletedByReceiver) {
+          setIsDeleted(false);
+        }
         if (message) {
           // Determine message type and display appropriate text
           if (isImageMessage(message.content)) {
@@ -63,7 +67,20 @@ const ItemFriend = ({ receiverID, name, avatar }) => {
       avatar: avatar,
     });
   };
-
+if (isDeleted) {
+  return (
+  <TouchableOpacity style={styles.itemContainer} onPress={handleNavigateChat}>
+  <View style={styles.avatarContainer}>
+    <Image source={{ uri: avatar }} style={styles.avatar} />
+  </View>
+  <View style={styles.infoContainer}>
+    <Text style={styles.name}>{name}</Text>
+    <TruncatedText text={"Tin nhắn đã bị xóa"} maxLength={30} />
+  </View>
+  <Text style={styles.time}>{time}</Text>
+</TouchableOpacity>
+  );
+  }
   return (
     <TouchableOpacity style={styles.itemContainer} onPress={handleNavigateChat}>
       <View style={styles.avatarContainer}>
