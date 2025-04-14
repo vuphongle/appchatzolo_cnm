@@ -181,11 +181,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         `/messages/messages?senderID=${userId}&receiverID=${receiverID}`
       );
   
-      // Lọc bỏ tin nhắn đã bị xóa bởi người gửi hoặc người nhận
-      const filteredMessages = data.filter(
-        (msg) => !msg.deletedBySender && !msg.deletedByReceiver
-      );
-  
       // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
       const sortedMessages = filteredMessages.sort(
         (a, b) => new Date(a.sendDate) - new Date(b.sendDate)

@@ -698,7 +698,7 @@ const MainPage = () => {
 
                 // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
                 if (incomingMessage.isRead === false) {
-                    MessageService.savƯereadMessages(MyUser.my_user.id, selectedChat.id)
+                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
                         .then(() => {
                             // Cập nhật trạng thái của tin nhắn trong chatMessages
                             setChatMessages((prevMessages) =>

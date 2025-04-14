@@ -79,6 +79,15 @@ function ListFriend({ userId }) {
     }, [userId]),
   );
 
+   // Lập lại sau 10s
+   useEffect(() => {
+    const interval = setInterval(() => {
+      fetchFriends();
+    }, 10000);
+
+    return () => clearInterval(interval);
+   })
+
   // Hàm xử lý ghim
   const pinFriend = (id) => {
     Alert.alert(
@@ -164,13 +173,13 @@ function ListFriend({ userId }) {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
+//  if (loading) {
+//    return (
+//      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+//        <ActivityIndicator size="large" color="#0000ff" />
+//      </View>
+//    );
+//  }
 
   if (error) {
     return (
