@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -21,12 +21,16 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
+import {IPV4} from '@env';
+import { UserContext } from '../../../context/UserContext';
+
 
 const Detail_infoChat = ({ route, navigation }) => {
-  const { user } = route.params;
-  const [nameChange, setNameChange] = useState(user?.name);
+  const { userFriend } = route.params;
+  const [nameChange, setNameChange] = useState(userFriend?.name);
   const [isBFF, setIsBFF] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
+  const {user, setUser } = useContext(UserContext);
 
   const updateName = () => {
     Alert.alert('Thông báo', 'Đổi tên thành công!');
@@ -46,7 +50,6 @@ const Detail_infoChat = ({ route, navigation }) => {
   };
 
   const handleDeleteGroup = () => {
-    console.log('user', user);
     Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
       {
         text: 'Hủy',
@@ -54,9 +57,22 @@ const Detail_infoChat = ({ route, navigation }) => {
       },
       {
         text: 'Xóa',
-        onPress: () => {
-          navigation.goBack();
-          Alert.alert('Thành công', 'Đã xóa cuộc trò chuyện');
+        onPress: async () => {
+          try {
+            const response = await fetch(`${IPV4}/messages/delete-chat/${userFriend?.id}/${user?.id}`, {
+              method: 'DELETE',
+            });
+
+            const result = await response.text();
+            if (response.ok) {
+              Alert.alert('Thành công', 'Đã xóa cuộc trò chuyện');
+              navigation.goBack();
+            } else {
+              Alert.alert('Lỗi', result.message || 'Không thể xóa cuộc trò chuyện');
+            }
+          } catch (error) {
+            Alert.alert('Lỗi', 'Có lỗi xảy ra khi xóa cuộc trò chuyện: ' + error.message);
+          }
         },
       },
     ]);
@@ -74,8 +90,8 @@ const Detail_infoChat = ({ route, navigation }) => {
 
   const ProfileSection = () => (
     <View style={styles.profileSection}>
-      <Image source={{ uri: user?.avatar }} style={styles.profileImage} />
-      <Text style={styles.profileName}>{user?.name}</Text>
+      <Image source={{ uri: userFriend?.avatar }} style={styles.profileImage} />
+      <Text style={styles.profileName}>{userFriend?.name}</Text>
       <View style={styles.quickActions}>
         <QuickActionButton
           icon="search"

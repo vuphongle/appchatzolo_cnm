@@ -16,8 +16,9 @@ function Header({ name, id, avatar }) {
 
   const handlePressMenu = () => {
     console.log('User:', user); // Kiểm tra dữ liệu người dùng
+    const userFriend = user;
     if (user) {
-      navigation.navigate('DetailChat', { user });
+      navigation.navigate('DetailChat', { userFriend });
     }
   };
 
