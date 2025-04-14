@@ -76,8 +76,6 @@ const FriendInfoModal = ({
         setIsUserInfoModalOpen(false); // Đóng modal thông tin
     };
 
-    console.log("FriendInfoModal", MyUser?.my_user?.friendIds);
-
     return (
         <div className="overlay" onClick={closeAllModal}>
             <div className="modal-e" onClick={(e) => e.stopPropagation()}>

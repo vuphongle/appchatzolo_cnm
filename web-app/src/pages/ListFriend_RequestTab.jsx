@@ -34,7 +34,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
     // Lắng nghe tín hiệu thu hồi/từ chối lời mời kết bạn
     useEffect(() => {
         const unsubscribe = onMessage((message) => {
-            if (message.type === "INVITATION_REVOKE") {
+            if (message.typeWeb === "INVITATION_REVOKE" || message.type === "FRIEND_REQUEST") {
                 // Xử lý khi nhận thông báo xóa lời mời
                 setReceivedRequests((prev) =>
                     prev.filter(
@@ -52,7 +52,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
                 );
             }
 
-            if (message.type === "INVITATION_REFUSE" || message.type === "SUBMIT_FRIEND_REQUEST") {
+            if (message.typeWeb === "INVITATION_REFUSE" || message.typeWeb === "SUBMIT_FRIEND_REQUEST" || message.type === "FRIEND_REQUEST") {
                 setReceivedRequests((prev) =>
                     prev.filter(
                         (request) =>
@@ -149,7 +149,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
 
                 // Gửi thông báo qua WebSocket cho bên A
                 sendMessage({
-                    type: "INVITATION_REFUSE",
+                    typeWeb: "INVITATION_REFUSE",
                     senderID: receiverID,
                     receiverID: senderID,
                 });
@@ -169,7 +169,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
 
                 // Gửi thông báo qua WebSocket cho bên B
                 sendMessage({
-                    type: "INVITATION_REVOKE",
+                    typeWeb: "INVITATION_REVOKE",
                     senderID,
                     receiverID,
                 });
@@ -204,7 +204,7 @@ const FriendRequestsTab = ({ userId, friendRequests, onSelectChat }) => {
                     content: "Tôi đã chấp nhận lời mời kết bạn của bạn.",
                     sendDate: new Date().toISOString(),
                     isRead: false,
-                    type: "SUBMIT_FRIEND_REQUEST",
+                    typeWeb: "SUBMIT_FRIEND_REQUEST",
                 };
 
                 //Gửi thông báo qua WebSocket đến bên A về việc đồng ý kết bạn

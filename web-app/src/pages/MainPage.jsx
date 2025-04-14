@@ -24,10 +24,11 @@ import FriendInfoModal from "./FriendInfoModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import { v4 as uuidv4 } from 'uuid';
 
+import VideoCallComponent from '../context/VideoCallComponent';  // Import VideoCallComponent
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
-    <li className="message-item" onClick={onClick}>
+    <li className="message-item" tabIndex={0} onClick={onClick}>
         <img src={img} alt="Avatar" className="avatar" />
         <div className="message-info">
             <h4>{groupName}</h4>
@@ -91,7 +92,7 @@ const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, isOwner, isMin
             // Lấy vị trí của menu so với cửa sổ
             const menuRect = menuRef.current.getBoundingClientRect();
             const windowHeight = window.innerHeight;
-            if (menuRect.top < windowHeight / 4) {
+            if (menuRect.top < windowHeight / 2) {
                 setMenuDirection('open-down');
             } else {
                 setMenuDirection('open-up');
@@ -326,6 +327,7 @@ const MainPage = () => {
 
     const [friendList, setFriendList] = useState([]);
     const selectedChatIdAtShareRef = useRef(null);
+    const [selectedTab, setSelectedTab] = useState("all");
 
     const updateFriendList = (friendId) => {
         const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
@@ -424,7 +426,7 @@ const MainPage = () => {
             if (!forwardMessageId) return;
             const uniqueUserIds = [...new Set(selectedUserIds)];
 
-            await MessageService.forwardMessage(forwardMessageId, MyUser.my_user.id, uniqueUserIds);
+            await MessageService.forwardMessage(forwardMessageId, MyUser?.my_user?.id, uniqueUserIds);
 
             alert("Chia sẻ thành công!");
             setShowForwardModal(false);
@@ -536,6 +538,7 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
+
             if (incomingMessage.type === "DELETE_MESSAGE") {
                 // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
                 // thì xóa luôn phần hiển thị
@@ -589,98 +592,67 @@ const MainPage = () => {
                 }
             }
 
-            if (incomingMessage.type === "WAITING_APPROVED") {
+            if (incomingMessage.typeWeb === "WAITING_APPROVED" || incomingMessage.type === "FRIEND_REQUEST") {
                 // Cập nhật số lời mời kết bạn chưa đọc
                 setInvitationCount((prev) => prev + (incomingMessage.count || 1));
             }
+            console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
             // Tin nhắn socket đồng ý kết bạn
-            if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
+            if (incomingMessage.typeWeb === "SUBMIT_FRIEND_REQUEST" || incomingMessage.type === "FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.senderID);
 
-                if (incomingMessage.type === "CHAT") {
-                    const msg = incomingMessage.message;
-
-                    // Nếu cuộc trò chuyện đang mở là đúng chiều người gửi/nhận
-                    if (
-                        selectedChat &&
-                        (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id)
-                    ) {
-                        setChatMessages((prev) =>
-                            [...prev, msg].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
-                        );
-                    } else {
-                        // Nếu không phải, tăng unread
-                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                            if (count.friendId === msg.senderID) {
-                                return {
-                                    ...count,
-                                    unreadCount: count.unreadCount + 1,
-                                };
-                            }
-                            return count;
-                        });
-                        setUnreadMessagesCounts(updatedUnreadCounts);
-                    }
-                }
-
-
-                // updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
-                if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
-                    updateFriendList(incomingMessage.senderID); // Cập nhật danh sách bạn bè khi có tin nhắn mới
-
-                    // Kiểm tra nếu người gửi không phải là selectedChat
-                    if (incomingMessage.senderID !== selectedChat?.id) {
-                        // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
-                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                            if (count.friendId === incomingMessage.senderID) {
-                                return {
-                                    ...count,
-                                    unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
-                                };
-                            }
-                            return count;
-                        });
-                        setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                    } else {
-                        // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
-                        const validSendDate = moment(incomingMessage.sendDate).isValid()
-                            ? moment(incomingMessage.sendDate).toISOString()
-                            : new Date().toISOString();
-
-                        // Cập nhật tin nhắn mới vào chatMessages
-                        setChatMessages((prevMessages) => [
-                            ...prevMessages,
-                            { ...incomingMessage, sendDate: validSendDate },
-                        ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
-
-                        // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
-                        if (incomingMessage.isRead === false) {
-                            MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
-                                .then(() => {
-                                    // Cập nhật trạng thái tin nhắn là đã đọc
-                                    setChatMessages((prevMessages) =>
-                                        prevMessages.map((msg) =>
-                                            msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
-                                        )
-                                    );
-
-                                    // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
-                                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                                        if (count.friendId === selectedChat.id) {
-                                            return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
-                                        }
-                                        return count;
-                                    });
-                                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
-                                    // Gọi lại reload trang khi nhấn vào tin nhắn đồng ý kết bạn
-
-                                })
-                                .catch((error) => {
-                                    console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
-                                });
+                // Kiểm tra nếu người gửi không phải là selectedChat
+                if (incomingMessage.senderID !== selectedChat?.id) {
+                    // Tăng unreadCount nếu tin nhắn không đến từ cuộc trò chuyện hiện tại
+                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                        if (count.friendId === incomingMessage.senderID) {
+                            return {
+                                ...count,
+                                unreadCount: count.unreadCount + 1, // Tăng số tin nhắn chưa đọc
+                            };
                         }
+                        return count;
+                    });
+                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+                } else if (incomingMessage.senderID === selectedChat?.id || incomingMessage.receiverID === selectedChat?.id) {
+                    // Nếu người gửi là selectedChat, cập nhật tin nhắn và đánh dấu là đã đọc
+                    const validSendDate = moment(incomingMessage.sendDate).isValid()
+                        ? moment(incomingMessage.sendDate).toISOString()
+                        : new Date().toISOString();
+
+                    // Cập nhật tin nhắn mới vào chatMessages
+                    setChatMessages((prevMessages) => [
+                        ...prevMessages,
+                        { ...incomingMessage, sendDate: validSendDate },
+                    ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                    // Đánh dấu tin nhắn là đã đọc và cập nhật số lượng tin nhắn chưa đọc về 0
+                    if (incomingMessage.isRead === false) {
+                        MessageService.savereadMessages(MyUser?.my_user?.id, selectedChat.id)
+                            .then(() => {
+                                // Cập nhật trạng thái tin nhắn là đã đọc
+                                setChatMessages((prevMessages) =>
+                                    prevMessages.map((msg) =>
+                                        msg.id === incomingMessage.id ? { ...msg, isRead: true } : msg
+                                    )
+                                );
+
+                                // Cập nhật số lượng tin nhắn chưa đọc cho người bạn đang chọn
+                                const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                    if (count.friendId === incomingMessage.senderID) {
+                                        return { ...count, unreadCount: 0 }; // Đánh dấu tin nhắn là đã đọc
+                                    }
+                                    return count;
+                                });
+                                setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật lại số lượng tin nhắn chưa đọc
+
+                            })
+                            .catch((error) => {
+                                console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                            });
                     }
                 }
+
             }
 
             // Tin nhắn bình thường
@@ -857,11 +829,6 @@ const MainPage = () => {
     };
 
     const handleFriendTab = () => {
-        if (invitationCount > 0) {
-            // Nếu có lời mời kết bạn chưa đọc, chuyển sang tab bạn bè
-            setActiveSubTab("requests");
-            setInvitationCount(0);
-        }
         setActiveTab("contacts");
         setSelectedChat(null); // Đặt lại selectedChat khi chuyển sang tab bạn bè
     }
@@ -953,7 +920,7 @@ const MainPage = () => {
 
         // Chèn emoji tại vị trí con trỏ
         document.execCommand("insertText", false, emoji);
-        setEmojiPickerVisible(false); // Ẩn bảng cảm xúc sau khi chọn
+        // setEmojiPickerVisible(false); // Ẩn bảng cảm xúc sau khi chọn
     };
 
     const toggleEmojiPicker = (e) => {
@@ -1046,6 +1013,32 @@ const MainPage = () => {
         }
     }, [searchQueryMessage, chatMessages]);  // Theo dõi sự thay đổi của searchQueryMessage
 
+    // hàm call video
+    const [isVideoCallVisible, setIsVideoCallVisible] = useState(false);
+    const [isCalling, setIsCalling] = useState(false);
+    const videoCallRef = useRef(null);
+    const toggleSearchModalCall = () => {
+        setIsVideoCallVisible((prev) => !prev);
+    };
+    useEffect(() => {
+        const unsubscribe = onMessage((message) => {
+            if (message.type === "video_call_request" && message.to === MyUser?.my_user?.id) {
+                // Hiển thị modal cuộc gọi đến
+                const userResponse = window.confirm(`Cuộc gọi video đến từ ${message.from}, bạn có muốn nhận không?`);
+                if (userResponse) {
+                    // Chấp nhận cuộc gọi
+                    videoCallRef.current.startCall(message.from);
+                    setIsCalling(true);  // Đánh dấu người dùng đang gọi video
+                    setIsVideoCallVisible(true);  // Hiển thị modal cuộc gọi video
+                }
+            }
+        });
+
+        return () => {
+            unsubscribe(); // Hủy đăng ký khi component unmount
+        };
+    }, [onMessage, MyUser?.my_user?.id]);
+
 
     const removeFile = (fileToRemove) => {
         setAttachedFiles((prev) => prev.filter((f) => f !== fileToRemove));
@@ -1096,7 +1089,7 @@ const MainPage = () => {
                                         {/* Nút gọi video */}
                                         <button
                                             className="video-call-btn"
-                                            onClick={() => console.log("Gọi video được nhấn")}
+                                            onClick={toggleSearchModalCall}
                                         >
                                             <i className="fas fa-video"></i>
                                         </button>
@@ -1111,7 +1104,14 @@ const MainPage = () => {
                                     setSearchQuery={setSearchQueryMessage} // Truyền vào setSearchQuery
                                     handleSearchMessages={handleSearchMessages}
                                 />
+                                {/*truyền vào các biến này   remoteUserId, userId, isVideoCallVisible, setIsVideoCallVisible  để call*/}
+                                <VideoCallComponent
+                                    remoteUserId={selectedChat.id} // Truyền ID người nhận vào VideoCallComponent
+                                    userId={MyUser?.my_user?.id} // Truyền ID người gửi vào VideoCallComponent
+                                    isVideoCallVisible={isVideoCallVisible} // Truyền trạng thái gọi video
+                                    setIsVideoCallVisible={setIsVideoCallVisible} // Truyền hàm để đóng VideoCallComponent
 
+                                />
                                 <section className="chat-section">
                                     <div className="chat-messages">
                                         {chatMessages.length > 0 ? (
@@ -1137,14 +1137,14 @@ const MainPage = () => {
                                                 const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
 
                                                 // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
-                                                const isImageMessage = (url) => url?.match(/\.(jjpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
+                                                const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
 
                                                 const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i);
 
                                                 const isAudioMessage = (url) => url?.match(/\.(mp3|wav|ogg)$/i);
 
                                                 const isDocumentFile = (url) =>
-                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql)$/i);
+                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql|.mobileprovision)$/i);
 
                                                 return (
                                                     <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}
@@ -1206,13 +1206,13 @@ const MainPage = () => {
                                                             )}
                                                             {showMenuForMessageId === msg.id && (
                                                                 <MessageOptionsMenu
-                                                                    isOwner={msg.senderID === MyUser.my_user.id}
-                                                                    isMine={msg.senderID === MyUser.my_user.id}
+                                                                    isOwner={msg.senderID === MyUser?.my_user?.id}
+                                                                    isMine={msg.senderID === MyUser?.my_user?.id}
                                                                     isRecalled={msg.content === "Tin nhắn đã được thu hồi"}
                                                                     onRecall={async () => {
                                                                         setShowMenuForMessageId(null);
                                                                         try {
-                                                                            await MessageService.recallMessage(msg.id, MyUser.my_user.id, selectedChat.id);
+                                                                            await MessageService.recallMessage(msg.id, MyUser?.my_user?.id, selectedChat.id);
                                                                             setChatMessages((prev) => prev.map((m) =>
                                                                                 m.id === msg.id ? { ...m, content: "Tin nhắn đã được thu hồi" } : m
                                                                             ));
@@ -1229,7 +1229,7 @@ const MainPage = () => {
                                                                     onDeleteForMe={async () => {
                                                                         setShowMenuForMessageId(null);
                                                                         try {
-                                                                            await MessageService.deleteSingleMessageForUser(msg.id, MyUser.my_user.id);
+                                                                            await MessageService.deleteSingleMessageForUser(msg.id, MyUser?.my_user?.id);
                                                                             setChatMessages((prev) => prev.filter(m => m.id !== msg.id));
                                                                         } catch (err) {
                                                                             console.error("Lỗi khi xóa ở phía tôi:", err);
@@ -1658,7 +1658,7 @@ const MainPage = () => {
             isRead: false,
             sendDate: new Date().toISOString(),
             status: 'Chờ đồng ý',
-            type: "WAITING_APPROVED"
+            typeWeb: "WAITING_APPROVED"
         };
 
         try {
@@ -1724,7 +1724,10 @@ const MainPage = () => {
         navigate('/');
     };
 
-
+    const handleClickFriendRequests = () => {
+        setActiveSubTab("requests");
+        setInvitationCount(0); // Reset badge về 0 khi người dùng đã bấm tab
+    };
 
     return (
         <div className="main-container">
@@ -1747,7 +1750,9 @@ const MainPage = () => {
                     <i className="icon">
                         <img src="/MainPage/friends.png" alt="friends Icon" />
                     </i>
-                    {invitationCount > 0 && <span className="badge">{invitationCount}</span>}
+                    {invitationCount > 0 && activeSubTab !== "requests" && (
+                        <span className="badge">{invitationCount}</span>
+                    )}
                 </div>
                 <div className="nav-item settings" onClick={toggleSettingsMenu}>
                     <i className="icon">
@@ -1791,6 +1796,7 @@ const MainPage = () => {
                     <input type="text" className="search-bar" placeholder="Tìm kiếm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+
                     />
                     <button className="search-button">
                         <img src="/MainPage/search.png" alt="Chat Icon" />
@@ -1800,6 +1806,7 @@ const MainPage = () => {
                             className="action-button-img"
                             src="/MainPage/add-friend.png"
                             alt="Add Friend"
+                            style={{ width: "35px", height: "35px" }}
 
                         />
                     </button>
@@ -1822,9 +1829,27 @@ const MainPage = () => {
                     <>
 
                         <div className="sidebar-tabs">
-                            <button className="tab active">Tất cả</button>
-                            <button className="tab active">Chưa đọc</button>
-                            <button className="tab active">Phân loại</button>
+                            <button
+                                tabIndex={0}
+                                className={`tab ${selectedTab === "all" ? "active" : ""}`}
+                                onClick={() => setSelectedTab("all")}
+                            >
+                                Tất cả
+                            </button>
+                            <button
+                                tabIndex={0}
+                                className={`tab ${selectedTab === "unread" ? "active" : ""}`}
+                                onClick={() => setSelectedTab("unread")}
+                            >
+                                Chưa đọc
+                            </button>
+                            <button
+                                tabIndex={0}
+                                className={`tab ${selectedTab === "categorized" ? "active" : ""}`}
+                                onClick={() => setSelectedTab("categorized")}
+                            >
+                                Phân loại
+                            </button>
                         </div>
                         <div className="message-list">
                             <ul>
@@ -1839,7 +1864,7 @@ const MainPage = () => {
                                                 unreadCount={item.unreadCount}
                                                 img={item.img || avatar_default}
                                                 onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn
-                                                onDeleteChat={() => handleDeleteChat(MyUser?.my_user.id, item.id)}
+                                                onDeleteChat={() => handleDeleteChat(MyUser?.my_user?.id, item.id)}
                                             />
                                         ))
                                 ) : filteredFriends.length > 0 ? (
@@ -1870,7 +1895,7 @@ const MainPage = () => {
                             <div className="d-flex align-items-start w-100">
                                 <div className="nav flex-column nav-pills me-3 w-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                                     <button
-                                        className="nav-link active d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "friends" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-friendlist-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-friendlist"
@@ -1884,7 +1909,7 @@ const MainPage = () => {
                                         Danh sách bạn bè
                                     </button>
                                     <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "groups" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-grouplist-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-grouplist"
@@ -1898,7 +1923,7 @@ const MainPage = () => {
                                         Danh sách nhóm
                                     </button>
                                     <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "requests" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-friend-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-friend"
@@ -1906,13 +1931,16 @@ const MainPage = () => {
                                         role="tab"
                                         aria-controls="v-pills-friend"
                                         aria-selected="false"
-                                        onClick={() => setActiveSubTab("requests")}
+                                        onClick={handleClickFriendRequests}
                                     >
                                         <i className="fas fa-user-plus me-2"></i>
-                                        Lời mời kết bạn
+                                        Lời mời kết bạn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        {invitationCount > 0 && activeSubTab !== "requests" && (
+                                            <span className="badge">{invitationCount}</span>
+                                        )}
                                     </button>
                                     <button
-                                        className="nav-link d-flex align-items-center fs-6 text-dark"
+                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "requestsGroup" ? "active text-white bg-primary" : "text-dark"}`}
                                         id="v-pills-group-tab"
                                         data-bs-toggle="pill"
                                         data-bs-target="#v-pills-group"
