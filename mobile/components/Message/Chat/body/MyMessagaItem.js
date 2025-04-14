@@ -289,10 +289,12 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
   // Lấy tên file từ URL
   const getFileNameFromUrl = (url) => {
     if (!url) return 'File';
-    const fileName = url.split('/').pop();
-    // Giới hạn độ dài tên file hiển thị
+    const parts = url.split('/');
+    const lastPart = parts[parts.length - 1]; 
+    const fileName = lastPart.includes('_') ? lastPart.split('_').pop() : lastPart; 
+
     return fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
-  };
+};
 
   // Lấy icon phù hợp cho loại file
   const getFileIcon = (url) => {
@@ -305,7 +307,7 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
     if (url?.match(/\.(doc|docx|odt|txt)$/i)) return '📝';
     if (url?.match(/\.(xls|xlsx|csv|ods)$/i)) return '📊';
     if (url?.match(/\.(ppt|pptx|odp)$/i)) return '📑';
-    if (url?.match(/\.(zip|rar|tar|gz|7z)$/i)) return '🗜️';
+    if (url?.match(/\.(zip|rar|tar|gz|7z)$/i)) return '📁';
     
     return '📎';
   };
