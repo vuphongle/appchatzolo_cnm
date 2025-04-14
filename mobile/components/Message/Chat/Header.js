@@ -23,8 +23,11 @@ function Header({ name, id, avatar }) {
 
   const getOnlineStatus = async () => {
     try {
-      const receiver = await UserService.getUserById(id);
-      setOnlineStatus(receiver.isOnline);
+      const userId=id;
+      const receiver = await UserService.getUserById(userId);
+      // console.log("id receiver :",userId);
+      // console.log("status Receiver :",receiver);
+      setOnlineStatus(receiver.online);
       setUser(receiver);
     } catch (err) {
       console.log(err);
@@ -53,20 +56,20 @@ function Header({ name, id, avatar }) {
                   name="ellipse"
                   size={10}
                   color="green"
-                  style={{ marginLeft: 10 }}
+                  style={{ marginLeft: 15 }}
                 />
               ) : (
                 <Ionicons
                   name="ellipse"
                   size={10}
                   color="grey"
-                  style={{ marginLeft: 10 }}
+                  style={{ marginLeft: 15 }}
                 />
               )}
             </Text>
           </View>
           {onlineStatus ? (
-            <Text style={{ color: 'white', fontSize: 12 }}>Hoạt động</Text>
+            <Text style={{ color: 'white', fontSize: 12 }}>Đang hoạt động</Text>
           ) : (
             <Text style={{ color: 'white', fontSize: 12 }}> Không hoạt động</Text>
           )}

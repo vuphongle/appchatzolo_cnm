@@ -82,16 +82,16 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       // Cập nhật localMessages
       setLocalMessages(sortedMessages);
       
-      // Đánh dấu tin nhắn là đã đọc
-      const unreadMessages = sortedMessages.filter(
-        (msg) => msg.isRead === false && msg.senderID === receiverID
-      );
+      // // Đánh dấu tin nhắn là đã đọc
+      // const unreadMessages = sortedMessages.filter(
+      //   (msg) => msg.isRead === false && msg.senderID === receiverID
+      // );
       
-      if (unreadMessages.length > 0) {
-        await MessageService.savereadMessages(userId, receiverID);
-      }
+      // if (unreadMessages.length > 0) {
+      //   await MessageService.savereadMessages(userId, receiverID);
+      // }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      // console.error('Error fetching messages:', error);
     }
   };
 
@@ -122,15 +122,21 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     return () => clearInterval(intervalId);
   }, [receiverID, userId]);
 
+  // useEffect(() => {
+  //   if (scrollViewRef.current) {
+  //     // Add a small delay to ensure the message is rendered before scrolling
+  //     setTimeout(() => {
+  //       scrollViewRef.current?.scrollToEnd({ animated: true });
+
+  //     }, 100);
+  //   }
+  // }, [localMessages]);
   useEffect(() => {
     if (scrollViewRef.current) {
-      // Add a small delay to ensure the message is rendered before scrolling
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-
-      }, 100);
+        scrollViewRef.current.scrollToEnd({ animated: true });
     }
-  }, [localMessages]);
+}, [localMessages]);
+
 
   const handleImageUpload = async () => {
     if (isMounted) {
@@ -399,6 +405,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                     messageId={message.id}
                     userId={userId}
                     receiverId={receiverID}
+                    avatar={user?.avatar}
                     // onDeleteMessage={handleMessageDeleted}
                     // isRead={
                     //   index === lastMyMessageIndex ? message.isRead : undefined
@@ -408,7 +415,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                   <MessageItem
                     avatar={avatar}
                     name={name}
-                    time={formatDate(message.sendDate)}
+                    time={message.sendDate}
                     message={message.content}
                     messageId={message.id}
                     userId={userId}

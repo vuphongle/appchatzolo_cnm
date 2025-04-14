@@ -17,6 +17,8 @@ import ForwardMessageModal from '../ForwardMessageModal';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
 function MessageItem({ avatar, time, message, messageId, userId, receiverId, showForwardRecall = true }) {
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState(null);
@@ -25,14 +27,15 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   const [forwardModalVisible, setForwardModalVisible] = useState(false);
   const [sound, setSound] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const messageTime = moment(time);
   const displayTime = messageTime.isValid()
-    ? messageTime.format("HH:mm")
+    ? messageTime.add(7, 'hour').format("HH:mm")
     : moment().format("HH:mm");
 
   // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
-  const isImageMessage = (url) => url?.match(/\.(jjpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
+  const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
   
   // Kiểm tra xem tin nhắn có phải là URL của video hay không
   const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i) != null;
@@ -51,25 +54,46 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   };
 
   // Tải và mở file
-  const downloadAndOpenFile = async (fileUrl) => {
+  const downloadAndOpenFile = async (fileUrl, openAfterDownload = false) => {
     try {
+      setIsDownloading(true);
       const fileName = fileUrl.split('/').pop();
       const localFile = `${RNFS.DocumentDirectoryPath}/${fileName}`;
   
       const options = {
         fromUrl: fileUrl,
         toFile: localFile,
+        background: true,
+        progressDivider: 10,
+        begin: (res) => {
+          console.log('Bắt đầu tải file:', res);
+        },
+        progress: (res) => {
+          const progress = (res.bytesWritten / res.contentLength) * 100;
+          console.log(`Đang tải: ${progress.toFixed(2)}%`);
+        }
       };
   
       // Tải file về
-      await RNFS.downloadFile(options).promise;
+      const download = await RNFS.downloadFile(options).promise;
       console.log('File downloaded to:', localFile);
+      
+      setIsDownloading(false);
   
-      // // Mở file bằng app mặc định
-      // await FileViewer.open(localFile);
+      // Hiển thị thông báo khi tải xong
+      Alert.alert('Thành công', `File "${fileName}" đã được tải về.`);
+  
+      // Mở file bằng app mặc định nếu được yêu cầu
+      // if (openAfterDownload) {
+      //   await FileViewer.open(localFile);
+      // }
+      
+      return localFile;
     } catch (error) {
-      console.error('Lỗi khi mở file:', error);
+      setIsDownloading(false);
+      console.error('Lỗi khi tải file:', error);
       Alert.alert('Lỗi', 'Không thể tải hoặc mở file.');
+      return null;
     }
   };
   
@@ -100,19 +124,19 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
         // Kiểm tra xem file đã tồn tại chưa
         const fileExists = await RNFS.exists(localFile);
         
+        let audioFilePath = localFile;
+        
         if (!fileExists) {
           // Tải file về nếu chưa tồn tại
-          const options = {
-            fromUrl: audioUrl,
-            toFile: localFile,
-          };
+          setIsDownloading(true);
+          audioFilePath = await downloadAndOpenFile(audioUrl, false);
+          setIsDownloading(false);
           
-          await RNFS.downloadFile(options).promise;
-          console.log('Audio downloaded to:', localFile);
+          if (!audioFilePath) return;
         }
         
         // Tạo đối tượng Sound từ file đã tải
-        const newSound = new Sound(localFile, '', (error) => {
+        const newSound = new Sound(audioFilePath, '', (error) => {
           if (error) {
             console.error('Lỗi khi tải audio:', error);
             Alert.alert('Lỗi', 'Không thể tải audio này.');
@@ -199,17 +223,18 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
       // { text: '😀', onPress: () => reactMessage('😀') },
       // { text: '😭', onPress: () => reactMessage('😭') },
       // { text: '😡', onPress: () => reactMessage('😡') },
+      { text: 'Tải xuống', onPress: () => downloadAndOpenFile(message) },
       { text: 'Chuyển tiếp', onPress: forwardMessage },
-      { text: 'Thu hồi', onPress: () => {
-        Alert.alert(
-          'Thu hồi tin nhắn',
-          'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
-          [
-            { text: 'Hủy', style: 'cancel' },
-            { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
-          ]
-        );
-      }},
+      // { text: 'Thu hồi', onPress: () => {
+      //   Alert.alert(
+      //     'Thu hồi tin nhắn',
+      //     'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
+      //     [
+      //       { text: 'Hủy', style: 'cancel' },
+      //       { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
+      //     ]
+      //   );
+      // }},
       {
         text: 'Hủy',
         onPress: () => {},
@@ -228,7 +253,9 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   // Lấy tên file từ URL
   const getFileNameFromUrl = (url) => {
     if (!url) return 'File';
-    return url.split('/').pop();
+    const fileName = url.split('/').pop();
+    // Giới hạn độ dài tên file hiển thị
+    return fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
   };
 
   // Lấy icon phù hợp cho loại file
@@ -252,38 +279,136 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
     switch (type) {
       case 'image':
         return (
-          <TouchableOpacity onPress={handlePressImage}>
-            <Image style={styles.image} source={{ uri: message }} />
-          </TouchableOpacity>
+          <View style={styles.boxMessagemedia}>
+          <View style={styles.mediaContainer}>
+            <TouchableOpacity onPress={handlePressImage} style={styles.mediaContent}>
+              <Image style={styles.image} source={{ uri: message }} resizeMode="cover" />
+            </TouchableOpacity>
+  
+          </View>
+          <View style={styles.iconHandlemedia}>
+          <TouchableOpacity 
+              onPress={() => downloadAndOpenFile(message)} 
+              style={styles.smallDownloadButtonContainer}
+              disabled={isDownloading}
+            >
+              <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={forwardMessage} 
+              style={styles.smallDownloadButtonContainer}           
+            >
+              <Ionicons name="share-outline" size={20} color="#4a86e8"/>
+              
+            </TouchableOpacity>
+          </View>
+          
+        </View>
+        
+          
         );
       case 'video':
         return (
-          <View style={styles.videoContainer}>
-            <Video
-              source={{ uri: message }}
-              style={styles.video}
-              controls={true}
-              resizeMode="contain"
-              repeat={false}
-              paused={true} // Video bị tạm dừng ban đầu
-            />
+          
+           <View style={styles.boxMessagemedia}>
+           <View style={styles.mediaContainer}>
+            <View style={styles.videoContainer}>
+              <Video
+                source={{ uri: message }}
+                style={styles.video}
+                controls={true}
+                resizeMode="contain"
+                repeat={false}
+                paused={true}
+              />
+            </View>
           </View>
+           <View style={styles.iconHandlemedia}>
+           <TouchableOpacity 
+               onPress={() => downloadAndOpenFile(message)} 
+               style={styles.smallDownloadButtonContainer}
+               disabled={isDownloading}
+             >
+               <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
+             </TouchableOpacity>
+             <TouchableOpacity 
+               onPress={forwardMessage} 
+               style={styles.smallDownloadButtonContainer}           
+             >
+               <Ionicons name="share-outline" size={20} color="#4a86e8"/>
+               
+             </TouchableOpacity>
+           </View>
+           
+         </View>
         );
       case 'audio':
         return (
-          <TouchableOpacity onPress={() => playAudio(message)} style={styles.audioContainer}>
-            <View style={styles.audioPlayer}>
-              <Text style={styles.audioIcon}>{isAudioPlaying ? '⏸️' : '▶️'}</Text>
-              <Text style={styles.audioText}>{getFileNameFromUrl(message)}</Text>
-            </View>
-          </TouchableOpacity>
+          
+           <View style={styles.boxMessagemedia}>
+         <View style={styles.mediaContainer}>
+            <TouchableOpacity onPress={() => playAudio(message)} style={styles.audioContainer}>
+              <View style={styles.audioPlayer}>
+                <Text style={styles.audioIcon}>{isAudioPlaying ? '⏸️' : '▶️'}</Text>
+                <View style={styles.audioInfoContainer}>
+                  <Text style={styles.audioText}>{getFileNameFromUrl(message)}</Text>
+                  <View style={styles.audioProgressBar}>
+                    <View style={[styles.audioProgress, { width: isAudioPlaying ? '60%' : '0%' }]} />
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+            
+          </View>
+           <View style={styles.iconHandlemedia}>
+           <TouchableOpacity 
+               onPress={() => downloadAndOpenFile(message)} 
+               style={styles.smallDownloadButtonContainer}
+               disabled={isDownloading}
+             >
+               <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
+             </TouchableOpacity>
+             <TouchableOpacity 
+               onPress={forwardMessage} 
+               style={styles.smallDownloadButtonContainer}           
+             >
+               <Ionicons name="share-outline" size={20} color="#4a86e8"/>
+               
+             </TouchableOpacity>
+           </View>
+           
+         </View>
         );
       case 'document':
         return (
-          <View style={styles.fileContainer}>
-            <Text style={styles.fileIcon}>{getFileIcon(message)}</Text>
-            <Text style={styles.fileText}>{getFileNameFromUrl(message)}</Text>
+        
+           <View style={styles.boxMessagemedia}>
+            <View style={styles.mediaContainer}>
+            <View style={styles.fileContainer}>
+              <Text style={styles.fileIcon}>{getFileIcon(message)}</Text>
+              <Text style={styles.fileText}>{getFileNameFromUrl(message)}</Text> 
+            </View>
+            
           </View>
+           <View style={styles.iconHandlemedia}>
+           <TouchableOpacity 
+               onPress={() => downloadAndOpenFile(message)} 
+               style={styles.smallDownloadButtonContainer}
+               disabled={isDownloading}
+             >
+               <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
+             </TouchableOpacity>
+             <TouchableOpacity 
+               onPress={forwardMessage} 
+               style={styles.smallDownloadButtonContainer}           
+             >
+               <Ionicons name="share-outline" size={20} color="#4a86e8"/>
+               
+             </TouchableOpacity>
+           </View>
+           
+         </View>
+          
         );
       case 'unsend':
         return <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>;
@@ -303,12 +428,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
             onLongPress={handleLongPress}
             onPress={() => {
               if (type === 'image') handlePressImage();
-              else if (type === 'document') downloadAndOpenFile(message);
               else if (type === 'audio') playAudio(message);
-              else if (type === 'video') {
-                // Mở video trong trình xem mặc định
-                downloadAndOpenFile(message);
-              }
             }}
             style={[
               styles.messageBox, 
@@ -355,17 +475,14 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flexDirection: 'column',
-    maxWidth: '65%',
-    padding: 12,
-    borderRadius: 10,
+    maxWidth: '80%', // Tăng kích thước để hiển thị nội dung to hơn
     marginRight: 10,
     position: 'relative',
   },
   avatarContainer: {
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginLeft: 5,
-    marginTop: 5,
+   margin:5
   },
   avatar: {
     width: 40,
@@ -373,30 +490,39 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   messageBox: {
-    backgroundColor: '#e0f7fa',
-    padding: 5,
+    // backgroundColor: '#e0f7fa',
     borderRadius: 15,
     marginBottom: 5,
-    alignItems: 'flex-end',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
+    overflow: 'hidden',
+  },
+  mediaContainer: {
+    width: '70%',
+  },
+  boxMessagemedia:
+  { flexDirection: 'row', gap:5,alignItems:'center',width:'100%' },
+  mediaContent: {
+    width: '100%',
   },
   image: {
-    width: 160,
-    height: 160,
-    borderRadius: 10,
+    width: 200, // Tăng kích thước ảnh
+    height: 200,
+   borderRadius:15
   },
   imageMessage: {
     padding: 0,
     overflow: 'hidden',
   },
   videoContainer: {
-    width: 160,
+    width: 200, // Tăng kích thước video
     height: 160,
-    borderRadius: 10,
+   borderRadius:15,
     overflow: 'hidden',
+    backgroundColor: '#000',
   },
   video: {
     width: '100%',
@@ -407,22 +533,44 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   audioContainer: {
-    minWidth: 120,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    width: '100%',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    backgroundColor: '#e8f1ff',
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
   },
   audioPlayer: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
   },
+  iconHandlemedia:
+  { flexDirection: 'row', gap:4,alignItems:'center',width:'20%' },
   audioIcon: {
-    fontSize: 24,
-    marginRight: 8,
+    fontSize: 30,
+    marginRight: 12,
+    color: '#4a86e8',
+  },
+  audioInfoContainer: {
+    flex: 1,
   },
   audioText: {
     fontSize: 14,
     color: '#333',
-    maxWidth: 130,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  audioProgressBar: {
+    height: 4,
+    width: '100%',
+    backgroundColor: '#d0d0d0',
+    borderRadius: 2,
+  },
+  audioProgress: {
+    height: '100%',
+    backgroundColor: '#4a86e8',
+    borderRadius: 2,
   },
   audioMessage: {
     padding: 0,
@@ -430,41 +578,43 @@ const styles = StyleSheet.create({
   fileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    backgroundColor: '#f0f8ff',
   },
   fileIcon: {
-    fontSize: 18,
-    marginRight: 6,
+    fontSize: 24,
+    marginRight: 12,
   },
   fileText: {
     fontSize: 14,
     color: '#0066cc',
-    textDecorationLine: 'underline',
-    maxWidth: 130,
+    fontWeight: 'bold',
   },
   documentMessage: {
-    padding: 5,
+    padding: 0,
   },
   messageText: {
     fontSize: 14,
     color: '#333',
-    marginBottom: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   unsendText: {
     fontSize: 14,
     color: '#aaa',
     fontStyle: 'italic',
-    marginBottom: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   time: {
     fontSize: 10,
-    color: '#C9D5D5',
+    color: '#999',
     textAlign: 'left',
+    marginTop: 2,
+    marginRight: 5,
   },
   emojiContainer: {
     marginTop: 5,
@@ -473,6 +623,42 @@ const styles = StyleSheet.create({
   emoji: {
     fontSize: 20,
     color: '#ff6347',
+  },
+  downloadButtonContainer: {
+    padding: 8,
+    backgroundColor: '#f5f5f5',
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+    alignItems: 'center',
+  },
+  downloadButton: {
+    backgroundColor: '#4a86e8',
+    borderRadius: 8,
+    height: 36,
+    paddingHorizontal: 0,
+  },
+  buttonLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+
+  smallDownloadButtonContainer: {
+   borderColor: 'blue',
+    borderRadius: 50,
+    backgroundColor: '#ffffffcc', // nền trắng mờ để nổi bật nút
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 4,
+  },
+  smallDownloadButton: {
+    height: 32,
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+    minWidth: 0, // tránh nút bị to ra khi dùng compact
+    elevation: 2, // tạo bóng nhẹ
   },
 });
 

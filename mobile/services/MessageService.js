@@ -103,6 +103,15 @@ const MessageService = {
           throw error.response ? error.response.data : error;
       }
   },
+  deleteSingleMessageForUser: async (messageId, userId) => {
+    try {
+        const response = await axios.delete(`${IPV4}/messages/delete-single/${messageId}/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi xóa tin nhắn:", error.response || error);
+        throw error.response ? error.response.data : error;
+    }
+},
 };
 
 export default MessageService;
