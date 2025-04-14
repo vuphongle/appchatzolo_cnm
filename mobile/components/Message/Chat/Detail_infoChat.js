@@ -59,14 +59,14 @@ const Detail_infoChat = ({ route, navigation }) => {
         text: 'Xóa',
         onPress: async () => {
           try {
-            const response = await fetch(`${IPV4}/messages/delete-chat/${userFriend?.id}/${user?.id}`, {
+            const response = await fetch(`${IPV4}/messages/delete-chat/${user?.id}/${userFriend?.id}`, {
               method: 'DELETE',
             });
 
             const result = await response.text();
             if (response.ok) {
               Alert.alert('Thành công', 'Đã xóa cuộc trò chuyện');
-              navigation.goBack();
+              navigation.replace('MainTabs');
             } else {
               Alert.alert('Lỗi', result.message || 'Không thể xóa cuộc trò chuyện');
             }

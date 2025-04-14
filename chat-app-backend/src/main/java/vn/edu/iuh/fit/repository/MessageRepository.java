@@ -1,5 +1,7 @@
 package vn.edu.iuh.fit.repository;
 
+import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -209,9 +211,13 @@ public class MessageRepository {
         // Xóa từng tin nhắn
         for (Message message : messagesToDelete) {
             try {
-                Key key = Key.builder().partitionValue(message.getId()).build();
-                table.deleteItem(key);
-                System.out.println("Deleted message: " + message);
+
+                if(message.getSenderID().equals(senderID)) {
+                    message.setDeletedBySender(true);
+                } else if (message.getSenderID().equals(receiverID)) {
+                    message.setDeletedByReceiver(true);
+                }
+                table.putItem(message);
             } catch (Exception e) {
                 System.err.println("Error deleting message: " + e.getMessage());
                 throw new RuntimeException("Lỗi khi xóa tin nhắn: " + e.getMessage());
