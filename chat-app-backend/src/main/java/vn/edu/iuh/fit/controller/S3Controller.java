@@ -80,6 +80,7 @@ public class S3Controller {
 
     @PostMapping("/file")
     public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
+        System.out.println("File: " + file.getOriginalFilename());
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "File không được để trống!"));
         }

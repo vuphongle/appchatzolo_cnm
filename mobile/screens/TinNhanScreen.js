@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  TextInput,
+  Modal,
+  Button,
   Alert,
 } from 'react-native';
 import SearchBar from '../components/SearchBar';
@@ -41,6 +44,8 @@ const TinNhanScreen = () => {
   const [loading, setLoading] = useState(false);
   const { fetchUserProfile, user, setUser } = useContext(UserContext);
   const [friendRequestStatus, setFriendRequestStatus] = useState('Kết bạn');
+  const [message, setMessage] = useState('Kết bạn với mình nhé.');
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     if (searchResult) {
@@ -105,7 +110,8 @@ const TinNhanScreen = () => {
     if (friendRequestStatus === 'Hoàn tác') {
       handleDeleteFriendRequest();
     } else if (friendRequestStatus === 'Kết bạn') {
-      handleAddFriend();
+      // Hiện modal khi người dùng bấm "Kết bạn"
+      setIsModalVisible(true);
     }
   };
 
@@ -115,7 +121,7 @@ const TinNhanScreen = () => {
 
     const newFriendRequest = {
       id: uuidv4(),
-      content: 'Lời mời kết bạn',
+      content: message,  // Use the custom message here
       sendDate: new Date().toISOString(),
       senderID: user?.id,
       receiverID: searchResult.id,
@@ -139,6 +145,7 @@ const TinNhanScreen = () => {
         console.log('Gửi lời mời kết bạn thất bại');
       }
       checkFriendRequestStatus();
+      setIsModalVisible(false);
     } catch (error) {
       console.error('Có lỗi xảy ra khi gửi lời mời kết bạn:', error);
     }
@@ -241,7 +248,7 @@ const TinNhanScreen = () => {
               inputRef={searchInputRef}
             />
             <TouchableOpacity
-              onPress={handleSearch}
+              onPress={() => console.log('Search initiated')}
               style={styles.searchButton}
             >
               <Text style={styles.searchButtonText}>Tìm</Text>
@@ -267,14 +274,16 @@ const TinNhanScreen = () => {
                   </Text>
                 </View>
                 {!searchResult.isOwnProfile && (
-                  <TouchableOpacity
-                    onPress={sendFriendRequest}
-                    style={styles.addFriendButton}
-                  >
-                    <Text style={styles.addFriendButtonText}>
-                      {friendRequestStatus}
-                    </Text>
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      onPress={sendFriendRequest}
+                      style={styles.addFriendButton}
+                    >
+                      <Text style={styles.addFriendButtonText}>
+                        {friendRequestStatus}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
                 )}
               </View>
             ) : (
@@ -287,6 +296,43 @@ const TinNhanScreen = () => {
           </ScrollView>
         </View>
       )}
+
+      {/* Modal nhập lời mời kết bạn */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Gửi yêu cầu kết bạn</Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Xin chào, nhập lời mời của bạn"
+              value={message}
+              onChangeText={setMessage}
+              multiline
+            />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                <TouchableOpacity
+                    style={styles.buttonAddFriend}
+                    onPress={handleAddFriend}
+                >
+                    <Text style={styles.buttonText}>Gửi yêu cầu</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.buttonCancel}
+                    onPress={() => setIsModalVisible(false)}
+                >
+                    <Text style={styles.buttonText}>Hủy</Text>
+                </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -363,6 +409,53 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     marginTop: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Background overlay
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  messageInput: {
+    width: '100%',
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 20,
+  },
+  buttonAddFriend: {
+    backgroundColor: '#1e90ff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  buttonCancel: {
+    backgroundColor: '#1e90ff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
