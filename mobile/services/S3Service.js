@@ -121,10 +121,17 @@ const S3Service = {
 
   uploadImage: async (file) => {
     const formData = new FormData();
+    const timestamp = Date.now();
 
+    // Lấy tên gốc hoặc tạo tên mặc định
+    let originalName = file.fileName || `file_${timestamp}`;
+   const sanitizedBaseName = originalName
+      .replace(/\.[^/.]+$/, '') // bỏ phần đuôi
+      .replace(/[^a-zA-Z0-9-_]/g, '_'); // thay ký tự đặc biệt bằng "_"
+      const finalFileName = `${timestamp}.${sanitizedBaseName}`;
     formData.append('file', {
       uri: file.uri,
-      name: file.fileName,
+      name: finalFileName,
       type: file.type,
     });
 
