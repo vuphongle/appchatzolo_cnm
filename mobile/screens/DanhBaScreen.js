@@ -62,6 +62,29 @@ const DanhBaScreen = () => {
     fetchReceivedCount();
   }, [user?.id, friendRequestsCount]);
 
+  // 10s tải lại danh sách bạn bè
+  useEffect(() => {
+      const fetchFriends = async () => {
+          if (!user?.id) return;
+          try {
+              const response = await fetch(`${IPV4}/user/${user.id}/friends`);
+              const data = await response.json();
+              setFriends(data);
+          } catch (error) {
+              console.error('Error fetching friends:', error);
+          }
+      };
+
+      // Lần đầu chạy ngay khi component render
+      fetchFriends();
+
+      // Khai báo interval và gọi lại hàm fetchFriends sau mỗi 5 giây
+      const interval = setInterval(fetchFriends, 10000); // 5000ms = 5 giây
+
+      // Cleanup function để clear interval khi component unmount
+      return () => clearInterval(interval);
+  }, [user?.id]); // Chạy lại useEffect khi user.id thay đổi
+
   // Dummy data nhóm
   const dummyGroups = [
     { id: 1, name: 'Nhóm UI/UX', membersCount: 5 },
@@ -168,6 +191,14 @@ const DanhBaScreen = () => {
     );
   };
 
+  const handleNavigateChat = (contact) => {
+      navigation.navigate('Chat', {
+        receiverid: contact.id,
+        name: contact.name,
+        avatar: contact.avatar || AVATAR_URL_DEFAULT,
+      });
+  };
+
   const renderFriendsTab = () => {
     return (
       <ScrollView style={styles.content}>
@@ -221,7 +252,7 @@ const DanhBaScreen = () => {
               renderRightActions(progress, dragX, contact)
             }
           >
-            <TouchableOpacity style={styles.contactItem}>
+            <TouchableOpacity style={styles.contactItem} onPress={() => handleNavigateChat(contact)}>
               <Image
                 source={{ uri: contact.avatar || AVATAR_URL_DEFAULT }}
                 style={styles.contactAvatar}
@@ -289,6 +320,7 @@ const DanhBaScreen = () => {
         onClose={() => setIsModalVisible(false)}
         friend={selectedFriend}
         onDeleteFriend={handleDelete} // Pass delete function
+        onSendMessage={handleNavigateChat}
       />
     </View>
   );

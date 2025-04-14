@@ -30,6 +30,12 @@ const UserDetailModal = ({
     }
   };
 
+  const handleSendMessage = () => {
+    if (onSendMessage) {
+      onSendMessage(friend);
+    }
+  }
+
   return (
     <Modal
       visible={visible}
@@ -131,7 +137,7 @@ const UserDetailModal = ({
 
             <TouchableOpacity
               style={[styles.footerButton, { backgroundColor: '#1e90ff' }]}
-              onPress={onSendMessage}
+              onPress={handleSendMessage}
             >
               <Text style={[styles.footerButtonText, { color: '#fff' }]}>
                 Nhắn tin
