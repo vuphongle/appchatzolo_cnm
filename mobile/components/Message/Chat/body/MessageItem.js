@@ -294,14 +294,14 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
         return (
           <View style={styles.boxMessagemedia}>
           <View style={styles.mediaContainer}>
-            <TouchableOpacity onPress={handlePressImage} style={styles.mediaContent}>
+            <TouchableOpacity  style={styles.mediaContent} onLongPress={handleLongPress}>
               <Image style={styles.image} source={{ uri: message }} resizeMode="cover" />
             </TouchableOpacity>
   
           </View>
           <View style={styles.iconHandlemedia}>
           <TouchableOpacity 
-              onPress={() => downloadAndOpenFile(message)} 
+//              onPress={() => downloadAndOpenFile(message)}
               style={styles.smallDownloadButtonContainer}
               disabled={isDownloading}
             >
@@ -309,7 +309,8 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={forwardMessage} 
-              style={styles.smallDownloadButtonContainer}           
+              style={styles.smallDownloadButtonContainer}
+
             >
               <Ionicons name="share-outline" size={20} color="#4a86e8"/>
               
@@ -338,14 +339,16 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
           </View>
            <View style={styles.iconHandlemedia}>
            <TouchableOpacity 
-               onPress={() => downloadAndOpenFile(message)} 
+//               onPress={() => downloadAndOpenFile(message)}
+onLongPress={handleLongPress}
                style={styles.smallDownloadButtonContainer}
                disabled={isDownloading}
              >
                <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
              </TouchableOpacity>
              <TouchableOpacity 
-               onPress={forwardMessage} 
+               onPress={forwardMessage}
+
                style={styles.smallDownloadButtonContainer}           
              >
                <Ionicons name="share-outline" size={20} color="#4a86e8"/>
@@ -360,7 +363,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
           
            <View style={styles.boxMessagemedia}>
          <View style={styles.mediaContainer}>
-            <TouchableOpacity onPress={() => playAudio(message)} style={styles.audioContainer}>
+            <TouchableOpacity onLongPress={handleLongPress} onPress={() => playAudio(message)} style={styles.audioContainer}>
               <View style={styles.audioPlayer}>
                 <Text style={styles.audioIcon}>{isAudioPlaying ? '⏸️' : '▶️'}</Text>
                 <View style={styles.audioInfoContainer}>
@@ -405,7 +408,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
           </View>
            <View style={styles.iconHandlemedia}>
            <TouchableOpacity 
-               onPress={() => downloadAndOpenFile(message)} 
+               onLongPress={handleLongPress}
                style={styles.smallDownloadButtonContainer}
                disabled={isDownloading}
              >
@@ -441,10 +444,10 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
         <View style={styles.messageContainer}>
           <TouchableOpacity
             onLongPress={handleLongPress}
-            onPress={() => {
-              if (type === 'image') handlePressImage();
-              else if (type === 'audio') playAudio(message);
-            }}
+//            onPress={() => {
+//              if (type === 'image') handlePressImage();
+//              else if (type === 'audio') playAudio(message);
+//            }}
             style={[
               styles.messageBox, 
               type === 'image' && styles.imageMessage,

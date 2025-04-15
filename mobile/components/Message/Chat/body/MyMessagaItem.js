@@ -326,7 +326,8 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
                     <View style={styles.boxMessagemedia}>
                       <View style={styles.iconHandlemedia}>
                     <TouchableOpacity 
-                        onPress={() => downloadAndOpenFile(message)} 
+//                        onPress={() => downloadAndOpenFile(message)}
+
                         style={styles.smallDownloadButtonContainer}
                         disabled={isDownloading}
                       >
@@ -341,7 +342,7 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
                       </TouchableOpacity>
                     </View>
                     <View style={styles.mediaContainer}>
-                      <TouchableOpacity onPress={handlePressImage} style={styles.mediaContent}>
+                      <TouchableOpacity onLongPress={handleLongPress} style={styles.mediaContent}>
                         <Image style={styles.image} source={{ uri: message }} resizeMode="cover" />
                       </TouchableOpacity>
             
@@ -355,8 +356,9 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
           
            <View style={styles.boxMessagemedia}>
            <View style={styles.iconHandlemedia}>
-         <TouchableOpacity 
-             onPress={() => downloadAndOpenFile(message)} 
+         <TouchableOpacity
+           onLongPress={handleLongPress}
+//             onPress={() => downloadAndOpenFile(message)}
              style={styles.smallDownloadButtonContainer}
              disabled={isDownloading}
            >
@@ -396,8 +398,9 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
          
             <View style={styles.boxMessagemedia}>
             <View style={styles.iconHandlemedia}>
-          <TouchableOpacity 
-              onPress={() => downloadAndOpenFile(message)} 
+          <TouchableOpacity
+            onLongPress={handleLongPress}
+//              onPress={() => downloadAndOpenFile(message)}
               style={styles.smallDownloadButtonContainer}
               disabled={isDownloading}
             >
@@ -412,7 +415,7 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
             </TouchableOpacity>
           </View>
           <View style={styles.mediaContainer}>
-            <TouchableOpacity onPress={() => playAudio(messIndex)} style={styles.audioContainer}>
+            <TouchableOpacity onPress={() => playAudio(messIndex)} onLongPress={handleLongPress} style={styles.audioContainer}>
               <View style={styles.audioPlayer}>
                 <Text style={styles.audioIcon}>{isAudioPlaying ? '⏸️' : '▶️'}</Text>
                 <View style={styles.audioInfoContainer}>
@@ -435,7 +438,8 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
             <View style={styles.boxMessagemedia}>
             <View style={styles.iconHandlemedia}>
           <TouchableOpacity 
-              // onPress={() => downloadAndOpenFile(message)} 
+              // onPress={() => downloadAndOpenFile(message)}
+              onLongPress={handleLongPress}
               style={styles.smallDownloadButtonContainer}
               disabled={isDownloading}
             >
@@ -501,7 +505,7 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
                 (typeIndex === 'image' || typeIndex === 'video' || typeIndex === 'audio' || typeIndex === 'document') && styles.mediaMessage
               ]}
               onLongPress={handleLongPress}
-              onPress={handleMessagePress}
+//              onPress={handleMessagePress}
             >
               {renderMessageContent()}
             </TouchableOpacity>
