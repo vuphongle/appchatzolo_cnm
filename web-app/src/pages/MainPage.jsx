@@ -594,7 +594,7 @@ const MainPage = () => {
 
             if (incomingMessage.typeWeb === "WAITING_APPROVED" || incomingMessage.type === "FRIEND_REQUEST") {
                 // Cập nhật số lời mời kết bạn chưa đọc
-                setInvitationCount((prev) => prev + (incomingMessage.count || 1));
+                setInvitationCount(incomingMessage.count);
             }
             console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
             // Tin nhắn socket đồng ý kết bạn
@@ -890,7 +890,7 @@ const MainPage = () => {
                     setIsFriendRequestSent(false);
                     //gửi thông báo bên B
                     sendMessage({
-                        type: "INVITATION_REVOKE",
+                        typeWeb: "INVITATION_REVOKE",
                         senderID: MyUser?.my_user?.id,
                         receiverID: user.id,
                     });
@@ -902,6 +902,12 @@ const MainPage = () => {
             }
         }
     };
+
+    useEffect(() => {
+        if (activeTab === "contacts") {
+            setActiveSubTab("friends");
+        }
+    }, [activeTab]);
 
     // Hàm mở giao diện chat
     const openChat = (user) => {
