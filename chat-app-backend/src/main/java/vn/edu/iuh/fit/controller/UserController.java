@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -185,7 +186,7 @@ public class UserController {
 
 
     @DeleteMapping("/{userId}/removeFriend/{friendId}")
-    public ResponseEntity<?> removeFriend(@PathVariable String userId, @PathVariable String friendId) {
+    public ResponseEntity<?> removeFriend(@PathVariable String userId, @PathVariable String friendId) throws JsonProcessingException {
         boolean success = userService.removeFriend(userId, friendId);
 
         if (success) {
