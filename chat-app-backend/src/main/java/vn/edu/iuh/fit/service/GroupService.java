@@ -12,7 +12,7 @@ import java.util.List;
 public interface GroupService {
     GroupResponse createGroup(GroupResquest group) throws GroupException;
     void updateGroupInfo(String groupId, String newName, String newImage);
-    void deleteGroup(String userId, String groupId);
+    void deleteGroup(String userId, String groupId) throws GroupException;
 
     GroupResponse addMember(GroupResquest group) throws GroupException;
     void removeMember(String groupId, String targetUserId, String actorUserId);
