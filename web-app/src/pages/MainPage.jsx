@@ -350,6 +350,22 @@ const MainPage = () => {
         updateUserInfo(updatedUserData);
     };
 
+    const removeFriendFromList = (friendId) => {
+        const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
+
+        setFriendList((prevList) => prevList.filter((id) => id !== friendId));
+
+        const updatedUserData = {
+            ...MyUser,
+            my_user: {
+                ...MyUser.my_user,
+                friendIds: friendIds.filter((id) => id !== friendId),
+            },
+        };
+
+        updateUserInfo(updatedUserData);
+    };
+
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
     const handleSelectChat = async (user) => {
@@ -592,14 +608,19 @@ const MainPage = () => {
                 }
             }
 
-            if (incomingMessage.typeWeb === "WAITING_APPROVED" || incomingMessage.type === "FRIEND_REQUEST") {
+            if (incomingMessage.type === "REMOVE_FRIEND") {
+                console.log("ddd message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
+                removeFriendFromList(incomingMessage.sender);
+            }
+
+            if (incomingMessage.type === "FRIEND_REQUEST") {
                 // Cập nhật số lời mời kết bạn chưa đọc
                 setInvitationCount(incomingMessage.count);
             }
             console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
             // Tin nhắn socket đồng ý kết bạn
-            if (incomingMessage.typeWeb === "SUBMIT_FRIEND_REQUEST" || incomingMessage.type === "FRIEND_REQUEST") {
-                updateFriendList(incomingMessage.senderID);
+            if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
+                updateFriendList(incomingMessage.sender);
 
                 // Kiểm tra nếu người gửi không phải là selectedChat
                 if (incomingMessage.senderID !== selectedChat?.id) {
@@ -888,12 +909,6 @@ const MainPage = () => {
                     // Cập nhật trực tiếp trong state để danh sách luôn mới
                     setFriendRequests((prevRequests) => [...prevRequests.filter((req) => req.senderID !== user.id)]);
                     setIsFriendRequestSent(false);
-                    //gửi thông báo bên B
-                    sendMessage({
-                        typeWeb: "INVITATION_REVOKE",
-                        senderID: MyUser?.my_user?.id,
-                        receiverID: user.id,
-                    });
                 } else {
                     console.error('Không thể xóa lời mời');
                 }
@@ -1664,7 +1679,6 @@ const MainPage = () => {
             isRead: false,
             sendDate: new Date().toISOString(),
             status: 'Chờ đồng ý',
-            typeWeb: "WAITING_APPROVED"
         };
 
         try {

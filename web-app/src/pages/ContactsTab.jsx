@@ -34,24 +34,19 @@ const FriendItem = ({
     const { updateUserInfo } = useAuth(); // Sử dụng custom hook để lấy hàm updateUserInfo từ context
     const [friendList, setFriendList] = useState([]);
 
-    const updateFriendList = (friendId) => {
+    const removeFriendFromList = (friendId) => {
         const friendIds = Array.isArray(MyUser?.my_user?.friendIds) ? MyUser.my_user.friendIds : [];
-        setFriendList((prevList) => {
-            // Kiểm tra xem bạn đã có trong danh sách chưa
-            if (!prevList.includes(friendId)) {
-                return [...prevList, friendId];  // Thêm bạn mới vào danh sách
-            }
-            return prevList;
-        });
 
-        // Cập nhật lại thông tin người dùng nếu cần
+        setFriendList((prevList) => prevList.filter((id) => id !== friendId));
+
         const updatedUserData = {
             ...MyUser,
             my_user: {
                 ...MyUser.my_user,
-                friendIds: [...friendIds, friendId],
+                friendIds: friendIds.filter((id) => id !== friendId),
             },
         };
+
         updateUserInfo(updatedUserData);
     };
 
@@ -59,11 +54,12 @@ const FriendItem = ({
         try {
             await UserService.delete(`/${userId}/removeFriend/${friendId}`);
             showToast("Xóa bạn bè thành công!", "success");
+
             if (onFriendRemoved) {
                 onFriendRemoved(friendId);
             }
             // Cập nhật lại danh sách bạn bè trong context
-            updateFriendList(MyUser?.my_user?.id);
+            removeFriendFromList(friendId);
 
         } catch (error) {
             showToast("Xóa bạn bè thất bại!", "error");
