@@ -59,7 +59,6 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
         System.out.println("Received message: " + payload);
-
         try {
             Message chatMessage = objectMapper.readValue(payload, Message.class);
 
@@ -110,6 +109,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         WebSocketSession receiverSession = sessions.get(receiverId);
         if (receiverSession != null && receiverSession.isOpen()) {
             Map<String, Object> payload = new HashMap<>();
+            System.out.println("-------------------------------------------------------------------------");
             payload.put("type", "FRIEND_REQUEST");  // Loại thông báo
             payload.put("count", updatedCount);       // Số lời mời cập nhật
             String jsonPayload = objectMapper.writeValueAsString(payload);

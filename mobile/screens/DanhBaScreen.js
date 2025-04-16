@@ -19,15 +19,17 @@ import {
   Swipeable,
 } from 'react-native-gesture-handler';
 import UserDetailModal from '../components/UserDetailModal';
+//import useFriendRequestCount from '../hooks/useFriendRequestCount';
 
 const DanhBaScreen = () => {
   const navigation = useNavigation();
-  const { user, friendRequestsCount } = useContext(UserContext);
+  const { user, notification } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState('friends');
   const [receivedCount, setReceivedCount] = useState(0);
   const [friends, setFriends] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
+//  const friendRequestsCount = useFriendRequestCount(user);
 
   // Ref để quản lý Swipeable đang mở
   const currentlyOpenSwipeable = useRef(null);
@@ -45,7 +47,7 @@ const DanhBaScreen = () => {
       }
     };
     fetchFriends();
-  }, [user?.id, friendRequestsCount]);
+  }, [user?.id, notification]);
 
   useEffect(() => {
     const fetchReceivedCount = async () => {
@@ -60,7 +62,7 @@ const DanhBaScreen = () => {
       }
     };
     fetchReceivedCount();
-  }, [user?.id, friendRequestsCount]);
+  }, [user?.id, notification]);
 
   // 10s tải lại danh sách bạn bè
   useEffect(() => {

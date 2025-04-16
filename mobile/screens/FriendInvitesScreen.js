@@ -10,6 +10,7 @@ import {
 import { IPV4 } from '@env';
 import { UserContext } from '../context/UserContext';
 import SearchBar from '../components/SearchBar';
+import useFriendRequestCount from '../hooks/useFriendRequestCount';
 
 const FriendInvitesScreen = () => {
   const [searchText, setSearchText] = useState('');
@@ -18,7 +19,9 @@ const FriendInvitesScreen = () => {
   const [sentRequests, setSentRequests] = useState([]); // Lời mời đã gửi
   const [sendersInfo, setSendersInfo] = useState({});
   const [receiversInfo, setReceiversInfo] = useState({});
-  const { user, friendRequestsCount } = useContext(UserContext);
+  const { user, setNotification } = useContext(UserContext);
+  const friendRequestsCount = useFriendRequestCount(user);
+
 
   // Lấy lời mời đã nhận
   useEffect(() => {
@@ -43,6 +46,7 @@ const FriendInvitesScreen = () => {
           console.error('Error fetching received invites:', error);
         }
       };
+      setNotification(0);
       fetchReceived();
     }
   }, [activeSubTab, user?.id, friendRequestsCount]);
