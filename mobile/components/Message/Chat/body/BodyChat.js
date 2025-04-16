@@ -12,6 +12,7 @@ import {
   Keyboard,
   PermissionsAndroid,
   Image,
+  Alert,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,7 +20,6 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import MyMessageItem from './MyMessagaItem';
 import MessageItem from './MessageItem';
-import { useWebSocket } from '../../../../context/WebSocketService';
 import { UserContext } from '../../../../context/UserContext';
 import EmojiSelector from '../../../../utils/EmojiSelector';
 import { formatDate } from '../../../../utils/formatDate';
@@ -27,20 +27,17 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import MessageService from '../../../../services/MessageService';
 import S3Service from '../../../../services/S3Service';
-import moment from 'moment';
 import AudioRecord from 'react-native-audio-record';
+import { WebSocketContext } from '../../../../context/Websocket';
 
 const ChatScreen = ({ receiverID, name, avatar }) => {
   const { user } = useContext(UserContext);
   const userId = user?.id;
-  const { height: windowHeight } = Dimensions.get('window');
-  const [selectedImages, setSelectedImages] = useState([]); // Lưu trữ các ảnh đã chọn
-  const [selectedFiles, setSelectedFiles] = useState([]); // Lưu trữ các file đã chọn
+  const { sendMessage, onMessage, isConnected } = useContext(WebSocketContext);
+  
   const [localMessages, setLocalMessages] = useState([]);
-  const [refreshMessages, setRefreshMessages] = useState(false);
-
-  const { messages, sendMessage } = useWebSocket(userId, receiverID);
-  const scrollViewRef = useRef(null);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [wantToShowEmojiPicker, setWantToShowEmojiPicker] = useState(false);
@@ -48,12 +45,110 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const [isMounted, setIsMounted] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
+  
+  
+  const scrollViewRef = useRef(null);
 
+  // Set up component mount/unmount tracking
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
 
+  // Fetch message history from server
+  const fetchMessages = async () => {
+    if (!userId || !receiverID) return;
+    
+    try {
+      const response = await MessageService.get(
+        `/messages/messages?senderID=${userId}&receiverID=${receiverID}`
+      );
+      
+      if (response && Array.isArray(response)) {
+        // Vérifier que response est un tableau avant de trier
+        const sortedMessages = response.sort(
+          (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+        );
+        
+        setLocalMessages(sortedMessages);
+      } else {
+        // Si response n'est pas un tableau, initialiser avec un tableau vide
+        setLocalMessages([]);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      if (isMounted) {
+        // Afficher une alerte uniquement si ce n'est pas une erreur 404
+        if (error.response?.status !== 404) {
+          Alert.alert('Error', 'Failed to load message history');
+        }
+      }
+    }
+  };
+
+  // Initial message load and set up periodic refresh
+  useEffect(() => {
+    if (!userId || !receiverID) return;
+    
+    // Initial load when entering the conversation
+  
+    fetchMessages();
+    
+    // Set up interval to refresh messages every 1 second
+    const intervalId = setInterval(() => {
+      if (isMounted) {
+        fetchMessages();
+      }
+    }, 100);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [userId, receiverID]);
+
+  // Initialize WebSocket message listener
+  useEffect(() => {
+    if (!userId || !receiverID) return;
+    
+    // Function to handle incoming WebSocket messages
+    const handleWebSocketMessage = (message) => {
+      // Check if message belongs to current conversation
+      if ((message.senderID === userId && message.receiverID === receiverID) || 
+          (message.senderID === receiverID && message.receiverID === userId)) {
+        setLocalMessages(prev => {
+          // Check if message already exists to prevent duplicates
+          const exists = prev.some(msg => msg.id === message.id);
+          if (exists) return prev;
+          
+          // Add new message and sort by date
+          const newMessages = [...prev, message].sort(
+            (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+          );
+          
+          return newMessages;
+        });
+      }
+    };
+    
+    // Subscribe to WebSocket messages
+    const unsubscribe = onMessage(handleWebSocketMessage);
+    
+    return () => {
+      // Clean up WebSocket subscription
+      if (unsubscribe) unsubscribe();
+    };
+  }, [userId, receiverID]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollViewRef.current && localMessages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [localMessages]);
+
+  // Initialize audio recorder
   useEffect(() => {
     const options = {
       sampleRate: 16000,
@@ -66,10 +161,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     };
 
     AudioRecord.init(options);
-    console.log('AudioRecord initialized');
-  }, []);
-
-  useEffect(() => {
+    
+    // Request audio recording permissions
     const requestPermissions = async () => {
       try {
         const granted = await PermissionsAndroid.request(
@@ -81,215 +174,14 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           setHasPermission(true);
-          console.log('Quyền ghi âm đã được cấp');
-        } else {
-          console.log('Quyền ghi âm bị từ chối');
         }
       } catch (err) {
-        console.warn(err);
+        console.warn('Error requesting audio permission:', err);
       }
     };
+    
     requestPermissions();
   }, []);
-
-  const startRecording = async () => {
-    try {
-      await AudioRecord.start();
-      setIsRecording(true);
-      console.log('Đang ghi âm...');
-    } catch (error) {
-      console.error('Lỗi khi bắt đầu ghi âm:', error);
-    }
-  };
-
-  const stopRecording = async () => {
-    try {
-      const audioPath = await AudioRecord.stop(); // Dừng ghi âm và lấy đường dẫn tệp âm thanh
-      setAudioFile(audioPath); // Lưu đường dẫn tệp âm thanh
-      setIsRecording(false); // Cập nhật trạng thái dừng ghi âm
-      console.log('Tệp âm thanh được lưu tại:', audioPath);  // Log đường dẫn tệp âm thanh
-
-      const file = {
-        uri: audioPath,   // Đường dẫn tệp
-        name: 'audio.wav', // Tên tệp
-        type: 'audio/wav', // Loại tệp
-      };
-
-      console.log('Đối tượng file sẽ được truyền:', file); // Log đối tượng file để kiểm tra
-      handleSendAudioMessage(file); // Gửi tệp âm thanh lên S3
-    } catch (error) {
-      console.error('Lỗi khi dừng ghi âm:', error);
-    }
-  };
-
-  const handleSendAudioMessage = async (file) => {
-    if (!file) {
-      console.error('Không có tệp âm thanh để gửi.');
-      return;
-    }
-
-    console.log('Đang tải lên âm thanh:', file); // Log file trước khi gửi
-
-    try {
-      const audioUrl = await S3Service.uploadAudio(file); // Gửi tệp âm thanh lên S3
-
-      if (!audioUrl) {
-        console.error('Tải lên tệp âm thanh thất bại.');
-        return;
-      }
-
-      console.log('URL tệp âm thanh sau khi tải lên:', audioUrl); // Log URL sau khi tải lên thành công
-
-      const message = {
-        id: new Date().getTime().toString(),
-        senderID: userId,
-        receiverID: receiverID,
-        content: audioUrl,
-        sendDate: new Date().toISOString(),
-        isRead: false,
-      };
-
-      console.log('Gửi tin nhắn âm thanh:', message); // Log thông tin tin nhắn
-      sendMessage(message.content, receiverID); // Gửi tin nhắn
-      setAudioFile(null);
-    } catch (error) {
-      console.error('Lỗi khi tải lên tệp âm thanh:', error);
-      Alert.alert('Lỗi', 'Có lỗi khi tải lên tệp âm thanh, vui lòng thử lại.');
-    }
-  };
-
-  // Effect để cập nhật localMessages khi messages thay đổi
-  useEffect(() => {
-    if (messages && messages.length > 0) {
-      setLocalMessages(messages);
-    }
-  }, [messages]);
-
-  // Effect để load lại tin nhắn khi có tin nhắn bị xóa
-  useEffect(() => {
-    if (refreshMessages && userId && receiverID) {
-      // Tải lại tin nhắn từ server
-      fetchMessages();
-      setRefreshMessages(false);
-    }
-  }, [refreshMessages, userId, receiverID]);
-
-  // Hàm để tải lại tin nhắn từ server
-  const fetchMessages = async () => {
-    try {
-      const data = await MessageService.get(
-        `/messages/messages?senderID=${userId}&receiverID=${receiverID}`
-      );
-  
-      // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
-      const sortedMessages = filteredMessages.sort(
-        (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
-      );
-  
-      // Cập nhật localMessages
-      setLocalMessages(sortedMessages);
-  
-      // // Đánh dấu tin nhắn là đã đọc
-      // const unreadMessages = sortedMessages.filter(
-      //   (msg) => msg.isRead === false && msg.senderID === receiverID
-      // );
-      // if (unreadMessages.length > 0) {
-      //   await MessageService.savereadMessages(userId, receiverID);
-      // }
-    } catch (error) {
-      // console.error('Error fetching messages:', error);
-    }
-  };
-  
-
-  // Triển khai hàm xử lý khi tin nhắn bị xóa
-  const handleMessageDeleted = (messageId) => {
-    // Lọc ra tin nhắn bị xóa khỏi localMessages
-    setLocalMessages(prevMessages => 
-      prevMessages.filter(msg => msg.id !== messageId)
-    );
-    
-    // Đánh dấu cần tải lại tin nhắn
-    setRefreshMessages(true);
-  };
-
-  useEffect(() => {
-    if (!userId || !receiverID) return;
-
-    // Tải tin nhắn ban đầu
-    fetchMessages();
-    
-    // Thiết lập interval để tải lại tin nhắn định kỳ (ví dụ: mỗi 30 giây)
-    const intervalId = setInterval(() => {
-      if (isMounted) {
-        fetchMessages();
-      }
-    }, 100);
-
-    return () => clearInterval(intervalId);
-  }, [receiverID, userId]);
-
-  // useEffect(() => {
-  //   if (scrollViewRef.current) {
-  //     // Add a small delay to ensure the message is rendered before scrolling
-  //     setTimeout(() => {
-  //       scrollViewRef.current?.scrollToEnd({ animated: true });
-
-  //     }, 100);
-  //   }
-  // }, [localMessages]);
-  useEffect(() => {
-    if (scrollViewRef.current) {
-//        scrollViewRef.current.scrollToEnd({ animated: true });
-    }
-}, [localMessages]);
-
-
-  const handleImageUpload = async () => {
-    if (isMounted) {
-      const options = {
-        mediaType: 'photo',
-        quality: 1,
-        includeBase64: false,
-      };
-
-      try {
-        const response = await launchImageLibrary(options);
-
-        if (response.didCancel) {
-          console.log('Người dùng đã hủy chọn ảnh');
-        } else if (response.errorCode) {
-          console.log('Lỗi chọn ảnh: ', response.errorMessage);
-        } else if (response.assets && response.assets.length > 0) {
-          const selectedAsset = response.assets[0];
-          setSelectedImages((prevFiles) => [...prevFiles, selectedAsset]);
-          console.log('Đã chọn ảnh:', selectedAsset);
-        }
-      } catch (error) {
-        console.log('Lỗi xử lý chọn ảnh:', error);
-      }
-    }
-  };
-
-  const handleFileUpload = async () => {
-    try {
-      const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
-      });
-
-      // DocumentPicker.pick có thể trả về một mảng trong các phiên bản mới
-      const file = Array.isArray(result) ? result[0] : result;
-
-      setSelectedFiles((prevFiles) => [...prevFiles, file]);
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        // Người dùng đã hủy việc chọn file
-        console.log('User cancelled file picker');
-      } else {
-        console.log('Error picking document:', err);
-      }
-    }
-  };
 
   // Handle keyboard hide to show emoji picker
   useEffect(() => {
@@ -307,105 +199,204 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     };
   }, [wantToShowEmojiPicker]);
 
+  // Start audio recording
+  const startRecording = async () => {
+    if (!hasPermission) {
+      Alert.alert('Permission Required', 'Microphone permission is needed to record audio');
+      return;
+    }
+    
+    try {
+      await AudioRecord.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      Alert.alert('Error', 'Failed to start recording');
+    }
+  };
+
+  // Stop audio recording and send
+  const stopRecording = async () => {
+    try {
+      const audioPath = await AudioRecord.stop();
+      setIsRecording(false);
+      
+      const file = {
+        uri: audioPath,
+        name: `audio_${new Date().getTime()}.wav`,
+        type: 'audio/wav',
+      };
+      
+      handleSendAudioMessage(file);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      Alert.alert('Error', 'Failed to process recording');
+    }
+  };
+
+  // Upload and send audio message
+  const handleSendAudioMessage = async (file) => {
+    if (!file) return;
+
+    try {
+      const audioUrl = await S3Service.uploadAudio(file);
+      
+      if (!audioUrl) {
+        throw new Error('Audio upload failed');
+      }
+
+      const message = {
+        id: `audio_${new Date().getTime()}`,
+        senderID: userId,
+        receiverID: receiverID,
+        content: audioUrl,
+        sendDate: new Date().toISOString(),
+        isRead: false,
+        type: 'audio'
+      };
+
+      sendMessage(message);
+      setAudioFile(null);
+      
+      // Refresh messages after sending
+      setTimeout(() => {
+        fetchMessages();
+      }, 500);
+    } catch (error) {
+      console.error('Error uploading audio:', error);
+      Alert.alert('Error', 'Failed to send audio message');
+    }
+  };
+
+  // Handle image selection
+  const handleImageUpload = async () => {
+    if (!isMounted) return;
+    
+    const options = {
+      mediaType: 'photo',
+      quality: 1,
+      includeBase64: false,
+    };
+
+    try {
+      const response = await launchImageLibrary(options);
+
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('Image picker error: ', response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        const selectedAsset = response.assets[0];
+        setSelectedImages((prevFiles) => [...prevFiles, selectedAsset]);
+      }
+    } catch (error) {
+      console.log('Error processing image selection:', error);
+    }
+  };
+
+  // Handle file selection
+  const handleFileUpload = async () => {
+    try {
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+      });
+
+      const file = Array.isArray(result) ? result[0] : result;
+      setSelectedFiles((prevFiles) => [...prevFiles, file]);
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        console.log('User cancelled file picker');
+      } else {
+        console.log('Error picking document:', err);
+      }
+    }
+  };
+
+  // Handle sending messages (text, images, files)
   const handleSendMessage = async () => {
-    if (
-      messageText.trim() === '' &&
-      selectedFiles.length === 0 &&
-      selectedImages.length === 0
-    )
-      return; // Don't send if no content and no files
+    if (messageText.trim() === '' && selectedFiles.length === 0 && selectedImages.length === 0) {
+      return;
+    }
 
     // Handle selected images
     if (selectedImages.length > 0) {
       try {
-        const uploadedImages = [];
-        // Upload all images
         for (let file of selectedImages) {
-          const fileUrl = await S3Service.uploadImage(file); // Upload image to S3
-          uploadedImages.push(fileUrl);
+          const imageUrl = await S3Service.uploadImage(file);
+          
+          if (imageUrl) {
+            const imageMessage = {
+              id: `image_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+              senderID: userId,
+              receiverID: receiverID,
+              content: imageUrl,
+              sendDate: new Date().toISOString(),
+              isRead: false,
+              type: 'image'
+            };
+            
+            sendMessage(imageMessage);
+          }
         }
-
-        // Send message for each image
-        for (let url of uploadedImages) {
-          const message = {
-            id: new Date().getTime().toString(),
-            senderID: userId,
-            receiverID: receiverID,
-            content: url, // Content is the URL of the uploaded image
-            sendDate: new Date().toISOString(),
-            isRead: false,
-          };
-
-          // Send message through WebSocket or your API
-          sendMessage(message.content, receiverID);
-        }
-        setSelectedImages([]); // Reset images
+        setSelectedImages([]);
       } catch (error) {
-        console.error('Upload image failed', error);
-        return;
+        console.error('Error uploading images:', error);
+        Alert.alert('Error', 'Failed to send one or more images');
       }
     }
 
     // Handle selected files
     if (selectedFiles.length > 0) {
       try {
-        const uploadedFiles = [];
-        // Upload all files
         for (let file of selectedFiles) {
-          const fileUrl = await S3Service.uploadFile(file); // Upload file to S3
-          console.log('url of file :', fileUrl);
-          uploadedFiles.push(fileUrl);
+          const fileUrl = await S3Service.uploadFile(file);
+          
+          if (fileUrl) {
+            const fileMessage = {
+              id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+              senderID: userId,
+              receiverID: receiverID,
+              content: fileUrl,
+              sendDate: new Date().toISOString(),
+              isRead: false,
+              type: 'file',
+              fileName: file.name
+            };
+            
+            sendMessage(fileMessage);
+          }
         }
-
-        // Send message for each file
-        for (let url of uploadedFiles) {
-          const message = {
-            id: new Date().getTime().toString(),
-            senderID: userId,
-            receiverID: receiverID,
-            content: url, // Content is the URL of the uploaded file
-            sendDate: new Date().toISOString(),
-            isRead: false,
-          };
-
-          // Send message through WebSocket or your API
-          sendMessage(message.content, receiverID);
-        }
-        setSelectedFiles([]); // Reset files
+        setSelectedFiles([]);
       } catch (error) {
-        console.error('Upload file failed', error);
-        return;
+        console.error('Error uploading files:', error);
+        Alert.alert('Error', 'Failed to send one or more files');
       }
     }
 
-    // Handle text message if exists
+    // Handle text message
     if (messageText.trim()) {
-      const message = {
-        id: new Date().getTime().toString(),
+      const textMessage = {
+        id: `text_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
         senderID: userId,
         receiverID: receiverID,
-        content: messageText.trim(), // Message content is text
+        content: messageText.trim(),
         sendDate: new Date().toISOString(),
         isRead: false,
+        type: 'text'
       };
-
-      // Send message through WebSocket or your API
-      sendMessage(message.content, receiverID);
+      
+      sendMessage(textMessage);
+      setMessageText('');
     }
 
-    // Reset input field and selected files/images
-    setMessageText('');
-    setSelectedFiles([]);
-    setSelectedImages([]);
-
-    // Ensure the emoji picker is closed when sending a message
+    // Close emoji picker if open
     if (showEmojiPicker) {
       setShowEmojiPicker(false);
     }
     
-    // Đánh dấu cần tải lại tin nhắn sau khi gửi
+    // Refresh messages after sending
     setTimeout(() => {
-      setRefreshMessages(true);
+      fetchMessages();
     }, 500);
   };
 
@@ -416,13 +407,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const removeFile = (index) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
-
-  const todayFormatted = new Date().toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  });
 
   const handleEmojiSelect = (emoji) => {
     setMessageText((prevText) => prevText + emoji);
@@ -437,109 +421,132 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     }
   };
 
+  // Format date for display
+  const formatMessageDate = (messageDate) => {
+    if (!messageDate) return null;
+
+    try {
+      const date = new Date(messageDate);
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'Asia/Ho_Chi_Minh',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return null;
+    }
+  };
+
+  const todayFormatted = formatMessageDate(new Date());
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <ScrollView
-        style={styles.messageContainer}
-        ref={scrollViewRef}
-        onContentSizeChange={() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }}
-      >
-        {(() => {
-          let lastDate = null;
 
-          // Tìm tin nhắn cuối cùng của bạn
-          const lastMyMessageIndex = localMessages
-            .map((msg, idx) => (msg.senderID === userId ? idx : -1))
-            .filter((idx) => idx !== -1)
-            .pop(); // Lấy index cuối cùng của tin nhắn bạn gửi
+        <ScrollView
+          style={styles.messageContainer}
+          ref={scrollViewRef}
+          onContentSizeChange={() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }}
+        >
+          {(() => {
+            let lastDate = null;
 
-          return localMessages.map((message, index) => {
-            const isMyMessage = message.senderID === userId;
-            const messageDate = new Date(message.sendDate);
+            // Find last message from user
+            const lastMyMessageIndex = localMessages
+              .map((msg, idx) => (msg.senderID === userId ? idx : -1))
+              .filter((idx) => idx !== -1)
+              .pop();
 
-            const formatMessageDate = (messageDate) => {
-              if (!messageDate) return null;
+            return localMessages.map((message, index) => {
+              const isMyMessage = message.senderID === userId;
+              const formattedDate = formatMessageDate(message.sendDate);
+              
+              let showDateHeader = false;
+              if (formattedDate && lastDate !== formattedDate) {
+                showDateHeader = true;
+                lastDate = formattedDate;
+              }
 
-              try {
-                const date = new Date(messageDate);
-                if (isNaN(date.getTime())) {
-                  return null;
-                }
-                return date.toLocaleDateString('vi-VN', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  timeZone: 'Asia/Ho_Chi_Minh',
-                });
-              } catch (error) {
-                console.error('Error formatting date:', error);
+              const headerText =
+                formattedDate === todayFormatted
+                  ? 'Hôm nay'
+                  : formattedDate || 'Hôm nay';
+
+              // Skip rendering deleted messages
+              if ((isMyMessage && message.deletedBySender) || 
+                  (!isMyMessage && message.deletedByReceiver)) {
                 return null;
               }
-            };
 
-            // Use the function in your component
-            const formattedDate = formatMessageDate(message.sendDate);
-            const todayFormatted = formatMessageDate(new Date());
-
-            let showDateHeader = false;
-            if (formattedDate && lastDate !== formattedDate) {
-              showDateHeader = true;
-              lastDate = formattedDate;
-            }
-
-            const headerText =
-              formattedDate === todayFormatted
-                ? 'Hôm nay'
-                : formattedDate || 'Hôm nay';
-
-                return (
-                  <View key={message.id || `msg-${index}-${message.sendDate}`}>
-                    {showDateHeader && formattedDate && (
-                      <View style={styles.dateHeader}>
-                        <Text style={styles.dateText}>{headerText}</Text>
-                      </View>
-                    )}
-                    
-                    {/* Only show sender's messages if not deleted by sender */}
-                    {isMyMessage && !message.deletedBySender ? (
-                      <MyMessageItem
-                        time={formatDate(message.sendDate)}
-                        message={message.content}
-                        messageId={message.id}
-                        userId={userId}
-                        receiverId={receiverID}
-                        avatar={user?.avatar}
-                        // onDeleteMessage={handleMessageDeleted}
-                        // isRead={
-                        //   index === lastMyMessageIndex ? message.isRead : undefined
-                        // }
-                      />
-                    ) : null}
-                    
-                    {/* Only show receiver's messages if not deleted by receiver */}
-                    {!isMyMessage && !message.deletedByReceiver ? (
-                      <MessageItem
-                        avatar={avatar}
-                        name={name}
-                        time={message.sendDate}
-                        message={message.content}
-                        messageId={message.id}
-                        userId={userId}
-                        receiverId={receiverID}
-                        // onDeleteMessage={handleMessageDeleted}
-                      />
-                    ) : null}
-                  </View>
-                );
-          });
-        })()}
-      </ScrollView>
+              return (
+                <View key={message.id || `msg-${index}-${message.sendDate}`}>
+                  {showDateHeader && formattedDate && (
+                    <View style={styles.dateHeader}>
+                      <Text style={styles.dateText}>{headerText}</Text>
+                    </View>
+                  )}
+                  
+                  {isMyMessage ? (
+                    <MyMessageItem
+                      time={formatDate(message.sendDate)}
+                      message={message.content}
+                      messageId={message.id}
+                      userId={userId}
+                      receiverId={receiverID}
+                      avatar={user?.avatar}
+                      messageType={message.type || 'text'}
+                      fileName={message.fileName}
+                      isRead={index === lastMyMessageIndex ? message.isRead : undefined}
+                      onDeleteMessage={() => {
+                        // Refresh messages after deletion
+                        setTimeout(() => {
+                          fetchMessages();
+                        }, 300);
+                      }}
+                    />
+                  ) : (
+                    <MessageItem
+                      avatar={avatar}
+                      name={name}
+                      time={message.sendDate}
+                      message={message.content}
+                      messageId={message.id}
+                      userId={userId}
+                      receiverId={receiverID}
+                      messageType={message.type || 'text'}
+                      fileName={message.fileName}
+                      onDeleteMessage={() => {
+                        // Refresh messages after deletion
+                        setTimeout(() => {
+                          fetchMessages();
+                        }, 300);
+                      }}
+                    />
+                  )}
+                </View>
+              );
+            });
+          })()}
+        </ScrollView>
+      
+      {/* Connection Status Indicator */}
+      {!isConnected && (
+        <View style={styles.connectionAlert}>
+          <Text style={styles.connectionAlertText}>
+            Đang kết nối lại...
+          </Text>
+        </View>
+      )}
 
       {/* Media Preview Section */}
       {(selectedImages.length > 0 || selectedFiles.length > 0) && (
@@ -583,8 +590,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
 
       <View style={styles.footerContainer}>
         <View style={styles.inputContainer}>
-        {/* onPress={toggleEmojiPicker} */}
-          <TouchableOpacity >
+          <TouchableOpacity onPress={toggleEmojiPicker}>
             <MaterialIcons name="insert-emoticon" size={24} color="#0091ff" />
           </TouchableOpacity>
           <TextInput
@@ -606,14 +612,29 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={isRecording ? stopRecording : startRecording}>
-            <FontAwesome name={isRecording ? 'stop' : 'microphone'} size={24} color="#0091ff" />
+            <FontAwesome 
+              name={isRecording ? 'stop' : 'microphone'} 
+              size={24} 
+              color={isRecording ? '#ff4d4d' : '#0091ff'} 
+            />
+            {isRecording && (
+              <View style={styles.recordingIndicator} />
+            )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleSendMessage}>
-            <Ionicons name="send-outline" size={24} color="#0091ff" />
+          <TouchableOpacity 
+            onPress={handleSendMessage}
+            disabled={messageText.trim() === '' && selectedFiles.length === 0 && selectedImages.length === 0}
+          >
+            <Ionicons 
+              name="send-outline" 
+              size={24} 
+              color={messageText.trim() === '' && selectedFiles.length === 0 && selectedImages.length === 0 ? '#ccc' : '#0091ff'} 
+            />
           </TouchableOpacity>
         </View>
       </View>
+      
       {showEmojiPicker && (
         <View style={{ height: 350, overflow: 'hidden' }}>
           <EmojiSelector
@@ -641,6 +662,11 @@ const styles = StyleSheet.create({
   messageContainer: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   footerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -658,11 +684,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 10,
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   inputMessage: {
     flex: 1,
     marginLeft: 10,
     fontSize: 16,
+    padding: 8,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -682,12 +711,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
   },
-  emojiPickerContainer: {
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    backgroundColor: '#fff',
-  },
-  // New styles for media preview
   mediaPreviewContainer: {
     borderTopWidth: 1,
     borderColor: '#ddd',
@@ -732,5 +755,23 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  connectionAlert: {
+    backgroundColor: '#ffcc00',
+    padding: 5,
+    alignItems: 'center',
+  },
+  connectionAlertText: {
+    color: '#333',
+    fontSize: 12,
+  },
+  recordingIndicator: {
+    position: 'absolute',
+    right: -2,
+    top: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ff4d4d',
   },
 });

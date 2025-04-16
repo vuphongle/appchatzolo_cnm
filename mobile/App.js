@@ -23,6 +23,7 @@ import PersonalInfoScreen from './screens/PersonalInfoScreen';
 import EditPersonalInfoScreen from './screens/EditPersonalInfoScreen';
 import ForgotPasswordScreen from './Auth/ForgotPasswordScreen';
 import ChangePasswordScreen from './Auth/ChangePasswordScreen';
+import { WebSocketProvider } from './context/Websocket';
 
 Amplify.configure({
   ...awsConfig,
@@ -30,105 +31,97 @@ Amplify.configure({
 
 const Stack = createStackNavigator();
 
+const AppNavigator = () => {
+  return (
+    <NavigationContainer initialRouteName="AuthScreen">
+      <Stack.Navigator>
+        <Stack.Screen
+          name="AuthScreen"
+          component={AuthScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ConfirmSignUpScreen"
+          component={ConfirmSignUpScreen}
+          options={{ headerTitle: 'Xác nhận đăng ký' }}
+        />
+        <Stack.Screen
+          name="MainTabs"
+          component={MainTabNavigator}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SettingsScreen"
+          component={SettingScreen}
+          options={{ headerTitle: 'Cài đặt' }}
+        />
+        <Stack.Screen
+          name="AccountSecurityScreen"
+          component={AccountSecurityScreen}
+          options={{ headerTitle: 'Tài khoản và bảo mật' }}
+        />
+        <Stack.Screen
+          name="PersonalInfoScreen"
+          component={PersonalInfoScreen}
+          options={{ headerTitle: 'Thông tin cá nhân' }}
+        />
+        <Stack.Screen
+          name="EditPersonalInfoScreen"
+          component={EditPersonalInfoScreen}
+          options={{ headerTitle: 'Chỉnh sửa thông tin' }}
+        />
+        <Stack.Screen
+          name="Chat"
+          component={Chat}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="DetailChat"
+          component={Detail_infoChat}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ImageChat"
+          component={ImageChat}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ScreenCloud"
+          component={ScreenCloud}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CloudStorageScreen"
+          component={CloudStorageScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="FriendInvitesScreen"
+          component={FriendInvitesScreen}
+          options={{ headerTitle: 'Lời mời kết bạn' }}
+        />
+        <Stack.Screen
+          name="ForgotPasswordScreen"
+          component={ForgotPasswordScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ChangePasswordScreen"
+          component={ChangePasswordScreen}
+          options={{ headerTitle: 'Thay đổi mật khẩu' }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
 const App = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <UserProvider>
-        <NavigationContainer initialRouteName="AuthScreen">
-          <Stack.Navigator>
-            <Stack.Screen
-              name="AuthScreen"
-              component={AuthScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="ConfirmSignUpScreen"
-              component={ConfirmSignUpScreen}
-              options={{ headerTitle: 'Xác nhận đăng ký' }}
-            />
-            <Stack.Screen
-              name="MainTabs"
-              component={MainTabNavigator}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="SettingsScreen"
-              component={SettingScreen}
-              options={{ headerTitle: 'Cài đặt' }}
-            />
-            <Stack.Screen
-              name="AccountSecurityScreen"
-              component={AccountSecurityScreen}
-              options={{ headerTitle: 'Tài khoản và bảo mật' }}
-            />
-            <Stack.Screen
-              name="PersonalInfoScreen"
-              component={PersonalInfoScreen}
-              options={{ headerTitle: 'Thông tin cá nhân' }}
-            />
-            <Stack.Screen
-              name="EditPersonalInfoScreen"
-              component={EditPersonalInfoScreen}
-              options={{ headerTitle: 'Chỉnh sửa thông tin' }}
-            />
-            <Stack.Screen
-              name="Chat"
-              component={Chat}
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="DetailChat"
-              component={Detail_infoChat}
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="ImageChat"
-              component={ImageChat}
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="ScreenCloud"
-              component={ScreenCloud}
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="CloudStorageScreen"
-              component={CloudStorageScreen}
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="FriendInvitesScreen"
-              component={FriendInvitesScreen}
-              options={{
-                headerTitle: 'Lời mời kết bạn',
-              }}
-            />
-            <Stack.Screen
-              name="ForgotPasswordScreen"
-              component={ForgotPasswordScreen}
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="ChangePasswordScreen"
-              component={ChangePasswordScreen}
-              options={{
-                headerTitle: 'Thay đổi mật khẩu',
-              }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <WebSocketProvider>
+          <AppNavigator />
+        </WebSocketProvider>
       </UserProvider>
     </GestureHandlerRootView>
   );
