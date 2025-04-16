@@ -9,7 +9,11 @@ import vn.edu.iuh.fit.model.DTO.request.GroupResquest;
 import vn.edu.iuh.fit.model.DTO.response.BaseResponse;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
 import vn.edu.iuh.fit.model.GroupRole;
+import vn.edu.iuh.fit.model.User;
+import vn.edu.iuh.fit.model.UserGroup;
 import vn.edu.iuh.fit.service.GroupService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/groups")
@@ -116,6 +120,21 @@ public class GroupController {
                         .data(groupId)
                         .success(true)
                         .message("Xóa nhóm thành công")
+                        .build()
+        );
+    }
+    @GetMapping("/getGroupMembers")
+    public ResponseEntity<BaseResponse<List<UserGroup>>> getGroupMembers(@RequestParam String groupId) throws GroupException {
+        // Lấy danh sách thành viên từ service
+        List<UserGroup> members = groupService.getGroupMembers(groupId);
+
+        // Trả về dữ liệu với BaseResponse
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<List<UserGroup>>builder()
+                        .data(members)
+                        .success(true)
+                        .message("Lấy danh sách thành viên nhóm thành công")
                         .build()
         );
     }
