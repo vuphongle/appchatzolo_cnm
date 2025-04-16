@@ -7,6 +7,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 
 @DynamoDbBean
 public class GroupAdmin {
+    // loại bo entity này vi khong can thiet nữa /// tín làm
     private String groupId;
     private String userId;
     private String roleName;

@@ -11,8 +11,8 @@ public class Group {
     private String id;
     private String groupName;
     private String image;
-    private List<String> adminIds;
-    private List<String> memberIds;
+    private String creatorId;
+    private String createdAt;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -42,21 +42,21 @@ public class Group {
         this.image = image;
     }
 
-    @DynamoDbAttribute("adminIds")
-    public List<String> getAdminIds() {
-        return adminIds;
+    @DynamoDbAttribute("creatorId")
+    public String getCreatorId() {
+        return creatorId;
     }
 
-    public void setAdminIds(List<String> adminIds) {
-        this.adminIds = adminIds;
+    public void setCreatorId(String creatorId) {
+        this.creatorId = creatorId;
     }
 
-    @DynamoDbAttribute("memberIds")
-    public List<String> getMemberIds() {
-        return memberIds;
+    @DynamoDbAttribute("createdAt")
+    public String getCreatedAt() {
+        return createdAt;
     }
 
-    public void setMemberIds(List<String> memberIds) {
-        this.memberIds = memberIds;
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 }

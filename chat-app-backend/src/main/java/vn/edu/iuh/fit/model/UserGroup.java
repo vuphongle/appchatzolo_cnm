@@ -10,7 +10,7 @@ public class UserGroup {
     private String userId;
     private String groupId;
     private String joinDate; // ISO format
-    private String role; // 'member', 'admin'
+    private GroupRole role; // trưởng nhóm || phó nhóm|| thành viên
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("userId")
@@ -43,10 +43,10 @@ public class UserGroup {
 
     @DynamoDbAttribute("role")
     public String getRole() {
-        return role;
+        return role != null ? role.name() : null;
     }
 
     public void setRole(String role) {
-        this.role = role;
+        this.role = role != null ? GroupRole.valueOf(role) : null;
     }
 }
