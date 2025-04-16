@@ -1,5 +1,8 @@
 package vn.edu.iuh.fit.service;
 
+import vn.edu.iuh.fit.exception.GroupException;
+import vn.edu.iuh.fit.model.DTO.request.GroupResquest;
+import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
 import vn.edu.iuh.fit.model.Group;
 import vn.edu.iuh.fit.model.GroupRole;
 import vn.edu.iuh.fit.model.User;
@@ -7,7 +10,7 @@ import vn.edu.iuh.fit.model.User;
 import java.util.List;
 
 public interface GroupService {
-    void createGroup(Group group, String creatorId);
+    GroupResponse createGroup(GroupResquest group) throws GroupException;
     void updateGroupInfo(String groupId, String newName, String newImage);
     void deleteGroup(String userId, String groupId);
 

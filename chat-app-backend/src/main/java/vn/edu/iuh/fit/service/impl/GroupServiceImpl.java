@@ -3,6 +3,9 @@ package vn.edu.iuh.fit.service.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import vn.edu.iuh.fit.exception.GroupException;
+import vn.edu.iuh.fit.model.DTO.request.GroupResquest;
+import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
 import vn.edu.iuh.fit.model.Group;
 import vn.edu.iuh.fit.model.GroupRole;
 import vn.edu.iuh.fit.model.User;
@@ -35,18 +38,53 @@ public class GroupServiceImpl implements GroupService {
 
     //Tạo nhóm
     @Override
-    public void createGroup(Group group, String creatorId) {
-        group.setId(java.util.UUID.randomUUID().toString());
-        groupRepository.saveGroup(group);
+    public GroupResponse createGroup(GroupResquest group) throws GroupException {
+        Group newGroup = new Group();
+        newGroup.setId(java.util.UUID.randomUUID().toString());
+        newGroup.setGroupName(group.getGroupName());
+        newGroup.setImage(group.getImage());
+        newGroup.setCreatorId(group.getCreatorId());
+        newGroup.setCreatedAt(java.time.LocalDate.now().toString());
+
+        groupRepository.saveGroup(newGroup);
 
         // Gán creator làm LEADER trong UserGroup
+        if(group.getCreatorId() == null) {
+            throw new GroupException("Người tạo nhóm không hợp lệ.");
+        }
+        String creatorId = group.getCreatorId();
         UserGroup userGroup = new UserGroup();
         userGroup.setUserId(creatorId);
-        userGroup.setGroupId(group.getId());
+        userGroup.setGroupId(newGroup.getId());
         userGroup.setRole(GroupRole.LEADER.name());
         userGroup.setJoinDate(java.time.LocalDate.now().toString());
+        groupRepository.addUserToGroup(userGroup);
+
+        // Gán các thành viên khác vào nhóm
+        List<String> memberIds = group.getMemberIds();
+
+        if(memberIds == null || memberIds.size() < 2) {
+            throw new GroupException("Danh sách thành viên không hợp lệ.");
+        }
+
+        for(String memberId : memberIds) {
+            UserGroup memberGroup = new UserGroup();
+            memberGroup.setUserId(memberId);
+            memberGroup.setGroupId(newGroup.getId());
+            memberGroup.setRole(GroupRole.MEMBER.name());
+            memberGroup.setJoinDate(java.time.LocalDate.now().toString());
+            groupRepository.addUserToGroup(memberGroup);
+        }
 
         groupRepository.addUserToGroup(userGroup);
+
+        return GroupResponse.builder()
+                .id(newGroup.getId())
+                .groupName(newGroup.getGroupName())
+                .image(newGroup.getImage())
+                .creatorId(newGroup.getCreatorId())
+                .createdAt(newGroup.getCreatedAt())
+                .build();
     }
 
     // Cập nhật tên/ảnh nhóm
