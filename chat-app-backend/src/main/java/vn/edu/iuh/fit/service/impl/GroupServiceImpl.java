@@ -225,10 +225,25 @@ public class GroupServiceImpl implements GroupService {
 
     //Lấy danh sách thành viên group
     @Override
-    public List<User> getGroupMembers(String groupId) {
+    public List<UserGroup> getGroupMembers(String groupId) throws GroupException {
+        Group group = groupRepository.getGroupById(groupId);
+        if (group == null) {
+            throw new GroupException("Nhóm không tồn tại.");
+        }
+
         List<UserGroup> memberLinks = groupRepository.getMembersOfGroup(groupId);
+        if (memberLinks.isEmpty()) {
+            throw new GroupException("Nhóm này không có thành viên.");
+        }
+        // Trả về danh sách người dùng từ bảng UserGroup bằng cách sử dụng thông tin trong id group
         return memberLinks.stream()
-                .map(link -> groupRepository.getUserById(link.getUserId()))
+                .map(userGroup -> {
+                    User user = userRepository.findById(userGroup.getUserId());
+                    if (user != null) {
+                        userGroup.setUserId(user.getId());
+                    }
+                    return userGroup;
+                })
                 .collect(Collectors.toList());
     }
 

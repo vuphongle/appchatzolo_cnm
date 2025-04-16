@@ -7,6 +7,7 @@ import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
 import vn.edu.iuh.fit.model.Group;
 import vn.edu.iuh.fit.model.GroupRole;
 import vn.edu.iuh.fit.model.User;
+import vn.edu.iuh.fit.model.UserGroup;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public interface GroupService {
 
     GroupRole getUserRole(String groupId, String userId);
     boolean isLeader(String groupId, String userId);
-    List<User> getGroupMembers(String groupId);
+    List<UserGroup> getGroupMembers(String groupId) throws GroupException;
     Group getGroupById(String groupId);
     GroupResponse updateGroup(GroupRequest group) throws GroupException;
     void sendMessageToGroup (MessageRequest request) throws GroupException;
