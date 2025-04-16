@@ -6,37 +6,21 @@ import { useAuth } from "../context/AuthContext";
 const CreateGroupModal = ({ onClose }) => {
     const { MyUser } = useAuth();
     const userId = MyUser?.my_user?.id;
-    const [friends, setFriends] = useState([
-        { id: 1, name: "Nguyễn Văn A", avatar: "https://randomuser.me/api/portraits/men/1.jpg" },
-        { id: 2, name: "Trần Thị B", avatar: "https://randomuser.me/api/portraits/women/2.jpg" },
-        { id: 3, name: "Phạm Văn C", avatar: "https://randomuser.me/api/portraits/men/3.jpg" },
-        { id: 4, name: "Lê Hoàng D", avatar: "https://randomuser.me/api/portraits/men/4.jpg" },
-        { id: 5, name: "Đặng Thị E", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
-        { id: 6, name: "Bùi Văn F", avatar: "https://randomuser.me/api/portraits/men/6.jpg" },
-        { id: 7, name: "Lý Thanh G", avatar: "https://randomuser.me/api/portraits/men/7.jpg" },
-        { id: 8, name: "Vũ Thị H", avatar: "https://randomuser.me/api/portraits/women/8.jpg" },
-        { id: 9, name: "Ngô Minh I", avatar: "https://randomuser.me/api/portraits/men/9.jpg" },
-        { id: 10, name: "Trịnh Thị J", avatar: "https://randomuser.me/api/portraits/women/10.jpg" },
-        { id: 11, name: "Đỗ Quốc K", avatar: "https://randomuser.me/api/portraits/men/11.jpg" },
-        { id: 12, name: "Hoàng Yến L", avatar: "https://randomuser.me/api/portraits/women/12.jpg" },
-        { id: 13, name: "Lâm Tuấn M", avatar: "https://randomuser.me/api/portraits/men/13.jpg" },
-        { id: 14, name: "Phan Mỹ N", avatar: "https://randomuser.me/api/portraits/women/14.jpg" },
-        { id: 15, name: "Trương Đức O", avatar: "https://randomuser.me/api/portraits/men/15.jpg" }
-    ]);
+    const [friends, setFriends] = useState();
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
 
-    // useEffect(() => {
-    //     if (userId) {
-    //         UserService.getFriends(userId)
-    //             .then((data) => {
-    //                 setFriends(Array.isArray(data) ? data : []);
-    //             })
-    //             .catch((err) => {
-    //                 console.error("Error fetching friends:", err);
-    //             });
-    //     }
-    // }, [userId]);
+    useEffect(() => {
+        if (userId) {
+            UserService.getFriends(userId)
+                .then((data) => {
+                    setFriends(Array.isArray(data) ? data : []);
+                })
+                .catch((err) => {
+                    console.error("Error fetching friends:", err);
+                });
+        }
+    }, [userId]);
 
     const toggleSelect = (id) => {
         setSelectedFriends((prev) =>
