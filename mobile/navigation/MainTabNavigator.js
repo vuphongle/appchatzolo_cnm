@@ -10,11 +10,13 @@ import NhatKyScreen from '../screens/NhatKyScreen';
 import CaNhanScreen from '../screens/CaNhanScreen';
 import AuthScreen from '../Auth/AuthScreen';
 import { UserContext } from '../context/UserContext';
+import useFriendRequestCount from '../hooks/useFriendRequestCount';
 
 const Tab = createBottomTabNavigator();
 
 const MainTabNavigator = () => {
-  const { user, friendRequestsCount } = useContext(UserContext);
+  const { user } = useContext(UserContext);
+  const friendRequestsCount = useFriendRequestCount(user);
 
   if (!user) {
     // Nếu người dùng chưa đăng nhập, hiển thị AuthScreen

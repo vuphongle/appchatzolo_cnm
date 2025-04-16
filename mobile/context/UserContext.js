@@ -2,14 +2,12 @@ import React, { createContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { Auth } from 'aws-amplify';
 import { IPV4 } from '@env';
-import { useFriendRequestNotifications } from '../context/useFriendRequestNotifications';
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [friendRequestsCount, setFriendRequestsCount] = useState(0);
 
   // Hàm lấy thông tin người dùng từ server dựa trên số điện thoại
   const fetchUserProfile = async (phoneNumber) => {
@@ -54,8 +52,6 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  useFriendRequestNotifications(user?.id, setFriendRequestsCount);
-
   useEffect(() => {
     loadUser();
   }, []);
@@ -66,7 +62,6 @@ export const UserProvider = ({ children }) => {
         user,
         setUser,
         fetchUserProfile,
-        friendRequestsCount,
       }}
     >
       {!loading && children}
