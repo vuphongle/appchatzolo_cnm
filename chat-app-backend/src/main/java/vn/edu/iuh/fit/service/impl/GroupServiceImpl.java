@@ -235,4 +235,23 @@ public class GroupServiceImpl implements GroupService {
     public Group getGroupById(String groupId) {
         return groupRepository.getGroupById(groupId);
     }
+
+    @Override
+    public GroupResponse updateGroup(GroupResquest group) throws GroupException {
+        Group existingGroup = groupRepository.getGroupById(group.getId());
+        if (existingGroup == null) {
+            throw new GroupException("Nhóm không tồn tại.");
+        }
+        existingGroup.setGroupName(group.getGroupName());
+        existingGroup.setImage(group.getImage());
+        groupRepository.saveGroup(existingGroup);
+
+        return GroupResponse.builder()
+                .id(existingGroup.getId())
+                .groupName(existingGroup.getGroupName())
+                .image(existingGroup.getImage())
+                .creatorId(existingGroup.getCreatorId())
+                .createdAt(existingGroup.getCreatedAt())
+                .build();
+    }
 }

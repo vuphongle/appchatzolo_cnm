@@ -23,5 +23,6 @@ public interface GroupService {
     boolean isLeader(String groupId, String userId);
     List<User> getGroupMembers(String groupId);
     Group getGroupById(String groupId);
+    GroupResponse updateGroup(GroupResquest group) throws GroupException;
 
 }

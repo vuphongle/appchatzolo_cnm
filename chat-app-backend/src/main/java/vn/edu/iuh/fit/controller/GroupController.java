@@ -2,10 +2,7 @@ package vn.edu.iuh.fit.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.model.DTO.request.GroupResquest;
 import vn.edu.iuh.fit.model.DTO.response.BaseResponse;
@@ -43,6 +40,20 @@ public class GroupController {
                         .data(group)
                         .success(true)
                         .message("Thêm thành viên thành công")
+                        .build()
+        );
+    }
+
+    // Update group info
+    @PutMapping("/update")
+    public ResponseEntity<BaseResponse<GroupResponse>> updateGroup(@RequestBody GroupResquest request) throws GroupException {
+        GroupResponse group = groupService.updateGroup(request);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<GroupResponse>builder()
+                        .data(group)
+                        .success(true)
+                        .message("Cập nhật nhóm thành công")
                         .build()
         );
     }
