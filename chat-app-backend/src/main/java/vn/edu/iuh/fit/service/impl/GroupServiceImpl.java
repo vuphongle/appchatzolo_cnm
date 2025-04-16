@@ -179,10 +179,10 @@ public class GroupServiceImpl implements GroupService {
 
     // Thăng cấp nhóm phó
     @Override
-    public void promoteToCoLeader(String groupId, String targetUserId, String promoterId) {
+    public void promoteToCoLeader(String groupId, String targetUserId, String promoterId) throws GroupException{
         GroupRole promoterRole = getUserRole(groupId, promoterId);
         if (promoterRole != GroupRole.LEADER)
-            throw new RuntimeException("Chỉ nhóm trưởng mới có quyền.");
+            throw new GroupException("Chỉ nhóm trưởng mới có quyền.");
 
         UserGroup ug = groupRepository.getUserGroup(targetUserId, groupId);
         if (ug != null) {
@@ -194,10 +194,10 @@ public class GroupServiceImpl implements GroupService {
 
     // Giáng xuống thành viên
     @Override
-    public void demoteToMember(String groupId, String targetUserId, String promoterId) {
+    public void demoteToMember(String groupId, String targetUserId, String promoterId)throws GroupException {
         GroupRole promoterRole = getUserRole(groupId, promoterId);
         if (promoterRole != GroupRole.LEADER)
-            throw new RuntimeException("Chỉ nhóm trưởng mới có quyền.");
+            throw new GroupException("Chỉ nhóm trưởng mới có quyền.");
 
         UserGroup ug = groupRepository.getUserGroup(targetUserId, groupId);
         if (ug != null) {
