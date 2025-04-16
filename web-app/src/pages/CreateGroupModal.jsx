@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 const CreateGroupModal = ({ onClose }) => {
     const { MyUser } = useAuth();
     const userId = MyUser?.my_user?.id;
-    const [friends, setFriends] = useState();
+    const [friends, setFriends] = useState([]);
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
 

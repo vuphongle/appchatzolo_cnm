@@ -94,27 +94,6 @@ public class GroupController {
 
     @DeleteMapping("/delete/{userId}/{groupId}")
     public ResponseEntity<BaseResponse<String>> deleteGroup(@PathVariable String userId,@PathVariable String groupId) throws GroupException {
-        GroupRole userGroup = groupService.getUserRole(groupId, userId);
-        if (userGroup == null) {
-            return ResponseEntity.badRequest().body(
-                    BaseResponse
-                            .<String>builder()
-                            .data(userId)
-                            .success(false)
-                            .message("Người dùng không phải là thành viên của nhóm")
-                            .build()
-            );
-        }
-        if (!userGroup.equals(GroupRole.LEADER)) {
-            return ResponseEntity.badRequest().body(
-                    BaseResponse
-                            .<String>builder()
-                            .data(userId)
-                            .success(false)
-                            .message("Bạn không có quyền xóa nhóm này")
-                            .build()
-            );
-        }
         groupService.deleteGroup(userId,groupId);
         return ResponseEntity.ok(
                 BaseResponse
@@ -149,16 +128,6 @@ public class GroupController {
         GroupRole actorRole = groupService.getUserRole(groupId, actorUserId);
         // targetUserId là người bị xóa
         GroupRole targetRole = groupService.getUserRole(groupId, targetUserId);
-
-        if (targetRole == null) {
-            return ResponseEntity.badRequest().body(
-                    BaseResponse.<String>builder()
-                            .data(targetUserId)
-                            .success(false)
-                            .message("Người bị xóa không phải là thành viên nhóm")
-                            .build()
-            );
-        }
 
         groupService.removeMember(groupId, targetUserId, actorUserId);
         return ResponseEntity.ok(
