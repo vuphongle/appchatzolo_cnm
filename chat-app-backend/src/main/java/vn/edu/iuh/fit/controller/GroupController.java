@@ -1,6 +1,7 @@
 package vn.edu.iuh.fit.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.exception.GroupException;
@@ -133,5 +134,55 @@ public class GroupController {
                         .message("Gửi tin nhắn thành công")
                         .build()
         );
+    }
+    // Xóa thành viên
+    @DeleteMapping("/removeMember/{groupId}/{targetUserId}/{actorUserId}")
+    public ResponseEntity<BaseResponse<String>> removeMember(
+            @PathVariable String groupId,
+            @PathVariable String targetUserId,
+            @PathVariable String actorUserId) throws GroupException {
+        // actorUserId là người thực hiện xóa
+        GroupRole actorRole = groupService.getUserRole(groupId, actorUserId);
+        // targetUserId là người bị xóa
+        GroupRole targetRole = groupService.getUserRole(groupId, targetUserId);
+
+        if (actorRole == null) {
+            return ResponseEntity.badRequest().body(
+                    BaseResponse.<String>builder()
+                            .data(actorUserId)
+                            .success(false)
+                            .message("Người thực hiện không phải thành viên nhóm")
+                            .build()
+            );
+        }
+
+        if (targetRole == null) {
+            return ResponseEntity.badRequest().body(
+                    BaseResponse.<String>builder()
+                            .data(targetUserId)
+                            .success(false)
+                            .message("Người bị xóa không phải là thành viên nhóm")
+                            .build()
+            );
+        }
+
+        if (actorRole == GroupRole.LEADER || (actorRole == GroupRole.CO_LEADER && targetRole == GroupRole.MEMBER)) {
+            groupService.removeMember(groupId, targetUserId, actorUserId);
+            return ResponseEntity.ok(
+                    BaseResponse.<String>builder()
+                            .data(targetUserId)
+                            .success(true)
+                            .message("Xóa thành viên thành công")
+                            .build()
+            );
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    BaseResponse.<String>builder()
+                            .data(targetUserId)
+                            .success(false)
+                            .message("Bạn không có quyền xóa người dùng này")
+                            .build()
+            );
+        }
     }
 }
