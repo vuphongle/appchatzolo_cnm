@@ -103,6 +103,10 @@ public class GroupServiceImpl implements GroupService {
     public void deleteGroup(String userId, String groupId) {
         // 1. Kiểm tra xem requester có phải là nhóm trưởng không
         GroupRole role = getUserRole(groupId, userId);
+        if (role == null) {
+            throw new RuntimeException("Người dùng không phải là thành viên của nhóm.");
+        }
+
         if (role != GroupRole.LEADER) {
             throw new RuntimeException("Chỉ nhóm trưởng mới có quyền xoá nhóm.");
         }
