@@ -49,6 +49,7 @@ public class GroupRepository {
 
 
     // ===================== CRUD CHO UserGroup ======================
+    //chỉnh sửa reolo cho thành viên  - Tín
     public void addUserToGroup(UserGroup userGroup) {
         userGroupTable.putItem(userGroup);
     }
