@@ -45,8 +45,19 @@ public class GroupServiceImpl implements GroupService {
         newGroup.setImage(group.getImage());
         newGroup.setCreatorId(group.getCreatorId());
         newGroup.setCreatedAt(java.time.LocalDate.now().toString());
+        //lưu id nhóm trưởng vào bảng user
+        User memberUserLead = userRepository.findById(group.getCreatorId());
+        if (memberUserLead != null) {
+            // Cập nhật groupIds của nhóm trưởng
+            if (memberUserLead.getGroupIds() == null) {
+                memberUserLead.setGroupIds(new ArrayList<>());
+            }
+            memberUserLead.getGroupIds().add(newGroup.getId());  // Thêm ID nhóm vào groupIds của nhóm trưởng
+            userRepository.save(memberUserLead);  // Cập nhật lại người dùng
+        }
 
         groupRepository.saveGroup(newGroup);
+
 
         // Gán creator làm LEADER trong UserGroup
         if(group.getCreatorId() == null) {
