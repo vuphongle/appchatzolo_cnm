@@ -150,16 +150,6 @@ public class GroupController {
         // targetUserId là người bị xóa
         GroupRole targetRole = groupService.getUserRole(groupId, targetUserId);
 
-        if (actorRole == null) {
-            return ResponseEntity.badRequest().body(
-                    BaseResponse.<String>builder()
-                            .data(actorUserId)
-                            .success(false)
-                            .message("Người thực hiện không phải thành viên nhóm")
-                            .build()
-            );
-        }
-
         if (targetRole == null) {
             return ResponseEntity.badRequest().body(
                     BaseResponse.<String>builder()
@@ -170,24 +160,14 @@ public class GroupController {
             );
         }
 
-        if (actorRole == GroupRole.LEADER || (actorRole == GroupRole.CO_LEADER && targetRole == GroupRole.MEMBER)) {
-            groupService.removeMember(groupId, targetUserId, actorUserId);
-            return ResponseEntity.ok(
-                    BaseResponse.<String>builder()
-                            .data(targetUserId)
-                            .success(true)
-                            .message("Xóa thành viên thành công")
-                            .build()
-            );
-        } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    BaseResponse.<String>builder()
-                            .data(targetUserId)
-                            .success(false)
-                            .message("Bạn không có quyền xóa người dùng này")
-                            .build()
-            );
-        }
+        groupService.removeMember(groupId, targetUserId, actorUserId);
+        return ResponseEntity.ok(
+            BaseResponse.<String>builder()
+                .data(targetUserId)
+                .success(true)
+                .message("Xóa thành viên thành công")
+                .build()
+        );
     }
     @GetMapping("/getGroupMembers")
     public ResponseEntity<BaseResponse<List<UserGroup>>> getGroupMembers(@RequestParam String groupId) throws GroupException {

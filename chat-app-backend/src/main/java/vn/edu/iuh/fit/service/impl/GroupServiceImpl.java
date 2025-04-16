@@ -168,14 +168,22 @@ public class GroupServiceImpl implements GroupService {
 
     //Xoá thành viên (chỉ LEADER hoặc CO_LEADER mới có quyền, và CO_LEADER không được xoá LEADER)
     @Override
-    public void removeMember(String groupId, String targetUserId, String actorUserId) {
+    public void removeMember(String groupId, String targetUserId, String actorUserId) throws GroupException {
         GroupRole actorRole = getUserRole(groupId, actorUserId);
         GroupRole targetRole = getUserRole(groupId, targetUserId);
+
+        if (actorRole == null) {
+            throw new GroupException("Người thực hiện không phải thành viên nhóm.");
+        }
+
+        if (targetRole == null) {
+            throw new GroupException("Người bị xóa không phải thành viên nhóm.");
+        }
 
         if (actorRole == GroupRole.LEADER || (actorRole == GroupRole.CO_LEADER && targetRole == GroupRole.MEMBER)) {
             groupRepository.removeUserFromGroup(targetUserId, groupId);
         } else {
-            throw new RuntimeException("Bạn không có quyền xoá người dùng này.");
+            throw new GroupException("Bạn không có quyền xoá người dùng này.");
         }
     }
 
