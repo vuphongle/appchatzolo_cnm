@@ -20,11 +20,7 @@ const useFriendRequestCount = (user) => {
             }
           }
           console.log('Notification ' , isChange);
-          if(isChange) {
-            setIsChange(false);
-          } else {
-            setIsChange(true);
-          }
+          setIsChange(message.type);
       });
       return () => {
         unsubscribe();

@@ -54,9 +54,17 @@ const TinNhanScreen = () => {
   }, [searchResult]);
 
   useEffect(() => {
-    checkFriendRequestStatus();
     updateUserProfile();
-  }, [isChange, user]);
+  }, [isChange]);
+
+  useEffect(() => {
+    if(isChange != "SUBMIT_FRIEND_REQUEST")
+        checkFriendRequestStatus();
+  }, [isChange]);
+
+  useEffect(() => {
+    checkFriendRequestStatus();
+  }, [user]);
 
   // Tạo ref cho ô tìm kiếm
   const searchInputRef = useRef(null);
@@ -224,7 +232,8 @@ const TinNhanScreen = () => {
           <SearchBar
             placeholder="Tìm kiếm số điện thoại"
             leftIcon="search"
-            rightIcon="qr-code-scanner"
+            rightIcon="add"
+            mainTabName="Chat"
             onRightIconPress={() => console.log('Scan QR button pressed')}
             searchText={searchText}
             setSearchText={(text) => {

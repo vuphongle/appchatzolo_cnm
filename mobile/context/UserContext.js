@@ -9,7 +9,7 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(0);
-  const [isChange, setIsChange] = useState(false);
+  const [isChange, setIsChange] = useState("");
 
   // Hàm lấy thông tin người dùng từ server dựa trên số điện thoại
   const fetchUserProfile = async (phoneNumber) => {

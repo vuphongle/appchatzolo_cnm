@@ -23,7 +23,7 @@ import UserDetailModal from '../components/UserDetailModal';
 
 const DanhBaScreen = () => {
   const navigation = useNavigation();
-  const { user, notification } = useContext(UserContext);
+  const { user, notification, updateUserProfile } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState('friends');
   const [receivedCount, setReceivedCount] = useState(0);
   const [friends, setFriends] = useState([]);
@@ -186,6 +186,7 @@ const DanhBaScreen = () => {
                 'Xóa thành công',
                 `${contact.name} đã được xóa khỏi danh sách bạn bè.`,
               );
+              updateUserProfile();
             } catch (error) {
               console.error('Lỗi khi xóa bạn bè:', error);
               alert('Lỗi khi xóa bạn bè. Vui lòng thử lại.');
