@@ -9,7 +9,9 @@ import java.util.List;
 @Setter
 @Getter
 @Builder
+@ToString
 public class GroupResquest {
+    private String id;
     private String groupName;
     private String image;
     private String creatorId;

@@ -22,21 +22,27 @@ public class GroupController {
     // Tao nhom
     @PostMapping("/create")
     public ResponseEntity<BaseResponse<GroupResponse>> createGroup(@RequestBody GroupResquest request) throws GroupException {
-
-        System.out.println("Create group request: ");
-        System.out.println(request);
-
         GroupResponse group = groupService.createGroup(request);
-
-        System.out.println("Group created: ");
-        System.out.println(group);
-
         return ResponseEntity.ok(
                 BaseResponse
                         .<GroupResponse>builder()
                         .data(group)
                         .success(true)
                         .message("Tạo nhóm thành công")
+                        .build()
+        );
+    }
+
+    // Add member
+    @PostMapping("/addMember")
+    public ResponseEntity<BaseResponse<GroupResponse>> addMember(@RequestBody GroupResquest request) throws GroupException {
+        GroupResponse group = groupService.addMember(request);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<GroupResponse>builder()
+                        .data(group)
+                        .success(true)
+                        .message("Thêm thành viên thành công")
                         .build()
         );
     }

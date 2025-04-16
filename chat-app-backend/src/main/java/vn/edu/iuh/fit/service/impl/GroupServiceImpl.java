@@ -121,15 +121,45 @@ public class GroupServiceImpl implements GroupService {
 
     //Thêm thành viên (LEADER hoặc CO_LEADER mới có quyền gọi hàm này)
     @Override
-    public void addMember(String groupId, String userId) {
-        UserGroup userGroup = new UserGroup();
-        userGroup.setUserId(userId);
-        userGroup.setGroupId(groupId);
-        userGroup.setRole(GroupRole.MEMBER.name());
-        userGroup.setJoinDate(java.time.LocalDate.now().toString());
+    public GroupResponse addMember(GroupResquest group) throws GroupException {
+        String groupId = group.getId();
+        Group groupToUpdate = groupRepository.getGroupById(groupId);
+        if (groupToUpdate == null) {
+            throw new GroupException("Nhóm không tồn tại.");
+        }
 
-        groupRepository.addUserToGroup(userGroup);
+        List<String> memberIds = group.getMemberIds();
 
+        for (String memberId : memberIds) {
+            User user = userRepository.findById(memberId);
+            if (user == null) {
+                throw new GroupException("Người dùng không tồn tại.");
+            }
+            if (user.getId() == null) {
+                throw new GroupException("Người dùng không hợp lệ.");
+            }
+            // Kiểm tra xem người dùng đã là thành viên của nhóm chưa
+            UserGroup existingUserGroup = groupRepository.getUserGroup(memberId, groupId);
+            if (existingUserGroup != null) {
+                throw new GroupException("Người dùng đã là thành viên của nhóm.");
+            }
+            // Nếu chưa, thêm người dùng vào nhóm
+            UserGroup userGroup = new UserGroup();
+            userGroup.setUserId(memberId);
+            userGroup.setGroupId(groupId);
+            userGroup.setRole(GroupRole.MEMBER.name());
+            userGroup.setJoinDate(java.time.LocalDate.now().toString());
+            groupRepository.addUserToGroup(userGroup);
+
+        }
+
+        return GroupResponse.builder()
+                .id(group.getId())
+                .groupName(group.getGroupName())
+                .image(group.getImage())
+                .creatorId(group.getCreatorId())
+                .createdAt(java.time.LocalDate.now().toString())
+                .build();
     }
 
 

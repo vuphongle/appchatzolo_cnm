@@ -14,7 +14,7 @@ public interface GroupService {
     void updateGroupInfo(String groupId, String newName, String newImage);
     void deleteGroup(String userId, String groupId);
 
-    void addMember(String groupId, String userId);
+    GroupResponse addMember(GroupResquest group) throws GroupException;
     void removeMember(String groupId, String targetUserId, String actorUserId);
     void promoteToCoLeader(String groupId, String targetUserId, String promoterId);
     void demoteToMember(String groupId, String targetUserId, String promoterId);
