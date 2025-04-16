@@ -57,11 +57,15 @@ const DanhBaScreen = () => {
         );
         const data = await response.json();
         setReceivedCount(data.length);
+        console.log('Received friend requests count:', data.length);
       } catch (error) {
         console.error('Error fetching friend requests count:', error);
       }
     };
     fetchReceivedCount();
+
+    const interval = setInterval(fetchReceivedCount, 10000);
+    return () => clearInterval(interval);
   }, [user?.id, notification]);
 
   // 10s tải lại danh sách bạn bè
@@ -81,7 +85,7 @@ const DanhBaScreen = () => {
       fetchFriends();
 
       // Khai báo interval và gọi lại hàm fetchFriends sau mỗi 5 giây
-      const interval = setInterval(fetchFriends, 10000); // 5000ms = 5 giây
+      const interval = setInterval(fetchFriends, 10000);
 
       // Cleanup function để clear interval khi component unmount
       return () => clearInterval(interval);

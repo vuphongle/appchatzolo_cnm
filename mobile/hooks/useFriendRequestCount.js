@@ -4,9 +4,8 @@ import { UserContext } from '../context/UserContext';
 
 const useFriendRequestCount = (user) => {
   const [friendRequestsCount, setFriendRequestsCount] = useState(0);
-  const [step, setStep] = useState(0);
   const { onMessage } = useContext(WebSocketContext);
-  const { notification, setNotification } = useContext(UserContext);
+  const { notification, setNotification, isChange, setIsChange } = useContext(UserContext);
 
   useEffect(() => {
     if (user) {
@@ -19,6 +18,12 @@ const useFriendRequestCount = (user) => {
             if(notification > 0){
                 setNotification(prevCount => prevCount - 1);
             }
+          }
+          console.log('Notification ' , isChange);
+          if(isChange) {
+            setIsChange(false);
+          } else {
+            setIsChange(true);
           }
       });
       return () => {

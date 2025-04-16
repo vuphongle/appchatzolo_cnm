@@ -42,7 +42,7 @@ const TinNhanScreen = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { fetchUserProfile, user, setUser } = useContext(UserContext);
+  const { fetchUserProfile, user, setUser, isChange, updateUserProfile } = useContext(UserContext);
   const [friendRequestStatus, setFriendRequestStatus] = useState('Kết bạn');
   const [message, setMessage] = useState('Kết bạn với mình nhé.');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -52,6 +52,11 @@ const TinNhanScreen = () => {
       checkFriendRequestStatus();
     }
   }, [searchResult]);
+
+  useEffect(() => {
+    checkFriendRequestStatus();
+    updateUserProfile();
+  }, [isChange, user]);
 
   // Tạo ref cho ô tìm kiếm
   const searchInputRef = useRef(null);
@@ -77,11 +82,6 @@ const TinNhanScreen = () => {
     const formattedPhone = formatPhoneNumber(searchText);
     if (!formattedPhone) {
       return;
-    }
-
-    const userNew = await fetchUserProfile(user?.phoneNumber);
-    if (userNew) {
-      setUser(userNew);
     }
 
     setLoading(true);

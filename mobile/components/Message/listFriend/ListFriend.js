@@ -66,7 +66,7 @@ function ListFriend({ userId }) {
       setError(null);
     } catch (err) {
       setError('Không có bạn trong danh sách');
-      Alert.alert('Error', 'Không thể tải danh sách bạn bè.');
+      console.error('Lỗi khi lấy danh sách bạn bè:', err);
     } finally {
       setLoading(false);
     }

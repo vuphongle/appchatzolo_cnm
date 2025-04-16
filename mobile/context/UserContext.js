@@ -9,10 +9,12 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(0);
+  const [isChange, setIsChange] = useState(false);
 
   // Hàm lấy thông tin người dùng từ server dựa trên số điện thoại
   const fetchUserProfile = async (phoneNumber) => {
     try {
+        console.log('Fetching user profile for phone number:', phoneNumber);
       const response = await fetch(IPV4 + '/user/findByPhoneNumber', {
         method: 'POST',
         headers: {
@@ -35,6 +37,16 @@ export const UserProvider = ({ children }) => {
       return null;
     }
   };
+
+  // Hàm cập nhật thông tin người dùng
+    const updateUserProfile = async (updatedData) => {
+      const result = await fetchUserProfile(user?.phoneNumber);
+        if (result) {
+            setUser(result);
+        } else {
+            console.error('Không thể cập nhật thông tin người dùng');
+        }
+    };
 
   // Hàm kiểm tra và lấy người dùng hiện tại nếu đã đăng nhập
   const loadUser = async () => {
@@ -65,6 +77,9 @@ export const UserProvider = ({ children }) => {
         fetchUserProfile,
         notification,
         setNotification,
+        isChange,
+        setIsChange,
+        updateUserProfile
       }}
     >
       {!loading && children}
