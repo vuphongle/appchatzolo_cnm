@@ -16,6 +16,7 @@ import vn.edu.iuh.fit.service.GroupService;
 import vn.edu.iuh.fit.service.MessageService;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,7 +67,17 @@ public class GroupServiceImpl implements GroupService {
             throw new GroupException("Danh sách thành viên không hợp lệ.");
         }
 
+
         for(String memberId : memberIds) {
+            User memberUser = userRepository.findById(memberId);
+            if (memberUser != null) {
+                // Cập nhật groupIds của thành viên
+                if (memberUser.getGroupIds() == null) {
+                    memberUser.setGroupIds(new ArrayList<>());
+                }
+                memberUser.getGroupIds().add(newGroup.getId());  // Thêm ID nhóm vào groupIds của thành viên
+                userRepository.save(memberUser);  // Cập nhật lại người dùng
+            }
             UserGroup memberGroup = new UserGroup();
             memberGroup.setUserId(memberId);
             memberGroup.setGroupId(newGroup.getId());
