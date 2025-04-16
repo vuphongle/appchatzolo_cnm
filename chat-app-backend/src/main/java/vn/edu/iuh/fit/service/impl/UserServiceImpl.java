@@ -1,7 +1,10 @@
 package vn.edu.iuh.fit.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.UserService;
@@ -12,6 +15,9 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    @Autowired
+    private ObjectProvider<MyWebSocketHandler> myWebSocketHandlerProvider;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository) {
@@ -49,8 +55,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean removeFriend(String userId, String friendId) {
-        return userRepository.removeFriend(userId, friendId);
+    public boolean removeFriend(String userId, String friendId) throws JsonProcessingException {
+        // Tính lại số lượng bạn bè hiện tại của người dùng
+//        List<User> friends = userRepository.findFriendsByUserId(userId);
+
+        userRepository.removeFriend(userId, friendId);
+
+        // Lấy bean MyWebSocketHandler một cách lazy và gửi thông báo cập nhật
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            myWebSocketHandler.removeFriendNotification(userId,friendId);
+        } else {
+            System.err.println("MyWebSocketHandler bean is not available.");
+        }
+
+        return true;
     }
 
     @Override

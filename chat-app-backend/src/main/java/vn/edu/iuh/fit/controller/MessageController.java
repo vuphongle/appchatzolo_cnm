@@ -49,11 +49,18 @@ public class MessageController {
         return ResponseEntity.ok(sentInvitations);
     }
 
-    // Xóa lời mời kết bạn (thu hồi hoặc từ chối)
+    // Xóa lời mời kết bạn (thu hồi)
     @DeleteMapping("/invitations/{senderId}/{receiverId}")
     public ResponseEntity<String> deleteInvitation(@PathVariable String senderId, @PathVariable String receiverId) throws JsonProcessingException {
         service.deleteInvitation(senderId, receiverId);
-        return ResponseEntity.ok("Lời mời đã bị xóa thành công.");
+        return ResponseEntity.ok("Lời mời đã bị Thu hồi thành công.");
+    }
+
+    //Từ chối lời mời kết bạn
+    @DeleteMapping("/invitations/refuse/{senderId}/{receiverId}")
+    public ResponseEntity<String> refuseInvitation(@PathVariable String senderId, @PathVariable String receiverId) throws JsonProcessingException {
+        service.refuseInvitation(senderId, receiverId);
+        return ResponseEntity.ok("Lời mời đã bị từ chối thành công.");
     }
 
     //Đếm số lời mời kết bạn

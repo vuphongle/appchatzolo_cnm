@@ -55,7 +55,7 @@ public class MessageServiceImpl implements MessageService {
         return repository.findSentInvitationsBySenderId(senderID);
     }
 
-    // Xóa, thu hồi lời mời kết bạn
+    // thu hồi lời mời kết bạn
     @Override
     public void deleteInvitation(String senderID, String receiverID) throws JsonProcessingException {
         repository.deleteInvitation(senderID, receiverID);
@@ -66,7 +66,24 @@ public class MessageServiceImpl implements MessageService {
         // Lấy bean MyWebSocketHandler một cách lazy và gửi thông báo cập nhật
         MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
         if (myWebSocketHandler != null) {
-            myWebSocketHandler.sendFriendRequestNotification(receiverID, updatedCount);
+            myWebSocketHandler.sendRevokeInvitationNotification(senderID,receiverID, updatedCount);
+        } else {
+            System.err.println("MyWebSocketHandler bean is not available.");
+        }
+    }
+
+    //Từ chối lời mời kết bạn
+    @Override
+    public void refuseInvitation(String senderID, String receiverID) throws JsonProcessingException {
+        repository.deleteInvitation(senderID, receiverID);
+
+        List<Message> invitations = getInvitationsByReceiverId(receiverID);
+        int updatedCount = invitations.size();
+
+        // Lấy bean MyWebSocketHandler một cách lazy và gửi thông báo cập nhật
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            myWebSocketHandler.sendRefuseInvitationNotification(receiverID, senderID, updatedCount);
         } else {
             System.err.println("MyWebSocketHandler bean is not available.");
         }
@@ -87,7 +104,7 @@ public class MessageServiceImpl implements MessageService {
         // Lấy bean MyWebSocketHandler một cách lazy và gửi thông báo cập nhật
         MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
         if (myWebSocketHandler != null) {
-            myWebSocketHandler.sendFriendRequestNotification(receiverId, updatedCount);
+            myWebSocketHandler.sendSubmitFriendNotification(receiverId,senderId, updatedCount);
         } else {
             System.err.println("MyWebSocketHandler bean is not available.");
         }

@@ -122,6 +122,60 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    public void sendRevokeInvitationNotification(String senderId, String receiverId, int updatedCount) throws JsonProcessingException {
+        WebSocketSession receiverSession = sessions.get(receiverId);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", senderId); // Người gửi lời mời
+            payload.put("receiver", receiverId); // Người nhận lời mời
+            payload.put("type", "REVOKE_INVITATION");  // Loại thông báo
+            payload.put("count", updatedCount);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Friend request notification sent to user: " + receiverId);
+            } catch (Exception e) {
+                System.err.println("Error sending submit friend notification: " + e.getMessage());
+            }
+        }
+    }
+
+    public void sendRefuseInvitationNotification(String senderId, String receiverId, int updatedCount) throws JsonProcessingException {
+        WebSocketSession receiverSession = sessions.get(receiverId);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", senderId); // Người gửi lời mời
+            payload.put("receiver", receiverId); // Người nhận lời mời
+            payload.put("type", "REFUSE_INVITATION");  // Loại thông báo
+            payload.put("count", updatedCount);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Friend request notification sent to user: " + receiverId);
+            } catch (Exception e) {
+                System.err.println("Error sending submit friend notification: " + e.getMessage());
+            }
+        }
+    }
+
+    public void sendSubmitFriendNotification(String senderId, String receiverId, int updatedCount) throws JsonProcessingException {
+        WebSocketSession receiverSession = sessions.get(receiverId);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", senderId); // Người gửi lời mời
+            payload.put("receiver", receiverId); // Người nhận lời mời
+            payload.put("type", "SUBMIT_FRIEND_REQUEST");  // Loại thông báo
+            payload.put("count", updatedCount);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Friend request notification sent to user: " + receiverId);
+            } catch (Exception e) {
+                System.err.println("Error sending submit friend notification: " + e.getMessage());
+            }
+        }
+    }
+
     public void sendDeleteMessageNotification(String receiverId, String fromUserId) throws JsonProcessingException {
         WebSocketSession receiverSession = sessions.get(receiverId);
         if (receiverSession != null && receiverSession.isOpen()) {
@@ -179,4 +233,21 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    //Socket Xóa bạn
+    public void removeFriendNotification(String senderId, String receiverId) throws JsonProcessingException {
+        WebSocketSession receiverSession = sessions.get(receiverId);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", senderId); // Người xóa bạn
+            payload.put("receiver", receiverId); // Người bị xóa
+            payload.put("type", "REMOVE_FRIEND");  // Loại thông báo
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Friend request notification sent to user: " + receiverId);
+            } catch (Exception e) {
+                System.err.println("Error sending submit friend notification: " + e.getMessage());
+            }
+        }
+    }
 }
