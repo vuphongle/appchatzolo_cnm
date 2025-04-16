@@ -4,16 +4,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import vn.edu.iuh.fit.exception.GroupException;
-import vn.edu.iuh.fit.model.DTO.request.GroupResquest;
+import vn.edu.iuh.fit.model.*;
+import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
+import vn.edu.iuh.fit.model.DTO.request.MessageRequest;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
-import vn.edu.iuh.fit.model.Group;
-import vn.edu.iuh.fit.model.GroupRole;
-import vn.edu.iuh.fit.model.User;
-import vn.edu.iuh.fit.model.UserGroup;
+import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.repository.GroupRepository;
+import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.GroupService;
+import vn.edu.iuh.fit.service.MessageService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,23 +24,20 @@ public class GroupServiceImpl implements GroupService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private DynamoDbEnhancedClient dynamoDbClient;
-
+    private MessageRepository messageRepository;
 
     private final GroupRepository groupRepository;
 
     @Autowired
     public GroupServiceImpl(UserRepository userRepository,
-                            GroupRepository groupRepository,
-                            DynamoDbEnhancedClient dynamoDbClient) {
+                            GroupRepository groupRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
-        this.dynamoDbClient = dynamoDbClient;
     }
 
     //Tạo nhóm
     @Override
-    public GroupResponse createGroup(GroupResquest group) throws GroupException {
+    public GroupResponse createGroup(GroupRequest group) throws GroupException {
         Group newGroup = new Group();
         newGroup.setId(java.util.UUID.randomUUID().toString());
         newGroup.setGroupName(group.getGroupName());
@@ -125,7 +124,7 @@ public class GroupServiceImpl implements GroupService {
 
     //Thêm thành viên (LEADER hoặc CO_LEADER mới có quyền gọi hàm này)
     @Override
-    public GroupResponse addMember(GroupResquest group) throws GroupException {
+    public GroupResponse addMember(GroupRequest group) throws GroupException {
         String groupId = group.getId();
         Group groupToUpdate = groupRepository.getGroupById(groupId);
         if (groupToUpdate == null) {
@@ -241,7 +240,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public GroupResponse updateGroup(GroupResquest group) throws GroupException {
+    public GroupResponse updateGroup(GroupRequest group) throws GroupException {
         Group existingGroup = groupRepository.getGroupById(group.getId());
         if (existingGroup == null) {
             throw new GroupException("Nhóm không tồn tại.");
@@ -257,5 +256,32 @@ public class GroupServiceImpl implements GroupService {
                 .creatorId(existingGroup.getCreatorId())
                 .createdAt(existingGroup.getCreatedAt())
                 .build();
+    }
+
+    @Override
+    public void sendMessageToGroup(MessageRequest request) throws GroupException {
+        Group group = groupRepository.getGroupById(request.getReceiverID());
+        if (group == null) {
+            throw new GroupException("Nhóm không tồn tại.");
+        }
+
+        // Kiểm tra xem người gửi có phải là thành viên của nhóm không
+        UserGroup userGroup = groupRepository.getUserGroup(request.getSenderID(), request.getReceiverID());
+        if (userGroup == null) {
+            throw new GroupException("Người gửi không phải là thành viên của nhóm.");
+        }
+        Message message = new Message();
+        message.setId(java.util.UUID.randomUUID().toString());
+        message.setSenderID(request.getSenderID());
+        message.setReceiverID(request.getReceiverID());
+        message.setContent(request.getContent());
+        message.setSendDate(LocalDateTime.now());
+        message.setIsRead(false);
+        message.setStatus("sent");
+        message.setType(request.getType());
+        message.setMedia(request.getMedia());
+        message.setDeletedBySender(false);
+        message.setDeletedByReceiver(false);
+        messageRepository.save(message);
     }
 }

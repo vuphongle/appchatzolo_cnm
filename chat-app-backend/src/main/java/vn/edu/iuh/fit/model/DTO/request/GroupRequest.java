@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Builder
 @ToString
-public class GroupResquest {
+public class GroupRequest {
     private String id;
     private String groupName;
     private String image;

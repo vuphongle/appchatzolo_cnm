@@ -5,7 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.model.DTO.request.GroupPromoteRequest;
-import vn.edu.iuh.fit.model.DTO.request.GroupResquest;
+import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
+import vn.edu.iuh.fit.model.DTO.request.MessageRequest;
 import vn.edu.iuh.fit.model.DTO.response.BaseResponse;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
 import vn.edu.iuh.fit.model.GroupRole;
@@ -20,7 +21,7 @@ public class GroupController {
 
     // Tao nhom
     @PostMapping("/create")
-    public ResponseEntity<BaseResponse<GroupResponse>> createGroup(@RequestBody GroupResquest request) throws GroupException {
+    public ResponseEntity<BaseResponse<GroupResponse>> createGroup(@RequestBody GroupRequest request) throws GroupException {
         GroupResponse group = groupService.createGroup(request);
         return ResponseEntity.ok(
                 BaseResponse
@@ -34,7 +35,7 @@ public class GroupController {
 
     // Add member
     @PostMapping("/addMember")
-    public ResponseEntity<BaseResponse<GroupResponse>> addMember(@RequestBody GroupResquest request) throws GroupException {
+    public ResponseEntity<BaseResponse<GroupResponse>> addMember(@RequestBody GroupRequest request) throws GroupException {
         GroupResponse group = groupService.addMember(request);
         return ResponseEntity.ok(
                 BaseResponse
@@ -48,7 +49,7 @@ public class GroupController {
 
     // Update group info
     @PutMapping("/update")
-    public ResponseEntity<BaseResponse<GroupResponse>> updateGroup(@RequestBody GroupResquest request) throws GroupException {
+    public ResponseEntity<BaseResponse<GroupResponse>> updateGroup(@RequestBody GroupRequest request) throws GroupException {
         GroupResponse group = groupService.updateGroup(request);
         return ResponseEntity.ok(
                 BaseResponse
@@ -116,6 +117,20 @@ public class GroupController {
                         .data(groupId)
                         .success(true)
                         .message("Xóa nhóm thành công")
+                        .build()
+        );
+    }
+
+    // Gửi tin nhắn đến tất cả thành viên trong nhóm
+    @PostMapping("/send-message")
+    public ResponseEntity<BaseResponse<String>> sendMessageToGroup(@RequestBody MessageRequest request) throws GroupException {
+        groupService.sendMessageToGroup(request);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<String>builder()
+                        .data("Message sent to group successfully.")
+                        .success(true)
+                        .message("Gửi tin nhắn thành công")
                         .build()
         );
     }
