@@ -4,6 +4,7 @@ import "../css/ModelTimkiem_TinNhan.css"; // CSS riêng cho giao diện
 import SearchModal from './SearchModal';
 import UserService from "../services/UserService";
 import MessageService from "../services/MessageService";
+import GroupService from "../services/GroupService";
 import flag from "../image/icon_VN.png";
 import avatar_default from '../image/avatar_user.jpg';
 import { useAuth } from "../context/AuthContext"; // Import custom hook để sử dụng context
@@ -27,7 +28,7 @@ import { v4 as uuidv4 } from 'uuid';
 import VideoCallComponent from '../context/VideoCallComponent';  // Import VideoCallComponent
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
-const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
+const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat, groupId }) => (
     <li className="message-item" tabIndex={0} onClick={onClick}>
         <img src={img} alt="Avatar" className="avatar" />
         <div className="message-info">
@@ -366,47 +367,79 @@ const MainPage = () => {
         updateUserInfo(updatedUserData);
     };
 
+    //hiển thị group mà user tham gia 
+    const [groupMembers, setGroupMembers] = useState([]);
+    const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
+    useEffect(() => {
+        const fetchGroupMembers = async () => {
+            if (groupIds.length > 0) {
+                try {
+                    const memberPromises = groupIds.map(async (groupId) => {
+                        //console.log("Fetching members for group:", groupId);  // Kiểm tra groupId
+                        const response = await GroupService.getGroupMembers(groupId);
+                        console.log("Group Members Response:", response);  // Kiểm tra phản hồi từ API
+                        return response.data;
+                    });
+
+                    const allMembers = await Promise.all(memberPromises);
+                    setGroupMembers(allMembers.flat());  // Flat để gộp tất cả thành viên lại
+                } catch (error) {
+                    console.error("Lỗi khi lấy thành viên nhóm:", error);
+                }
+            }
+        };
+
+        fetchGroupMembers();
+    }, [groupIds]);  // Chạy lại khi groupIds thay đổi
+
+
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
-    const handleSelectChat = async (user) => {
+    const handleSelectChat = async (item) => {
         try {
-            // Gọi API để lấy trạng thái online của user
-            const updatedUser = await UserService.getUserById(user.id);
+            let updatedUser;
+            if (item.type === 'group') {
+                // Nếu là nhóm, gọi API lấy thông tin nhóm
+                updatedUser = await GroupService.getGroupMembers(item.id);  // Lấy thông tin nhóm
+                setSelectedChat({
+                    ...item,
+                    isOnline: true,  // Bạn có thể không cần trạng thái online ở đây cho nhóm
+                    username: updatedUser.groupName,
+                    avatar: updatedUser.img,
+                });
+            } else {
+                // Nếu là người dùng, gọi API lấy thông tin người dùng
+                updatedUser = await UserService.getUserById(item.id);  // Lấy thông tin người dùng
+                setSelectedChat({
+                    ...item,
+                    isOnline: updatedUser.isOnline,  // Trạng thái online của người dùng
+                    username: updatedUser.name,
+                    avatar: updatedUser.avatar,
+                });
+            }
 
-            // Cập nhật thông tin người bạn và trạng thái online
-            setSelectedChat({
-                ...user,
-                isOnline: updatedUser.online,  // Cập nhật trạng thái online từ backend
-                username: updatedUser.name,
-                avatar: updatedUser.avatar,
-            });
-            //console.log("Selected user", updatedUser);
-            //console.log("User status", updatedUser.isOnline);
-            // Gọi API hoặc xử lý thêm các bước cần thiết, ví dụ như lấy tin nhắn chưa đọc
-            const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser?.my_user?.id, user.id);
+            // Tiếp tục xử lý các tin nhắn chưa đọc
+            const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser?.my_user?.id, item.id);
             if (unreadMsgs.length > 0) {
-                await MessageService.savereadMessages(MyUser?.my_user?.id, user.id);
+                await MessageService.savereadMessages(MyUser?.my_user?.id, item.id);
             }
 
             setUnreadMessages([]);  // Đánh dấu tất cả tin nhắn là đã đọc
-
             setActiveTab("chat");
-
         } catch (error) {
             console.error("Lỗi khi lấy dữ liệu user hoặc tin nhắn:", error);
 
             // Nếu có lỗi, thiết lập trạng thái offline mặc định
             setSelectedChat({
-                ...user,
+                ...item,
                 isOnline: false,
-
             });
 
             setUnreadMessages([]);
-
-            setActiveTab("chat")
+            setActiveTab("chat");
         }
     };
+
 
     const handleDeleteChat = async (senderID, receiverID) => {
         if (!window.confirm("Bạn có chắc muốn xóa toàn bộ hội thoại này không?")) return;
@@ -896,6 +929,16 @@ const MainPage = () => {
                 img: friend.avatar,
             };
         }) : []),
+        ...(Array.isArray(groupMembers) ? groupMembers.map((group) => {
+            const unreadCount = unreadMessagesCounts.find(u => u.groupId === group.id)?.unreadCount || 0;
+            return {
+                id: group.id,
+                groupName: group.groupName,
+                unreadCount: unreadCount,  // Đảm bảo tính toán số tin nhắn chưa đọc
+                img: group.image,
+                type: 'group', // Thêm thông tin loại để phân biệt giữa bạn bè và nhóm
+            };
+        }) : []),
     ];
 
     const handleUserInfoModalOpen = async () => {
@@ -1087,7 +1130,7 @@ const MainPage = () => {
                             <>
                                 <header className="content-header">
                                     <div className="profile">
-                                        <img src={selectedChat.avatar || avatar_default} alt="Avatar" className="avatar" />
+                                        <img src={selectedChat.avatar || selectedChat.img || avatar_default} alt="Avatar" className="avatar" />
                                         <span className="username">{selectedChat.groupName || selectedChat.username}</span>
                                         <span className="user-status">
                                             {selectedChat.isOnline ? (

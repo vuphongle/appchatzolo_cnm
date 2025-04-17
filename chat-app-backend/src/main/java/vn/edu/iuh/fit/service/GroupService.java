@@ -27,7 +27,7 @@ public interface GroupService {
 
     GroupRole getUserRole(String groupId, String userId);
     boolean isLeader(String groupId, String userId);
-    List<UserGroup> getGroupMembers(String groupId) throws GroupException;
+    GroupResponse getGroupMembers(String groupId) throws GroupException;
     Group getGroupById(String groupId);
     GroupResponse updateGroup(GroupRequest group) throws GroupException;
     void sendMessageToGroup (MessageRequest request) throws GroupException;

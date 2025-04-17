@@ -16,5 +16,5 @@ public class GroupResponse {
     private String image;
     private String creatorId;
     private String createdAt;
-    private List<UserGroup> userGroups;
+    private List<UserGroupResponse> userGroups;
 }
