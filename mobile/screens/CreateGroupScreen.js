@@ -1,28 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Modal, Text, Alert, FlatList, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import axios from 'axios';
 import { AVATAR_URL_DEFAULT } from '@env';
-import ImageCropPicker from 'react-native-image-crop-picker';  // Import thư viện mới
+import { UserContext } from '../context/UserContext';
+import ImageCropPicker from 'react-native-image-crop-picker';
+import { formatPhoneNumber } from '../utils/formatPhoneNumber';
+import { IPV4 } from '@env';
 
 const CreateGroupScreen = () => {
   const [groupName, setGroupName] = useState('');
   const [searchText, setSearchText] = useState('');
   const [selectedFriends, setSelectedFriends] = useState([]);
-  const [friendsList, setFriendsList] = useState([
-    { id: '1', name: 'Lê Văn A', avatar: AVATAR_URL_DEFAULT },
-    { id: '2', name: 'Lê Văn B', avatar: AVATAR_URL_DEFAULT },
-    { id: '3', name: 'Lê Văn C', avatar: AVATAR_URL_DEFAULT },
-    { id: '4', name: 'Lê Văn D', avatar: AVATAR_URL_DEFAULT },
-    { id: '5', name: 'Lê Văn E', avatar: AVATAR_URL_DEFAULT },
-    { id: '6', name: 'Lê Văn F', avatar: AVATAR_URL_DEFAULT },
-    { id: '7', name: 'Lê Văn G', avatar: AVATAR_URL_DEFAULT },
-    { id: '8', name: 'Lê Văn H', avatar: AVATAR_URL_DEFAULT },
-    { id: '9', name: 'Lê Văn I', avatar: AVATAR_URL_DEFAULT },
-    { id: '10', name: 'Lê Văn J', avatar: AVATAR_URL_DEFAULT },
-  ]);
+  const [friendsList, setFriendsList] = useState([]);
   const [groupAvatar, setGroupAvatar] = useState(null);
+  const [searchResult, setSearchResult] = useState(null); // Lưu người dùng tìm được qua API
+
+  const { user } = useContext(UserContext);
+
+  useEffect(() => {
+    const fetchFriendsList = async () => {
+      try {
+        const response = await axios.get(`${IPV4}/user/${user.id}/friends`);
+        setFriendsList(response.data);
+      } catch (error) {
+        console.error('Có lỗi xảy ra', error);
+      }
+    };
+
+    fetchFriendsList();
+  }, [user.id]);
+
+  const fetchUserProfile = async (phoneNumber) => {
+    phoneNumber = formatPhoneNumber(phoneNumber);
+    try {
+      console.log('Fetching user profile for phone number:', phoneNumber);
+      const response = await fetch(IPV4 + '/user/findByPhoneNumber', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('User data:', userData);
+        return userData;
+      } else {
+        const error = await response.text();
+        return null;
+      }
+    } catch (error) {
+      console.error('Error during API call:', error);
+      Alert.alert('Lỗi', 'Không thể kết nối tới server.');
+      return null;
+    }
+  };
+
+  const normalizePhoneNumber = (phoneNumber) => {
+    let normalized = phoneNumber.replace(/\D/g, ''); // Loại bỏ tất cả ký tự không phải là chữ số
+    if (normalized.startsWith('84')) {
+      normalized = '0' + normalized.slice(2); // Thay "84" bằng "0"
+    }
+    return normalized;
+  };
+
+  const normalizeString = (str) => {
+    return str.replace(/\s+/g, '').trim();
+  }
+
+  useEffect(() => {
+    const searchByPhoneNumber = async () => {
+      if (searchText.length === 10 && !friendsList.some(friend => normalizePhoneNumber(friend.phoneNumber) === normalizePhoneNumber(searchText))) {
+        // Gọi API tìm người dùng không có trong danh bạ
+        const userProfile = await fetchUserProfile(normalizePhoneNumber(searchText));
+        setSearchResult(userProfile); // Lưu người dùng tìm thấy
+      } else {
+        setSearchResult(null); // Nếu đã có trong danh bạ thì không tìm
+      }
+    };
+
+    if (searchText) {
+      searchByPhoneNumber();
+    } else {
+      setSearchResult(null);
+    }
+  }, [searchText, friendsList]);
+
+  const filteredFriends = friendsList.filter((friend) => {
+    const normalizedSearchText = normalizePhoneNumber(searchText);
+    const normalizedFriendPhone = normalizePhoneNumber(friend.phoneNumber);
+
+    // Kiểm tra tìm kiếm theo tên hoặc số điện thoại
+    if (normalizedSearchText === normalizeString(searchText)) {
+      return normalizedFriendPhone.includes(normalizedSearchText);
+    } else {
+      return friend.name.toLowerCase().includes(searchText.toLowerCase());
+    }
+  });
 
   const handleFriendSelect = (friend) => {
+    if (normalizePhoneNumber(friend.phoneNumber) === normalizePhoneNumber(user.phoneNumber)) {
+      Alert.alert('Thông báo', 'Bạn không thể thêm chính mình vào nhóm');
+      return;
+    }
     const updatedFriends = [...selectedFriends];
     if (updatedFriends.includes(friend.id)) {
       updatedFriends.splice(updatedFriends.indexOf(friend.id), 1);
@@ -34,13 +116,18 @@ const CreateGroupScreen = () => {
 
   const handleCreateGroup = () => {
     if (groupName.trim() === '') {
-      Alert.alert('Vui lòng nhập tên nhóm');
+      Alert.alert('Thông báo', 'Vui lòng nhập tên nhóm');
       return;
     }
-    Alert.alert('Group Created', `Tên nhóm: ${groupName}`);
+
+    if (selectedFriends.length < 2) {
+        Alert.alert('Thông báo', 'Để tạo nhóm, bạn cần chọn ít nhất 2 thành viên');
+        return;
+      }
+
+    Alert.alert('Tạo nhóm thành công', `Tên nhóm: ${groupName}`);
   };
 
-  // Sử dụng ImageCropPicker để chọn ảnh
   const handleAvatarChange = () => {
     ImageCropPicker.openPicker({
       width: 300,
@@ -52,10 +139,6 @@ const CreateGroupScreen = () => {
       console.log('Error picking image: ', error);
     });
   };
-
-  const filteredFriends = friendsList.filter((friend) =>
-    friend.name.toLowerCase().includes(searchText.toLowerCase())
-  );
 
   return (
     <View style={styles.container}>
@@ -84,7 +167,7 @@ const CreateGroupScreen = () => {
       />
 
       <FlatList
-        data={filteredFriends}
+        data={[...filteredFriends, searchResult].filter(Boolean)} // Hiển thị kết quả từ API nếu có
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -93,7 +176,7 @@ const CreateGroupScreen = () => {
           >
             <Image source={{ uri: item.avatar }} style={styles.friendAvatar} />
             <Text style={styles.friendName}>{item.name}</Text>
-            {selectedFriends.includes(item.id) && <Icon name="check-circle" size={20} color="green" />}
+            {selectedFriends.includes(item.id) && <Icon name="check-circle" size={20} color="blue" />}
           </TouchableOpacity>
         )}
       />
