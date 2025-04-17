@@ -375,7 +375,7 @@ const MainPage = () => {
             if (groupIds.length > 0) {
                 try {
                     const memberPromises = groupIds.map(async (groupId) => {
-                        //console.log("Fetching members for group:", groupId);  // Kiểm tra groupId
+                        console.log("Fetching members for group:", groupId);  // Log kiểm tra groupId
                         const response = await GroupService.getGroupMembers(groupId);
                         console.log("Group Members Response:", response);  // Kiểm tra phản hồi từ API
                         return response.data;
@@ -385,6 +385,7 @@ const MainPage = () => {
                     setGroupMembers(allMembers.flat());  // Flat để gộp tất cả thành viên lại
                 } catch (error) {
                     console.error("Lỗi khi lấy thành viên nhóm:", error);
+
                 }
             }
         };

@@ -5,12 +5,12 @@ import GroupService from "../services/GroupService";
 
 
 const CreateGroupModal = ({ onClose }) => {
-    const { MyUser } = useAuth();
+    const { MyUser, updateUserInfo } = useAuth();
     const userId = MyUser?.my_user?.id;
     const [friends, setFriends] = useState([]);
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-
+    const [groupList, setgroupList] = useState([]);
     useEffect(() => {
         if (userId) {
             UserService.getFriends(userId)
@@ -39,6 +39,30 @@ const CreateGroupModal = ({ onClose }) => {
         onClose();
     };
 
+
+    const updateGroupList = (groupId) => {
+        setgroupList((prevList) => {
+            if (!prevList.includes(groupId)) {
+                return [...prevList, groupId];  // Thêm nhóm mới vào danh sách nhóm
+            }
+            return prevList;
+        });
+
+        // Cập nhật lại thông tin người dùng trong context
+        const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
+        const updatedUserData = {
+            ...MyUser,
+            my_user: {
+                ...MyUser.my_user,
+                groupIds: [...groupIds, groupId],  // Cập nhật lại groupIds
+            },
+        };
+
+        updateUserInfo(updatedUserData);  // Cập nhật dữ liệu người dùng trong context
+    };
+
+
+
     const handlerCreateGroup = async () => {
         const groupName = document.querySelector('input[placeholder="Nhập tên nhóm..."]').value.trim();
 
@@ -64,16 +88,46 @@ const CreateGroupModal = ({ onClose }) => {
         try {
             const response = await GroupService.post("/create", requestBody);
             console.log("Nhóm được tạo:", response);
-            // Cập nhật danh sách nhóm trong context hoặc state nếu cần
 
+            // Lấy groupId từ response.data.id
+            const newGroupId = response?.data?.id;  // Sửa lại để lấy đúng groupId
+            console.log("New Group ID:", newGroupId);  // Log để kiểm tra giá trị groupId
+
+            if (!newGroupId) {
+                alert("Không nhận được groupId từ server.");
+                return;
+            }
+
+            // Cập nhật lại groupIds trong state và context
+            const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
+            const updatedGroupIds = [...groupIds, newGroupId];
+
+            const updatedUserData = {
+                ...MyUser,
+                my_user: {
+                    ...MyUser.my_user,
+                    groupIds: updatedGroupIds,  // Cập nhật groupIds mới
+                },
+            };
+
+            // Cập nhật lại MyUser trong context
+            updateUserInfo(updatedUserData);
+
+            // Cập nhật lại my_user trong local storage
+            localStorage.setItem('my_user', JSON.stringify(updatedUserData.my_user));
+
+            // Lấy lại thông tin người dùng mới từ localStorage
+            const updatedUserFromStorage = JSON.parse(localStorage.getItem('my_user'));
+            console.log("Thông tin người dùng từ localStorage:", updatedUserFromStorage);
 
             alert("Tạo nhóm thành công");
-            onClose(); // Đóng modal sau khi tạo
+            onClose();  // Đóng modal sau khi tạo nhóm thành công
         } catch (err) {
             console.error("Lỗi khi tạo nhóm:", err);
             alert("Có lỗi xảy ra khi tạo nhóm");
         }
     };
+
 
 
     return (
