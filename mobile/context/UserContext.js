@@ -10,6 +10,8 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(0);
   const [isChange, setIsChange] = useState("");
+  const [accept, setAccept] = useState(false);
+  const [reject, setReject] = useState(false);
 
   // Hàm lấy thông tin người dùng từ server dựa trên số điện thoại
   const fetchUserProfile = async (phoneNumber) => {
@@ -25,7 +27,6 @@ export const UserProvider = ({ children }) => {
 
       if (response.ok) {
         const userData = await response.json();
-        console.log('User data:', userData);
         return userData;
       } else {
         const error = await response.text();
@@ -79,7 +80,11 @@ export const UserProvider = ({ children }) => {
         setNotification,
         isChange,
         setIsChange,
-        updateUserProfile
+        updateUserProfile,
+        accept,
+        setAccept,
+        reject,
+        setReject,
       }}
     >
       {!loading && children}

@@ -19,7 +19,7 @@ const FriendInvitesScreen = () => {
   const [sentRequests, setSentRequests] = useState([]); // Lời mời đã gửi
   const [sendersInfo, setSendersInfo] = useState({});
   const [receiversInfo, setReceiversInfo] = useState({});
-  const { user, setNotification } = useContext(UserContext);
+  const { user, setNotification, accept, setAccept, reject, setReject, updateUserProfile} = useContext(UserContext);
   const friendRequestsCount = useFriendRequestCount(user);
 
 
@@ -49,7 +49,7 @@ const FriendInvitesScreen = () => {
       setNotification(0);
       fetchReceived();
     }
-  }, [activeSubTab, user?.id, friendRequestsCount]);
+  }, [activeSubTab, user?.id]);
 
   // Lấy lời mời đã gửi
   useEffect(() => {
@@ -107,10 +107,21 @@ const FriendInvitesScreen = () => {
           setFriendRequests(
             friendRequests.filter((req) => req.id !== requestId),
           );
+          if(accept) {
+            setAccept(true);
+          } else {
+            setAccept(false);
+          }
+          updateUserProfile();
         } else if (action === 'reject') {
           setFriendRequests(
             friendRequests.filter((req) => req.id !== requestId),
           );
+          if(reject) {
+            setReject(true);
+          }else {
+            setReject(false);
+          }
         } else if (action === 'delete') {
           setSentRequests(sentRequests.filter((req) => req.id !== requestId));
         }

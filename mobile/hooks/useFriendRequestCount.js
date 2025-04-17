@@ -11,22 +11,25 @@ const useFriendRequestCount = (user) => {
     if (user) {
       const unsubscribe = onMessage((message) => {
           console.log('Received message:', message);
-          if(message.type == 'FRIEND_REQUEST'){
-            setNotification(prevCount => prevCount + 1);
+          // kiểm tra message.type có null hay không
+          if(message.type != null){
+              if(message.type == 'FRIEND_REQUEST'){
+                setNotification(prevCount => prevCount + 1);
+              }
+              if(message.type == 'REVOKE_INVITATION'){
+                if(notification > 0){
+                    setNotification(prevCount => prevCount - 1);
+                }
+              }
+              console.log('Notification ' , isChange);
+              setIsChange(message.type);
           }
-          if(message.type == 'REVOKE_INVITATION'){
-            if(notification > 0){
-                setNotification(prevCount => prevCount - 1);
-            }
-          }
-          console.log('Notification ' , isChange);
-          setIsChange(message.type);
       });
       return () => {
         unsubscribe();
       };
     }
-  }, [user, onMessage]);
+  }, [onMessage]);
 
   useEffect(() => {
       setFriendRequestsCount(notification);

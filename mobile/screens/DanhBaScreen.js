@@ -19,17 +19,16 @@ import {
   Swipeable,
 } from 'react-native-gesture-handler';
 import UserDetailModal from '../components/UserDetailModal';
-//import useFriendRequestCount from '../hooks/useFriendRequestCount';
+import { useFocusEffect } from '@react-navigation/native';
 
 const DanhBaScreen = () => {
   const navigation = useNavigation();
-  const { user, notification, updateUserProfile } = useContext(UserContext);
+  const { user, notification, updateUserProfile, isChange, accept, reject } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState('friends');
   const [receivedCount, setReceivedCount] = useState(0);
   const [friends, setFriends] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
-//  const friendRequestsCount = useFriendRequestCount(user);
 
   // Ref để quản lý Swipeable đang mở
   const currentlyOpenSwipeable = useRef(null);
@@ -63,13 +62,7 @@ const DanhBaScreen = () => {
     };
     fetchReceivedCount();
 
-    const interval = setInterval(fetchReceivedCount, 10000);
-    return () => clearInterval(interval);
-  }, [user?.id, notification]);
-
-  // 10s tải lại danh sách bạn bè
-  useEffect(() => {
-      const fetchFriends = async () => {
+    const fetchFriends = async () => {
           if (!user?.id) return;
           try {
               const response = await fetch(`${IPV4}/user/${user.id}/friends`);
@@ -79,16 +72,8 @@ const DanhBaScreen = () => {
               console.error('Error fetching friends:', error);
           }
       };
-
-      // Lần đầu chạy ngay khi component render
-      fetchFriends();
-
-      // Khai báo interval và gọi lại hàm fetchFriends sau mỗi 5 giây
-      const interval = setInterval(fetchFriends, 10000);
-
-      // Cleanup function để clear interval khi component unmount
-      return () => clearInterval(interval);
-  }, [user?.id]); // Chạy lại useEffect khi user.id thay đổi
+    fetchFriends();
+  }, [user?.friendIds, notification, isChange, accept, reject]);
 
   // Dummy data nhóm
   const dummyGroups = [

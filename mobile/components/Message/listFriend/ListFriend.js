@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,11 +17,13 @@ import axios from 'axios';
 import { IPV4 } from '@env';
 import UserService from '../../../services/UserService';
 import MessageService from '../../../services/MessageService';
+import {UserContext} from '../../../context/UserContext';
 function ListFriend({ userId }) {
   const [openRow, setOpenRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [friends, setFriends] = useState([]);
+  const { isChange } = useContext(UserContext);
 
   const fetchFriends = async () => {
     try {
@@ -79,14 +81,9 @@ function ListFriend({ userId }) {
     }, [userId]),
   );
 
-   // Lập lại sau 10s
    useEffect(() => {
-    const interval = setInterval(() => {
-      fetchFriends();
-    }, 10000);
-
-    return () => clearInterval(interval);
-   })
+    fetchFriends();
+   }, [isChange]);
 
   // Hàm xử lý ghim
   const pinFriend = (id) => {
