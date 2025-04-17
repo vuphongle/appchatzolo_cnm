@@ -64,6 +64,9 @@ const CreateGroupModal = ({ onClose }) => {
         try {
             const response = await GroupService.post("/create", requestBody);
             console.log("Nhóm được tạo:", response);
+            // Cập nhật danh sách nhóm trong context hoặc state nếu cần
+
+
             alert("Tạo nhóm thành công");
             onClose(); // Đóng modal sau khi tạo
         } catch (err) {

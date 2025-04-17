@@ -12,6 +12,15 @@ const GroupService = {
         }
     },
 
+    postForm: async (url, formData) => {
+        const res = await axios.post(`${API_BASE_URL}${url}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        });
+        return res.data;
+    },
+
     getGroupsByIds: async (userId) => {
         try {
             const response = await axios.get(`${API_BASE_URL}/getGroupsByUserId`, { params: { userId } });
