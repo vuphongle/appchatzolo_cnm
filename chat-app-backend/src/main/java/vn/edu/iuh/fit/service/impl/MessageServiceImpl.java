@@ -30,16 +30,18 @@ public class MessageServiceImpl implements MessageService {
     public void sendMessage(Message message) throws JsonProcessingException {
         repository.save(message);
         // Tính lại số lời mời hiện tại của người nhận
-        List<Message> invitations = getInvitationsByReceiverId(message.getReceiverID());
-        int updatedCount = invitations.size();
+        if(message.getStatus().equals("Chờ đồng ý")) {
+            List<Message> invitations = getInvitationsByReceiverId(message.getReceiverID());
+            int updatedCount = invitations.size();
 
-        // Lấy MyWebSocketHandler một cách lazy khi cần dùng
-        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
-        if (myWebSocketHandler != null) {
-            myWebSocketHandler.sendFriendRequestNotification(message.getReceiverID(), updatedCount);
-        } else {
-            // Xử lý nếu không tìm thấy bean (nếu cần)
-            System.err.println("MyWebSocketHandler bean is not available.");
+            // Lấy MyWebSocketHandler một cách lazy khi cần dùng
+            MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+            if (myWebSocketHandler != null) {
+                myWebSocketHandler.sendFriendRequestNotification(message.getReceiverID(), updatedCount);
+            } else {
+                // Xử lý nếu không tìm thấy bean (nếu cần)
+                System.err.println("MyWebSocketHandler bean is not available.");
+            }
         }
     }
 
