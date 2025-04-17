@@ -9,6 +9,7 @@ import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
 import vn.edu.iuh.fit.model.DTO.request.MessageRequest;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
 import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
+import vn.edu.iuh.fit.model.DTO.response.UserGroupResponse;
 import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
@@ -18,6 +19,7 @@ import vn.edu.iuh.fit.service.MessageService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -253,28 +255,51 @@ public class GroupServiceImpl implements GroupService {
         return getUserRole(groupId, userId) == GroupRole.LEADER;
     }
 
-    //Lấy danh sách thành viên group
     @Override
-    public List<UserGroup> getGroupMembers(String groupId) throws GroupException {
+    public GroupResponse getGroupMembers(String groupId) throws GroupException {
+        // Kiểm tra xem nhóm có tồn tại hay không
         Group group = groupRepository.getGroupById(groupId);
         if (group == null) {
             throw new GroupException("Nhóm không tồn tại.");
         }
 
+        // Lấy danh sách UserGroup của nhóm
         List<UserGroup> memberLinks = groupRepository.getMembersOfGroup(groupId);
         if (memberLinks.isEmpty()) {
             throw new GroupException("Nhóm này không có thành viên.");
         }
-        // Trả về danh sách người dùng từ bảng UserGroup bằng cách sử dụng thông tin trong id group
-        return memberLinks.stream()
+
+        // Lấy thông tin người dùng từ bảng UserGroup và map sang UserGroupResponse
+        List<UserGroupResponse> userGroupsResponse = memberLinks.stream()
                 .map(userGroup -> {
-                    User user = userRepository.findById(userGroup.getUserId());
+                    User user = userRepository.findById(userGroup.getUserId()); // Lấy thông tin người dùng từ userId
                     if (user != null) {
-                        userGroup.setUserId(user.getId());
+                        return UserGroupResponse.builder()
+                                .userId(user.getId())
+                                .groupId(groupId)
+                                .joinDate(userGroup.getJoinDate())
+                                .role(userGroup.getRole()) // Vai trò trong nhóm
+                                .userName(user.getName())
+                                .avatar(user.getAvatar())
+                                .phoneNumber(user.getPhoneNumber())
+                                .gender(user.getGender())
+                                .isOnline(user.isOnline())
+                                .build();
                     }
-                    return userGroup;
+                    return null;
                 })
+                .filter(Objects::nonNull)  // Lọc ra những UserGroup hợp lệ
                 .collect(Collectors.toList());
+
+        // Tạo và trả về GroupResponse với thông tin nhóm và danh sách thành viên
+        return GroupResponse.builder()
+                .id(group.getId())
+                .groupName(group.getGroupName())
+                .image(group.getImage())
+                .creatorId(group.getCreatorId())
+                .createdAt(group.getCreatedAt())
+                .userGroups(userGroupsResponse)  // Gán danh sách UserGroupResponse đã được cập nhật thông tin người dùng
+                .build();
     }
 
 
