@@ -13,8 +13,9 @@ const CreateGroupScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [friendsList, setFriendsList] = useState([]);
+  const [friendsListOther, setFriendsListOther] = useState([]);
   const [groupAvatar, setGroupAvatar] = useState(null);
-  const [searchResult, setSearchResult] = useState(null); // Lưu người dùng tìm được qua API
+  const [searchResult, setSearchResult] = useState(null);
 
   const { user } = useContext(UserContext);
 
@@ -45,7 +46,9 @@ const CreateGroupScreen = () => {
 
       if (response.ok) {
         const userData = await response.json();
-        console.log('User data:', userData);
+        if (!friendsListOther.some(friend => friend.id === userData.id)) {
+          setFriendsListOther(prev => [...prev, userData]);
+        }
         return userData;
       } else {
         const error = await response.text();
@@ -59,25 +62,24 @@ const CreateGroupScreen = () => {
   };
 
   const normalizePhoneNumber = (phoneNumber) => {
-    let normalized = phoneNumber.replace(/\D/g, ''); // Loại bỏ tất cả ký tự không phải là chữ số
+    let normalized = phoneNumber.replace(/\D/g, '');
     if (normalized.startsWith('84')) {
-      normalized = '0' + normalized.slice(2); // Thay "84" bằng "0"
+      normalized = '0' + normalized.slice(2);
     }
     return normalized;
   };
 
   const normalizeString = (str) => {
     return str.replace(/\s+/g, '').trim();
-  }
+  };
 
   useEffect(() => {
     const searchByPhoneNumber = async () => {
       if (searchText.length === 10 && !friendsList.some(friend => normalizePhoneNumber(friend.phoneNumber) === normalizePhoneNumber(searchText))) {
-        // Gọi API tìm người dùng không có trong danh bạ
         const userProfile = await fetchUserProfile(normalizePhoneNumber(searchText));
-        setSearchResult(userProfile); // Lưu người dùng tìm thấy
+        setSearchResult(userProfile);
       } else {
-        setSearchResult(null); // Nếu đã có trong danh bạ thì không tìm
+        setSearchResult(null);
       }
     };
 
@@ -91,8 +93,6 @@ const CreateGroupScreen = () => {
   const filteredFriends = friendsList.filter((friend) => {
     const normalizedSearchText = normalizePhoneNumber(searchText);
     const normalizedFriendPhone = normalizePhoneNumber(friend.phoneNumber);
-
-    // Kiểm tra tìm kiếm theo tên hoặc số điện thoại
     if (normalizedSearchText === normalizeString(searchText)) {
       return normalizedFriendPhone.includes(normalizedSearchText);
     } else {
@@ -121,9 +121,9 @@ const CreateGroupScreen = () => {
     }
 
     if (selectedFriends.length < 2) {
-        Alert.alert('Thông báo', 'Để tạo nhóm, bạn cần chọn ít nhất 2 thành viên');
-        return;
-      }
+      Alert.alert('Thông báo', 'Để tạo nhóm, bạn cần chọn ít nhất 2 thành viên');
+      return;
+    }
 
     Alert.alert('Tạo nhóm thành công', `Tên nhóm: ${groupName}`);
   };
@@ -132,9 +132,9 @@ const CreateGroupScreen = () => {
     ImageCropPicker.openPicker({
       width: 300,
       height: 300,
-      cropping: true,  // Cho phép crop ảnh
+      cropping: true,
     }).then((image) => {
-      setGroupAvatar(image.path); // Lưu ảnh vào state
+      setGroupAvatar(image.path);
     }).catch((error) => {
       console.log('Error picking image: ', error);
     });
@@ -159,15 +159,27 @@ const CreateGroupScreen = () => {
         />
       </View>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Tìm kiếm bạn bè theo tên hoặc số điện thoại"
-        value={searchText}
-        onChangeText={setSearchText}
-      />
+      <View style={styles.searchInputContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Tìm kiếm bạn bè theo tên hoặc số điện thoại"
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+
+        {searchText.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => setSearchText('')}  // Xóa dữ liệu nhập
+          >
+            <Icon name="cancel" size={20} color="#888" />
+          </TouchableOpacity>
+        )}
+      </View>
+
 
       <FlatList
-        data={[...filteredFriends, searchResult].filter(Boolean)} // Hiển thị kết quả từ API nếu có
+        data={[...filteredFriends, searchResult].filter(Boolean)}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -180,6 +192,37 @@ const CreateGroupScreen = () => {
           </TouchableOpacity>
         )}
       />
+
+      {selectedFriends.length > 0 && (
+        <View style={styles.selectedFriendsContainer}>
+          {selectedFriends.map((friendId) => {
+            let friend = friendsList.find((f) => f.id === friendId);
+
+            // Nếu không tìm thấy bạn bè trong danh sách, tìm trong friendsListOther
+            if (!friend) {
+              const otherFriend = friendsListOther.find((f) => f.id === friendId);
+              if (otherFriend) {
+                // Sao chép đối tượng `otherFriend` nếu tìm thấy
+                friend = { ...otherFriend };
+              }
+            }
+
+            return (
+              friend && (
+                <View key={friend.id} style={styles.selectedFriendItem}>
+                  <Image source={{ uri: friend.avatar }} style={styles.selectedAvatar} />
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveFriend(friend.id)}
+                  >
+                    <Text style={styles.removeText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              )
+            );
+          })}
+        </View>
+      )}
 
       <TouchableOpacity style={styles.createButton} onPress={handleCreateGroup}>
         <Text style={styles.createButtonText}>Tạo nhóm</Text>
@@ -214,13 +257,25 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     fontSize: 20,
   },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 20,
+  },
   searchInput: {
     height: 40,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
     paddingLeft: 10,
-    marginBottom: 20,
+    flex: 1,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 10,
+    top: 8,
+    padding: 5,
   },
   friendItem: {
     flexDirection: 'row',
@@ -238,6 +293,39 @@ const styles = StyleSheet.create({
   friendName: {
     flex: 1,
     fontSize: 16,
+  },
+  selectedFriendsContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
+    flexWrap: 'wrap',
+  },
+  selectedFriendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+    marginBottom: 10,
+    position: 'relative',
+  },
+  selectedAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 5,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#e6e6e6',
+    borderRadius: 10,
+    padding: 3,
+    paddingRight: 6,
+    paddingLeft: 6,
+  },
+  removeText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   createButton: {
     backgroundColor: '#007bff',
