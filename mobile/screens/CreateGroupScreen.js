@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Modal, Text, Alert, FlatList, Image } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Modal, Text, Alert, FlatList, Image, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import { AVATAR_URL_DEFAULT } from '@env';
@@ -16,6 +16,7 @@ const CreateGroupScreen = () => {
   const [friendsListOther, setFriendsListOther] = useState([]);
   const [groupAvatar, setGroupAvatar] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { user } = useContext(UserContext);
 
@@ -114,7 +115,7 @@ const CreateGroupScreen = () => {
     setSelectedFriends(updatedFriends);
   };
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async() => {
     if (groupName.trim() === '') {
       Alert.alert('Thông báo', 'Vui lòng nhập tên nhóm');
       return;
@@ -124,20 +125,80 @@ const CreateGroupScreen = () => {
       Alert.alert('Thông báo', 'Để tạo nhóm, bạn cần chọn ít nhất 2 thành viên');
       return;
     }
+    setIsLoading(true)
 
-    Alert.alert('Tạo nhóm thành công', `Tên nhóm: ${groupName}`);
+    // nếu người dùng chọn ảnh mới thì upload lên S3
+    let groupAvatarUrl = groupAvatar;
+    if (groupAvatar && groupAvatar.startsWith('file://')) {
+        try {
+          const formData = new FormData();
+          const file = {
+            uri: groupAvatar,
+            type: 'image/jpeg',
+            name: 'avatar.jpg',
+          };
+          formData.append('file', file);
+
+          const response = await axios.post(`${IPV4}/s3/image`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+
+          if (response.data.url) {
+            groupAvatarUrl = response.data.url;
+          } else {
+            setIsLoading(false);
+            Alert.alert('Lỗi', 'Không thể tải lên ảnh đại diện nhóm');
+            return;
+          }
+        } catch (error) {
+            setIsLoading(false);
+            Alert.alert('Lỗi', 'Không thể tải lên ảnh đại diện nhóm');
+            return;
+        }
+    }
+
+    const groupData = {
+        groupName: groupName,
+        image: groupAvatarUrl || AVATAR_URL_DEFAULT,
+        creatorId: user?.id,
+        memberIds: selectedFriends,
+    }
+
+    try{
+        const response = await axios.post(`${IPV4}/groups/create`, groupData);
+        setIsLoading(false);
+        if (response.data.success) {
+              Alert.alert('Tạo nhóm thành công', `Tên nhóm: ${response.data.data.groupName}`);
+        } else {
+            Alert.alert('Lỗi', 'Không thể tạo nhóm. Vui lòng thử lại.');
+        }
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Error creating group:', error);
+      Alert.alert('Lỗi', 'Không thể tạo nhóm');
+      return;
+    }
   };
 
-  const handleAvatarChange = () => {
-    ImageCropPicker.openPicker({
-      width: 300,
-      height: 300,
-      cropping: true,
-    }).then((image) => {
-      setGroupAvatar(image.path);
-    }).catch((error) => {
-      console.log('Error picking image: ', error);
-    });
+  const handleAvatarChange = async() => {
+   try {
+       const image = await ImageCropPicker.openPicker({
+         width: 300,
+         height: 300,
+         cropping: true,
+         compressImageQuality: 0.7,
+       });
+       if (image) {
+         setGroupAvatar(image.path);
+       }
+     } catch (error) {
+       if (error.code !== 'E_PICKER_CANCELLED') {
+         Alert.alert('Lỗi', 'Không thể chọn ảnh');
+         console.error(error);
+       }
+     }
   };
 
   return (
@@ -224,9 +285,13 @@ const CreateGroupScreen = () => {
         </View>
       )}
 
-      <TouchableOpacity style={styles.createButton} onPress={handleCreateGroup}>
-        <Text style={styles.createButtonText}>Tạo nhóm</Text>
-      </TouchableOpacity>
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#007bff" />
+      ) : (
+        <TouchableOpacity style={styles.createButton} onPress={handleCreateGroup}>
+          <Text style={styles.createButtonText}>Tạo nhóm</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

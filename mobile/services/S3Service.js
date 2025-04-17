@@ -121,6 +121,7 @@ const S3Service = {
 
   uploadImage: async (file) => {
     const formData = new FormData();
+    console.log('File:', file);
 
     const timestamp = Date.now();
     const sanitizedFileName = file.fileName.replace(/\s+/g, '')
