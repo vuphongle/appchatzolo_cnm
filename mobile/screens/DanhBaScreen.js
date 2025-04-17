@@ -57,7 +57,6 @@ const DanhBaScreen = () => {
         );
         const data = await response.json();
         setReceivedCount(data.length);
-        console.log('Received friend requests count:', data.length);
       } catch (error) {
         console.error('Error fetching friend requests count:', error);
       }
@@ -297,7 +296,8 @@ const DanhBaScreen = () => {
       <SearchBar
         placeholder="Tìm kiếm"
         leftIcon="search"
-        rightIcon="notifications"
+        rightIcon="add"
+        mainTabName="Contacts"
       />
 
       <View style={styles.tabBar}>

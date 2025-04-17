@@ -234,7 +234,6 @@ const TinNhanScreen = () => {
             leftIcon="search"
             rightIcon="add"
             mainTabName="Chat"
-            onRightIconPress={() => console.log('Scan QR button pressed')}
             searchText={searchText}
             setSearchText={(text) => {
               setSearchText(text);

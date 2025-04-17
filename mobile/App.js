@@ -24,6 +24,7 @@ import EditPersonalInfoScreen from './screens/EditPersonalInfoScreen';
 import ForgotPasswordScreen from './Auth/ForgotPasswordScreen';
 import ChangePasswordScreen from './Auth/ChangePasswordScreen';
 import { WebSocketProvider } from './context/Websocket';
+import CreateGroupScreen from './screens/CreateGroupScreen';
 
 Amplify.configure({
   ...awsConfig,
@@ -109,6 +110,11 @@ const AppNavigator = () => {
           name="ChangePasswordScreen"
           component={ChangePasswordScreen}
           options={{ headerTitle: 'Thay đổi mật khẩu' }}
+        />
+        <Stack.Screen
+          name="CreateGroupScreen"
+          component={CreateGroupScreen}
+          options={{ headerTitle: 'Nhóm mới' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
