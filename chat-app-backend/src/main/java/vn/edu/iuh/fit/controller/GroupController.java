@@ -153,4 +153,18 @@ public class GroupController {
                         .build()
         );
     }
+
+    //// Lấy danh sách nhóm của 1 người dùng trong UserGroup
+    @GetMapping("/getGroupsByUserId")
+    public ResponseEntity<BaseResponse<List<GroupResponse>>> getGroupsByUserId(@RequestParam String userId) {
+        List<GroupResponse> groups = groupService.getGroupsByUserId(userId);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<List<GroupResponse>>builder()
+                        .data(groups)
+                        .success(true)
+                        .message("Lấy danh sách nhóm thành công")
+                        .build()
+        );
+    }
 }

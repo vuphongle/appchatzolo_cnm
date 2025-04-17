@@ -883,6 +883,7 @@ const MainPage = () => {
             friend.name.toLowerCase().includes(searchQuery.toLowerCase()) // Lọc tên theo query, không phân biệt chữ hoa/thường
         )
         : [];
+
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
     const allMessagesAndFriends = [
         ...messages,

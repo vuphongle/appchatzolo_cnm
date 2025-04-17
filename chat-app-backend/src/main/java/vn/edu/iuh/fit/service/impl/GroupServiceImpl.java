@@ -2,18 +2,15 @@ package vn.edu.iuh.fit.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.model.*;
 import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
 import vn.edu.iuh.fit.model.DTO.request.MessageRequest;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
-import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.GroupService;
-import vn.edu.iuh.fit.service.MessageService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -106,6 +103,28 @@ public class GroupServiceImpl implements GroupService {
                 .creatorId(newGroup.getCreatorId())
                 .createdAt(newGroup.getCreatedAt())
                 .build();
+    }
+
+    // Lấy danh sách nhóm của 1 người dùng trong UserGroup
+    @Override
+    public List<GroupResponse> getGroupsByUserId(String userId) {
+        List<UserGroup> userGroups = groupRepository.getGroupsOfUser(userId);
+        List<GroupResponse> groupResponses = new ArrayList<>();
+
+        for (UserGroup userGroup : userGroups) {
+            Group group = groupRepository.getGroupById(userGroup.getGroupId());
+            if (group != null) {
+                GroupResponse groupResponse = GroupResponse.builder()
+                        .id(group.getId())
+                        .groupName(group.getGroupName())
+                        .image(group.getImage())
+                        .creatorId(group.getCreatorId())
+                        .createdAt(group.getCreatedAt())
+                        .build();
+                groupResponses.add(groupResponse);
+            }
+        }
+        return groupResponses;
     }
 
     // Cập nhật tên/ảnh nhóm

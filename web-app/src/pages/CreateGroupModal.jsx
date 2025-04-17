@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext";
+import GroupService from "../services/GroupService";
 
 
 const CreateGroupModal = ({ onClose }) => {
@@ -37,6 +38,40 @@ const CreateGroupModal = ({ onClose }) => {
         if (e.target.closest('.modal-dialog')) return;
         onClose();
     };
+
+    const handlerCreateGroup = async () => {
+        const groupName = document.querySelector('input[placeholder="Nhập tên nhóm..."]').value.trim();
+
+        if (!groupName) {
+            alert("Vui lòng nhập tên nhóm.");
+            return;
+        }
+
+        if (selectedFriends.length < 2) {
+            alert("Vui lòng chọn ít nhất 2 bạn bè để tạo nhóm.");
+            return;
+        }
+
+        const defaultImage = "https://cdn-icons-png.flaticon.com/512/9131/9131529.png"; // ảnh mặc định
+
+        const requestBody = {
+            groupName: groupName,
+            image: defaultImage,
+            creatorId: userId,
+            memberIds: selectedFriends
+        };
+
+        try {
+            const response = await GroupService.post("/create", requestBody);
+            console.log("Nhóm được tạo:", response);
+            alert("Tạo nhóm thành công");
+            onClose(); // Đóng modal sau khi tạo
+        } catch (err) {
+            console.error("Lỗi khi tạo nhóm:", err);
+            alert("Có lỗi xảy ra khi tạo nhóm");
+        }
+    };
+
 
     return (
         <div className="modal show d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
@@ -97,7 +132,7 @@ const CreateGroupModal = ({ onClose }) => {
                     </div>
                     <div className="modal-footer">
                         <button className="btn btn-secondary" onClick={onClose}>Hủy</button>
-                        <button className="btn btn-primary" disabled={selectedFriends.length < 2}>Tạo nhóm</button>
+                        <button className="btn btn-primary" disabled={selectedFriends.length < 2} onClick={handlerCreateGroup}>Tạo nhóm</button>
                     </div>
                 </div>
             </div>
