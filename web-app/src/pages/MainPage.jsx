@@ -16,6 +16,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import axios from "axios";
 import UserInfoModal from "./UserInfoModal";
+import GroupMenuModal from "./GroupMenuModal";
 
 
 import S3Service from "../services/S3Service";
@@ -377,7 +378,7 @@ const MainPage = () => {
             if (groupIds.length > 0) {
                 try {
                     const memberPromises = groupIds.map(async (groupId) => {
-                        //console.log("Fetching members for group:", groupId);  // Kiểm tra groupId
+                        console.log("Fetching members for group:", groupId);  // Log kiểm tra groupId
                         const response = await GroupService.getGroupMembers(groupId);
                         console.log("Group Members Response:", response);  // Kiểm tra phản hồi từ API
                         return response.data;
@@ -387,6 +388,7 @@ const MainPage = () => {
                     setGroupMembers(allMembers.flat());  // Flat để gộp tất cả thành viên lại
                 } catch (error) {
                     console.error("Lỗi khi lấy thành viên nhóm:", error);
+
                 }
             }
         };
@@ -976,6 +978,7 @@ const MainPage = () => {
             friend.name.toLowerCase().includes(searchQuery.toLowerCase()) // Lọc tên theo query, không phân biệt chữ hoa/thường
         )
         : [];
+
     //Tích hợp danh sách bạn bè vào danh sách tin nhắn
     const allMessagesAndFriends = [
         ...messages,
@@ -993,6 +996,9 @@ const MainPage = () => {
             return {
                 id: group.id,
                 groupName: group.groupName,
+                creatorId: group.creatorId,
+                createdAt: group.createdAt,
+                userGroups: group.userGroups,
                 unreadCount: unreadCount,  // Đảm bảo tính toán số tin nhắn chưa đọc
                 img: group.image,
                 type: 'group', // Thêm thông tin loại để phân biệt giữa bạn bè và nhóm
@@ -1178,6 +1184,11 @@ const MainPage = () => {
         return url.replace(/(file|image)\/[^_]+_/, "$1/");
     }
 
+    const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+    const toggleMenu = () => {
+        setIsMenuModalOpen((prev) => !prev);
+    };
+
 
 
     // Hàm render nội dung theo tab
@@ -1233,6 +1244,14 @@ const MainPage = () => {
                                             onClick={toggleSearchModalCall}
                                         >
                                             <i className="fas fa-video"></i>
+                                        </button>
+
+                                        {/* Nút menu ngoài cùng bên phải */}
+                                        <button
+                                            className="menu-btn"
+                                            onClick={toggleMenu}
+                                        >
+                                            <i className="fas fa-bars"></i>
                                         </button>
                                     </div>
                                 </header>
@@ -2191,6 +2210,16 @@ const MainPage = () => {
                     <span>Đang ghi âm...</span>
                 </div>
             )}
+
+            {/* Hiển thị Menu thông tin */}
+            {isMenuModalOpen && selectedChat?.type === 'group' && (
+                <GroupMenuModal
+                    conversation={selectedChat}
+                    user={MyUser?.my_user}
+                    onClose={() => setIsMenuModalOpen(false)}
+                />
+            )}
+
         </div>
     );
 };

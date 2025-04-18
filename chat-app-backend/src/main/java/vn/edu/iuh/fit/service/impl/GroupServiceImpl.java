@@ -112,6 +112,28 @@ public class GroupServiceImpl implements GroupService {
                 .build();
     }
 
+    // Lấy danh sách nhóm của 1 người dùng trong UserGroup
+    @Override
+    public List<GroupResponse> getGroupsByUserId(String userId) {
+        List<UserGroup> userGroups = groupRepository.getGroupsOfUser(userId);
+        List<GroupResponse> groupResponses = new ArrayList<>();
+
+        for (UserGroup userGroup : userGroups) {
+            Group group = groupRepository.getGroupById(userGroup.getGroupId());
+            if (group != null) {
+                GroupResponse groupResponse = GroupResponse.builder()
+                        .id(group.getId())
+                        .groupName(group.getGroupName())
+                        .image(group.getImage())
+                        .creatorId(group.getCreatorId())
+                        .createdAt(group.getCreatedAt())
+                        .build();
+                groupResponses.add(groupResponse);
+            }
+        }
+        return groupResponses;
+    }
+
     // Cập nhật tên/ảnh nhóm
     @Override
     public void updateGroupInfo(String groupId, String newName, String newImage) {

@@ -13,6 +13,10 @@ import java.util.List;
 
 public interface GroupService {
     GroupResponse createGroup(GroupRequest group) throws GroupException;
+
+    // Lấy danh sách nhóm của 1 người dùng trong UserGroup
+    List<GroupResponse> getGroupsByUserId(String userId);
+
     void updateGroupInfo(String groupId, String newName, String newImage);
     void deleteGroup(String userId, String groupId) throws GroupException;
 
