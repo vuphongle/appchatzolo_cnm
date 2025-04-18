@@ -180,4 +180,17 @@ public class GroupController {
                         .build()
         );
     }
+
+    @DeleteMapping("/leaveGroup/{groupId}/{userId}")
+    public ResponseEntity<BaseResponse<String>> leaveGroup(@PathVariable String groupId, @PathVariable String userId) throws GroupException {
+        groupService.leaveGroup(groupId, userId);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<String>builder()
+                        .data(userId)
+                        .success(true)
+                        .message("Rời nhóm thành công")
+                        .build()
+        );
+    }
 }

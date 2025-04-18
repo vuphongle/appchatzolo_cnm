@@ -28,6 +28,7 @@ import AddMemberModal from "./AddMemberModal";
 import { v4 as uuidv4 } from 'uuid';
 
 import VideoCallComponent from '../context/VideoCallComponent';  // Import VideoCallComponent
+import showToast from "../utils/AppUtils";
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat, groupId }) => (
@@ -395,7 +396,28 @@ const MainPage = () => {
 
         fetchGroupMembers();
     }, [groupIds]);  // Chạy lại khi groupIds thay đổi
+    const [conversations, setConversations] = useState([]);
+    // Hàm xử lý khi nhóm bị xóa
+    const handleGroupDeleted = (groupId) => {
+        setConversations((prev) => prev.filter((conv) => conv.id !== groupId));
+        setGroups((prev) => prev.filter((group) => group.id !== groupId));
+        if (selectedChat?.id === groupId) {
+            setSelectedChat(null);
+            setChatMessages([]);
+        }
 
+        // Cập nhật groupIds trong MyUser và localStorage
+        const updatedGroupIds = groupIds.filter((id) => id !== groupId);
+        const updatedUser = {
+            ...MyUser,
+            my_user: {
+                ...MyUser.my_user,
+                groupIds: updatedGroupIds,
+            },
+        };
+        setMyUser(updatedUser);
+        localStorage.setItem("my_user", JSON.stringify(updatedUser));
+    };
 
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
@@ -636,6 +658,86 @@ const MainPage = () => {
                 return;
             }
 
+            if (incomingMessage.type === "MEMBER_REMOVED") {
+                const groupId = incomingMessage.groupId;
+                const removedUserId = incomingMessage.removedUserId;
+
+                // Nếu người bị xóa là người dùng hiện tại
+                if (removedUserId === MyUser?.my_user?.id) {
+                    setConversations((prev) => prev.filter((conv) => conv.id !== groupId));
+                    setGroups((prev) => prev.filter((group) => group.id !== groupId));
+                    if (selectedChat?.id === groupId) {
+                        setSelectedChat(null);
+                        setChatMessages([]);
+                    }
+                    const updatedGroupIds = groupIds.filter((id) => id !== groupId);
+                    const updatedUser = {
+                        ...MyUser,
+                        my_user: {
+                            ...MyUser.my_user,
+                            groupIds: updatedGroupIds,
+                        },
+                    };
+                    setMyUser(updatedUser);
+                    localStorage.setItem("my_user", JSON.stringify(updatedUser));
+                    showToast("Bạn đã bị xóa khỏi nhóm!", "info");
+                    return;
+                }
+
+                // Cập nhật danh sách thành viên của nhóm
+                setConversations((prev) =>
+                    prev.map((conv) =>
+                        conv.id === groupId
+                            ? {
+                                ...conv,
+                                userGroups: conv.userGroups.filter((member) => member.userId !== removedUserId),
+                            }
+                            : conv
+                    )
+                );
+                setGroups((prev) =>
+                    prev.map((group) =>
+                        group.id === groupId
+                            ? {
+                                ...group,
+                                userGroups: group.userGroups.filter((member) => member.userId !== removedUserId),
+                            }
+                            : group
+                    )
+                );
+                showToast(`Một thành viên đã bị xóa khỏi nhóm!`, "info");
+                return;
+            }
+
+            if (incomingMessage.type === "GROUP_DELETED") {
+                const groupId = incomingMessage.groupId;
+
+                // Cập nhật danh sách hội thoại: Xóa nhóm bị xóa
+                setConversations((prev) => prev.filter((conv) => conv.id !== groupId));
+                setGroups((prev) => prev.filter((group) => group.id !== groupId));
+
+                // Nếu nhóm bị xóa là selectedChat, xóa selectedChat
+                if (selectedChat?.id === groupId) {
+                    setSelectedChat(null);
+                    setChatMessages([]);
+                }
+
+                // Cập nhật groupIds trong MyUser và localStorage
+                const updatedGroupIds = groupIds.filter((id) => id !== groupId);
+                const updatedUser = {
+                    ...MyUser,
+                    my_user: {
+                        ...MyUser.my_user,
+                        groupIds: updatedGroupIds,
+                    },
+                };
+                setMyUser(updatedUser);
+                localStorage.setItem("my_user", JSON.stringify(updatedUser));
+
+                showToast(`Nhóm ${groupId} đã bị giải tán!`, "info");
+                return;
+            }
+
             if (incomingMessage.type === "GROUP_UPDATE") {
                 const groupId = incomingMessage.groupId;
 
@@ -654,18 +756,18 @@ const MainPage = () => {
                     .catch((err) => console.error("Error fetching group:", err));
 
                 // Làm mới danh sách thành viên nhóm
-                GroupService.getGroupMembers(groupId)
-                    .then((res) => {
-                        const updatedMembers = res?.data || [];
-                        setGroupMembers((prev) => {
-                            // Loại bỏ thành viên cũ của nhóm này
-                            const otherMembers = prev.filter((member) => member.groupId !== groupId);
-                            // Thêm thành viên mới
-                            return [...otherMembers, ...updatedMembers];
-                        });
-                    })
-                    .catch((err) => console.error("Error fetching group members:", err));
-                return;
+                // GroupService.getGroupMembers(groupId)
+                //     .then((res) => {
+                //         const updatedMembers = res?.data || [];
+                //         setGroupMembers((prev) => {
+                //             // Loại bỏ thành viên cũ của nhóm này
+                //             const otherMembers = prev.filter((member) => member.groupId !== groupId);
+                //             // Thêm thành viên mới
+                //             return [...otherMembers, ...updatedMembers];
+                //         });
+                //     })
+                //     .catch((err) => console.error("Error fetching group members:", err));
+                // return;
             }
 
             if (incomingMessage.type === "CHAT") {
@@ -2216,6 +2318,7 @@ const MainPage = () => {
                 <GroupMenuModal
                     conversation={selectedChat}
                     user={MyUser?.my_user}
+                    onGroupDeleted={handleGroupDeleted}
                     onClose={() => setIsMenuModalOpen(false)}
                 />
             )}

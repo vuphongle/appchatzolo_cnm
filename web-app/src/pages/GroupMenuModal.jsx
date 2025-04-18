@@ -1,10 +1,73 @@
 import React, { useState } from "react";
+import GroupService from "../services/GroupService";
 
-const GroupMenuModal = ({ conversation, user }) => {
+const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
 
     console.log("Group info", conversation);
 
     const [showMembers, setShowMembers] = useState(false);
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [selectedNewLeader, setSelectedNewLeader] = useState(null);
+
+
+    // Hàm xóa nhóm
+    const handleDeleteGroup = async () => {
+        if (window.confirm("Bạn có chắc chắn muốn xóa nhóm này không?")) {
+            try {
+                // Gọi API xóa nhóm
+                await GroupService.deleteGroup(user.id, conversation.id);
+                alert("Xóa nhóm thành công!");
+
+                // Gọi callback để thông báo cho component cha
+                if (onGroupDeleted) {
+                    onGroupDeleted(conversation.id);
+                }
+            } catch (error) {
+                console.error("Lỗi khi xóa nhóm:", error);
+                alert(error?.message || "Đã có lỗi xảy ra.");
+            }
+        }
+    };
+
+    // Hàm xóa thành viên
+    const handleRemoveMember = async (targetUserId) => {
+        if (window.confirm(`Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm không?`)) {
+            try {
+                await GroupService.removeMember(conversation.id, targetUserId, user.id);
+                alert("Xóa thành viên thành công!");
+            } catch (error) {
+                console.error("Lỗi khi xóa thành viên:", error);
+                alert(error?.message || "Đã có lỗi xảy ra.");
+            }
+        }
+    };
+
+    // Hàm rời nhóm
+    const handleLeaveGroup = async () => {
+        const isLeader = userRole === "LEADER";
+
+        if (!window.confirm("Bạn có chắc chắn muốn rời khỏi nhóm này không?")) return;
+
+        try {
+            if (isLeader) {
+                // Nếu người dùng là trưởng nhóm, yêu cầu xác nhận trước khi rời nhóm
+                if (!window.confirm("Bạn là trưởng nhóm. Bạn có chắc chắn muốn rời khỏi nhóm này không?")) return;
+            }
+            // Gọi API để rời nhóm
+            await GroupService.leaveGroup(conversation.id, user.id);
+            alert("Rời nhóm thành công!");
+            // Gọi callback để thông báo cho component cha
+            if (onGroupDeleted) {
+                onGroupDeleted(conversation.id);
+            }
+        } catch (error) {
+            console.error("Lỗi khi rời nhóm:", error);
+            alert(error?.message || "Đã có lỗi xảy ra.");
+        }
+    };
+
+    // Kiểm tra quyền của người dùng hiện tại
+    const userRole = conversation.userGroups.find((member) => member.userId === user.id)?.role;
 
     return (
         <div className="relative">
@@ -97,6 +160,15 @@ const GroupMenuModal = ({ conversation, user }) => {
                                         {member.role === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}
                                     </div>
                                 </div>
+                                {/* Nút xóa thành viên */}
+                                {(userRole === 'LEADER' || (userRole === 'CO_LEADER' && member.role === 'MEMBER')) && member.userId !== user.id && (
+                                    <i
+                                        className="btn btn-danger btn-sm ms-auto"
+                                        onClick={() => handleRemoveMember(member.userId)}
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                    </i>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -164,26 +236,24 @@ const GroupMenuModal = ({ conversation, user }) => {
 
                 {/* Các hành động */}
                 <div className="py-3 px-2 small">
-                    <div className="d-flex align-items-center text-danger gap-2 mb-3 cursor-pointer">
-                        <i className="fas fa-trash"></i>
-                        <span>Xoá lịch sử trò chuyện</span>
-                    </div>
-
-                    <div className="d-flex align-items-center text-danger gap-2 mb-3 cursor-pointer">
+                    <div className="d-flex align-items-center text-danger gap-2 mb-3 cursor-pointer"
+                        onClick={handleLeaveGroup}>
                         <i className="fas fa-sign-out-alt"></i>
                         <span>Rời nhóm</span>
                     </div>
 
                     {/* Chỉ hiển thị nếu user là người tạo nhóm */}
                     {user.id === conversation.creatorId && (
-                        <div className="d-flex align-items-center text-danger gap-2 mb-1 cursor-pointer">
+                        <div className="d-flex align-items-center text-danger gap-2 mb-1 cursor-pointer"
+                            onClick={handleDeleteGroup}
+                        >
                             <i className="fas fa-users-slash"></i>
                             <span>Giải tán nhóm</span>
                         </div>
                     )}
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

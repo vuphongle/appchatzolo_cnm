@@ -268,6 +268,41 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    // Thông báo khi nhóm bị xóa
+    public void sendGroupDeletedNotification(String userId, String groupId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "GROUP_DELETED");
+            payload.put("groupId", groupId);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent GROUP_DELETED notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending GROUP_DELETED notification: " + e.getMessage());
+            }
+        }
+    }
+
+    // Thông báo khi thành viên bị xóa khỏi nhóm
+    public void sendMemberRemovedNotification(String userId, String groupId, String removedUserId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "MEMBER_REMOVED");
+            payload.put("groupId", groupId);
+            payload.put("removedUserId", removedUserId);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent MEMBER_REMOVED notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending MEMBER_REMOVED notification: " + e.getMessage());
+            }
+        }
+    }
+
     // Thông báo khi nhóm được cập nhật (cho các thành viên hiện tại)
     public void sendGroupUpdateNotification(String userId, String groupId) throws JsonProcessingException {
         WebSocketSession session = sessions.get(userId);

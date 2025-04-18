@@ -111,6 +111,16 @@ const GroupService = {
             throw error.response ? error.response.data : error;
         }
     },
+
+    // Thành viên rời khỏi nhóm
+    leaveGroup: async (groupId, userId) => {
+        try {
+            const response = await axios.delete(`${API_BASE_URL}/leaveGroup/${groupId}/${userId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : error;
+        }
+    },
 };
 
 export default GroupService;

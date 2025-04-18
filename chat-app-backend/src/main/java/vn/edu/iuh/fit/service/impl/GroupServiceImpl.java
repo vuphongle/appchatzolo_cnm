@@ -155,19 +155,42 @@ public class GroupServiceImpl implements GroupService {
         }
 
         if (role != GroupRole.LEADER) {
-            throw new GroupException("Chỉ nhóm trưởng mới có quyền xoá nhóm.");
+            throw new GroupException("Chỉ nhóm trưởng mới có quyền xóa nhóm.");
         }
 
-        // 2. Xoá tất cả UserGroup liên quan đến group
+        // 2. Lấy danh sách thành viên của nhóm
         List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
-        for (UserGroup member : members) {
-            groupRepository.removeUserFromGroup(member.getUserId(), groupId);
-        }
-        //xóa thành viên nhóm trước khi xóa nhóm
+        List<String> memberIds = members.stream()
+                .map(UserGroup::getUserId)
+                .toList();
+
+        // 3. Xóa tất cả UserGroup liên quan đến nhóm
         groupRepository.deleteAllUserGroupsByGroupId(groupId);
-        // 3. Xoá nhóm
+
+        // 4. Xóa nhóm
         groupRepository.deleteGroup(groupId);
 
+        // 5. Cập nhật groupIds của tất cả thành viên
+        for (String memberId : memberIds) {
+            User user = userRepository.findById(memberId);
+            if (user != null && user.getGroupIds() != null) {
+                user.getGroupIds().remove(groupId);
+                userRepository.save(user);
+            }
+        }
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        // 6. Gửi thông báo WebSocket đến tất cả thành viên
+        if (myWebSocketHandler != null) {
+            try {
+                for (String memberId : memberIds) {
+                    myWebSocketHandler.sendGroupDeletedNotification(memberId, groupId);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending GROUP_DELETED notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+        }
     }
 
     //Thêm thành viên (LEADER hoặc CO_LEADER mới có quyền gọi hàm này)
@@ -247,6 +270,7 @@ public class GroupServiceImpl implements GroupService {
     //Xoá thành viên (chỉ LEADER hoặc CO_LEADER mới có quyền, và CO_LEADER không được xoá LEADER)
     @Override
     public void removeMember(String groupId, String targetUserId, String actorUserId) throws GroupException {
+        // 1. Kiểm tra quyền của người thực hiện
         GroupRole actorRole = getUserRole(groupId, actorUserId);
         GroupRole targetRole = getUserRole(groupId, targetUserId);
 
@@ -258,10 +282,43 @@ public class GroupServiceImpl implements GroupService {
             throw new GroupException("Người bị xóa không phải thành viên nhóm.");
         }
 
+        // Chỉ LEADER hoặc CO_LEADER được xóa thành viên, và CO_LEADER không được xóa LEADER
         if (actorRole == GroupRole.LEADER || (actorRole == GroupRole.CO_LEADER && targetRole == GroupRole.MEMBER)) {
+            // 2. Xóa thành viên khỏi nhóm
             groupRepository.removeUserFromGroup(targetUserId, groupId);
+
+            // 3. Cập nhật groupIds của người bị xóa
+            User targetUser = userRepository.findById(targetUserId);
+            if (targetUser != null && targetUser.getGroupIds() != null) {
+                targetUser.getGroupIds().remove(groupId);
+                userRepository.save(targetUser);
+            }
+
+            // 4. Lấy danh sách thành viên trong nhóm để gửi thông báo
+            List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+            List<String> memberIds = members.stream()
+                    .map(UserGroup::getUserId)
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            // Thêm targetUserId vào danh sách để thông báo cho cả người bị xóa
+            if (!memberIds.contains(targetUserId)) {
+                memberIds.add(targetUserId);
+            }
+            MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+            // 5. Gửi thông báo WebSocket đến tất cả thành viên
+            if (myWebSocketHandler != null) {
+                try {
+                    for (String memberId : memberIds) {
+                        myWebSocketHandler.sendMemberRemovedNotification(memberId, groupId, targetUserId);
+                    }
+                } catch (JsonProcessingException e) {
+                    System.err.println("Error sending MEMBER_REMOVED notification: " + e.getMessage());
+                }
+            } else {
+                System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+            }
         } else {
-            throw new GroupException("Bạn không có quyền xoá người dùng này.");
+            throw new GroupException("Bạn không có quyền xóa người dùng này.");
         }
     }
 
@@ -292,6 +349,39 @@ public class GroupServiceImpl implements GroupService {
         if (ug != null) {
             ug.setRole(GroupRole.MEMBER.name());
             groupRepository.addUserToGroup(ug);
+        }
+    }
+
+    @Override
+    public void leaveGroup(String groupId, String userId) throws GroupException {
+        // Kiểm tra xem người dùng có phải là thành viên của nhóm không
+        UserGroup userGroup = groupRepository.getUserGroup(userId, groupId);
+        if (userGroup == null) {
+            throw new GroupException("Người dùng không phải là thành viên của nhóm.");
+        }
+        // Nếu là LEADER, phải chuyển quyền trước khi rời nhóm
+        if (userGroup.getRole().equals(GroupRole.LEADER.name())) {
+            List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+            if (members.size() > 1) {
+                // Chuyển quyền cho một thành viên khác
+                UserGroup newLeader = members.stream()
+                        .filter(ug -> !ug.getUserId().equals(userId))
+                        .findFirst()
+                        .orElseThrow(() -> new GroupException("Không có thành viên nào khác để chuyển quyền."));
+                newLeader.setRole(GroupRole.LEADER.name());
+                groupRepository.addUserToGroup(newLeader);
+            } else {
+                throw new GroupException("Không thể rời nhóm khi bạn là nhóm trưởng và không có thành viên nào khác.");
+            }
+        }
+        // Xóa người dùng khỏi nhóm
+        groupRepository.removeUserFromGroup(userId, groupId);
+
+        // Cập nhật groupIds của người dùng
+        User user = userRepository.findById(userId);
+        if (user != null && user.getGroupIds() != null) {
+            user.getGroupIds().remove(groupId);
+            userRepository.save(user);
         }
     }
 
