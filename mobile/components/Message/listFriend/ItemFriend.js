@@ -8,7 +8,7 @@ import axios from 'axios';
 import { formatDate } from '../../../utils/formatDate';
 import { IPV4 } from '@env';
 import TruncatedText from '../../../utils/TruncatedText';
-
+import GroupService from '../../../services/GroupService'; // Import GroupService
 const ItemFriend = ({ receiverID, name, avatar }) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext); // Lấy user hiện tại
@@ -60,13 +60,47 @@ const ItemFriend = ({ receiverID, name, avatar }) => {
     }
   }, [senderID, receiverID]);
 
-  const handleNavigateChat = () => {
+  const handleNavigateChat = async () => {
+    try {
+      const response = await GroupService.getGroupMembers(receiverID); // Lấy danh sách thành viên nhóm từ API
+  
+      const members = response.data.data; // Giả sử response là BaseResponse, dữ liệu trong `.data`
+  console.log('members: ', members);
+      // Kiểm tra xem userID có nằm trong danh sách thành viên không
+      const isMember = members.some(member => member.userId === senderID);
+      console.log('isMember: ', isMember);
+
+  // const group = await GroupService.getGroupByID(receiverID);
+  // const members = group.data;
+  // console.log('members: ', members);
+  if(isMember) {
+
+    navigation.navigate('ChatGroup', {
+      receiverid: receiverID,
+      name: name,
+      avatar: avatar,
+    });
+  }
+  else{
+        
     navigation.navigate('Chat', {
       receiverid: receiverID,
       name: name,
       avatar: avatar,
     });
+    } 
+  }catch (error) {
+      console.error("Lỗi khi kiểm tra thành viên nhóm:", error);
+      // Nếu lỗi xảy ra, vẫn cho phép điều hướng về Chat cá nhân như fallback
+      navigation.navigate('Chat', {
+        receiverid: receiverID,
+        name: name,
+        avatar: avatar,
+      });
+ 
+    }
   };
+  
 if (isDeleted) {
   return (
   <TouchableOpacity style={styles.itemContainer} onPress={handleNavigateChat}>
@@ -81,6 +115,7 @@ if (isDeleted) {
 </TouchableOpacity>
   );
   }
+  
   return (
     <TouchableOpacity style={styles.itemContainer} onPress={handleNavigateChat}>
       <View style={styles.avatarContainer}>

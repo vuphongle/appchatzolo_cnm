@@ -215,31 +215,33 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
         { text: 'Hủy', style: 'cancel' },
         {
           text: 'Xóa ở phía tôi',
-          onPress: () => {
-            Alert.alert(
-              'Xóa tin nhắn',
-              'Tin nhắn sẽ bị xóa ở phía bạn. Bạn có chắc chắn muốn xóa?',
-              [
-                { text: 'Hủy', style: 'cancel' },
-                { text: 'Xóa', onPress: deleteMessageForMe, style: 'destructive' }
-              ]
-            );
-          },
-          style: 'default',
+          onPress:deleteMessageForMe, style: 'destructive' 
+          //  () => {
+            // Alert.alert(
+            //   'Xóa tin nhắn',
+            //   'Tin nhắn sẽ bị xóa ở phía bạn. Bạn có chắc chắn muốn xóa?',
+            //   [
+            //     { text: 'Hủy', style: 'cancel' },
+            //     { text: 'Xóa', onPress: deleteMessageForMe, style: 'destructive' }
+            //   ]
+            // );
+          // },
+          // style: 'default',
         },
         {
           text: 'Thu hồi',
-          onPress: () => {
-            Alert.alert(
-              'Thu hồi tin nhắn',
-              'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
-              [
-                { text: 'Hủy', style: 'cancel' },
-                { text: 'Thu hồi', onPress: recallMessage, style: 'destructive' }
-              ]
-            );
-          },
-          style: 'default',
+          onPress:  recallMessage, style: 'destructive'
+          // () => {
+          //   Alert.alert(
+          //     'Thu hồi tin nhắn',
+          //     'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
+          //     [
+          //       { text: 'Hủy', style: 'cancel' },
+          //       { text: 'Thu hồi',  }
+          //     ]
+          //   );
+          // },
+          // style: 'default',
         },
        
       ]

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,14 +23,63 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Feather from 'react-native-vector-icons/Feather';
 import {IPV4} from '@env';
 import { UserContext } from '../../../context/UserContext';
+import GroupService from '../../../services/GroupService';
+const Detail_infoChatGroup = ({ route, navigation }) => {
+  const { userFriend,groupId } = route.params;
 
-
-const Detail_infoChat = ({ route, navigation }) => {
-  const { userFriend } = route.params;
   const [nameChange, setNameChange] = useState(userFriend?.name);
   const [isBFF, setIsBFF] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const {user, setUser } = useContext(UserContext);
+const [GroupMembers, setGroupMembers] = useState([]); // State to hold group members
+const [isLeader, setIsLeader] = useState(false); 
+
+    const getGroupMembers = async () => {
+        try {
+            const response = await GroupService.getGroupMembers(groupId); // Gọi API để lấy danh sách thành viên nhóm
+            setGroupMembers(response.data); // Cập nhật danh sách thành viên
+        } catch (error) {
+            console.error('Lỗi khi lấy danh sách thành viên nhóm:', error);
+        }
+    };
+    useEffect(() => {
+        getGroupMembers(); // Fetch group members when the component mounts
+        const isLeader = GroupMembers.some(
+          member => member.userId === user?.id && member.role === "LEADER"
+        );
+        if(isLeader) {
+          setIsLeader(true);
+        }
+        else {
+          setIsLeader(false);
+        }
+    }, [groupId]);
+   const handleDeleteGroupByleader = () => {
+    Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
+      {
+        text: 'Hủy',
+        style: 'cancel',
+      },
+      {
+        text: 'Xóa',
+        onPress: async () => {
+          try {
+            let userId= user?.id;
+            const response = await GroupService.deleteGroup(userId, groupId); // Gọi API để xóa nhóm
+              if (response.ok) {
+              Alert.alert('Thành công', 'Đã xóa cuộc trò chuyện');
+              navigation.replace('MainTabs');
+            } else {
+              Alert.alert('Lỗi', response.message || 'Không thể xóa cuộc trò chuyện');
+            }
+          } catch (error) {
+            Alert.alert('Lỗi', 'Có lỗi xảy ra khi xóa cuộc trò chuyện: ' + error.message);
+          }
+        },
+      },
+    ]);
+  };
+
 
   const updateName = () => {
     Alert.alert('Thông báo', 'Đổi tên thành công!');
@@ -188,6 +237,25 @@ const Detail_infoChat = ({ route, navigation }) => {
                 Xóa cuộc trò chuyện
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.settingsItem]}
+             
+            >
+              <AntDesign name="team" size={24} color="#FF0000" />
+              <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
+              {GroupMembers.length} thành viên
+              </Text>
+            </TouchableOpacity>
+            {isLeader && (
+            <TouchableOpacity
+              style={[styles.settingsItem]}
+              onPress={handleDeleteGroupByleader}
+            >
+               <Ionicons name="close-circle-outline" size={24} color="#FF0000" />
+              <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
+                Giải tán nhóm
+              </Text>
+            </TouchableOpacity>)}
             
         </ScrollView>
 
@@ -216,7 +284,7 @@ const Detail_infoChat = ({ route, navigation }) => {
   );
 };
 
-export default Detail_infoChat;
+export default Detail_infoChatGroup;
 
 const styles = StyleSheet.create({
   container: {

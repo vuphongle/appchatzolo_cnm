@@ -30,7 +30,17 @@ function ListFriend({ userId }) {
       setLoading(true);
       const response = await UserService.getFriends(userId);
       let friendsList = response;
-
+      // console.log('friendsList : ', friendsList);
+  
+      // Xử lý loại bỏ bạn bè có id trùng nhau
+      const uniqueFriendsMap = new Map();
+      friendsList.forEach((friend) => {
+        if (!uniqueFriendsMap.has(friend.id)) {
+          uniqueFriendsMap.set(friend.id, friend);
+        }
+      });
+      friendsList = Array.from(uniqueFriendsMap.values());
+  
       // Lấy tin nhắn mới nhất của từng bạn
       const friendsWithMessages = await Promise.all(
         friendsList.map(async (friend) => {
@@ -58,12 +68,13 @@ function ListFriend({ userId }) {
           }
         }),
       );
-
+  
       // Sắp xếp bạn bè theo thời gian gửi tin nhắn mới nhất (gần nhất trước)
       friendsWithMessages.sort((a, b) => {
         return (b.sendDate?.getTime() || 0) - (a.sendDate?.getTime() || 0);
       });
 
+  
       setFriends(friendsWithMessages);
       setError(null);
     } catch (err) {
@@ -73,6 +84,7 @@ function ListFriend({ userId }) {
       setLoading(false);
     }
   };
+  
 
   useFocusEffect(
     React.useCallback(() => {

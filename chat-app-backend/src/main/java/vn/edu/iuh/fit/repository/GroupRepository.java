@@ -33,6 +33,8 @@ public class GroupRepository {
     }
 
     public Group getGroupById(String groupId) {
+
+
         return groupTable.getItem(Key.builder().partitionValue(groupId).build());
     }
 
@@ -46,6 +48,7 @@ public class GroupRepository {
             removeUserFromGroup(ug.getUserId(), groupId);
         }
     }
+
 
 
     // ===================== CRUD CHO UserGroup ======================
