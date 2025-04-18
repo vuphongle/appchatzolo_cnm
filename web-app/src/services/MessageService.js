@@ -36,6 +36,12 @@ const MessageService = {
             return []; // Trả về mảng rỗng nếu có lỗi
         }
     },
+
+    // Phương thức thu hồi lời mời
+    deleteInvitation: (senderID, receiverID) => {
+        return axios.delete(`${API_BASE_URL}/invitations/${senderID}/${receiverID}`);
+    },
+
     // Phương thức từ chối lời mời
     deleteInvitation_refuse: (senderID, receiverID) => {
         return axios.delete(`${API_BASE_URL}/invitations/refuse/${senderID}/${receiverID}`);
