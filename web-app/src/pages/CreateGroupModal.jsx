@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import UserService from "../services/UserService";
 import { useAuth } from "../context/AuthContext";
 import GroupService from "../services/GroupService";
+import group_default from '../image/group-default.png';
+import S3Service from "../services/S3Service";
 
 
 const CreateGroupModal = ({ onClose }) => {
@@ -61,7 +63,17 @@ const CreateGroupModal = ({ onClose }) => {
         updateUserInfo(updatedUserData);  // Cập nhật dữ liệu người dùng trong context
     };
 
+    const [groupImage, setGroupImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
 
+    // Hàm xử lý khi chọn file
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setGroupImage(file);
+            setImagePreview(URL.createObjectURL(file)); // Tạo URL tạm thời để hiển thị ảnh
+        }
+    };
 
     const handlerCreateGroup = async () => {
         const groupName = document.querySelector('input[placeholder="Nhập tên nhóm..."]').value.trim();
@@ -76,11 +88,21 @@ const CreateGroupModal = ({ onClose }) => {
             return;
         }
 
-        const defaultImage = "https://cdn-icons-png.flaticon.com/512/9131/9131529.png"; // ảnh mặc định
+        let imageUrl = groupImage ? groupImage : group_default;
+
+        // Kiểm tra nếu có ảnh, thì tải ảnh lên S3
+        if (groupImage) {
+            try {
+                imageUrl = await S3Service.uploadImage(groupImage);
+            } catch (error) {
+                alert("Có lỗi khi tải ảnh lên.");
+                return;
+            }
+        }
 
         const requestBody = {
             groupName: groupName,
-            image: defaultImage,
+            image: imageUrl,
             creatorId: userId,
             memberIds: selectedFriends
         };
@@ -128,8 +150,6 @@ const CreateGroupModal = ({ onClose }) => {
         }
     };
 
-
-
     return (
         <div className="modal show d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-xl">
@@ -141,11 +161,24 @@ const CreateGroupModal = ({ onClose }) => {
                     <div className="modal-body" style={{ flexGrow: 1, overflowY: "auto" }}>
                         <div className="mb-3">
                             <div className="d-flex align-items-center">
-                                <div
-                                    className="bg-light rounded-circle shadow-sm d-flex justify-content-center align-items-center me-2"
-                                    style={{ width: "50px", height: "50px", cursor: "pointer", border: "1px solid #ddd" }}
-                                >
-                                    <i className="fas fa-camera text-secondary" style={{ fontSize: "24px" }}></i>
+                                <div className="d-flex align-items-center">
+                                    <input
+                                        type="file"
+                                        id="fileInput"
+                                        accept="image/*"
+                                        onChange={handleFileChange}  // Xử lý khi người dùng chọn file
+                                        style={{ display: "none" }}  // Ẩn thẻ input
+                                    />
+                                    <label htmlFor="fileInput" style={{ cursor: "pointer" }}>
+                                        <div
+                                            className="bg-light rounded-circle shadow-sm d-flex justify-content-center align-items-center me-2"
+                                            style={{ width: "50px", height: "50px", border: "1px solid #ddd" }}
+                                        >
+                                            <i className="fas fa-camera text-secondary" style={{ fontSize: "24px" }}></i>
+                                        </div>
+                                    </label>
+                                    {/* Hiển thị ảnh nếu có */}
+                                    {imagePreview && <img src={imagePreview} alt="Group Avatar" style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "50%" }} />}
                                 </div>
                                 <input
                                     type="text"
