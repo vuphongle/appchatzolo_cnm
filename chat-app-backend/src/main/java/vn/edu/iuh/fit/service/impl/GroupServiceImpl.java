@@ -1,23 +1,25 @@
 package vn.edu.iuh.fit.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import vn.edu.iuh.fit.exception.GroupException;
-import vn.edu.iuh.fit.model.*;
+import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
 import vn.edu.iuh.fit.model.DTO.request.MessageRequest;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
-import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
+import vn.edu.iuh.fit.model.DTO.response.UserGroupResponse;
+import vn.edu.iuh.fit.model.*;
 import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.GroupService;
-import vn.edu.iuh.fit.service.MessageService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +28,8 @@ public class GroupServiceImpl implements GroupService {
     private UserRepository userRepository;
     @Autowired
     private MessageRepository messageRepository;
+    @Autowired
+    private ObjectProvider<MyWebSocketHandler> myWebSocketHandlerProvider;
 
     private final GroupRepository groupRepository;
 
@@ -108,6 +112,28 @@ public class GroupServiceImpl implements GroupService {
                 .build();
     }
 
+    // Lấy danh sách nhóm của 1 người dùng trong UserGroup
+    @Override
+    public List<GroupResponse> getGroupsByUserId(String userId) {
+        List<UserGroup> userGroups = groupRepository.getGroupsOfUser(userId);
+        List<GroupResponse> groupResponses = new ArrayList<>();
+
+        for (UserGroup userGroup : userGroups) {
+            Group group = groupRepository.getGroupById(userGroup.getGroupId());
+            if (group != null) {
+                GroupResponse groupResponse = GroupResponse.builder()
+                        .id(group.getId())
+                        .groupName(group.getGroupName())
+                        .image(group.getImage())
+                        .creatorId(group.getCreatorId())
+                        .createdAt(group.getCreatedAt())
+                        .build();
+                groupResponses.add(groupResponse);
+            }
+        }
+        return groupResponses;
+    }
+
     // Cập nhật tên/ảnh nhóm
     @Override
     public void updateGroupInfo(String groupId, String newName, String newImage) {
@@ -129,19 +155,42 @@ public class GroupServiceImpl implements GroupService {
         }
 
         if (role != GroupRole.LEADER) {
-            throw new GroupException("Chỉ nhóm trưởng mới có quyền xoá nhóm.");
+            throw new GroupException("Chỉ nhóm trưởng mới có quyền xóa nhóm.");
         }
 
-        // 2. Xoá tất cả UserGroup liên quan đến group
+        // 2. Lấy danh sách thành viên của nhóm
         List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
-        for (UserGroup member : members) {
-            groupRepository.removeUserFromGroup(member.getUserId(), groupId);
-        }
-        //xóa thành viên nhóm trước khi xóa nhóm
+        List<String> memberIds = members.stream()
+                .map(UserGroup::getUserId)
+                .toList();
+
+        // 3. Xóa tất cả UserGroup liên quan đến nhóm
         groupRepository.deleteAllUserGroupsByGroupId(groupId);
-        // 3. Xoá nhóm
+
+        // 4. Xóa nhóm
         groupRepository.deleteGroup(groupId);
 
+        // 5. Cập nhật groupIds của tất cả thành viên
+        for (String memberId : memberIds) {
+            User user = userRepository.findById(memberId);
+            if (user != null && user.getGroupIds() != null) {
+                user.getGroupIds().remove(groupId);
+                userRepository.save(user);
+            }
+        }
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        // 6. Gửi thông báo WebSocket đến tất cả thành viên
+        if (myWebSocketHandler != null) {
+            try {
+                for (String memberId : memberIds) {
+                    myWebSocketHandler.sendGroupDeletedNotification(memberId, groupId);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending GROUP_DELETED notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+        }
     }
 
     //Thêm thành viên (LEADER hoặc CO_LEADER mới có quyền gọi hàm này)
@@ -152,6 +201,12 @@ public class GroupServiceImpl implements GroupService {
         if (groupToUpdate == null) {
             throw new GroupException("Nhóm không tồn tại.");
         }
+
+        // Lấy danh sách thành viên hiện tại của nhóm
+        List<UserGroup> currentMembers = groupRepository.getMembersOfGroup(groupId);
+        List<String> currentMemberIds = currentMembers.stream()
+                .map(UserGroup::getUserId)
+                .toList();
 
         List<String> memberIds = group.getMemberIds();
 
@@ -176,6 +231,30 @@ public class GroupServiceImpl implements GroupService {
             userGroup.setJoinDate(java.time.LocalDate.now().toString());
             groupRepository.addUserToGroup(userGroup);
 
+            if (user.getGroupIds() == null) {
+                user.setGroupIds(new ArrayList<>());
+            }
+            if (!user.getGroupIds().contains(groupId)) {
+                user.getGroupIds().add(groupId);
+            }
+            userRepository.save(user);
+        }
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                // Thông báo cho các thành viên mới (người vừa được thêm)
+                for (String newMemberId : memberIds) {
+                    myWebSocketHandler.sendAddToGroupNotification(newMemberId, groupId);
+                }
+                // Thông báo cho các thành viên hiện tại của nhóm (người đã có trong nhóm)
+                for (String existingMemberId : currentMemberIds) {
+                    myWebSocketHandler.sendGroupUpdateNotification(existingMemberId, groupId);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending WebSocket notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
         }
 
         return GroupResponse.builder()
@@ -191,6 +270,7 @@ public class GroupServiceImpl implements GroupService {
     //Xoá thành viên (chỉ LEADER hoặc CO_LEADER mới có quyền, và CO_LEADER không được xoá LEADER)
     @Override
     public void removeMember(String groupId, String targetUserId, String actorUserId) throws GroupException {
+        // 1. Kiểm tra quyền của người thực hiện
         GroupRole actorRole = getUserRole(groupId, actorUserId);
         GroupRole targetRole = getUserRole(groupId, targetUserId);
 
@@ -202,10 +282,43 @@ public class GroupServiceImpl implements GroupService {
             throw new GroupException("Người bị xóa không phải thành viên nhóm.");
         }
 
+        // Chỉ LEADER hoặc CO_LEADER được xóa thành viên, và CO_LEADER không được xóa LEADER
         if (actorRole == GroupRole.LEADER || (actorRole == GroupRole.CO_LEADER && targetRole == GroupRole.MEMBER)) {
+            // 2. Xóa thành viên khỏi nhóm
             groupRepository.removeUserFromGroup(targetUserId, groupId);
+
+            // 3. Cập nhật groupIds của người bị xóa
+            User targetUser = userRepository.findById(targetUserId);
+            if (targetUser != null && targetUser.getGroupIds() != null) {
+                targetUser.getGroupIds().remove(groupId);
+                userRepository.save(targetUser);
+            }
+
+            // 4. Lấy danh sách thành viên trong nhóm để gửi thông báo
+            List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+            List<String> memberIds = members.stream()
+                    .map(UserGroup::getUserId)
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            // Thêm targetUserId vào danh sách để thông báo cho cả người bị xóa
+            if (!memberIds.contains(targetUserId)) {
+                memberIds.add(targetUserId);
+            }
+            MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+            // 5. Gửi thông báo WebSocket đến tất cả thành viên
+            if (myWebSocketHandler != null) {
+                try {
+                    for (String memberId : memberIds) {
+                        myWebSocketHandler.sendMemberRemovedNotification(memberId, groupId, targetUserId);
+                    }
+                } catch (JsonProcessingException e) {
+                    System.err.println("Error sending MEMBER_REMOVED notification: " + e.getMessage());
+                }
+            } else {
+                System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+            }
         } else {
-            throw new GroupException("Bạn không có quyền xoá người dùng này.");
+            throw new GroupException("Bạn không có quyền xóa người dùng này.");
         }
     }
 
@@ -239,6 +352,39 @@ public class GroupServiceImpl implements GroupService {
         }
     }
 
+    @Override
+    public void leaveGroup(String groupId, String userId) throws GroupException {
+        // Kiểm tra xem người dùng có phải là thành viên của nhóm không
+        UserGroup userGroup = groupRepository.getUserGroup(userId, groupId);
+        if (userGroup == null) {
+            throw new GroupException("Người dùng không phải là thành viên của nhóm.");
+        }
+        // Nếu là LEADER, phải chuyển quyền trước khi rời nhóm
+        if (userGroup.getRole().equals(GroupRole.LEADER.name())) {
+            List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+            if (members.size() > 1) {
+                // Chuyển quyền cho một thành viên khác
+                UserGroup newLeader = members.stream()
+                        .filter(ug -> !ug.getUserId().equals(userId))
+                        .findFirst()
+                        .orElseThrow(() -> new GroupException("Không có thành viên nào khác để chuyển quyền."));
+                newLeader.setRole(GroupRole.LEADER.name());
+                groupRepository.addUserToGroup(newLeader);
+            } else {
+                throw new GroupException("Không thể rời nhóm khi bạn là nhóm trưởng và không có thành viên nào khác.");
+            }
+        }
+        // Xóa người dùng khỏi nhóm
+        groupRepository.removeUserFromGroup(userId, groupId);
+
+        // Cập nhật groupIds của người dùng
+        User user = userRepository.findById(userId);
+        if (user != null && user.getGroupIds() != null) {
+            user.getGroupIds().remove(groupId);
+            userRepository.save(user);
+        }
+    }
+
 
     //Lấy role của người dùng trong nhóm
     @Override
@@ -253,28 +399,51 @@ public class GroupServiceImpl implements GroupService {
         return getUserRole(groupId, userId) == GroupRole.LEADER;
     }
 
-    //Lấy danh sách thành viên group
     @Override
-    public List<UserGroup> getGroupMembers(String groupId) throws GroupException {
+    public GroupResponse getGroupMembers(String groupId) throws GroupException {
+        // Kiểm tra xem nhóm có tồn tại hay không
         Group group = groupRepository.getGroupById(groupId);
         if (group == null) {
             throw new GroupException("Nhóm không tồn tại.");
         }
 
+        // Lấy danh sách UserGroup của nhóm
         List<UserGroup> memberLinks = groupRepository.getMembersOfGroup(groupId);
         if (memberLinks.isEmpty()) {
             throw new GroupException("Nhóm này không có thành viên.");
         }
-        // Trả về danh sách người dùng từ bảng UserGroup bằng cách sử dụng thông tin trong id group
-        return memberLinks.stream()
+
+        // Lấy thông tin người dùng từ bảng UserGroup và map sang UserGroupResponse
+        List<UserGroupResponse> userGroupsResponse = memberLinks.stream()
                 .map(userGroup -> {
-                    User user = userRepository.findById(userGroup.getUserId());
+                    User user = userRepository.findById(userGroup.getUserId()); // Lấy thông tin người dùng từ userId
                     if (user != null) {
-                        userGroup.setUserId(user.getId());
+                        return UserGroupResponse.builder()
+                                .userId(user.getId())
+                                .groupId(groupId)
+                                .joinDate(userGroup.getJoinDate())
+                                .role(userGroup.getRole()) // Vai trò trong nhóm
+                                .userName(user.getName())
+                                .avatar(user.getAvatar())
+                                .phoneNumber(user.getPhoneNumber())
+                                .gender(user.getGender())
+                                .isOnline(user.isOnline())
+                                .build();
                     }
-                    return userGroup;
+                    return null;
                 })
+                .filter(Objects::nonNull)  // Lọc ra những UserGroup hợp lệ
                 .collect(Collectors.toList());
+
+        // Tạo và trả về GroupResponse với thông tin nhóm và danh sách thành viên
+        return GroupResponse.builder()
+                .id(group.getId())
+                .groupName(group.getGroupName())
+                .image(group.getImage())
+                .creatorId(group.getCreatorId())
+                .createdAt(group.getCreatedAt())
+                .userGroups(userGroupsResponse)  // Gán danh sách UserGroupResponse đã được cập nhật thông tin người dùng
+                .build();
     }
 
 

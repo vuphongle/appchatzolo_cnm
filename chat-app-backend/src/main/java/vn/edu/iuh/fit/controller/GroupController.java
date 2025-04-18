@@ -70,32 +70,33 @@ public class GroupController {
     // chỉnh sửa quyền Role thăng cấp phó nhóm
     @PutMapping("/promoteToCoLeader")
     public ResponseEntity<BaseResponse<String>> promoteToCoLeader(
-            @RequestBody GroupPromoteRequest  request) throws GroupException  {
+            @RequestBody GroupPromoteRequest request) throws GroupException {
 
-            groupService.promoteToCoLeader(request.getGroupId(), request.getTargetUserId(), request.getPromoterId());
-            return ResponseEntity.ok(BaseResponse.<String>builder()
-                    .data("User promoted to Co-Leader successfully.")
-                    .success(true)
-                    .message("Thăng cấp thành công")
-                    .build());
+        groupService.promoteToCoLeader(request.getGroupId(), request.getTargetUserId(), request.getPromoterId());
+        return ResponseEntity.ok(BaseResponse.<String>builder()
+                .data("User promoted to Co-Leader successfully.")
+                .success(true)
+                .message("Thăng cấp thành công")
+                .build());
 
     }
+
     //chỉnh sửa quyền role hạ cấp thành viên
     @PutMapping("/demoteToMember")
     public ResponseEntity<BaseResponse<String>> demoteToMember(
-            @RequestBody GroupPromoteRequest request)  throws GroupException {
+            @RequestBody GroupPromoteRequest request) throws GroupException {
 
-            groupService.demoteToMember(request.getGroupId(), request.getTargetUserId(), request.getPromoterId());
-            return ResponseEntity.ok(BaseResponse.<String>builder()
-                    .data("User demoted to Member successfully.")
-                    .success(true)
-                    .message("Hạ cấp thành công")
-                    .build());
+        groupService.demoteToMember(request.getGroupId(), request.getTargetUserId(), request.getPromoterId());
+        return ResponseEntity.ok(BaseResponse.<String>builder()
+                .data("User demoted to Member successfully.")
+                .success(true)
+                .message("Hạ cấp thành công")
+                .build());
     }
 
     @DeleteMapping("/delete/{userId}/{groupId}")
-    public ResponseEntity<BaseResponse<String>> deleteGroup(@PathVariable String userId,@PathVariable String groupId) throws GroupException {
-        groupService.deleteGroup(userId,groupId);
+    public ResponseEntity<BaseResponse<String>> deleteGroup(@PathVariable String userId, @PathVariable String groupId) throws GroupException {
+        groupService.deleteGroup(userId, groupId);
         return ResponseEntity.ok(
                 BaseResponse
                         .<String>builder()
@@ -119,6 +120,7 @@ public class GroupController {
                         .build()
         );
     }
+
     // Xóa thành viên
     @DeleteMapping("/removeMember/{groupId}/{targetUserId}/{actorUserId}")
     public ResponseEntity<BaseResponse<String>> removeMember(
@@ -132,27 +134,64 @@ public class GroupController {
 
         groupService.removeMember(groupId, targetUserId, actorUserId);
         return ResponseEntity.ok(
-            BaseResponse.<String>builder()
-                .data(targetUserId)
-                .success(true)
-                .message("Xóa thành viên thành công")
-                .build()
+                BaseResponse.<String>builder()
+                        .data(targetUserId)
+                        .success(true)
+                        .message("Xóa thành viên thành công")
+                        .build()
         );
     }
+
     @GetMapping("/getGroupMembers")
-    public ResponseEntity<BaseResponse<List<UserGroup>>> getGroupMembers(@RequestParam String groupId) throws GroupException {
+    public ResponseEntity<BaseResponse<List<GroupResponse>>> getGroupMembers(@RequestParam String groupId) throws GroupException {
         // Lấy danh sách thành viên từ service
-        List<UserGroup> members = groupService.getGroupMembers(groupId);
+        GroupResponse groupResponse = groupService.getGroupMembers(groupId);
+
+        // Kiểm tra nếu không có thành viên nào
+        if (groupResponse == null || groupResponse.getUserGroups() == null || groupResponse.getUserGroups().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(BaseResponse.<List<GroupResponse>>builder()
+                            .data(null)
+                            .success(false)
+                            .message("Nhóm này không có thành viên.")
+                            .build());
+        }
 
         // Trả về dữ liệu với BaseResponse
         return ResponseEntity.ok(
                 BaseResponse
-                        .<List<UserGroup>>builder()
-                        .data(members)
+                        .<List<GroupResponse>>builder()
+                        .data(List.of(groupResponse))  // Đảm bảo trả về dạng List
                         .success(true)
                         .message("Lấy danh sách thành viên nhóm thành công")
                         .build()
         );
     }
 
+    //// Lấy danh sách nhóm của 1 người dùng trong UserGroup
+    @GetMapping("/getGroupsByUserId")
+    public ResponseEntity<BaseResponse<List<GroupResponse>>> getGroupsByUserId(@RequestParam String userId) {
+        List<GroupResponse> groups = groupService.getGroupsByUserId(userId);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<List<GroupResponse>>builder()
+                        .data(groups)
+                        .success(true)
+                        .message("Lấy danh sách nhóm thành công")
+                        .build()
+        );
+    }
+
+    @DeleteMapping("/leaveGroup/{groupId}/{userId}")
+    public ResponseEntity<BaseResponse<String>> leaveGroup(@PathVariable String groupId, @PathVariable String userId) throws GroupException {
+        groupService.leaveGroup(groupId, userId);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<String>builder()
+                        .data(userId)
+                        .success(true)
+                        .message("Rời nhóm thành công")
+                        .build()
+        );
+    }
 }

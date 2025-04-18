@@ -13,6 +13,10 @@ import java.util.List;
 
 public interface GroupService {
     GroupResponse createGroup(GroupRequest group) throws GroupException;
+
+    // Lấy danh sách nhóm của 1 người dùng trong UserGroup
+    List<GroupResponse> getGroupsByUserId(String userId);
+
     void updateGroupInfo(String groupId, String newName, String newImage);
     void deleteGroup(String userId, String groupId) throws GroupException;
 
@@ -20,10 +24,10 @@ public interface GroupService {
     void removeMember(String groupId, String targetUserId, String actorUserId) throws GroupException;
     void promoteToCoLeader(String groupId, String targetUserId, String promoterId)throws GroupException;
     void demoteToMember(String groupId, String targetUserId, String promoterId)throws GroupException;
-
+    void leaveGroup(String groupId, String userId) throws GroupException;
     GroupRole getUserRole(String groupId, String userId);
     boolean isLeader(String groupId, String userId);
-    List<UserGroup> getGroupMembers(String groupId) throws GroupException;
+    GroupResponse getGroupMembers(String groupId) throws GroupException;
     Group getGroupById(String groupId);
     GroupResponse updateGroup(GroupRequest group) throws GroupException;
     void sendMessageToGroup (MessageRequest request) throws GroupException;
