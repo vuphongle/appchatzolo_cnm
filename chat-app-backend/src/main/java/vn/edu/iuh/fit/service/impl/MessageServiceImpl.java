@@ -6,8 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
+import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
+import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.repository.MessageRepository;
+import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.MessageService;
 
 import java.time.*;
@@ -18,6 +21,8 @@ import java.util.UUID;
 @Service
 public class MessageServiceImpl implements MessageService {
     private final MessageRepository repository;
+    @Autowired
+    private UserRepository userRepository;
     @Autowired
     private ObjectProvider<MyWebSocketHandler> myWebSocketHandlerProvider;
 
@@ -224,9 +229,37 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public List<Message> getMessagesInGroup(String groupId) {
-        // Truy vấn bảng DynamoDB để lấy tin nhắn của nhóm (groupId)
-        return repository.findMessagesInGroup(groupId);
+    public List<MessageResponse> getMessagesInGroup(String groupId) {
+        // Truy vấn tất cả tin nhắn trong nhóm từ DynamoDB (dựa vào receiverID là groupId)
+        List<Message> messages = repository.findMessagesInGroup(groupId);
+
+        List<MessageResponse> messageResponses = new ArrayList<>();
+        for (Message message : messages) {
+            // Lấy thông tin người gửi từ bảng User
+            User sender = userRepository.findById(message.getSenderID());
+
+            // Tạo MessageResponse từ Message
+            MessageResponse response = MessageResponse.builder()
+                    .id(message.getId())
+                    .content(message.getContent())
+                    .sendDate(message.getSendDate())
+                    .senderID(message.getSenderID())
+                    .receiverID(message.getReceiverID())
+                    .isRead(message.getIsRead())
+                    .media(message.getMedia())
+                    .status(message.getStatus())
+                    .type("group")
+                    .deletedBySender(message.isDeletedBySender())
+                    .deletedByReceiver(message.isDeletedByReceiver())
+                    .typeWeb(message.getTypeWeb())
+                    .name(sender != null ? sender.getName() : "Unknown")  // Lấy tên người gửi
+                    .avatar(sender != null ? sender.getAvatar() : "")  // Lấy avatar người gửi
+                    .build();
+
+            messageResponses.add(response);
+        }
+
+        return messageResponses;
     }
 
 

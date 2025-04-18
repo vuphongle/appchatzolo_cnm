@@ -555,11 +555,16 @@ const MainPage = () => {
                     // Cộng 7 giờ vào sendDate của mỗi tin nhắn
                     const updatedMessages = sortedMessages.map((msg) => ({
                         ...msg,
+                        senderName: msg.name, // Đảm bảo gửi tên người gửi từ BE
+                        senderAvatar: msg.avatar || "/default-avatar.jpg",
                         sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
                     }));
 
+                    //console.log("Updated Messages chứa gì:", updatedMessages); // Kiểm tra dữ liệu tin nhắn đã cập nhật
                     // Cập nhật tin nhắn vào state
                     setChatMessages(updatedMessages);
+
+
                     // Lọc các tin nhắn chưa đọc
                     const unreadMessages = updatedMessages.filter((msg) => msg.isRead === false);
 
@@ -1517,6 +1522,18 @@ const MainPage = () => {
                                                         )}
 
                                                         <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
+                                                            {/* Nếu là tin nhắn nhóm, hiển thị tên và avatar người gửi */}
+
+                                                            {msg.type === 'group' && (
+                                                                <div style={{ display: "flex", alignItems: "center" }}>
+                                                                    <img
+                                                                        src={msg.senderAvatar || "/default-avatar.jpg"}
+                                                                        alt="Avatar"
+                                                                        style={{ width: "30px", height: "30px", borderRadius: "50%", marginRight: "10px" }}
+                                                                    />
+                                                                    <span style={{ fontWeight: 'bold' }}>{msg.senderName}</span>
+                                                                </div>
+                                                            )}
                                                             {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
                                                             {isImageMessage(msg.content) ? (
                                                                 <img src={msg.content} alt="Image" className="message-image" />
