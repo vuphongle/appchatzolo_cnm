@@ -540,6 +540,32 @@ const MainPage = () => {
 
                     // Cập nhật tin nhắn vào state
                     setChatMessages(updatedMessages);
+                    // Lọc các tin nhắn chưa đọc
+                    const unreadMessages = updatedMessages.filter((msg) => msg.isRead === false);
+
+                    // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
+                    if (unreadMessages.length > 0) {
+                        // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
+                        MessageService.savereadMessages(MyUser?.my_user?.id, selectedChat.id)
+                            .then(() => {
+                                setChatMessages(updatedMessages);  // Cập nhật tin nhắn ngay lập tức
+
+                                // Cập nhật số lượng tin nhắn chưa đọc cho bạn bè
+                                const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                    if (count.friendId === selectedChat.id) {
+                                        return { ...count, unreadCount: 0 };  // Đánh dấu đã đọc (unreadCount = 0)
+                                    }
+                                    return count;
+                                });
+                                setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật số lượng tin nhắn chưa đọc
+                            })
+                            .catch((error) => {
+                                console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                            });
+                    } else {
+                        // Nếu không có tin nhắn chưa đọc, chỉ cần cập nhật lại danh sách tin nhắn
+                        setChatMessages(updatedMessages);
+                    }
                 })
                 .catch((err) => {
                     console.error("Error fetching group messages:", err);
