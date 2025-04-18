@@ -18,8 +18,8 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import MyMessageItem from './MyMessagaItem';
-import MessageItem from './MessageItem';
+import MyMessageItem from '../../Chat/body/MyMessagaItem'
+import MessageItem from '../../Chat/body/MessageItem';
 import { UserContext } from '../../../../context/UserContext';
 import EmojiSelector from '../../../../utils/EmojiSelector';
 import { formatDate } from '../../../../utils/formatDate';
@@ -30,7 +30,7 @@ import S3Service from '../../../../services/S3Service';
 import AudioRecord from 'react-native-audio-record';
 import { WebSocketContext } from '../../../../context/Websocket';
 
-const ChatScreen = ({ receiverID, name, avatar }) => {
+const ChatScreenGroup = ({ receiverID, name, avatar }) => {
   const { user } = useContext(UserContext);
   const userId = user?.id;
   const { sendMessage, onMessage, isConnected } = useContext(WebSocketContext);
@@ -65,33 +65,30 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       );
       
       if (response && Array.isArray(response)) {
-        // Vérifier que response est un tableau avant de trier
+      
         const sortedMessages = response.sort(
           (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
         );
         
         setLocalMessages(sortedMessages);
       } else {
-        // Si response n'est pas un tableau, initialiser avec un tableau vide
-        setLocalMessages([]);
+       
       }
     } catch (error) {
-      // console.error('Error fetching messages:', error);
+      console.error('Error fetching messages:', error);
       if (isMounted) {
-        // Afficher une alerte uniquement si ce n'est pas une erreur 404
-        // if (error.response?.status !== 404) {
-        //   Alert.alert('Error', 'Failed to load message history');
-        // }
+     
+        if (error.response?.status !== 404) {
+          Alert.alert('Error', 'Failed to load message history');
+        }
       }
     }
   };
 
-  // Initial message load and set up periodic refresh
+ 
   useEffect(() => {
     if (!userId || !receiverID) return;
-    
-    // Initial load when entering the conversation
-  
+   
     fetchMessages();
     
     // Set up interval to refresh messages every 1 second
@@ -540,13 +537,13 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         </ScrollView>
       
       {/* Connection Status Indicator */}
-      {!isConnected && (
+      {/* {!isConnected && (
         <View style={styles.connectionAlert}>
           <Text style={styles.connectionAlertText}>
             Đang kết nối lại...
           </Text>
         </View>
-      )}
+      )} */}
 
       {/* Media Preview Section */}
       {(selectedImages.length > 0 || selectedFiles.length > 0) && (
@@ -650,7 +647,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   );
 };
 
-export default ChatScreen;
+export default ChatScreenGroup;
 
 const styles = StyleSheet.create({
   container: {

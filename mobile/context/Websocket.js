@@ -94,8 +94,6 @@ export const WebSocketProvider = ({ children }) => {
     };
   };
 
-  // // Nếu chưa có userId, không render context
-  // if (!userId) return null;
 
   return (
     <WebSocketContext.Provider value={{ sendMessage, onMessage, isConnected }}>

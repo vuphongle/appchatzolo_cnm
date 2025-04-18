@@ -59,4 +59,15 @@ public class Group {
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
+
+    @Override
+    public String toString() {
+        return "Group{" +
+                "id='" + id + '\'' +
+                ", groupName='" + groupName + '\'' +
+                ", image='" + image + '\'' +
+                ", creatorId='" + creatorId + '\'' +
+                ", createdAt='" + createdAt + '\'' +
+                '}';
+    }
 }
