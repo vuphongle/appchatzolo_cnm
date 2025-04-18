@@ -222,4 +222,12 @@ public class MessageServiceImpl implements MessageService {
     public void deleteMessageForUser(String messageId, String userId) {
         repository.deleteMessageForUser(messageId, userId);
     }
+
+    @Override
+    public List<Message> getMessagesInGroup(String groupId) {
+        // Truy vấn bảng DynamoDB để lấy tin nhắn của nhóm (groupId)
+        return repository.findMessagesInGroup(groupId);
+    }
+
+
 }

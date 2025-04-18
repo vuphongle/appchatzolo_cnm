@@ -3,14 +3,22 @@ package vn.edu.iuh.fit.handler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import vn.edu.iuh.fit.exception.GroupException;
+import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
+import vn.edu.iuh.fit.model.DTO.response.UserGroupResponse;
 import vn.edu.iuh.fit.model.Message;
+import vn.edu.iuh.fit.model.UserGroup;
+import vn.edu.iuh.fit.repository.GroupRepository;
+import vn.edu.iuh.fit.service.GroupService;
 import vn.edu.iuh.fit.service.MessageService;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,6 +32,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     public MyWebSocketHandler(MessageService messageService) {
         this.messageService = messageService;
         this.objectMapper.registerModule(new JavaTimeModule());
+
     }
 
 
@@ -232,6 +241,45 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+//    public void sendGroupChatMessage(String groupId, Message message) throws GroupException {
+//        // Lấy thông tin nhóm từ groupService
+//        GroupResponse groupResponse = groupService.getGroupMembers(groupId);
+//
+//        // Lấy danh sách các thành viên trong nhóm từ userGroups
+//        List<UserGroupResponse> userGroups = groupResponse.getUserGroups();
+//
+//        // Duyệt qua từng thành viên trong nhóm và gửi tin nhắn
+//        for (UserGroupResponse userGroup : userGroups) {
+//            String userId = userGroup.getUserId();  // Lấy userId của thành viên
+//            WebSocketSession userSession = sessions.get(userId);
+//
+//            if (userSession != null && userSession.isOpen()) {
+//                try {
+//                    // Tạo payload để gửi tin nhắn theo định dạng JSON
+//                    Map<String, Object> payload = new HashMap<>();
+//                    payload.put("type", "GROUP_CHAT");  // Loại tin nhắn là nhóm
+//                    payload.put("message", message);    // Gửi tin nhắn thực tế
+//
+//                    // Chuyển payload thành JSON
+//                    String jsonPayload = objectMapper.writeValueAsString(payload);
+//
+//                    // Gửi tin nhắn đến WebSocket session của thành viên
+//                    userSession.sendMessage(new TextMessage(jsonPayload));
+//                    System.out.println("Sent GROUP_CHAT message to " + userId);
+//                } catch (IOException e) {
+//                    // Xử lý lỗi nếu không thể gửi tin nhắn cho thành viên này
+//                    System.err.println("Error sending group chat message to user " + userId + ": " + e.getMessage());
+//                }
+//            } else {
+//                // Nếu session không tồn tại hoặc đã đóng, thông báo lỗi
+//                System.out.println("User session not open or not found for user: " + userId);
+//            }
+//        }
+//    }
+
+
+
 
     //Socket Xóa bạn
     public void removeFriendNotification(String senderId, String receiverId) throws JsonProcessingException {
