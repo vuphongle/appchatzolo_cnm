@@ -4,6 +4,8 @@ const GroupMenuModal = ({ conversation, user }) => {
 
     console.log("Group info", conversation);
 
+    const [showMembers, setShowMembers] = useState(false);
+
     return (
         <div className="relative">
             <div className="absolute bg-white shadow-md rounded" style={{
@@ -71,13 +73,34 @@ const GroupMenuModal = ({ conversation, user }) => {
                 </div>
 
                 {/* Thành viên nhóm */}
-                <div className="d-flex justify-content-between align-items-center border-bottom py-2 px-2 pt-4 pb-4">
+                <div className="d-flex justify-content-between align-items-center border-bottom py-2 px-2 pt-4 pb-4" onClick={() => setShowMembers(!showMembers)}>
                     <div className="d-flex align-items-center gap-2">
                         <i className="fas fa-users text-secondary"></i>
                         <span className="small">Thành viên nhóm</span>
                     </div>
-                    <span className="small text-muted">3 thành viên</span>
+                    <span className="small text-muted">{conversation.userGroups.length} thành viên</span>
                 </div>
+
+                {showMembers && (
+                    <div className="px-3">
+                        {conversation.userGroups?.map((member, index) => (
+                            <div key={index} className="d-flex align-items-center gap-3 border-bottom py-2">
+                                <img
+                                    src={member.avatar}
+                                    alt={member.userName}
+                                    className="rounded-circle"
+                                    style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                />
+                                <div>
+                                    <div className="fw-medium">{member.userName}</div>
+                                    <div className="text-muted small">
+                                        {member.role === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Gạch ngang */}
                 <div className="my-2" style={{ height: '8px', backgroundColor: '#ebecf0' }}></div>
