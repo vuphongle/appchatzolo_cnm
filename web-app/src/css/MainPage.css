@@ -273,7 +273,6 @@ button {
 /* Nội dung chính */
 .main-content {
   flex: 1;
-  padding: 20px;
   padding-bottom: 0px;
   background-color: #fff;
   overflow-y: auto;
@@ -1159,6 +1158,23 @@ button {
   .tab.active:focus {
     /* outline: 1px solid #4da6f4; */
     background-color: #7fc2fc;
+  }
+
+  .menu-btn{
+    background-color: transparent;
+    color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    flex: 1;
+    margin: 0 0; 
+    height: 50px;
+    text-align: center;
+  }
+
+  .menu-btn:hover {
+    background-color: #88b8eb;
+    color: white;
   }
   
   
