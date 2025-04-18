@@ -2022,7 +2022,7 @@ const MainPage = () => {
             setFriendRequests((prevRequests) => [...prevRequests, message]);
 
             // Gửi WebSocket thông báo
-            sendMessage(message);
+            // sendMessage(message);
 
             console.log('Message sent successfully');
         } catch (error) {
