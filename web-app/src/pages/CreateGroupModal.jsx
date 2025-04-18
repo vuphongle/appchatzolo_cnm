@@ -57,7 +57,7 @@ const CreateGroupModal = ({ onClose }) => {
                                 </div>
                                 <input
                                     type="text"
-                                    className="form-control border-0 border-bottom"
+                                    className="form-control border-0"
                                     placeholder="Nhập tên nhóm..."
                                     style={{ borderRadius: "0", outline: "none", fontSize: "18px" }}
                                 />

@@ -250,4 +250,38 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    // Thông báo khi người dùng được thêm vào nhóm
+    public void sendAddToGroupNotification(String userId, String groupId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "ADD_TO_GROUP");
+            payload.put("groupId", groupId);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent ADD_TO_GROUP notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending ADD_TO_GROUP notification: " + e.getMessage());
+            }
+        }
+    }
+
+    // Thông báo khi nhóm được cập nhật (cho các thành viên hiện tại)
+    public void sendGroupUpdateNotification(String userId, String groupId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "GROUP_UPDATE");
+            payload.put("groupId", groupId);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent GROUP_UPDATE notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending GROUP_UPDATE notification: " + e.getMessage());
+            }
+        }
+    }
 }

@@ -1,20 +1,20 @@
 package vn.edu.iuh.fit.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import vn.edu.iuh.fit.exception.GroupException;
-import vn.edu.iuh.fit.model.*;
+import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
 import vn.edu.iuh.fit.model.DTO.request.MessageRequest;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
-import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.DTO.response.UserGroupResponse;
+import vn.edu.iuh.fit.model.*;
 import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.GroupService;
-import vn.edu.iuh.fit.service.MessageService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,6 +28,8 @@ public class GroupServiceImpl implements GroupService {
     private UserRepository userRepository;
     @Autowired
     private MessageRepository messageRepository;
+    @Autowired
+    private ObjectProvider<MyWebSocketHandler> myWebSocketHandlerProvider;
 
     private final GroupRepository groupRepository;
 
@@ -155,6 +157,12 @@ public class GroupServiceImpl implements GroupService {
             throw new GroupException("Nhóm không tồn tại.");
         }
 
+        // Lấy danh sách thành viên hiện tại của nhóm
+        List<UserGroup> currentMembers = groupRepository.getMembersOfGroup(groupId);
+        List<String> currentMemberIds = currentMembers.stream()
+                .map(UserGroup::getUserId)
+                .toList();
+
         List<String> memberIds = group.getMemberIds();
 
         for (String memberId : memberIds) {
@@ -178,6 +186,30 @@ public class GroupServiceImpl implements GroupService {
             userGroup.setJoinDate(java.time.LocalDate.now().toString());
             groupRepository.addUserToGroup(userGroup);
 
+            if (user.getGroupIds() == null) {
+                user.setGroupIds(new ArrayList<>());
+            }
+            if (!user.getGroupIds().contains(groupId)) {
+                user.getGroupIds().add(groupId);
+            }
+            userRepository.save(user);
+        }
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                // Thông báo cho các thành viên mới (người vừa được thêm)
+                for (String newMemberId : memberIds) {
+                    myWebSocketHandler.sendAddToGroupNotification(newMemberId, groupId);
+                }
+                // Thông báo cho các thành viên hiện tại của nhóm (người đã có trong nhóm)
+                for (String existingMemberId : currentMemberIds) {
+                    myWebSocketHandler.sendGroupUpdateNotification(existingMemberId, groupId);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending WebSocket notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
         }
 
         return GroupResponse.builder()

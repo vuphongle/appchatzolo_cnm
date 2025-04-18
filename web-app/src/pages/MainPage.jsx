@@ -23,6 +23,7 @@ import { se } from "date-fns/locale";
 import CreateGroupModal from "./CreateGroupModal";
 import FriendInfoModal from "./FriendInfoModal";
 import ChangePasswordModal from "./ChangePasswordModal";
+import AddMemberModal from "./AddMemberModal";
 import { v4 as uuidv4 } from 'uuid';
 
 import VideoCallComponent from '../context/VideoCallComponent';  // Import VideoCallComponent
@@ -368,6 +369,7 @@ const MainPage = () => {
     };
 
     //hiển thị group mà user tham gia 
+    const [groups, setGroups] = useState([]);
     const [groupMembers, setGroupMembers] = useState([]);
     const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
     useEffect(() => {
@@ -455,11 +457,6 @@ const MainPage = () => {
                 setChatMessages([]);
             }
 
-            // 3. (Tùy chọn) Cập nhật lại danh sách cuộc trò chuyện nếu cần
-            // setConversations(prev => prev.filter(conv => conv.userId !== receiverID));
-
-            // Chú ý: Không cần gửi thông báo WebSocket từ FE,
-            // Backend sẽ tự gửi thông báo xóa chat cho người bên kia.
         } catch (error) {
             console.error("Lỗi khi xóa hội thoại:", error);
             alert("Không thể xóa hội thoại.");
@@ -607,6 +604,66 @@ const MainPage = () => {
                     )
                 );
                 return; // Kết thúc xử lý cho RECALL_MESSAGE
+            }
+
+            if (incomingMessage.type === "ADD_TO_GROUP") {
+                const groupId = incomingMessage.groupId;
+
+                // Cập nhật groupIds trong MyUser và localStorage
+                if (!groupIds.includes(groupId)) {
+                    const updatedUser = {
+                        ...MyUser,
+                        my_user: {
+                            ...MyUser.my_user,
+                            groupIds: [...groupIds, groupId],
+                        },
+                    };
+                    setMyUser(updatedUser);
+                    localStorage.setItem("my_user", JSON.stringify(updatedUser));
+                }
+
+                // Tải thông tin nhóm mới và thêm vào danh sách nhóm
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const group = res?.data;
+                        if (group && !groups.some((g) => g.id === group.id)) {
+                            setGroups((prev) => [...prev, group]);
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching group:", err));
+                return;
+            }
+
+            if (incomingMessage.type === "GROUP_UPDATE") {
+                const groupId = incomingMessage.groupId;
+
+                // Cập nhật thông tin nhóm
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const updatedGroup = res?.data;
+                        if (updatedGroup) {
+                            setGroups((prev) =>
+                                prev.map((group) =>
+                                    group.id === groupId ? updatedGroup : group
+                                )
+                            );
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching group:", err));
+
+                // Làm mới danh sách thành viên nhóm
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const updatedMembers = res?.data || [];
+                        setGroupMembers((prev) => {
+                            // Loại bỏ thành viên cũ của nhóm này
+                            const otherMembers = prev.filter((member) => member.groupId !== groupId);
+                            // Thêm thành viên mới
+                            return [...otherMembers, ...updatedMembers];
+                        });
+                    })
+                    .catch((err) => console.error("Error fetching group members:", err));
+                return;
             }
 
             if (incomingMessage.type === "CHAT") {
@@ -900,7 +957,10 @@ const MainPage = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
     const [emojiBtnPosition, setEmojiBtnPosition] = useState({});
-
+    const [isModalMemberOpen, setIsModalMemberOpen] = useState(false);
+    const handleCloseMemberModal = () => {
+        setIsModalMemberOpen(false);
+    };
     const [loading, setLoading] = useState(false); // Loading state
 
     const [friendRequests, setFriendRequests] = useState([]);
@@ -1119,6 +1179,7 @@ const MainPage = () => {
     }
 
 
+
     // Hàm render nội dung theo tab
     const renderContent = () => {
         switch (activeTab) {
@@ -1142,6 +1203,22 @@ const MainPage = () => {
                                     </div>
                                     {/* Thêm nút tìm kiếm và gọi video vào header */}
                                     <div className="header-actions">
+
+                                        {/* Nút thêm thành viên */}
+                                        {selectedChat?.type === 'group' && (
+                                            <button
+                                                className="search-btn"
+                                                onClick={() => setIsModalMemberOpen(true)}>
+                                                <i className="fas fa-user-plus"></i>
+                                            </button>
+                                        )}
+                                        {isModalMemberOpen && (
+                                            <AddMemberModal
+                                                onClose={handleCloseMemberModal}
+                                                groupId={selectedChat.id}
+                                            />
+                                        )}
+
                                         {/* Nút tìm kiếm */}
                                         <button
                                             className="search-btn"
