@@ -22,11 +22,20 @@ const MessageService = {
         }
     },
 
-    // Phương thức thu hồi lời mời
-    deleteInvitation: (senderID, receiverID) => {
-        return axios.delete(`${API_BASE_URL}/invitations/${senderID}/${receiverID}`);
+    // lấy tin nhắn trong group
+    fetchGroupMessages: async (groupId) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/group-messages`, {
+                params: {
+                    groupId: groupId
+                }
+            });
+            return response.data; // Trả về danh sách tin nhắn nhóm
+        } catch (error) {
+            console.error("Error fetching group messages:", error);
+            return []; // Trả về mảng rỗng nếu có lỗi
+        }
     },
-
     // Phương thức từ chối lời mời
     deleteInvitation_refuse: (senderID, receiverID) => {
         return axios.delete(`${API_BASE_URL}/invitations/refuse/${senderID}/${receiverID}`);

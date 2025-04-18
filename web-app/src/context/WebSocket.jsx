@@ -18,7 +18,7 @@ export const WebSocketProvider = ({ children, userId }) => {
 
         socketRef.current.onmessage = (event) => {
             const message = JSON.parse(event.data);
-
+            console.log("Received message:", message); // Kiểm tra tin nhắn nhận được
             // Gọi tất cả các listener đã đăng ký
             listenersRef.current.forEach((listener) => listener(message));
         };
@@ -26,6 +26,7 @@ export const WebSocketProvider = ({ children, userId }) => {
         socketRef.current.onclose = () => {
             console.log("WebSocket disconnected");
         };
+
 
         return () => {
             socketRef.current.close();

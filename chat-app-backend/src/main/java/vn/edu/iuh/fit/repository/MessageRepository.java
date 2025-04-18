@@ -271,4 +271,13 @@ public class MessageRepository {
         }
         table.putItem(message);
     }
+
+
+    //lấy tin nhắn trong receiverID là groupID
+    public List<Message> findMessagesInGroup(String groupId) {
+        // Truy vấn tất cả các tin nhắn trong nhóm từ DynamoDB (dựa vào receiverID là groupId)
+        return table.scan().items().stream()
+                .filter(message -> message.getReceiverID().equals(groupId))  // Lọc tin nhắn có receiverID là groupId
+                .collect(Collectors.toList());
+    }
 }

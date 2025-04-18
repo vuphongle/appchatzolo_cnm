@@ -400,14 +400,16 @@ const MainPage = () => {
         try {
             let updatedUser;
             if (item.type === 'group') {
-                // Nếu là nhóm, gọi API lấy thông tin nhóm
-                updatedUser = await GroupService.getGroupMembers(item.id);  // Lấy thông tin nhóm
+                // Nếu là nhóm, gọi API lấy tin nhắn trong nhóm
+                const groupMessages = await MessageService.fetchGroupMessages(item.id);
                 setSelectedChat({
                     ...item,
-                    isOnline: true,  // Bạn có thể không cần trạng thái online ở đây cho nhóm
-                    username: updatedUser.groupName,
-                    avatar: updatedUser.img,
+                    isOnline: true,  // Trạng thái online không cần thiết cho nhóm
+                    username: item.groupName,
+                    avatar: item.img,
+                    type: 'group'
                 });
+                setChatMessages(groupMessages);  // Cập nhật tin nhắn nhóm
             } else {
                 // Nếu là người dùng, gọi API lấy thông tin người dùng
                 updatedUser = await UserService.getUserById(item.id);  // Lấy thông tin người dùng
@@ -522,49 +524,47 @@ const MainPage = () => {
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
 
-        // Lấy tất cả tin nhắn giữa người gửi và người nhận
-        MessageService.get(`/messages?senderID=${MyUser?.my_user?.id}&receiverID=${selectedChat.id}`)
-            .then((data) => {
-                // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
-                const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
+        if (selectedChat.type === 'group') {
+            // Gọi hàm lấy tin nhắn trong nhóm khi selectedChat là nhóm
+            MessageService.get(`/group-messages?groupId=${MyUser?.my_user?.groupIds}`)
+                .then((data) => {
+                    // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+                    const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
 
-                // Cộng 7 giờ vào sendDate của mỗi tin nhắn
-                const updatedMessages = sortedMessages.map((msg) => ({
-                    ...msg,
-                    sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
-                }));
+                    // Cộng 7 giờ vào sendDate của mỗi tin nhắn
+                    const updatedMessages = sortedMessages.map((msg) => ({
+                        ...msg,
+                        sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
+                    }));
 
-                // Lọc các tin nhắn chưa đọc
-                const unreadMessages = updatedMessages.filter((msg) => msg.isRead === false);
-
-                // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
-                if (unreadMessages.length > 0) {
-                    // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
-                    MessageService.savereadMessages(MyUser?.my_user?.id, selectedChat.id)
-                        .then(() => {
-                            setChatMessages(updatedMessages);  // Cập nhật tin nhắn ngay lập tức
-
-                            // Cập nhật số lượng tin nhắn chưa đọc cho bạn bè
-                            const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                                if (count.friendId === selectedChat.id) {
-                                    return { ...count, unreadCount: 0 };  // Đánh dấu đã đọc (unreadCount = 0)
-                                }
-                                return count;
-                            });
-                            setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật số lượng tin nhắn chưa đọc
-                        })
-                        .catch((error) => {
-                            console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
-                        });
-                } else {
-                    // Nếu không có tin nhắn chưa đọc, chỉ cần cập nhật lại danh sách tin nhắn
+                    // Cập nhật tin nhắn vào state
                     setChatMessages(updatedMessages);
-                }
-            })
-            .catch((err) => {
-                console.error("Error fetching messages:", err);
-            });
-    }, [selectedChat, MyUser?.my_user?.id]);  // Khi selectedChat hoặc MyUser thay đổi
+                })
+                .catch((err) => {
+                    console.error("Error fetching group messages:", err);
+                });
+        } else {
+            // Gọi hàm lấy tin nhắn giữa 2 user khi selectedChat là user chat
+            MessageService.get(`/messages?senderID=${MyUser?.my_user?.id}&receiverID=${selectedChat.id}`)
+                .then((data) => {
+                    // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+                    const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
+
+                    // Cộng 7 giờ vào sendDate của mỗi tin nhắn
+                    const updatedMessages = sortedMessages.map((msg) => ({
+                        ...msg,
+                        sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
+                    }));
+
+                    // Cập nhật tin nhắn vào state
+                    setChatMessages(updatedMessages);
+                })
+                .catch((err) => {
+                    console.error("Error fetching messages:", err);
+                });
+        }
+    }, [selectedChat, MyUser?.my_user?.id]);
+
 
     //lấy dữ liệu messages từ backend
     const [messages, setMessages] = useState([]);
@@ -612,33 +612,45 @@ const MainPage = () => {
 
             if (incomingMessage.type === "CHAT") {
                 const msg = incomingMessage.message;
-                if (
-                    selectedChat &&
-                    (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id)
-                ) {
-                    const validSendDate = moment(incomingMessage.sendDate).isValid()
-                        ? moment(incomingMessage.sendDate).toISOString()
-                        : new Date().toISOString();
 
-                    const message = {
-                        ...msg,
-                        sendDate: validSendDate
-                    };
-                    setChatMessages((prev) =>
-                        [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate))
-                    );
+                if (!selectedChat) return; // Nếu không có selectedChat, không làm gì cả
+
+                // Kiểm tra nếu selectedChat là nhóm
+                if (selectedChat.type === "group") {
+                    if (incomingMessage.receiverID === selectedChat.id) {
+                        // Nếu receiverID của tin nhắn trùng với ID nhóm đã chọn
+                        const validSendDate = moment(incomingMessage.sendDate).isValid()
+                            ? moment(incomingMessage.sendDate).toISOString()
+                            : new Date().toISOString();
+
+                        // Cập nhật tin nhắn nhóm
+                        setChatMessages((prevMessages) => [
+                            ...prevMessages,
+                            { ...msg, sendDate: validSendDate },
+                        ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                    }
                 } else {
-                    // Nếu không phải, tăng unread
-                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                        if (count.friendId === msg.senderID) {
-                            return {
-                                ...count,
-                                unreadCount: count.unreadCount + 1,
-                            };
-                        }
-                        return count;
-                    });
-                    setUnreadMessagesCounts(updatedUnreadCounts);
+                    // Nếu là chat cá nhân
+                    if (msg.senderID === selectedChat.id || msg.receiverID === selectedChat.id) {
+                        const validSendDate = moment(incomingMessage.sendDate).isValid()
+                            ? moment(incomingMessage.sendDate).toISOString()
+                            : new Date().toISOString();
+
+                        // Cập nhật tin nhắn cá nhân
+                        setChatMessages((prevMessages) => [
+                            ...prevMessages,
+                            { ...msg, sendDate: validSendDate },
+                        ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                    } else {
+                        // Nếu không phải chat cá nhân, tăng unread count
+                        const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                            if (count.friendId === msg.senderID) {
+                                return { ...count, unreadCount: count.unreadCount + 1 };
+                            }
+                            return count;
+                        });
+                        setUnreadMessagesCounts(updatedUnreadCounts);
+                    }
                 }
             }
 
@@ -788,7 +800,6 @@ const MainPage = () => {
             });
     }, [MyUser]);
 
-    //nhấn enter gửi tin nhắn
     const handleSendMessage = async () => {
         const progress = document.getElementById('uploadProgress');
         const status = document.getElementById('status');
@@ -797,11 +808,12 @@ const MainPage = () => {
 
         if (!textContent && attachedFiles.length === 0) return;
 
-
         const isFileNameOnly = attachedFiles.some(file => {
             return file.name === textContent || textContent.includes(file.name);
         });
 
+        // Kiểm tra xem đang gửi tin nhắn trong nhóm hay không
+        const receiverId = selectedChat?.type === 'group' ? selectedChat.id : selectedChat?.id; // Nếu là group, lấy ID nhóm, nếu không lấy ID cá nhân
 
         // Xử lý file là ảnh (image/*)
         const imageFiles = attachedFiles.filter(file => file.type.startsWith("image/"));
@@ -820,12 +832,12 @@ const MainPage = () => {
                     const message = {
                         id: uuidv4(),
                         senderID: MyUser?.my_user?.id,
-                        receiverID: selectedChat.id,
+                        receiverID: receiverId, // Sử dụng receiverId được cập nhật cho nhóm
                         content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
                     };
-                    sendMessage(message);
+                    sendMessage(message); // Gửi qua WebSocket
                     setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
                 }
             } catch (error) {
@@ -847,12 +859,12 @@ const MainPage = () => {
                     const message = {
                         id: uuidv4(),
                         senderID: MyUser?.my_user?.id,
-                        receiverID: selectedChat.id,
+                        receiverID: receiverId, // Sử dụng receiverId được cập nhật cho nhóm
                         content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
                     };
-                    sendMessage(message);
+                    sendMessage(message); // Gửi qua WebSocket
                     setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
                 }
             } catch (error) {
@@ -866,20 +878,17 @@ const MainPage = () => {
             const message = {
                 id: uuidv4(),
                 senderID: MyUser?.my_user?.id,
-                receiverID: selectedChat.id,
+                receiverID: receiverId, // Sử dụng receiverId được cập nhật cho nhóm
                 content: textContent,
                 sendDate: new Date().toISOString(),
                 isRead: false,
             };
-            sendMessage(message);
+            sendMessage(message); // Gửi qua WebSocket
             setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
         }
 
         // Reset mọi thứ
         setAttachedFiles([]);
-        // if (messageInputRef.current) {
-        //     messageInputRef.current.innerHTML = ""; // Xoá nội dung ô nhập
-        // }
         setMessageInputKey(Date.now()); // Đặt lại key để làm mới ô nhập
     };
 
@@ -1119,6 +1128,36 @@ const MainPage = () => {
     const getPureFileUrl = (url) => {
         return url.replace(/(file|image)\/[^_]+_/, "$1/");
     }
+
+    const sendMessageToGroup = (message, groupId, userIds) => {
+        // Gửi tin nhắn đến tất cả thành viên trong nhóm
+        userIds.forEach(userId => {
+            // Gửi tin nhắn qua WebSocket
+            sendMessage({
+                ...message,
+                receiverID: groupId, // Dùng receiverID là ID nhóm
+                userId, // Gửi đến từng người dùng trong nhóm
+            });
+        });
+    };
+    useEffect(() => {
+        const unsubscribe = onMessage((incomingMessage) => {
+            if (incomingMessage.type === "CHAT" && selectedChat) {
+                if (selectedChat.type === 'group' && incomingMessage.receiverID === selectedChat.id) {
+                    // Cập nhật tin nhắn nhóm
+                    const validSendDate = moment(incomingMessage.sendDate).isValid()
+                        ? moment(incomingMessage.sendDate).toISOString()
+                        : new Date().toISOString();
+
+                    setChatMessages(prevMessages => [
+                        ...prevMessages,
+                        { ...incomingMessage, sendDate: validSendDate }
+                    ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                }
+            }
+        });
+        return () => unsubscribe();
+    }, [selectedChat, onMessage]);
 
 
     // Hàm render nội dung theo tab

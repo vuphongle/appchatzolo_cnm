@@ -127,6 +127,14 @@ public class MessageController {
         Message latestMessage = service.getLatestMessageBetweenUsers(senderID, receiverID);
         return latestMessage != null ? ResponseEntity.ok(latestMessage) : ResponseEntity.noContent().build();
     }
+    //tin nhắn trong group
+    // Lấy tất cả tin nhắn trong nhóm
+    @GetMapping("/group-messages")
+    public ResponseEntity<List<Message>> getMessagesInGroup(@RequestParam String groupId ) {
+        List<Message> groupMessages = service.getMessagesInGroup(groupId );
+        return ResponseEntity.ok(groupMessages);
+    }
+
 
     //lấy tin nhắn chưa đọc từ các bạn bè
     @GetMapping("/messages/unread-count/{receiverID}")
