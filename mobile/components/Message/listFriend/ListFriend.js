@@ -81,6 +81,8 @@ function ListFriend({ userId }) {
               sendDate: messageResponse
                 ? new Date(messageResponse.sendDate)
                 : null,
+              deletedBySender: messageResponse?.deletedBySender,
+              deletedByReceiver: messageResponse?.deletedByReceiver,
             };
           } catch (error) {
             console.error(`Lỗi khi lấy tin nhắn mới nhất cho ${item.type} ${item.id}:`, error);
@@ -112,7 +114,7 @@ function ListFriend({ userId }) {
     React.useCallback(() => {
       fetchFriendsAndGroups();
       return () => {};
-    }, [userId]),
+    }, []),
   );
 
    useEffect(() => {
@@ -177,6 +179,11 @@ function ListFriend({ userId }) {
           name={item.groupName}
           avatar={item.image}
           type={item.type}
+          lastMessage={item.lastMessage}
+          sendDate={item.sendDate}
+          
+          isDeleted={item.deletedBySender || item.deletedByReceiver}
+
         />
       );
     } else {
@@ -186,6 +193,9 @@ function ListFriend({ userId }) {
           name={item.name}
           avatar={item.avatar}
           type={item.type}
+          lastMessage={item.lastMessage}
+          sendDate={item.sendDate}
+          isDeleted={item.deletedBySender || item.deletedByReceiver}
         />
       );
     }

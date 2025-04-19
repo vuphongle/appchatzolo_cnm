@@ -9,13 +9,13 @@ import { formatDate } from '../../../utils/formatDate';
 import { IPV4 } from '@env';
 import TruncatedText from '../../../utils/TruncatedText';
 import GroupService from '../../../services/GroupService'; // Import GroupService
-const ItemFriend = ({ receiverID, name, avatar ,type}) => {
+const ItemFriend = ({ receiverID, name, avatar ,type, lastMessage,sendDate,isDeleted}) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext); // Lấy user hiện tại
   const senderID = user?.id; // ID của người dùng hiện tại
-  const [lastMessage, setLastMessage] = useState('');
+  const [lastMessages, setLastMessages] = useState('');
   const [time, setTime] = useState('');
-  const [isDeleted, setIsDeleted] = useState(true);
+  
 
   // Functions to determine message type
   const isImageMessage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/) != null;
@@ -27,27 +27,22 @@ const ItemFriend = ({ receiverID, name, avatar ,type}) => {
   useEffect(() => {
     const fetchLatestMessage = async () => {
       try {
-        const message = await MessageService.getLatestMessage(
-          senderID,
-          receiverID,
-        );
-        if(!message.deletedBySender && !message.deletedByReceiver) {
-          setIsDeleted(false);
-        }
-        if (message) {
+       
+        
+        if (lastMessage.trim() !== '') {
           // Determine message type and display appropriate text
-          if (isImageMessage(message.content)) {
-            setLastMessage('Bạn đã được gửi một bức ảnh');
-          } else if (isFileMessage(message.content)) {
-            setLastMessage('Bạn đã được gửi một file');
+          if (isImageMessage(lastMessage)) {
+            setLastMessages('Bạn đã được gửi một bức ảnh');
+          } else if (isFileMessage(lastMessage)) {
+            setLastMessages('Bạn đã được gửi một file');
           } else {
-            setLastMessage(message.content);
+            setLastMessages(lastMessage);
           }
 
-          setTime(formatDate(message.sendDate));
-          console.log('time', new Date(message.sendDate).toLocaleTimeString());
+          setTime(formatDate(sendDate));
+          
         } else {
-          setLastMessage('Chưa có tin nhắn');
+          setLastMessages('Chưa có tin nhắn');
           setTime('');
         }
       } catch (error) {
@@ -114,7 +109,7 @@ if (isDeleted) {
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{name}</Text>
-        <TruncatedText text={lastMessage} maxLength={30} />
+        <TruncatedText text={lastMessages} maxLength={30} />
       </View>
       <Text style={styles.time}>{time}</Text>
     </TouchableOpacity>
