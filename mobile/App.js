@@ -28,6 +28,7 @@ import CreateGroupScreen from './screens/CreateGroupScreen';
 import ChatGroup from './components/Message/ChatGroup/Chatnhom';
 import Detail_infoChatGroup from './components/Message/ChatGroup/Detail_infoChatGroup';
 import MemberGroupScreen from './components/Message/ChatGroup/MemberGroupScreen';
+import AddMemberGroupScreen from './components/Message/ChatGroup/AddMemberGroupScreen';
 Amplify.configure({
   ...awsConfig,
 });
@@ -132,6 +133,12 @@ const AppNavigator = () => {
           name="MemberGroupScreen"
           component={MemberGroupScreen}
           options={{ headerTitle: 'Thành viên nhóm' }}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AddMemberGroupScreen"
+          component={AddMemberGroupScreen}
+          options={{ headerTitle: 'Thêm thành viên' }}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
