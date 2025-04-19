@@ -24,6 +24,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { IPV4 } from '@env';
 import { UserContext } from '../../../context/UserContext';
 import GroupService from '../../../services/GroupService';
+import SelectNewLeaderModal from './SelectNewLeaderModal';
 
 const Detail_infoChatGroup = ({ route, navigation }) => {
   const [nameChange, setNameChange] = useState(infoGroup?.name);
@@ -32,6 +33,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
   const { user, setUser, infoGroup, infoMemberGroup } = useContext(UserContext);
   const [isLeader, setIsLeader] = useState(infoGroup?.creatorId === user?.id); // Assuming leader is the creator of the group
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleDeleteGroupByleader = () => {
     Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
@@ -60,9 +62,24 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
     ]);
   };
 
+  const handleSelectNewLeader = async (newLeader) => {
+    try {
+        const response = await GroupService.leaveGroup(infoGroup.id, user?.id, newLeader.userId);
+        if (response.success) {
+            navigation.navigate('MainTabs');
+        } else {
+            Alert.alert('Lỗi', response.message || 'Không thể rời nhóm');
+        }
+    } catch (error) {
+        Alert.alert('Lỗi', 'Có lỗi xảy ra khi rời nhóm: ' + error.message);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   const handleOutGroup = async () => {
     if (isLeader) {
-      Alert.alert('Thông báo', 'Bạn không thể rời nhóm vì bạn là người tạo nhóm');
+      setIsModalVisible(true);
     } else {
       // Cảnh báo xác nhận
       Alert.alert('Xác nhận', 'Bạn có chắc muốn rời nhóm?', [
@@ -289,6 +306,13 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
             </Dialog.Actions>
           </Dialog>
         </Portal>
+
+        <SelectNewLeaderModal
+          visible={isModalVisible}
+          onDismiss={() => setIsModalVisible(false)}
+          members={infoMemberGroup}
+          onSelectNewLeader={handleSelectNewLeader}
+        />
       </View>
     </Provider>
   );

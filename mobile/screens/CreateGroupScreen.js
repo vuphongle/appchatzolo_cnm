@@ -212,7 +212,7 @@ const CreateGroupScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.groupNameContainer}>
-     
+
         <TouchableOpacity style={styles.avatarContainer}  onPress={handleAvatarChange}>
           {groupAvatar ? (
             <Image source={{ uri: groupAvatar }} style={styles.avatarImageLarge} />
