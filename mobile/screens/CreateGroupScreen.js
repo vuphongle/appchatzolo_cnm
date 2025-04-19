@@ -174,7 +174,7 @@ const CreateGroupScreen = () => {
         if (response.data.success) {
               Alert.alert('Tạo nhóm thành công', `Tên nhóm: ${response.data.data.groupName}`);
               navigation.navigate('ChatGroup', {
-                receiverid: response.data.data.groupId,
+                receiverid: response.data.data.id,
                 name: response.data.data.groupName,
                 avatar: response.data.data.image,
               });

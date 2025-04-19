@@ -46,10 +46,10 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
           try {
             const groupId = infoGroup?.id;
             const userId = user?.id;
-            const response = await GroupService.deleteGroup(userId, groupId); // Gọi API để xóa nhóm
-            if (response.ok) {
-              Alert.alert('Thành công', 'Đã xóa cuộc trò chuyện');
-              navigation.replace('MainTabs');
+            const response = await GroupService.deleteGroup(userId, groupId);
+            if (response.success) {
+              Alert.alert('Thành công', 'Đã xóa cuộc nhóm thành công');
+              navigation.navigate('MainTabs');
             } else {
               Alert.alert('Lỗi', response.message || 'Không thể xóa cuộc trò chuyện');
             }
