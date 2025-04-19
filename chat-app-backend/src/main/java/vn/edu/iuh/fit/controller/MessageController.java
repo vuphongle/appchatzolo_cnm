@@ -8,6 +8,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.model.DTO.ForwardRequest;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
+import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.service.MessageService;
 import vn.edu.iuh.fit.service.impl.MessageServiceImpl;
@@ -130,8 +131,8 @@ public class MessageController {
     //tin nhắn trong group
     // Lấy tất cả tin nhắn trong nhóm
     @GetMapping("/group-messages")
-    public ResponseEntity<List<Message>> getMessagesInGroup(@RequestParam String groupId ) {
-        List<Message> groupMessages = service.getMessagesInGroup(groupId );
+    public ResponseEntity<List<MessageResponse>> getMessagesInGroup(@RequestParam String groupId ) {
+        List<MessageResponse> groupMessages = service.getMessagesInGroup(groupId );
         return ResponseEntity.ok(groupMessages);
     }
 

@@ -555,11 +555,16 @@ const MainPage = () => {
                     // Cộng 7 giờ vào sendDate của mỗi tin nhắn
                     const updatedMessages = sortedMessages.map((msg) => ({
                         ...msg,
+                        senderName: msg.name, // Đảm bảo gửi tên người gửi từ BE
+                        senderAvatar: msg.avatar || "/default-avatar.jpg",
                         sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
                     }));
 
+                    //console.log("Updated Messages chứa gì:", updatedMessages); // Kiểm tra dữ liệu tin nhắn đã cập nhật
                     // Cập nhật tin nhắn vào state
                     setChatMessages(updatedMessages);
+
+
                     // Lọc các tin nhắn chưa đọc
                     const unreadMessages = updatedMessages.filter((msg) => msg.isRead === false);
 
@@ -660,7 +665,7 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-
+            //console.log("Incoming message loại:", incomingMessage); // Log thông báo nhận được
             if (incomingMessage.type === "DELETE_MESSAGE") {
                 // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
                 // thì xóa luôn phần hiển thị
@@ -829,7 +834,7 @@ const MainPage = () => {
 
                 // Kiểm tra nếu selectedChat là nhóm
                 if (selectedChat.type === "group") {
-                    if (incomingMessage.receiverID === selectedChat.id) {
+                    if (selectedChat && selectedChat.type === "group" && incomingMessage.receiverID === selectedChat.id) {
                         const validSendDate = moment(incomingMessage.sendDate).isValid()
                             ? moment(incomingMessage.sendDate).toISOString()
                             : new Date().toISOString();
@@ -1349,17 +1354,18 @@ const MainPage = () => {
         setIsMenuModalOpen((prev) => !prev);
     };
 
-    const sendMessageToGroup = (message, groupId, userIds) => {
-        // Gửi tin nhắn đến tất cả thành viên trong nhóm
-        userIds.forEach(userId => {
-            // Gửi tin nhắn qua WebSocket
-            sendMessage({
-                ...message,
-                receiverID: groupId, // Dùng receiverID là ID nhóm
-                userId, // Gửi đến từng người dùng trong nhóm
-            });
-        });
-    };
+    // const sendMessageToGroup = (message, groupId, userIds) => {
+    //     // Gửi tin nhắn đến tất cả thành viên trong nhóm
+    //     userIds.forEach(userId => {
+    //         // Gửi tin nhắn qua WebSocket
+    //         sendMessage({
+    //             ...message,
+    //             receiverID: groupId, // Dùng receiverID là ID nhóm
+    //             userId, // Gửi đến từng người dùng trong nhóm
+    //         });
+
+    //     });
+    // };
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
             if (incomingMessage.type === "CHAT" && selectedChat) {
@@ -1517,6 +1523,18 @@ const MainPage = () => {
                                                         )}
 
                                                         <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
+                                                            {/* Nếu là tin nhắn nhóm, hiển thị tên và avatar người gửi */}
+
+                                                            {msg.type === 'group' && (
+                                                                <div style={{ display: "flex", alignItems: "center" }}>
+                                                                    <img
+                                                                        src={msg.senderAvatar || "/default-avatar.jpg"}
+                                                                        alt="Avatar"
+                                                                        style={{ width: "30px", height: "30px", borderRadius: "50%", marginRight: "10px" }}
+                                                                    />
+                                                                    <span style={{ fontWeight: 'bold' }}>{msg.senderName}</span>
+                                                                </div>
+                                                            )}
                                                             {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
                                                             {isImageMessage(msg.content) ? (
                                                                 <img src={msg.content} alt="Image" className="message-image" />

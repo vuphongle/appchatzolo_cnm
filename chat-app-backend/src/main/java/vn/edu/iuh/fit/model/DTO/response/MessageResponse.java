@@ -23,4 +23,8 @@ public class MessageResponse {
     private boolean deletedBySender = false;
     private boolean deletedByReceiver = false;
     private String typeWeb;
+
+    // Thêm thông tin người gửi vào MessageResponse
+    private String name;  // Tên người gửi
+    private String avatar;  // Avatar người gửi
 }

@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -109,7 +110,7 @@ public class GroupController {
 
     // Gửi tin nhắn đến tất cả thành viên trong nhóm
     @PostMapping("/send-message")
-    public ResponseEntity<BaseResponse<String>> sendMessageToGroup(@RequestBody MessageRequest request) throws GroupException {
+    public ResponseEntity<BaseResponse<String>> sendMessageToGroup(@RequestBody MessageRequest request) throws GroupException, JsonProcessingException {
         groupService.sendMessageToGroup(request);
         return ResponseEntity.ok(
                 BaseResponse

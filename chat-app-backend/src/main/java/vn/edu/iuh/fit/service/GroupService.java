@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
 import vn.edu.iuh.fit.model.DTO.request.MessageRequest;
