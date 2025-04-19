@@ -252,7 +252,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         content: audioUrl,
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'audio'
+        type: 'audio',
+        status:'sent'
       };
 
       sendMessage(message);
@@ -332,7 +333,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
               content: imageUrl,
               sendDate: new Date().toISOString(),
               isRead: false,
-              type: 'image'
+              type: 'image',
+              status: 'sent',
             };
             
             sendMessage(imageMessage);
@@ -360,7 +362,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
               sendDate: new Date().toISOString(),
               isRead: false,
               type: 'file',
-              fileName: file.name
+              fileName: file.name,
+              status:'sent'
             };
             
             sendMessage(fileMessage);
@@ -382,7 +385,9 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         content: messageText.trim(),
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'text'
+        type: 'text',
+        status: 'sent'
+
       };
       
       sendMessage(textMessage);

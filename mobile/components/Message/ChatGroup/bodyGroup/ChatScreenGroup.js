@@ -20,7 +20,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import MyMessageItem from '../../Chat/body/MyMessagaItem'
 import MessageItem from '../../Chat/body/MessageItem';
-import { UserContext } from '../../../../context/UserContext';
+import { UserContext } from '../../../../context/UserContext'
 import EmojiSelector from '../../../../utils/EmojiSelector';
 import { formatDate } from '../../../../utils/formatDate';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -30,7 +30,7 @@ import S3Service from '../../../../services/S3Service';
 import AudioRecord from 'react-native-audio-record';
 import { WebSocketContext } from '../../../../context/Websocket';
 
-const ChatScreenGroup = ({ receiverID, name, avatar }) => {
+const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const { user } = useContext(UserContext);
   const userId = user?.id;
   const { sendMessage, onMessage, isConnected } = useContext(WebSocketContext);
@@ -179,7 +179,17 @@ const ChatScreenGroup = ({ receiverID, name, avatar }) => {
     
     requestPermissions();
   }, []);
-
+//   const sendMessageToGroup = (message, groupId, userIds) => {
+//     // Gửi tin nhắn đến tất cả thành viên trong nhóm
+//     userIds.forEach(userId => {
+//         // Gửi tin nhắn qua WebSocket
+//         sendMessage({
+//             ...message,
+//             receiverID: groupId, // Dùng receiverID là ID nhóm
+//             userId, // Gửi đến từng người dùng trong nhóm
+//         });
+//     });
+// };
   // Handle keyboard hide to show emoji picker
   useEffect(() => {
     const keyboardDidHideListener = Keyboard.addListener(

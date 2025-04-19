@@ -1,37 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useContext } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import UserService from '../../../services/UserService';
 import GroupService from '../../../services/GroupService';
+import Detail_infoChatGroup from './Detail_infoChatGroup';
+import { UserContext } from '../../../context/UserContext'; // Import UserContext
 
 function HeaderGroup({ name, id, avatar }) {
   const navigation = useNavigation();
   const [onlineStatus, setOnlineStatus] = useState(false);
-  const [user, setUser] = useState(null); // Lưu dữ liệu người dùng
+  const { user, setUser } = useContext(UserContext); // Lấy user hiện tại từ UserContext
   const [countMember, setCountMember] = useState(0); // Lưu số lượng thành viên
 useEffect(() => {
   getGroupMembers(); // Gọi hàm để lấy danh sách thành viên nhóm khi component được mount
 }, [id]); // Chỉ chạy một lần khi component được mount
   const handlePressBack = () => {
-    navigation.goBack();
+    navigation.navigate('MainTabs'); //
   };
   const getGroupMembers = async () => {
     try {
-      const response = await GroupService.getGroups(id); // Gọi API để lấy danh sách thành viên nhóm
-      setCountMember(response.length); // Cập nhật số lượng thành viên
+      const response = await GroupService.getGroupMembers(id);
+      console.log('Dữ liệu trả về từ API:', response.data);
+  
+      if (response.data && Array.isArray(response.data.userGroups)) {
+        const memberCount = response.data.userGroups.length;
+        setCountMember(memberCount);
+      } else {
+       
+        setCountMember(0); // Đặt giá trị mặc định
+      }
     } catch (error) {
-      console.error('Lỗi khi lấy danh sách thành viên nhóm:', error);
+     
     }
-  }
+  };
   
 
   const handlePressMenu = () => {
     console.log('User:', user); // Kiểm tra dữ liệu người dùng
-    const userFriend = user;
+    const userFriend = user?.id;
     if (user) {
-      navigation.navigate('DetailChat', { userFriend,groupId:id });
+      navigation.navigate('Detail_infoChatGroup', { userFriend,groupId:id });
     }
   };
 
@@ -54,8 +64,8 @@ useEffect(() => {
               {name}
              
             </Text>
-            <View>
-              <Ionicons name="member" size={20} color="white" />
+            <View style={{ flexDirection: 'row', alignItems: 'center' ,gap:5}}>
+              <Ionicons name="people-outline" size={18} color="white" />
               <Text style={{ color: 'white', fontSize: 12 }}>
                 {countMember} thành viên
               </Text>

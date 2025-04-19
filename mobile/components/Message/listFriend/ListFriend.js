@@ -18,21 +18,27 @@ import { IPV4 } from '@env';
 import UserService from '../../../services/UserService';
 import MessageService from '../../../services/MessageService';
 import {UserContext} from '../../../context/UserContext';
+import GroupService from '../../../services/GroupService';
 function ListFriend({ userId }) {
   const [openRow, setOpenRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [friends, setFriends] = useState([]);
   const { isChange } = useContext(UserContext);
+  const [groups, setGroups] = useState([]);
+  const [items, setItems] = useState([]);
 
-  const fetchFriends = async () => {
+
+  const fetchFriendsAndGroups = async () => {
     try {
       setLoading(true);
+      
+      // Fetch friends and groups data
       const response = await UserService.getFriends(userId);
+      const groupsResponse = await GroupService.getGroupsByIds(userId);
+      
+      // Process friends data - remove duplicates
       let friendsList = response;
-      // console.log('friendsList : ', friendsList);
-  
-      // Xử lý loại bỏ bạn bè có id trùng nhau
       const uniqueFriendsMap = new Map();
       friendsList.forEach((friend) => {
         if (!uniqueFriendsMap.has(friend.id)) {
@@ -40,17 +46,35 @@ function ListFriend({ userId }) {
         }
       });
       friendsList = Array.from(uniqueFriendsMap.values());
-  
-      // Lấy tin nhắn mới nhất của từng bạn
-      const friendsWithMessages = await Promise.all(
-        friendsList.map(async (friend) => {
+      setFriends(friendsList);
+      
+      // Process groups data
+      const hasGroups = groupsResponse?.data && groupsResponse.data.length > 0;
+      const groupsList = hasGroups ? groupsResponse.data : [];
+      setGroups(groupsList);
+      
+      if (hasGroups) {
+        console.log("groups : ", groupsResponse);
+      } else {
+        console.log("No groups found");
+      }
+      
+      // Combine friends and groups with type identifier
+      const friendsWithType = friendsList.map(friend => ({ ...friend, type: 'friend' }));
+      const groupsWithType = groupsList.map(group => ({ ...group, type: 'group' }));
+      const mergedItems = [...friendsWithType, ...groupsWithType];
+      
+      // Get latest messages for all items (both friends and groups)
+      const itemsWithMessages = await Promise.all(
+        mergedItems.map(async (item) => {
           try {
             const messageResponse = await MessageService.getLatestMessage(
               userId,
-              friend.id,
+              item.id
             );
+            
             return {
-              ...friend,
+              ...item,
               lastMessage: messageResponse
                 ? messageResponse.content
                 : 'Chưa có tin nhắn',
@@ -59,23 +83,23 @@ function ListFriend({ userId }) {
                 : null,
             };
           } catch (error) {
-            console.error('Lỗi khi lấy tin nhắn mới nhất:', error);
+            console.error(`Lỗi khi lấy tin nhắn mới nhất cho ${item.type} ${item.id}:`, error);
             return {
-              ...friend,
+              ...item,
               lastMessage: 'Chưa có tin nhắn',
               sendDate: null,
             };
           }
-        }),
+        })
       );
-  
-      // Sắp xếp bạn bè theo thời gian gửi tin nhắn mới nhất (gần nhất trước)
-      friendsWithMessages.sort((a, b) => {
+      
+      // Sort by latest message time
+      itemsWithMessages.sort((a, b) => {
         return (b.sendDate?.getTime() || 0) - (a.sendDate?.getTime() || 0);
       });
-
-  
-      setFriends(friendsWithMessages);
+      
+      // Update state with the sorted items
+      setItems(itemsWithMessages);
       setError(null);
     } catch (err) {
       setError('Không có bạn trong danh sách');
@@ -84,17 +108,15 @@ function ListFriend({ userId }) {
       setLoading(false);
     }
   };
-  
-
   useFocusEffect(
     React.useCallback(() => {
-      fetchFriends();
+      fetchFriendsAndGroups();
       return () => {};
     }, [userId]),
   );
 
    useEffect(() => {
-    fetchFriends();
+    fetchFriendsAndGroups();
    }, [isChange]);
 
   // Hàm xử lý ghim
@@ -147,11 +169,27 @@ function ListFriend({ userId }) {
     );
   };
 
-  const renderItem = ({ item }) => (
-    
-        <ItemFriend receiverID={item.id} name={item.name} avatar={item.avatar} />
-     
-    );
+  const renderItem = ({ item }) => {
+    if (item.type === 'group') {
+      return (
+        <ItemFriend
+          receiverID={item.id}
+          name={item.groupName}
+          avatar={item.image}
+          type={item.type}
+        />
+      );
+    } else {
+      return (
+        <ItemFriend
+          receiverID={item.id}
+          name={item.name}
+          avatar={item.avatar}
+          type={item.type}
+        />
+      );
+    }
+  };
 
   const renderHiddenItem = ({ item }) => {
     if (openRow !== item.id) return <View style={{ height: 0 }} />;
@@ -203,7 +241,7 @@ function ListFriend({ userId }) {
       <CloudItem timestamp="23 tiếng" />
       {friends.length > 0 ? (
         <SwipeListView
-          data={friends}
+          data={items}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           renderHiddenItem={renderHiddenItem}

@@ -9,7 +9,7 @@ import { formatDate } from '../../../utils/formatDate';
 import { IPV4 } from '@env';
 import TruncatedText from '../../../utils/TruncatedText';
 import GroupService from '../../../services/GroupService'; // Import GroupService
-const ItemFriend = ({ receiverID, name, avatar }) => {
+const ItemFriend = ({ receiverID, name, avatar ,type}) => {
   const navigation = useNavigation();
   const { user } = useContext(UserContext); // Lấy user hiện tại
   const senderID = user?.id; // ID của người dùng hiện tại
@@ -62,18 +62,9 @@ const ItemFriend = ({ receiverID, name, avatar }) => {
 
   const handleNavigateChat = async () => {
     try {
-      const response = await GroupService.getGroupMembers(receiverID); // Lấy danh sách thành viên nhóm từ API
-  
-      const members = response.data.data; // Giả sử response là BaseResponse, dữ liệu trong `.data`
-  console.log('members: ', members);
-      // Kiểm tra xem userID có nằm trong danh sách thành viên không
-      const isMember = members.some(member => member.userId === senderID);
-      console.log('isMember: ', isMember);
 
-  // const group = await GroupService.getGroupByID(receiverID);
-  // const members = group.data;
-  // console.log('members: ', members);
-  if(isMember) {
+
+  if(type==='group'){ 
 
     navigation.navigate('ChatGroup', {
       receiverid: receiverID,
@@ -90,7 +81,7 @@ const ItemFriend = ({ receiverID, name, avatar }) => {
     });
     } 
   }catch (error) {
-      console.error("Lỗi khi kiểm tra thành viên nhóm:", error);
+      console.error("Lỗi khi kiểm tra  nhóm và bạn bè:", error);
       // Nếu lỗi xảy ra, vẫn cho phép điều hướng về Chat cá nhân như fallback
       navigation.navigate('Chat', {
         receiverid: receiverID,

@@ -7,6 +7,7 @@ import { UserContext } from '../context/UserContext';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { formatPhoneNumber } from '../utils/formatPhoneNumber';
 import { IPV4 } from '@env';
+import { useNavigation } from '@react-navigation/native';
 
 const CreateGroupScreen = () => {
   const [groupName, setGroupName] = useState('');
@@ -17,6 +18,7 @@ const CreateGroupScreen = () => {
   const [groupAvatar, setGroupAvatar] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const navigation = useNavigation();
 
   const { user } = useContext(UserContext);
 
@@ -171,6 +173,12 @@ const CreateGroupScreen = () => {
         setIsLoading(false);
         if (response.data.success) {
               Alert.alert('Tạo nhóm thành công', `Tên nhóm: ${response.data.data.groupName}`);
+              navigation.navigate('ChatGroup', {
+                receiverid: response.data.data.groupId,
+                name: response.data.data.groupName,
+                avatar: response.data.data.image,
+              });
+              setGroupName('');
         } else {
             Alert.alert('Lỗi', 'Không thể tạo nhóm. Vui lòng thử lại.');
         }
@@ -204,7 +212,8 @@ const CreateGroupScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.groupNameContainer}>
-        <TouchableOpacity style={styles.avatarContainer} onPress={handleAvatarChange}>
+     
+        <TouchableOpacity style={styles.avatarContainer}  onPress={handleAvatarChange}>
           {groupAvatar ? (
             <Image source={{ uri: groupAvatar }} style={styles.avatarImageLarge} />
           ) : (

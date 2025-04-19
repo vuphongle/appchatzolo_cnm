@@ -26,7 +26,7 @@ import ChangePasswordScreen from './Auth/ChangePasswordScreen';
 import { WebSocketProvider } from './context/Websocket';
 import CreateGroupScreen from './screens/CreateGroupScreen';
 import ChatGroup from './components/Message/ChatGroup/Chatnhom';
-
+import Detail_infoChatGroup from './components/Message/ChatGroup/Detail_infoChatGroup';
 Amplify.configure({
   ...awsConfig,
 });
@@ -80,7 +80,12 @@ const AppNavigator = () => {
           <Stack.Screen
           name="ChatGroup"
           component={ChatGroup}
-          options={{ headerTitle: 'Xác nhận đăng ký' }}
+          options={{ headerShown: false }}
+        />
+         <Stack.Screen
+          name="Detail_infoChatGroup"
+          component={Detail_infoChatGroup}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="DetailChat"

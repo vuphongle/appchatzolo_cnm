@@ -13,21 +13,21 @@ const GroupService = {
         );
         return response.data;
         } catch (error) {
-        console.error("Lỗi khi lấy danh sách thành viên nhóm:", error);
+        // console.error("Lỗi khi lấy danh sách thành viên nhóm:", error);
         throw error.response ? error.response.data : error;
         }
     },
-    getGroupByID: async (groupID) => {
-        try {
-        const response = await axios.get(`${IPV4}/groups/getGroupById`,{
-            params: { groupId: groupID } // Thay thế groupId bằng ID nhóm bạn muốn lấy
-        });
-        return response;
-        } catch (error) {
-        console.error("Lỗi khi lấy thông tin nhóm:", error);
-        throw error.response ? error.response.data : error;
-        }
-    },
+    // getGroupByID: async (groupID) => {
+    //     try {
+    //     const response = await axios.get(`${IPV4}/groups/getGroupById`,{
+    //         params: { groupId: groupID } // Thay thế groupId bằng ID nhóm bạn muốn lấy
+    //     });
+    //     return response;
+    //     } catch (error) {
+    //     console.error("Lỗi khi lấy thông tin nhóm:", error);
+    //     throw error.response ? error.response.data : error;
+    //     }
+    // },
     
    
     addMember: async (data) => {
@@ -92,11 +92,21 @@ const GroupService = {
       // Xóa thành viên khỏi nhóm
       removeMember: async (groupId, targetUserId, actorUserId) => {
         try {
-          const response = await axios.delete(`${IPV4}/removeMember/${groupId}/${targetUserId}/${actorUserId}`);
+          const response = await axios.delete(`${IPV4}/groups/removeMember/${groupId}/${targetUserId}/${actorUserId}`);
           return response;
         } catch (error) {
           throw error.response ? error.response.data : error;
         }
       },
+      
+    getGroupsByIds: async (userId) => {
+      try {
+          const response = await axios.get(`${IPV4}/groups/getGroupsByUserId`, { params: { userId } });
+          return response.data;
+      } catch (error) {
+          console.error("Error fetching groups by IDs:", error.response || error);
+          throw error; // Nếu muốn xử lý lỗi cụ thể sau
+      }
+  },
     };
 export default GroupService;
