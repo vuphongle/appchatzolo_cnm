@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, FlatList, Image } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, FlatList, Image, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HeaderMemberGroupScreen from './HeaderMemberGroupScreen';
 import { UserContext } from '../../../context/UserContext';
@@ -18,27 +18,30 @@ const MemberGroupScreen = ({ route, navigation }) => {
   sortedMembers.sort((a, b) => (a.userId === user?.id ? -1 : 1));
   const refreshMemberGroupData = async () => {
     try {
-          const response = await GroupService.getGroupMembers(infoGroup.id);
+      const response = await GroupService.getGroupMembers(infoGroup.id);
 
-          if (response.data && Array.isArray(response.data) && response.data[0].userGroups) {
-            const userGroups = response.data[0].userGroups;
-            setInfoMemberGroup(userGroups);
-          } else {
-            console.error('Dữ liệu không hợp lệ:', response.data);
-            setInfoMemberGroup([]);
-          }
+      if (response.data && Array.isArray(response.data) && response.data[0].userGroups) {
+        const userGroups = response.data[0].userGroups;
+        setInfoMemberGroup(userGroups);
+      } else {
+        console.error('Dữ liệu không hợp lệ:', response.data);
+        setInfoMemberGroup([]);
+      }
 
-        } catch (error) {
-          console.error('Lỗi khi lấy thông tin thành viên nhóm:', error);
-          setInfoMemberGroup([]);
-        }
+    } catch (error) {
+      console.error('Lỗi khi lấy thông tin thành viên nhóm:', error);
+      setInfoMemberGroup([]);
+    }
   };
+
+  const handleAddFriend = (userId) => async () => {
+    Alert.alert('Thông báo', 'Tính năng này chưa được phát triển');
+  }
 
   const renderItem = ({ item }) => {
     const displayName = item.userId === user?.id ? 'Bạn' : item.userName;
 
     let roleText = '';
-    // Kiểm tra vai trò và hiển thị tên tương ứng
     if (item.role === 'LEADER') {
       roleText = 'Trưởng nhóm';
     } else if (item.role === 'CO_LEADER') {
@@ -46,6 +49,8 @@ const MemberGroupScreen = ({ route, navigation }) => {
     } else if (item.role === 'MEMBER') {
       roleText = 'Thành viên';
     }
+
+    const isFriend = user?.friendIds.includes(item.userId) || item.userId === user?.id;
 
     const openMemberModal = () => {
       setSelectedMember(item);
@@ -56,15 +61,17 @@ const MemberGroupScreen = ({ route, navigation }) => {
       <TouchableOpacity style={styles.memberItem} onPress={openMemberModal}>
         <View style={styles.memberLeftContainer}>
           <Image source={{ uri: item.avatar }} style={styles.avatar} />
+          <View style={styles.memberRightContainer}>
+            <Text style={styles.memberName}>{displayName}</Text>
+            {roleText && <Text style={styles.roleText}>{roleText}</Text>}
+          </View>
         </View>
-        <View style={styles.memberRightContainer}>
-          <Text style={styles.memberName}>{displayName}</Text>
-          {roleText ? (
-            <Text style={styles.roleText}>{roleText}</Text>
-          ) : (
-            <Ionicons name="person-add" size={24} color="#4CAF50" />
-          )}
-        </View>
+
+        {!isFriend && (
+          <TouchableOpacity onPress={handleAddFriend(item.userId)}>
+            <Ionicons name="person-add" size={24} color="#0b9cf9" />
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
@@ -100,6 +107,8 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderColor: '#ddd',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   memberLeftContainer: {
     flexDirection: 'row',

@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { Auth } from 'aws-amplify';
 import { IPV4 } from '@env';
+import GroupService from '../services/GroupService';
 
 export const UserContext = createContext();
 
@@ -68,6 +69,40 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Hàm update infoGroup
+    const updateInfoGroup = async (groupId) => {
+        try {
+        const response = await fetch(`${IPV4}/groups/getGroupById/${groupId}`);
+        if (response.success) {
+            const groupData = await response.json();
+            setInfoGroup(groupData.data);
+        } else {
+            console.error('Error fetching group data');
+        }
+        } catch (error) {
+            console.error('Error fetching group data:', error);
+        }
+    };
+
+  // Hàm update infoMemberGroup
+    const updateInfoMemberGroup = async (groupId) => {
+        try {
+          const response = await GroupService.getGroupMembers(groupId);
+
+          if (response.data && Array.isArray(response.data) && response.data[0].userGroups) {
+            const userGroups = response.data[0].userGroups;
+            setInfoMemberGroup(userGroups);
+          } else {
+            console.error('Dữ liệu không hợp lệ:', response.data);
+            setInfoMemberGroup([]);
+          }
+
+        } catch (error) {
+          console.error('Lỗi khi lấy thông tin thành viên nhóm:', error);
+          setInfoMemberGroup([]);
+        }
+    };
+
   useEffect(() => {
     loadUser();
   }, []);
@@ -91,6 +126,7 @@ export const UserProvider = ({ children }) => {
         setInfoGroup,
         infoMemberGroup,
         setInfoMemberGroup,
+        updateInfoMemberGroup,
       }}
     >
       {!loading && children}

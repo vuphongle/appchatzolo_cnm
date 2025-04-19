@@ -59,6 +59,10 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
     ]);
   };
 
+  const handleOutGroup = () => {
+
+  }
+
   const updateName = () => {
     Alert.alert('Thông báo', 'Đổi tên thành công!');
     setIsDialogVisible(false);
@@ -205,7 +209,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
 
           <TouchableOpacity
             style={styles.settingsItem}
-            onPress={() => Alert.alert('Thông báo', 'Chức năng đang phát triển')}
+            onPress={handleOutGroup}
           >
             <View style={styles.leftContainer}>
                 <MaterialCommunityIcons name="account-remove" size={24} />

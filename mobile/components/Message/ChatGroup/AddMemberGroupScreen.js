@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../../context/UserContext';
 import axios from 'axios';
 import { IPV4 } from '@env';
+import GroupService from '../../../services/GroupService';
 
 const AddMemberGroupScreen = ({ route }) => {
-  const { infoMemberGroup } = route.params;
-  const { user } = React.useContext(UserContext);
+  const { user, infoGroup, infoMemberGroup, updateInfoMemberGroup } = React.useContext(UserContext);
   const navigation = useNavigation();
 
   const [newMember, setNewMember] = useState('');
@@ -53,16 +53,35 @@ const AddMemberGroupScreen = ({ route }) => {
     setSelectedMembers(updatedSelectedMembers);
   };
 
-  const handleAddMembersToGroup = () => {
+  const handleAddMembersToGroup = async () => {
     if (selectedMembers.length === 0) {
-      alert('Vui lòng chọn ít nhất một thành viên');
+      Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một thành viên');
       return;
     }
+
+    const data = {
+      id: infoGroup.id,
+      memberIds: selectedMembers,
+    };
+
     setIsAdding(true);
-    setTimeout(() => {
+
+    try {
+      const response = await GroupService.addMember(data);
+      if (response.success) {
+        Alert.alert('Thông báo', 'Thêm thành viên vào nhóm thành công');
+        // Cập nhật lại thông tin nhóm trong context
+        await updateInfoMemberGroup(infoGroup.id);
+        navigation.goBack();
+      } else {
+        Alert.alert('Thông báo', 'Có lỗi xảy ra khi thêm thành viên vào nhóm');
+      }
+    } catch (error) {
+      console.error('Lỗi khi thêm thành viên vào nhóm', error);
+      Alert.alert('Thông báo', 'Có lỗi xảy ra. Vui lòng thử lại!');
+    } finally {
       setIsAdding(false);
-      navigation.goBack(); // Quay lại sau khi thêm thành viên vào nhóm
-    }, 1000);
+    }
   };
 
   const renderItem = ({ item }) => {
