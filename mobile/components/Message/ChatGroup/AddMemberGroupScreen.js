@@ -6,6 +6,7 @@ import { UserContext } from '../../../context/UserContext';
 import axios from 'axios';
 import { IPV4 } from '@env';
 import GroupService from '../../../services/GroupService';
+import { formatPhoneNumber } from '../../../utils/formatPhoneNumber';
 
 const AddMemberGroupScreen = ({ route }) => {
   const { user, infoGroup, infoMemberGroup, updateInfoMemberGroup } = React.useContext(UserContext);
@@ -16,6 +17,11 @@ const AddMemberGroupScreen = ({ route }) => {
   const [filteredFriends, setFilteredFriends] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [searchResult, setSearchResult] = useState(null);
+
+  const clearSearch = () => {
+    setNewMember('');
+  };
 
   useEffect(() => {
     const fetchFriendsList = async () => {
@@ -31,14 +37,45 @@ const AddMemberGroupScreen = ({ route }) => {
     fetchFriendsList();
   }, [user?.id]);
 
-  // Cập nhật kết quả tìm kiếm
+  const normalizePhoneNumber = (phoneNumber) => {
+    let normalized = phoneNumber.replace(/\D/g, '');
+    if (normalized.startsWith('84')) {
+      normalized = '0' + normalized.slice(2);
+    }
+    return normalized;
+  };
+
+  const fetchUserByPhoneNumber = async (phoneNumber) => {
+    try {
+      phoneNumber = formatPhoneNumber(phoneNumber);
+      const response = await axios.post(`${IPV4}/user/findByPhoneNumber`, { phoneNumber });
+      return response.data || null;
+    } catch (error) {
+      console.error('Error fetching user by phone:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (newMember === '') {
       setFilteredFriends(friendsList);
+      setSearchResult(null);
     } else {
       const filtered = friendsList.filter((user) =>
-        user.name.toLowerCase().includes(newMember.toLowerCase())
+        user.name.toLowerCase().includes(newMember.toLowerCase()) ||
+        normalizePhoneNumber(user.phoneNumber).includes(normalizePhoneNumber(newMember))
       );
+
+      if (filtered.length === 0 && newMember.length === 10) {
+        const userProfile = fetchUserByPhoneNumber(newMember);
+        userProfile.then((data) => {
+          if (data && !friendsList.some(friend => friend.id === data.id)) {
+            setSearchResult(data);
+          }
+        });
+      } else {
+        setSearchResult(null);
+      }
       setFilteredFriends(filtered);
     }
   }, [newMember, friendsList]);
@@ -70,7 +107,6 @@ const AddMemberGroupScreen = ({ route }) => {
       const response = await GroupService.addMember(data);
       if (response.success) {
         Alert.alert('Thông báo', 'Thêm thành viên vào nhóm thành công');
-        // Cập nhật lại thông tin nhóm trong context
         await updateInfoMemberGroup(infoGroup.id);
         navigation.goBack();
       } else {
@@ -92,12 +128,11 @@ const AddMemberGroupScreen = ({ route }) => {
     return (
       <TouchableOpacity
         style={[styles.memberItem, isDisabled && styles.disabledItem]}
-        onPress={() => !isDisabled && handleSelectMember(item.id)} // Không cho chọn lại nếu đã có trong nhóm
-        disabled={isDisabled} // Disable bấm vào nếu đã có trong nhóm
+        onPress={() => !isDisabled && handleSelectMember(item.id)}
+        disabled={isDisabled}
       >
         <Image source={{ uri: item.avatar }} style={styles.avatar} />
         <Text style={styles.memberName}>{item.name}</Text>
-        {/* Hiển thị nút check nếu đã chọn hoặc đã có trong nhóm */}
         {(isSelected || isAlreadyInGroup) && (
           <Ionicons name="checkmark-circle" size={24} color="green" />
         )}
@@ -114,15 +149,30 @@ const AddMemberGroupScreen = ({ route }) => {
         <Text style={styles.headerText}>Thêm vào nhóm</Text>
       </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Tìm kiếm người dùng"
-        value={newMember}
-        onChangeText={setNewMember} // Cập nhật từ khóa tìm kiếm
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Tìm kiếm người dùng"
+          value={newMember}
+          onChangeText={setNewMember} // Cập nhật từ khóa tìm kiếm
+        />
+        {newMember.length > 0 && (
+          <TouchableOpacity style={styles.clearIcon} onPress={clearSearch}>
+            <Ionicons name="close-circle" size={20} color="gray" />
+          </TouchableOpacity>
+        )}
+      </View>
 
-      {filteredFriends.length === 0 && newMember && (
+      {filteredFriends.length === 0 && newMember && !searchResult && (
         <Text style={styles.noResultsText}>Không có kết quả tìm kiếm!</Text>
+      )}
+
+      {searchResult && (
+        <FlatList
+          data={[searchResult]}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+        />
       )}
 
       <FlatList
@@ -180,13 +230,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 10,
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    position: 'relative',
+  },
   input: {
     height: 40,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 20,
     paddingLeft: 10,
+    flex: 1,
+  },
+  clearIcon: {
+    right: 5,
+    position: 'absolute',
   },
   memberItem: {
     flexDirection: 'row',

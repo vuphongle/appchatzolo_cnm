@@ -75,11 +75,11 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
        
       }
     } catch (error) {
-//      console.error('Error fetching messages:', error);
+      console.error('Error fetching messages:', error);
       if (isMounted) {
      
         if (error.response?.status !== 404) {
-//          console.error('Error details:', error);
+          console.error('Error details:', error);
         }
       }
     }
