@@ -1,13 +1,32 @@
 import React, { useState } from "react";
 import GroupService from "../services/GroupService";
+import EditGroupModal from "./EditGroupModal";
 
-const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
+const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo }) => {
 
     console.log("Group info", conversation);
 
     const [showMembers, setShowMembers] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [selectedNewLeader, setSelectedNewLeader] = useState(null);
+    const [isEditingModalOpen, setIsEditingModalOpen] = useState(false); // Trạng thái để mở modal chỉnh sửa
+
+    // Mở modal chỉnh sửa
+    const handleEditClick = () => {
+        setIsEditingModalOpen(true);
+    };
+
+    // Đóng modal chỉnh sửa
+    const closeEditModal = () => {
+        setIsEditingModalOpen(false); // Đóng modal khi nhấn vào nút đóng
+    };
+
+    // Ngừng sự kiện click để không đóng modal khi nhấn vào nội dung modal
+    const handleModalClick = (e) => {
+        // Ngừng sự kiện nếu nhấn vào nội dung modal
+        if (e.target.closest('.modal-dialog')) return;
+        closeEditModal(); // Đóng modal khi nhấn ra ngoài
+    };
 
 
     // Hàm xóa nhóm
@@ -15,7 +34,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
         if (window.confirm("Bạn có chắc chắn muốn xóa nhóm này không?")) {
             try {
                 // Gọi API xóa nhóm
-                await GroupService.deleteGroup(user.id, conversation.id);
+                await GroupService.deleteGroup(user?.id, conversation.id);
                 alert("Xóa nhóm thành công!");
 
                 // Gọi callback để thông báo cho component cha
@@ -33,7 +52,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
     const handleRemoveMember = async (targetUserId) => {
         if (window.confirm(`Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm không?`)) {
             try {
-                await GroupService.removeMember(conversation.id, targetUserId, user.id);
+                await GroupService.removeMember(conversation.id, targetUserId, user?.id);
                 alert("Xóa thành viên thành công!");
             } catch (error) {
                 console.error("Lỗi khi xóa thành viên:", error);
@@ -54,7 +73,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
                 if (!window.confirm("Bạn là trưởng nhóm. Bạn có chắc chắn muốn rời khỏi nhóm này không?")) return;
             }
             // Gọi API để rời nhóm
-            await GroupService.leaveGroup(conversation.id, user.id);
+            await GroupService.leaveGroup(conversation.id, user?.id);
             alert("Rời nhóm thành công!");
             // Gọi callback để thông báo cho component cha
             if (onGroupDeleted) {
@@ -67,13 +86,14 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
     };
 
     // Kiểm tra quyền của người dùng hiện tại
-    const userRole = conversation.userGroups.find((member) => member.userId === user.id)?.role;
+    const userRole = conversation.userGroups.find((member) => member.userId === user?.id)?.role;
 
     return (
         <div className="relative">
             <div className="absolute bg-white shadow-md rounded" style={{
                 width: '320px',
                 maxHeight: '100vh',
+                height: '750px',
                 overflowY: 'auto',
                 backgroundColor: 'white',
                 boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
@@ -93,7 +113,6 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
                     />
                     <div className="d-flex align-items-center justify-content-center mt-2 gap-2">
                         <p className="fw-medium mb-0 text-center">{conversation.groupName}</p>
-                        {/* <button className="btn btn-light btn-sm rounded-circle p-1"> */}
                         <i
                             className="fas fa-pen text-secondary"
                             style={{
@@ -117,8 +136,8 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
                                 e.target.style.borderColor = '#ccc';
                                 e.target.style.color = '#007bff';
                             }}
+                            onClick={handleEditClick}
                         ></i>
-                        {/* </button> */}
                     </div>
 
                 </div>
@@ -136,18 +155,26 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
                 </div>
 
                 {/* Thành viên nhóm */}
-                <div className="d-flex justify-content-between align-items-center border-bottom py-2 px-2 pt-4 pb-4" onClick={() => setShowMembers(!showMembers)}>
+                <div className="d-flex justify-content-between align-items-center border-bottom py-2 px-2 pt-4 pb-4" onClick={() => setShowMembers(!showMembers)} style={{ cursor: 'pointer' }}>
                     <div className="d-flex align-items-center gap-2">
                         <i className="fas fa-users text-secondary"></i>
                         <span className="small">Thành viên nhóm</span>
                     </div>
                     <span className="small text-muted">{conversation.userGroups.length} thành viên</span>
+
+                    <style>
+                        {`
+                            .d-flex:hover {
+                            background-color: #f0f0f0;
+                            }
+                        `}
+                    </style>
                 </div>
 
                 {showMembers && (
                     <div className="px-3">
                         {conversation.userGroups?.map((member, index) => (
-                            <div key={index} className="d-flex align-items-center gap-3 border-bottom py-2">
+                            <div key={index} className="d-flex align-items-center gap-3 border-bottom py-2" style={{ cursor: 'pointer' }}>
                                 <img
                                     src={member.avatar}
                                     alt={member.userName}
@@ -161,7 +188,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
                                     </div>
                                 </div>
                                 {/* Nút xóa thành viên */}
-                                {(userRole === 'LEADER' || (userRole === 'CO_LEADER' && member.role === 'MEMBER')) && member.userId !== user.id && (
+                                {(userRole === 'LEADER' || (userRole === 'CO_LEADER' && member.role === 'MEMBER')) && member.userId !== user?.id && (
                                     <i
                                         className="btn btn-danger btn-sm ms-auto"
                                         onClick={() => handleRemoveMember(member.userId)}
@@ -236,15 +263,17 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
 
                 {/* Các hành động */}
                 <div className="py-3 px-2 small">
-                    <div className="d-flex align-items-center text-danger gap-2 mb-3 cursor-pointer"
+                    <div className="d-flex align-items-center text-danger gap-2 pb-3 pt-3"
+                        style={{ cursor: 'pointer' }}
                         onClick={handleLeaveGroup}>
                         <i className="fas fa-sign-out-alt"></i>
                         <span>Rời nhóm</span>
                     </div>
 
                     {/* Chỉ hiển thị nếu user là người tạo nhóm */}
-                    {user.id === conversation.creatorId && (
-                        <div className="d-flex align-items-center text-danger gap-2 mb-1 cursor-pointer"
+                    {user?.id === conversation.creatorId && (
+                        <div className="d-flex align-items-center text-danger gap-2 mb-2 pb-3 pt-3"
+                            style={{ cursor: 'pointer' }}
                             onClick={handleDeleteGroup}
                         >
                             <i className="fas fa-users-slash"></i>
@@ -253,8 +282,85 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
                     )}
                 </div>
             </div>
+            {/* Modal chỉnh sửa nhóm */}
+            {isEditingModalOpen && (
+                <div className="modal show d-flex align-items-center justify-content-center" onClick={handleModalClick}>
+                    <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+                        <EditGroupModal
+                            conversation={conversation}
+                            onClose={closeEditModal}
+                            onUpdateGroupInfo={onUpdateGroupInfo}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+
+// // Modal chỉnh sửa nhóm
+// const EditGroupModal = ({ conversation, onClose, onUpdateGroupInfo }) => {
+//     const [groupName, setGroupName] = useState(conversation.groupName);
+//     const [groupAvatar, setGroupAvatar] = useState(conversation.img);
+
+//     const handleGroupNameChange = (e) => {
+//         setGroupName(e.target.value);
+//     };
+
+//     const handleAvatarChange = (e) => {
+//         const file = e.target.files[0];
+//         if (file) {
+//             const url = URL.createObjectURL(file);
+//             setGroupAvatar(url);
+//         }
+//     };
+
+//     const handleSaveChanges = () => {
+//         // Cập nhật thông tin nhóm
+//         onUpdateGroupInfo(groupName, groupAvatar);
+//         onClose();
+//     };
+
+//     return (
+//         <div className="modal show d-flex align-items-center justify-content-center" onClick={onClose}>
+//             <div className="modal-dialog modal-dialog-centered">
+//                 <div className="modal-content" style={{ width: "400px" }}>
+//                     <div className="modal-header">
+//                         <h5 className="modal-title">Chỉnh sửa thông tin nhóm</h5>
+//                         <button type="button" className="close" onClick={onClose}>×</button>
+//                     </div>
+//                     <div className="modal-body">
+//                         <div className="d-flex flex-column align-items-center">
+//                             {/* Hiển thị avatar */}
+//                             <img
+//                                 src={groupAvatar}
+//                                 alt="Avatar"
+//                                 className="rounded-circle"
+//                                 style={{ width: "80px", height: "80px", objectFit: "cover" }}
+//                             />
+//                             <input
+//                                 type="file"
+//                                 accept="image/*"
+//                                 onChange={handleAvatarChange}
+//                                 className="mt-2 mb-3"
+//                             />
+//                             <input
+//                                 type="text"
+//                                 value={groupName}
+//                                 onChange={handleGroupNameChange}
+//                                 className="form-control mb-2"
+//                                 placeholder="Tên nhóm"
+//                             />
+//                         </div>
+//                     </div>
+//                     <div className="modal-footer">
+//                         <button type="button" className="btn btn-secondary" onClick={onClose}>Hủy</button>
+//                         <button type="button" className="btn btn-primary" onClick={handleSaveChanges}>Lưu thay đổi</button>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+//     );
+// };
 
 export default GroupMenuModal;

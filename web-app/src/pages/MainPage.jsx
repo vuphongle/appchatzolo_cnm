@@ -397,6 +397,7 @@ const MainPage = () => {
         fetchGroupMembers();
     }, [groupIds]);  // Chạy lại khi groupIds thay đổi
     const [conversations, setConversations] = useState([]);
+
     // Hàm xử lý khi nhóm bị xóa
     const handleGroupDeleted = (groupId) => {
         setConversations((prev) => prev.filter((conv) => conv.id !== groupId));
@@ -418,6 +419,35 @@ const MainPage = () => {
         setMyUser(updatedUser);
         localStorage.setItem("my_user", JSON.stringify(updatedUser));
     };
+
+    //Hàm xử lý khi thay đổi thông tin nhóm
+    const onUpdateGroupInfo = (groupId, newGroupName, newGroupAvatar) => {
+        // Cập nhật chỉ groupName và img trong conversations
+        setConversations((prev) =>
+            prev.map((conversation) =>
+                conversation.id === groupId
+                    ? { ...conversation, groupName: newGroupName, img: newGroupAvatar }
+                    : conversation
+            )
+        );
+
+        // Cập nhật lại MyUser trong context, không thay đổi các thuộc tính khác
+        const updatedUser = {
+            ...MyUser,
+            my_user: {
+                ...MyUser.my_user,
+                groupIds: MyUser.my_user.groupIds,
+            },
+        };
+
+        // Cập nhật lại MyUser trong context
+        setMyUser(updatedUser);
+
+        // Cập nhật lại my_user trong localStorage
+        localStorage.setItem("my_user", JSON.stringify(updatedUser));
+
+    };
+
 
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
@@ -946,7 +976,7 @@ const MainPage = () => {
 
                 // Nếu tin nhắn chưa được đọc, đánh dấu là đã đọc
                 if (incomingMessage.isRead === false) {
-                    MessageService.savereadMessages(MyUser.my_user.id, selectedChat.id)
+                    MessageService.savereadMessages(MyUser?.my_user?.id, selectedChat.id)
                         .then(() => {
                             // Cập nhật trạng thái của tin nhắn trong chatMessages
                             setChatMessages((prevMessages) =>
@@ -1898,7 +1928,7 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} onSelectChat={handleSelectChat}
+                return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser?.my_user?.id} friendRequests={friendRequests} onSelectChat={handleSelectChat}
                     avatar_default={avatar_default}
                     MyUser={MyUser}
                     isUserInfoModalOpen={isUserInfoModalOpen}
@@ -2406,6 +2436,7 @@ const MainPage = () => {
                     conversation={selectedChat}
                     user={MyUser?.my_user}
                     onGroupDeleted={handleGroupDeleted}
+                    onUpdateGroupInfo={onUpdateGroupInfo}
                     onClose={() => setIsMenuModalOpen(false)}
                 />
             )}
