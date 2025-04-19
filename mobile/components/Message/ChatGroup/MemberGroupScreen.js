@@ -6,7 +6,7 @@ import { UserContext } from '../../../context/UserContext';
 import MemberInfoModal from './MemberInfoModal';  // Import modal mới
 
 const MemberGroupScreen = ({ route, navigation }) => {
-  const { infoMemberGroup } = route.params;
+  const { infoMemberGroup, infoGroup } = route.params;
   const { user } = React.useContext(UserContext);
 
   const filteredMembers = infoMemberGroup.filter(member => member.userId == user?.id);
@@ -66,6 +66,7 @@ const MemberGroupScreen = ({ route, navigation }) => {
         onClose={() => setModalVisible(false)}
         member={selectedMember}
         filteredMembers={filteredMembers[0]}
+        infoGroup={infoGroup}
       />
     </View>
   );

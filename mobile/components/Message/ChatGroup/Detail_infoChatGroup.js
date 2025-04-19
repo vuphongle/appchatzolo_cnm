@@ -180,7 +180,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingsItem} onPress ={() => navigation.navigate('MemberGroupScreen', { infoMemberGroup: infoMemberGroup })}>
+          <TouchableOpacity style={styles.settingsItem} onPress ={() => navigation.navigate('MemberGroupScreen', { infoMemberGroup: infoMemberGroup, infoGroup: infoGroup })}>
             <View style={styles.leftContainer}>
                 <AntDesign name="team" size={24}/>
                 <Text style={[styles.settingsItemText]}>

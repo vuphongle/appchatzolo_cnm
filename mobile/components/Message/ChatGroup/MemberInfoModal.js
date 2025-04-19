@@ -1,8 +1,83 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import GroupService from '../../../services/GroupService';
 
-const MemberInfoModal = ({ visible, onClose, member, filteredMembers }) => {
+const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup }) => {
+  const handlePromoteToLeader = async () => {
+      const isConfirmed = await new Promise((resolve) => {
+          Alert.alert(
+              'Xác nhận thăng cấp',
+              'Bạn có chắc chắn muốn thăng cấp thành viên này lên phó nhóm không?',
+              [
+                  {
+                      text: 'Hủy',
+                      onPress: () => resolve(false),
+                      style: 'cancel',
+                  },
+                  {
+                      text: 'Đồng ý',
+                      onPress: () => resolve(true),
+                  },
+              ],
+              { cancelable: false }
+          );
+      });
+
+      if (isConfirmed) {
+          try {
+              const response = await GroupService.promoteToCoLeader({
+                  groupId: infoGroup.id,
+                  targetUserId: member.userId,
+                  promoterId: filteredMembers.userId,
+              });
+              Alert.alert('Thăng cấp thành công', 'Thăng cấp thành viên lên phó nhóm thành công');
+              onClose();
+          } catch (error) {
+              console.error('Lỗi khi thăng cấp:', error);
+          }
+      } else {
+          console.log('Người dùng không đồng ý thăng cấp');
+      }
+  };
+
+  const handleDemoteToMember = async () => {
+      const isConfirmed = await new Promise((resolve) => {
+          Alert.alert(
+              'Xác nhận hạ cấp',
+              'Bạn có chắc chắn muốn hạ cấp thành viên này?',
+              [
+                  {
+                      text: 'Hủy',
+                      onPress: () => resolve(false),
+                      style: 'cancel',
+                  },
+                  {
+                      text: 'Đồng ý',
+                      onPress: () => resolve(true),
+                  },
+              ],
+              { cancelable: false }
+          );
+      });
+
+      if (isConfirmed) {
+          try {
+              const response = await GroupService.demoteToMember({
+                  groupId: infoGroup.id,
+                  targetUserId: member.userId,
+                  promoterId: filteredMembers.userId,
+              });
+              Alert.alert('Hạ cấp thành công', 'Hạ cấp thành viên thành công');
+              onClose();
+          } catch (error) {
+              console.error('Lỗi khi hạ cấp:', error);
+          }
+      } else {
+          console.log('Người dùng không đồng ý hạ cấp');
+      }
+  }
+
   if (!member) return null;
 
   return (
@@ -48,10 +123,16 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers }) => {
               <Text style={styles.actionButtonText}>Xem trang cá nhân</Text>
             </TouchableOpacity>
 
-            {(filteredMembers.role === 'LEADER' && filteredMembers.userId !== member.userId) && (
-              <TouchableOpacity style={styles.actionButton}>
+            {(filteredMembers.role === 'LEADER' && filteredMembers.userId !== member.userId && member.role !== 'CO_LEADER') && (
+              <TouchableOpacity style={styles.actionButton} onPress={handlePromoteToLeader}>
                 <Text style={styles.actionButtonText}>Bổ nhiệm làm phó nhóm</Text>
               </TouchableOpacity>
+            )}
+
+            {(filteredMembers.role === 'LEADER' && filteredMembers.userId !== member.userId && member.role === 'CO_LEADER') && (
+                <TouchableOpacity style={styles.actionButton} onPress={handleDemoteToMember}>
+                    <Text style={styles.actionButtonText}>Hạ cấp thành viên</Text>
+                </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.actionButton}>
