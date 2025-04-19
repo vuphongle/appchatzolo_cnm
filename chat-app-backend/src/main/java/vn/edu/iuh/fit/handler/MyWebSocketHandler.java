@@ -242,6 +242,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+
 //    public void sendGroupChatMessage(String groupId, Message message) throws GroupException {
 //        // Lấy thông tin nhóm từ groupService
 //        GroupResponse groupResponse = groupService.getGroupMembers(groupId);

@@ -665,7 +665,7 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-
+            //console.log("Incoming message loại:", incomingMessage); // Log thông báo nhận được
             if (incomingMessage.type === "DELETE_MESSAGE") {
                 // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
                 // thì xóa luôn phần hiển thị
@@ -834,7 +834,7 @@ const MainPage = () => {
 
                 // Kiểm tra nếu selectedChat là nhóm
                 if (selectedChat.type === "group") {
-                    if (incomingMessage.receiverID === selectedChat.id) {
+                    if (selectedChat && selectedChat.type === "group" && incomingMessage.receiverID === selectedChat.id) {
                         const validSendDate = moment(incomingMessage.sendDate).isValid()
                             ? moment(incomingMessage.sendDate).toISOString()
                             : new Date().toISOString();
@@ -1354,17 +1354,18 @@ const MainPage = () => {
         setIsMenuModalOpen((prev) => !prev);
     };
 
-    const sendMessageToGroup = (message, groupId, userIds) => {
-        // Gửi tin nhắn đến tất cả thành viên trong nhóm
-        userIds.forEach(userId => {
-            // Gửi tin nhắn qua WebSocket
-            sendMessage({
-                ...message,
-                receiverID: groupId, // Dùng receiverID là ID nhóm
-                userId, // Gửi đến từng người dùng trong nhóm
-            });
-        });
-    };
+    // const sendMessageToGroup = (message, groupId, userIds) => {
+    //     // Gửi tin nhắn đến tất cả thành viên trong nhóm
+    //     userIds.forEach(userId => {
+    //         // Gửi tin nhắn qua WebSocket
+    //         sendMessage({
+    //             ...message,
+    //             receiverID: groupId, // Dùng receiverID là ID nhóm
+    //             userId, // Gửi đến từng người dùng trong nhóm
+    //         });
+
+    //     });
+    // };
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
             if (incomingMessage.type === "CHAT" && selectedChat) {

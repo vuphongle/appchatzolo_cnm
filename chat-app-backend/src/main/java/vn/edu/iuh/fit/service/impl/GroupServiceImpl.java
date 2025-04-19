@@ -28,6 +28,7 @@ public class GroupServiceImpl implements GroupService {
     private UserRepository userRepository;
     @Autowired
     private MessageRepository messageRepository;
+    @Autowired MessageServiceImpl messageServiceImpl;
     @Autowired
     private ObjectProvider<MyWebSocketHandler> myWebSocketHandlerProvider;
 
@@ -473,7 +474,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public void sendMessageToGroup(MessageRequest request) throws GroupException {
+    public void sendMessageToGroup(MessageRequest request) throws GroupException, JsonProcessingException {
         Group group = groupRepository.getGroupById(request.getReceiverID());
         if (group == null) {
             throw new GroupException("Nhóm không tồn tại.");
@@ -497,5 +498,22 @@ public class GroupServiceImpl implements GroupService {
         message.setDeletedBySender(false);
         message.setDeletedByReceiver(false);
         messageRepository.save(message);
+
+
+
+//        // Gửi tin nhắn tới tất cả các thành viên trong nhóm
+//        if(message.getStatus().equals("chat-group")) {
+//            List<Message> invitations = messageServiceImpl.getInvitationsByReceiverId(message.getReceiverID());
+//            int updatedCount = invitations.size();
+//
+//            // Lấy MyWebSocketHandler một cách lazy khi cần dùng
+//            MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+//            if (myWebSocketHandler != null) {
+//                myWebSocketHandler.sendFriendRequestNotification(message.getReceiverID(), updatedCount);
+//            } else {
+//                // Xử lý nếu không tìm thấy bean (nếu cần)
+//                System.err.println("MyWebSocketHandler bean is not available.");
+//            }
+//        }
     }
 }
