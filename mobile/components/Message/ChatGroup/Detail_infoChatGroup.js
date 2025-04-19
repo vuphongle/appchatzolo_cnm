@@ -31,6 +31,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const { user, setUser, infoGroup, infoMemberGroup } = useContext(UserContext);
   const [isLeader, setIsLeader] = useState(infoGroup?.creatorId === user?.id); // Assuming leader is the creator of the group
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDeleteGroupByleader = () => {
     Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
@@ -59,9 +60,37 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
     ]);
   };
 
-  const handleOutGroup = () => {
-
-  }
+  const handleOutGroup = async () => {
+    if (isLeader) {
+      Alert.alert('Thông báo', 'Bạn không thể rời nhóm vì bạn là người tạo nhóm');
+    } else {
+      // Cảnh báo xác nhận
+      Alert.alert('Xác nhận', 'Bạn có chắc muốn rời nhóm?', [
+        {
+          text: 'Hủy',
+          style: 'cancel',
+        },
+        {
+          text: 'Rời nhóm',
+          onPress: async () => {
+            setIsLoading(true); // Bật loading khi bắt đầu xử lý
+            try {
+              const response = await GroupService.leaveGroup(infoGroup.id, user?.id, null);
+              if (response.success) {
+                navigation.navigate('MainTabs');
+              } else {
+                Alert.alert('Lỗi', response.message || 'Không thể rời nhóm');
+              }
+            } catch (error) {
+              Alert.alert('Lỗi', 'Có lỗi xảy ra khi rời nhóm: ' + error.message);
+            } finally {
+              setIsLoading(false); // Tắt loading khi hoàn thành xử lý
+            }
+          },
+        },
+      ]);
+    }
+  };
 
   const updateName = () => {
     Alert.alert('Thông báo', 'Đổi tên thành công!');
@@ -235,6 +264,12 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
 
         </ScrollView>
 
+        {isLoading && (
+            <View style={styles.loadingOverlay}>
+              <Text>Đang xử lý...</Text>
+            </View>
+        )}
+
         <Portal>
           <Dialog
             visible={isDialogVisible}
@@ -329,5 +364,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 10,
     color: '#333',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

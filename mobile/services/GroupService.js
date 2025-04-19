@@ -106,5 +106,16 @@ const GroupService = {
           throw error; // Nếu muốn xử lý lỗi cụ thể sau
       }
     },
+
+    // Rời nhóm
+    leaveGroup: async (groupId, currentLeaderId, newLeaderId) => {
+        try {
+          const response = await axios.delete(`${IPV4}/groups/leaveGroup/${groupId}/${currentLeaderId}/${newLeaderId}`);
+          console.log("response", response);
+          return response.data;
+        } catch (error) {
+          throw error.response ? error.response.data : error;
+        }
+      },
   };
 export default GroupService;

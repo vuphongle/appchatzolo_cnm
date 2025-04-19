@@ -188,6 +188,9 @@ public class GroupController {
             @PathVariable String groupId,
             @PathVariable String currentLeaderId,
             @PathVariable String newLeaderId) throws GroupException {
+        System.out.println("Group ID: " + groupId);
+        System.out.println("Current Leader ID: " + currentLeaderId);
+        System.out.println("New Leader ID: " + newLeaderId);
         groupService.leaveGroup(groupId, currentLeaderId, newLeaderId);
         return ResponseEntity.ok(
                 BaseResponse
