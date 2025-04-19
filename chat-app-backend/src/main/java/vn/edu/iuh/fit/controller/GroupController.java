@@ -182,13 +182,16 @@ public class GroupController {
         );
     }
 
-    @DeleteMapping("/leaveGroup/{groupId}/{userId}")
-    public ResponseEntity<BaseResponse<String>> leaveGroup(@PathVariable String groupId, @PathVariable String userId) throws GroupException {
-        groupService.leaveGroup(groupId, userId);
+    @DeleteMapping("/leaveGroup/{groupId}/{currentLeaderId}/{newLeaderId}")
+    public ResponseEntity<BaseResponse<String>> leaveGroup(
+            @PathVariable String groupId,
+            @PathVariable String currentLeaderId,
+            @PathVariable String newLeaderId) throws GroupException {
+        groupService.leaveGroup(groupId, currentLeaderId, newLeaderId);
         return ResponseEntity.ok(
                 BaseResponse
                         .<String>builder()
-                        .data(userId)
+                        .data(groupId)
                         .success(true)
                         .message("Rời nhóm thành công")
                         .build()
