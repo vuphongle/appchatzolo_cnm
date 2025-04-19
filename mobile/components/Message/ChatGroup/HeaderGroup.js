@@ -22,9 +22,7 @@ function HeaderGroup({ name, id, avatar }) {
   const getGroupMembers = async () => {
     try {
       const response = await GroupService.getGroupMembers(id);
-      console.log('Dữ liệu trả về từ API:', response.data);
 
-      // Kiểm tra dữ liệu trả về từ API là mảng và lấy số lượng thành viên
       if (response.data && Array.isArray(response.data) && response.data[0].userGroups) {
         const userGroups = response.data[0].userGroups;
         setInfoMemberGroup(userGroups);

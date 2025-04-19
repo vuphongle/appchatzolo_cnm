@@ -3,7 +3,7 @@ import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'r
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import GroupService from '../../../services/GroupService';
 
-const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup }) => {
+const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup, refreshMemberGroupData }) => {
   const handlePromoteToLeader = async () => {
       const isConfirmed = await new Promise((resolve) => {
           Alert.alert(
@@ -32,6 +32,7 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup 
                   promoterId: filteredMembers.userId,
               });
               Alert.alert('Thăng cấp thành công', 'Thăng cấp thành viên lên phó nhóm thành công');
+              refreshMemberGroupData();
               onClose();
           } catch (error) {
               console.error('Lỗi khi thăng cấp:', error);
@@ -69,6 +70,7 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup 
                   promoterId: filteredMembers.userId,
               });
               Alert.alert('Hạ cấp thành công', 'Hạ cấp thành viên thành công');
+              refreshMemberGroupData();
               onClose();
           } catch (error) {
               console.error('Lỗi khi hạ cấp:', error);

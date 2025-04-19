@@ -3,10 +3,12 @@ import { TouchableOpacity, View, Text, StyleSheet, FlatList, Image } from 'react
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HeaderMemberGroupScreen from './HeaderMemberGroupScreen';
 import { UserContext } from '../../../context/UserContext';
-import MemberInfoModal from './MemberInfoModal';  // Import modal mới
+import MemberInfoModal from './MemberInfoModal';
+import GroupService from '../../../services/GroupService';
 
 const MemberGroupScreen = ({ route, navigation }) => {
-  const { infoMemberGroup, infoGroup } = route.params;
+  const {infoGroup } = route.params;
+  const [infoMemberGroup, setInfoMemberGroup] = useState(route.params.infoMemberGroup);
   const { user } = React.useContext(UserContext);
 
   const filteredMembers = infoMemberGroup.filter(member => member.userId == user?.id);
@@ -16,6 +18,23 @@ const MemberGroupScreen = ({ route, navigation }) => {
 
   const sortedMembers = [...infoMemberGroup];
   sortedMembers.sort((a, b) => (a.userId === user?.id ? -1 : 1));
+  const refreshMemberGroupData = async () => {
+    try {
+          const response = await GroupService.getGroupMembers(infoGroup.id);
+
+          if (response.data && Array.isArray(response.data) && response.data[0].userGroups) {
+            const userGroups = response.data[0].userGroups;
+            setInfoMemberGroup(userGroups);
+          } else {
+            console.error('Dữ liệu không hợp lệ:', response.data);
+            setInfoMemberGroup([]);
+          }
+
+        } catch (error) {
+          console.error('Lỗi khi lấy thông tin thành viên nhóm:', error);
+          setInfoMemberGroup([]);
+        }
+  };
 
   const renderItem = ({ item }) => {
     const displayName = item.userId === user?.id ? 'Bạn' : item.userName;
@@ -67,6 +86,7 @@ const MemberGroupScreen = ({ route, navigation }) => {
         member={selectedMember}
         filteredMembers={filteredMembers[0]}
         infoGroup={infoGroup}
+        refreshMemberGroupData={refreshMemberGroupData}
       />
     </View>
   );
