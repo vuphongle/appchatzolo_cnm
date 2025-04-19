@@ -102,9 +102,9 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
           onPress={() => Alert.alert('Tìm kiếm', 'Chức năng đang phát triển')}
         />
         <QuickActionButton
-          icon="user"
-          label="Xem trang cá nhân"
-          onPress={() => Alert.alert('Thông báo', 'Chức năng đang phát triển')}
+            icon="user-plus"
+            label="Thêm thành viên"
+            onPress={() => navigation.navigate('AddMemberGroupScreen', { infoGroup: infoGroup, infoMemberGroup: infoMemberGroup })}
         />
         <QuickActionButton
           icon="image"
@@ -210,9 +210,11 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
             >
                 <View style={styles.leftContainer}>
                   <Ionicons name="close-circle-outline" size={24} color="#FF0000" />
-                  <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
+                  {user?.id === infoGroup?.creatorId && (
+                    <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
                     Giải tán nhóm
                   </Text>
+                  )}
                 </View>
             </TouchableOpacity>
           )}

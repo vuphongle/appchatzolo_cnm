@@ -79,7 +79,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
       if (isMounted) {
      
         if (error.response?.status !== 404) {
-          Alert.alert('Error', 'Failed to load message history');
+          console.error('Error details:', error);
         }
       }
     }
