@@ -24,7 +24,7 @@ public interface GroupService {
     void removeMember(String groupId, String targetUserId, String actorUserId) throws GroupException;
     void promoteToCoLeader(String groupId, String targetUserId, String promoterId)throws GroupException;
     void demoteToMember(String groupId, String targetUserId, String promoterId)throws GroupException;
-    void leaveGroup(String groupId, String userId) throws GroupException;
+    void leaveGroup(String groupId, String currentLeaderId, String newLeaderId) throws GroupException;
     GroupRole getUserRole(String groupId, String userId);
     boolean isLeader(String groupId, String userId);
     GroupResponse getGroupMembers(String groupId) throws GroupException;

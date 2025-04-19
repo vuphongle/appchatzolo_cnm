@@ -8,7 +8,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
     const [showMembers, setShowMembers] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [selectedNewLeader, setSelectedNewLeader] = useState(null);
-
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Hàm xóa nhóm
     const handleDeleteGroup = async () => {
@@ -48,23 +48,22 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
 
         if (!window.confirm("Bạn có chắc chắn muốn rời khỏi nhóm này không?")) return;
 
-        try {
-            if (isLeader) {
-                // Nếu người dùng là trưởng nhóm, yêu cầu xác nhận trước khi rời nhóm
-                if (!window.confirm("Bạn là trưởng nhóm. Bạn có chắc chắn muốn rời khỏi nhóm này không?")) return;
+        if (isLeader) {
+            setShowTransferModal(true); // mở modal chọn người kế nhiệm
+        } else {
+            try {
+                await GroupService.leaveGroup(conversation.id, user.id, "null");
+                alert("Rời nhóm thành công!");
+                if (onGroupDeleted) {
+                    onGroupDeleted(conversation.id);
+                }
+            } catch (error) {
+                console.error("Lỗi khi rời nhóm:", error);
+                alert(error?.message || "Đã có lỗi xảy ra.");
             }
-            // Gọi API để rời nhóm
-            await GroupService.leaveGroup(conversation.id, user.id);
-            alert("Rời nhóm thành công!");
-            // Gọi callback để thông báo cho component cha
-            if (onGroupDeleted) {
-                onGroupDeleted(conversation.id);
-            }
-        } catch (error) {
-            console.error("Lỗi khi rời nhóm:", error);
-            alert(error?.message || "Đã có lỗi xảy ra.");
         }
     };
+
 
     // Kiểm tra quyền của người dùng hiện tại
     const userRole = conversation.userGroups.find((member) => member.userId === user.id)?.role;
@@ -252,6 +251,78 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted }) => {
                         </div>
                     )}
                 </div>
+                {showTransferModal && (
+                    <div className="modal d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
+                        <div className="modal-dialog">
+                            <div className="modal-content" style={{ width: "500px", maxHeight: "90vh", overflow: "hidden" }}>
+                                <div className="modal-header">
+                                    <h5 className="modal-title">Chọn trưởng nhóm mới trước khi rời nhóm</h5>
+                                    <i className="fas fa-times" onClick={() => setShowTransferModal(false)} style={{ cursor: "pointer" }}></i>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="mb-3">
+                                        <div className="input-group">
+                                            <input
+                                                type="text"
+                                                className="form-control rounded-pill "
+                                                placeholder="Nhập tên, số điện thoại, hoặc danh sách số điện thoại"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <hr />
+                                    {conversation.userGroups
+                                        .filter(member => member.userId !== user.id)
+                                        .filter(member =>
+                                            member.userName.toLowerCase().includes(searchTerm.toLowerCase())
+                                        )
+                                        .map((member) => (
+                                            <div
+                                                key={member.userId}
+                                                className="d-flex align-items-center gap-3 py-2 px-2"
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedNewLeader === member.userId}
+                                                    onChange={() => setSelectedNewLeader(member.userId)}
+                                                    className="form-check-input me-2 rounded-pill"
+                                                />
+                                                <img
+                                                    src={member.avatar}
+                                                    alt={member.userName}
+                                                    className="rounded-circle"
+                                                    style={{ width: 40, height: 40 }}
+                                                />
+                                                <span>{member.userName}</span>
+                                            </div>
+                                        ))}
+                                </div>
+                                <div className="modal-footer">
+                                    <button className="btn btn-secondary" onClick={() => setShowTransferModal(false)}>Hủy</button>
+                                    <button
+                                        className="btn btn-primary"
+                                        disabled={!selectedNewLeader}
+                                        onClick={async () => {
+                                            try {
+                                                await GroupService.leaveGroup(conversation.id, user.id, selectedNewLeader);
+                                                alert("Rời nhóm và chuyển quyền trưởng nhóm thành công!");
+                                                setShowTransferModal(false);
+                                                if (onGroupDeleted) onGroupDeleted(conversation.id);
+                                            } catch (error) {
+                                                console.error("Lỗi khi rời nhóm:", error);
+                                                alert(error?.message || "Đã có lỗi xảy ra.");
+                                            }
+                                        }}
+                                    >
+                                        Xác nhận
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

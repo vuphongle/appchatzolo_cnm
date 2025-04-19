@@ -352,39 +352,42 @@ public class GroupServiceImpl implements GroupService {
         }
     }
 
+    // Rời nhóm
     @Override
-    public void leaveGroup(String groupId, String userId) throws GroupException {
-        // Kiểm tra xem người dùng có phải là thành viên của nhóm không
-        UserGroup userGroup = groupRepository.getUserGroup(userId, groupId);
-        if (userGroup == null) {
+    public void leaveGroup(String groupId, String currentLeaderId, String newLeaderId) throws GroupException {
+        UserGroup currentLeader  = groupRepository.getUserGroup(currentLeaderId, groupId);
+        if (currentLeader == null) {
             throw new GroupException("Người dùng không phải là thành viên của nhóm.");
         }
-        // Nếu là LEADER, phải chuyển quyền trước khi rời nhóm
-        if (userGroup.getRole().equals(GroupRole.LEADER.name())) {
+        if (currentLeader.getRole().equals(GroupRole.LEADER.name())) {
             List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
-            if (members.size() > 1) {
-                // Chuyển quyền cho một thành viên khác
-                UserGroup newLeader = members.stream()
-                        .filter(ug -> !ug.getUserId().equals(userId))
-                        .findFirst()
-                        .orElseThrow(() -> new GroupException("Không có thành viên nào khác để chuyển quyền."));
-                newLeader.setRole(GroupRole.LEADER.name());
-                groupRepository.addUserToGroup(newLeader);
-            } else {
+            if (members.size() <= 1) {
                 throw new GroupException("Không thể rời nhóm khi bạn là nhóm trưởng và không có thành viên nào khác.");
             }
+
+            if (newLeaderId == null || newLeaderId.isEmpty()) {
+                throw new GroupException("Vui lòng chọn thành viên khác làm nhóm trưởng trước khi rời nhóm.");
+            }
+
+            UserGroup newLeader = groupRepository.getUserGroup(newLeaderId, groupId);
+            if (newLeader == null) {
+                throw new GroupException("Người được chọn không phải là thành viên của nhóm.");
+            }
+
+            newLeader.setRole(GroupRole.LEADER.name());
+            groupRepository.addUserToGroup(newLeader);
         }
+
         // Xóa người dùng khỏi nhóm
-        groupRepository.removeUserFromGroup(userId, groupId);
+        groupRepository.removeUserFromGroup(currentLeaderId, groupId);
 
         // Cập nhật groupIds của người dùng
-        User user = userRepository.findById(userId);
+        User user = userRepository.findById(currentLeaderId);
         if (user != null && user.getGroupIds() != null) {
             user.getGroupIds().remove(groupId);
             userRepository.save(user);
         }
     }
-
 
     //Lấy role của người dùng trong nhóm
     @Override

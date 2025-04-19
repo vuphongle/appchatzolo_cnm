@@ -113,9 +113,9 @@ const GroupService = {
     },
 
     // Thành viên rời khỏi nhóm
-    leaveGroup: async (groupId, userId) => {
+    leaveGroup: async (groupId, currentLeaderId, newLeaderId) => {
         try {
-            const response = await axios.delete(`${API_BASE_URL}/leaveGroup/${groupId}/${userId}`);
+            const response = await axios.delete(`${API_BASE_URL}/leaveGroup/${groupId}/${currentLeaderId}/${newLeaderId}`);
             return response.data;
         } catch (error) {
             throw error.response ? error.response.data : error;
