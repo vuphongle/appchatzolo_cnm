@@ -7,9 +7,7 @@ import MemberInfoModal from './MemberInfoModal';
 import GroupService from '../../../services/GroupService';
 
 const MemberGroupScreen = ({ route, navigation }) => {
-  const {infoGroup } = route.params;
-  const [infoMemberGroup, setInfoMemberGroup] = useState(route.params.infoMemberGroup);
-  const { user } = React.useContext(UserContext);
+  const { user, infoGroup, infoMemberGroup, setInfoMemberGroup } = React.useContext(UserContext);
 
   const filteredMembers = infoMemberGroup.filter(member => member.userId == user?.id);
 

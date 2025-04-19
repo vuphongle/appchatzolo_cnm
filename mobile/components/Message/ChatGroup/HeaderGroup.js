@@ -11,8 +11,7 @@ import { UserContext } from '../../../context/UserContext';
 function HeaderGroup({ name, id, avatar }) {
   const navigation = useNavigation();
   const [onlineStatus, setOnlineStatus] = useState(false);
-  const { user, setUser } = useContext(UserContext);
-  const [infoMemberGroup, setInfoMemberGroup] = useState([]);
+  const { user, setUser, infoMemberGroup, setInfoMemberGroup, infoGroup, setInfoGroup } = useContext(UserContext);
   useEffect(() => {
     getGroupMembers(); // Gọi hàm để lấy danh sách thành viên nhóm khi component được mount
   }, [id]); // Chỉ chạy một lần khi component được mount
@@ -38,10 +37,10 @@ function HeaderGroup({ name, id, avatar }) {
   };
 
   const handlePressMenu = async () => {
-    const infoGroup = await GroupService.getGroupByID(id);
-    console.log('Thông tin nhóm:', infoGroup);
+    const response = await GroupService.getGroupByID(id);
+    setInfoGroup(response.data);
     if (user) {
-      navigation.navigate('Detail_infoChatGroup', { infoGroup: infoGroup.data, infoMemberGroup: infoMemberGroup });
+      navigation.navigate('Detail_infoChatGroup');
     }
   };
 

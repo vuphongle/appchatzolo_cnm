@@ -12,6 +12,8 @@ export const UserProvider = ({ children }) => {
   const [isChange, setIsChange] = useState("");
   const [accept, setAccept] = useState(false);
   const [reject, setReject] = useState(false);
+  const [infoGroup, setInfoGroup] = useState(null);
+  const [infoMemberGroup, setInfoMemberGroup] = useState([]);
 
   // Hàm lấy thông tin người dùng từ server dựa trên số điện thoại
   const fetchUserProfile = async (phoneNumber) => {
@@ -85,6 +87,10 @@ export const UserProvider = ({ children }) => {
         setAccept,
         reject,
         setReject,
+        infoGroup,
+        setInfoGroup,
+        infoMemberGroup,
+        setInfoMemberGroup,
       }}
     >
       {!loading && children}

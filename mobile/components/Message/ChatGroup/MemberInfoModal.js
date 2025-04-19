@@ -80,6 +80,40 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
       }
   }
 
+  const handleDeleteMember = async () => {
+      const isConfirmed = await new Promise((resolve) => {
+          Alert.alert(
+              'Xác nhận xóa thành viên',
+              'Bạn có chắc chắn muốn xóa thành viên này?',
+              [
+                  {
+                      text: 'Hủy',
+                      onPress: () => resolve(false),
+                      style: 'cancel',
+                  },
+                  {
+                      text: 'Đồng ý',
+                      onPress: () => resolve(true),
+                  },
+              ],
+              { cancelable: false }
+          );
+      });
+
+      if (isConfirmed) {
+          try {
+              const response = await GroupService.removeMember(infoGroup.id, member.userId, filteredMembers.userId);
+              Alert.alert('Xoa thành công', 'Xóa thành viên thành công');
+              refreshMemberGroupData();
+              onClose();
+          } catch (error) {
+              console.error('Lỗi khi xóa:', error);
+          }
+      } else {
+          console.log('Người dùng không đồng ý xóa');
+      }
+  }
+
   if (!member) return null;
 
   return (
@@ -142,7 +176,7 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
             </TouchableOpacity>
 
             {((filteredMembers.role === 'LEADER' || filteredMembers.role === 'CO_LEADER') && filteredMembers.userId !== member.userId) && (
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity style={styles.actionButton} onPress={handleDeleteMember}>
                 <Text style={styles.deleteButtonText}>Xóa khỏi nhóm</Text>
               </TouchableOpacity>
             )}

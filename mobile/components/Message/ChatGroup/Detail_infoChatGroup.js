@@ -26,12 +26,10 @@ import { UserContext } from '../../../context/UserContext';
 import GroupService from '../../../services/GroupService';
 
 const Detail_infoChatGroup = ({ route, navigation }) => {
-  const { infoGroup, infoMemberGroup } = route.params;
-
   const [nameChange, setNameChange] = useState(infoGroup?.name);
   const [isBFF, setIsBFF] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
-  const { user, setUser } = useContext(UserContext);
+  const { user, setUser, infoGroup, infoMemberGroup } = useContext(UserContext);
   const [isLeader, setIsLeader] = useState(infoGroup?.creatorId === user?.id); // Assuming leader is the creator of the group
 
   const handleDeleteGroupByleader = () => {
@@ -195,6 +193,18 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
 
           <TouchableOpacity
             style={styles.settingsItem}
+            onPress={handleDeleteGroup}
+          >
+            <View style={styles.leftContainer}>
+                <Ionicons name="trash" size={24} />
+                <Text style={[styles.settingsItemText]}>
+                  Xóa cuộc trò chuyện
+                </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.settingsItem}
             onPress={() => Alert.alert('Thông báo', 'Chức năng đang phát triển')}
           >
             <View style={styles.leftContainer}>
@@ -218,18 +228,6 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
                 </View>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={styles.settingsItem}
-            onPress={handleDeleteGroup}
-          >
-            <View style={styles.leftContainer}>
-                <Ionicons name="trash" size={24} color="#FF0000" />
-                <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
-                  Xóa cuộc trò chuyện
-                </Text>
-            </View>
-          </TouchableOpacity>
 
         </ScrollView>
 
