@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, FlatList, Image } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import HeaderMemberGroupScreen from './HeaderMemberGroupScreen';
 import { UserContext } from '../../../context/UserContext';
+import MemberInfoModal from './MemberInfoModal';  // Import modal mới
 
 const MemberGroupScreen = ({ route, navigation }) => {
   const { infoMemberGroup } = route.params;
   const { user } = React.useContext(UserContext);
+
+  const filteredMembers = infoMemberGroup.filter(member => member.userId == user?.id);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
 
   const sortedMembers = [...infoMemberGroup];
   sortedMembers.sort((a, b) => (a.userId === user?.id ? -1 : 1));
@@ -24,8 +30,13 @@ const MemberGroupScreen = ({ route, navigation }) => {
       roleText = 'Thành viên';
     }
 
+    const openMemberModal = () => {
+      setSelectedMember(item);
+      setModalVisible(true);
+    };
+
     return (
-      <TouchableOpacity style={styles.memberItem}>
+      <TouchableOpacity style={styles.memberItem} onPress={openMemberModal}>
         <View style={styles.memberLeftContainer}>
           <Image source={{ uri: item.avatar }} style={styles.avatar} />
         </View>
@@ -47,7 +58,14 @@ const MemberGroupScreen = ({ route, navigation }) => {
       <FlatList
         data={sortedMembers}
         renderItem={renderItem}
-        keyExtractor={(item) => (item.userId ? item.userId.toString() : Math.random().toString())} // fallback to random string
+        keyExtractor={(item) => (item.userId ? item.userId.toString() : Math.random().toString())}
+      />
+
+      <MemberInfoModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        member={selectedMember}
+        filteredMembers={filteredMembers[0]}
       />
     </View>
   );
