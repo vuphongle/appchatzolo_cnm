@@ -292,7 +292,7 @@ public class GroupServiceImpl implements GroupService {
             if (targetUser != null && targetUser.getGroupIds() != null) {
                 targetUser.getGroupIds().remove(groupId);
                 userRepository.save(targetUser);
-            }
+            }   
 
             // 4. Lấy danh sách thành viên trong nhóm để gửi thông báo
             List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
@@ -449,8 +449,19 @@ public class GroupServiceImpl implements GroupService {
 
     // Lấy nhóm theo ID
     @Override
-    public Group getGroupById(String groupId) {
-        return groupRepository.getGroupById(groupId);
+    public GroupResponse getGroupById(String groupId) throws GroupException {
+        // Kiểm tra xem nhóm có tồn tại hay không
+        Group group = groupRepository.getGroupById(groupId);
+        if (group == null) {
+            throw new GroupException("Nhóm không tồn tại.");
+        }
+        return GroupResponse.builder()
+                .id(group.getId())
+                .groupName(group.getGroupName())
+                .image(group.getImage())
+                .creatorId(group.getCreatorId())
+                .createdAt(group.getCreatedAt())
+                .build();
     }
 
     @Override

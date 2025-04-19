@@ -27,6 +27,7 @@ import { WebSocketProvider } from './context/Websocket';
 import CreateGroupScreen from './screens/CreateGroupScreen';
 import ChatGroup from './components/Message/ChatGroup/Chatnhom';
 import Detail_infoChatGroup from './components/Message/ChatGroup/Detail_infoChatGroup';
+import MemberGroupScreen from './components/Message/ChatGroup/MemberGroupScreen';
 Amplify.configure({
   ...awsConfig,
 });
@@ -126,6 +127,12 @@ const AppNavigator = () => {
           name="CreateGroupScreen"
           component={CreateGroupScreen}
           options={{ headerTitle: 'Nhóm mới' }}
+        />
+        <Stack.Screen
+          name="MemberGroupScreen"
+          component={MemberGroupScreen}
+          options={{ headerTitle: 'Thành viên nhóm' }}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

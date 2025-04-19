@@ -194,4 +194,18 @@ public class GroupController {
                         .build()
         );
     }
+
+    //Get group by ID
+    @GetMapping("/getGroupById/{groupId}")
+    public ResponseEntity<BaseResponse<GroupResponse>> getGroupById(@PathVariable String groupId) throws GroupException {
+        GroupResponse group = groupService.getGroupById(groupId);
+        return ResponseEntity.ok(
+                BaseResponse
+                        .<GroupResponse>builder()
+                        .data(group)
+                        .success(true)
+                        .message("Lấy thông tin nhóm thành công")
+                        .build()
+        );
+    }
 }

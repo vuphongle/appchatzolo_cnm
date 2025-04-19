@@ -21,40 +21,20 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
-import {IPV4} from '@env';
+import { IPV4 } from '@env';
 import { UserContext } from '../../../context/UserContext';
 import GroupService from '../../../services/GroupService';
-const Detail_infoChatGroup = ({ route, navigation }) => {
-  const { userFriend,groupId } = route.params;
 
-  const [nameChange, setNameChange] = useState(userFriend?.name);
+const Detail_infoChatGroup = ({ route, navigation }) => {
+  const { infoGroup, infoMemberGroup } = route.params;
+
+  const [nameChange, setNameChange] = useState(infoGroup?.name);
   const [isBFF, setIsBFF] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
-  const {user, setUser } = useContext(UserContext);
-const [GroupMembers, setGroupMembers] = useState([]); // State to hold group members
-const [isLeader, setIsLeader] = useState(false); 
+  const { user, setUser } = useContext(UserContext);
+  const [isLeader, setIsLeader] = useState(infoGroup?.creatorId === user?.id); // Assuming leader is the creator of the group
 
-    const getGroupMembers = async () => {
-        try {
-            const response = await GroupService.getGroupMembers(groupId); // Gọi API để lấy danh sách thành viên nhóm
-            setGroupMembers(response.data); // Cập nhật danh sách thành viên
-        } catch (error) {
-            console.error('Lỗi khi lấy danh sách thành viên nhóm:', error);
-        }
-    };
-    useEffect(() => {
-        getGroupMembers(); // Fetch group members when the component mounts
-        const isLeader = GroupMembers.some(
-          member => member.userId === user?.id && member.role === "LEADER"
-        );
-        if(isLeader) {
-          setIsLeader(true);
-        }
-        else {
-          setIsLeader(false);
-        }
-    }, [groupId]);
-   const handleDeleteGroupByleader = () => {
+  const handleDeleteGroupByleader = () => {
     Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
       {
         text: 'Hủy',
@@ -64,9 +44,10 @@ const [isLeader, setIsLeader] = useState(false);
         text: 'Xóa',
         onPress: async () => {
           try {
-            let userId= user?.id;
+            const groupId = infoGroup?.id;
+            const userId = user?.id;
             const response = await GroupService.deleteGroup(userId, groupId); // Gọi API để xóa nhóm
-              if (response.ok) {
+            if (response.ok) {
               Alert.alert('Thành công', 'Đã xóa cuộc trò chuyện');
               navigation.replace('MainTabs');
             } else {
@@ -79,7 +60,6 @@ const [isLeader, setIsLeader] = useState(false);
       },
     ]);
   };
-
 
   const updateName = () => {
     Alert.alert('Thông báo', 'Đổi tên thành công!');
@@ -99,35 +79,9 @@ const [isLeader, setIsLeader] = useState(false);
   };
 
   const handleDeleteGroup = () => {
-    Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
-      {
-        text: 'Hủy',
-        style: 'cancel',
-      },
-      {
-        text: 'Xóa',
-        onPress: async () => {
-          try {
-            const response = await fetch(`${IPV4}/messages/delete-chat/${user?.id}/${userFriend?.id}`, {
-              method: 'DELETE',
-            });
-
-            const result = await response.text();
-            if (response.ok) {
-              Alert.alert('Thành công', 'Đã xóa cuộc trò chuyện');
-              navigation.replace('MainTabs');
-            } else {
-              Alert.alert('Lỗi', result.message || 'Không thể xóa cuộc trò chuyện');
-            }
-          } catch (error) {
-            Alert.alert('Lỗi', 'Có lỗi xảy ra khi xóa cuộc trò chuyện: ' + error.message);
-          }
-        },
-      },
-    ]);
+    Alert.alert('Thông báo', 'Tính năng đang phát triển');
   };
 
-  // Components
   const Header = ({ onBack }) => (
     <View style={styles.header}>
       <TouchableOpacity onPress={onBack} style={styles.backButton}>
@@ -139,8 +93,8 @@ const [isLeader, setIsLeader] = useState(false);
 
   const ProfileSection = () => (
     <View style={styles.profileSection}>
-      <Image source={{ uri: userFriend?.avatar }} style={styles.profileImage} />
-      <Text style={styles.profileName}>{userFriend?.name}</Text>
+      <Image source={{ uri: infoGroup?.image }} style={styles.profileImage} />
+      <Text style={styles.profileName}>{infoGroup?.groupName}</Text>
       <View style={styles.quickActions}>
         <QuickActionButton
           icon="search"
@@ -150,15 +104,13 @@ const [isLeader, setIsLeader] = useState(false);
         <QuickActionButton
           icon="user"
           label="Xem trang cá nhân"
-          onPress={() =>
-            Alert.alert('Thông báo', 'Chức năng đang phát triển')
-          }
+          onPress={() => Alert.alert('Thông báo', 'Chức năng đang phát triển')}
         />
-          <QuickActionButton
-            icon="image"
-            label="Đổi hình nền"
-            onPress={handleImagePicker}
-          />
+        <QuickActionButton
+          icon="image"
+          label="Đổi hình nền"
+          onPress={handleImagePicker}
+        />
         <QuickActionButton
           icon="bell"
           label="Tắt thông báo"
@@ -185,25 +137,28 @@ const [isLeader, setIsLeader] = useState(false);
         <ScrollView>
           <ProfileSection />
 
-          {/* Settings Items */}
-            <TouchableOpacity
-              style={styles.settingsItem}
-              onPress={() => setIsDialogVisible(true)}
-            >
-              <Ionicons name="pencil" size={24} color="#828282" />
-              <Text style={styles.settingsItemText}>Đổi tên gợi nhớ</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.settingsItem}
+            onPress={() => setIsDialogVisible(true)}
+          >
+            <View style={styles.leftContainer}>
+                <Ionicons name="pencil" size={24}/>
+                <Text style={styles.settingsItemText}>Đổi tên gợi nhớ</Text>
+            </View>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.settingsItem}
             onPress={() => setIsBFF(!isBFF)}
           >
-            <MaterialCommunityIcons
-              name="star-outline"
-              size={24}
-              color="#828282"
-            />
-            <Text style={styles.settingsItemText}>Đánh dấu bạn thân</Text>
+            <View style={styles.leftContainer}>
+                <MaterialCommunityIcons
+                  name="star-outline"
+                  size={24}
+                />
+
+                <Text style={styles.settingsItemText}>Đánh dấu bạn thân</Text>
+            </View>
             <Switch
               value={isBFF}
               onValueChange={setIsBFF}
@@ -211,55 +166,71 @@ const [isLeader, setIsLeader] = useState(false);
             />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.settingsItem}
-          >
-            <MaterialCommunityIcons
-              name="clock-outline"
-              size={24}
-              color="#828282"
-            />
-            <Text style={styles.settingsItemText}>Nhật ký chung</Text>
+          <TouchableOpacity style={styles.settingsItem}>
+            <View style={styles.leftContainer}>
+              <MaterialCommunityIcons
+                name="clock-outline"
+                size={24}
+                />
+                <Text style={styles.settingsItemText}>Nhật ký chung</Text>
+            </View>
             <Ionicons
               name="chevron-forward-outline"
               size={24}
-              color="#828282"
-              style={{ marginLeft: 200 }}
             />
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.settingsItem} onPress ={() => navigation.navigate('MemberGroupScreen', { infoMemberGroup: infoMemberGroup })}>
+            <View style={styles.leftContainer}>
+                <AntDesign name="team" size={24}/>
+                <Text style={[styles.settingsItemText]}>
+                  Xem thành viên ({infoMemberGroup.length})
+                </Text>
+            </View>
+            <Ionicons
+              name="chevron-forward-outline"
+              size={24}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.settingsItem}
+            onPress={() => Alert.alert('Thông báo', 'Chức năng đang phát triển')}
+          >
+            <View style={styles.leftContainer}>
+                <MaterialCommunityIcons name="account-remove" size={24} />
+                <Text style={styles.settingsItemText}>Rời nhóm</Text>
+            </View>
+          </TouchableOpacity>
+
+          {isLeader && (
             <TouchableOpacity
-              style={[styles.settingsItem]}
-              onPress={handleDeleteGroup}
-            >
-              <Ionicons name="trash" size={24} color="#FF0000" />
-              <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
-                Xóa cuộc trò chuyện
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.settingsItem]}
-             
-            >
-              <AntDesign name="team" size={24} color="#FF0000" />
-              <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
-              {GroupMembers.length} thành viên
-              </Text>
-            </TouchableOpacity>
-            {isLeader && (
-            <TouchableOpacity
-              style={[styles.settingsItem]}
+              style={styles.settingsItem}
               onPress={handleDeleteGroupByleader}
             >
-               <Ionicons name="close-circle-outline" size={24} color="#FF0000" />
-              <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
-                Giải tán nhóm
-              </Text>
-            </TouchableOpacity>)}
-            
+                <View style={styles.leftContainer}>
+                  <Ionicons name="close-circle-outline" size={24} color="#FF0000" />
+                  <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
+                    Giải tán nhóm
+                  </Text>
+                </View>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.settingsItem}
+            onPress={handleDeleteGroup}
+          >
+            <View style={styles.leftContainer}>
+                <Ionicons name="trash" size={24} color="#FF0000" />
+                <Text style={[styles.settingsItemText, { color: '#FF0000' }]}>
+                  Xóa cuộc trò chuyện
+                </Text>
+            </View>
+          </TouchableOpacity>
+
         </ScrollView>
 
-        {/* Name Change Dialog */}
         <Portal>
           <Dialog
             visible={isDialogVisible}
@@ -341,9 +312,14 @@ const styles = StyleSheet.create({
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+  },
+  leftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   settingsItemText: {
     fontSize: 16,

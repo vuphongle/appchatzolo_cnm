@@ -6,16 +6,16 @@ import { useNavigation } from '@react-navigation/native';
 import UserService from '../../../services/UserService';
 import GroupService from '../../../services/GroupService';
 import Detail_infoChatGroup from './Detail_infoChatGroup';
-import { UserContext } from '../../../context/UserContext'; // Import UserContext
+import { UserContext } from '../../../context/UserContext';
 
 function HeaderGroup({ name, id, avatar }) {
   const navigation = useNavigation();
   const [onlineStatus, setOnlineStatus] = useState(false);
-  const { user, setUser } = useContext(UserContext); // Lấy user hiện tại từ UserContext
-  const [countMember, setCountMember] = useState(0); // Lưu số lượng thành viên
-useEffect(() => {
-  getGroupMembers(); // Gọi hàm để lấy danh sách thành viên nhóm khi component được mount
-}, [id]); // Chỉ chạy một lần khi component được mount
+  const { user, setUser } = useContext(UserContext);
+  const [infoMemberGroup, setInfoMemberGroup] = useState([]);
+  useEffect(() => {
+    getGroupMembers(); // Gọi hàm để lấy danh sách thành viên nhóm khi component được mount
+  }, [id]); // Chỉ chạy một lần khi component được mount
   const handlePressBack = () => {
     navigation.navigate('MainTabs'); //
   };
@@ -23,33 +23,29 @@ useEffect(() => {
     try {
       const response = await GroupService.getGroupMembers(id);
       console.log('Dữ liệu trả về từ API:', response.data);
-  
-      if (response.data && Array.isArray(response.data.userGroups)) {
-        const memberCount = response.data.userGroups.length;
-        setCountMember(memberCount);
+
+      // Kiểm tra dữ liệu trả về từ API là mảng và lấy số lượng thành viên
+      if (response.data && Array.isArray(response.data) && response.data[0].userGroups) {
+        const userGroups = response.data[0].userGroups;
+        setInfoMemberGroup(userGroups);
       } else {
-       
-        setCountMember(0); // Đặt giá trị mặc định
+        console.error('Dữ liệu không hợp lệ:', response.data);
+        setInfoMemberGroup([]);
       }
+
     } catch (error) {
-     
+      console.error('Lỗi khi lấy thông tin thành viên nhóm:', error);
+      setInfoMemberGroup([]);
     }
   };
-  
 
-  const handlePressMenu = () => {
-    console.log('User:', user); // Kiểm tra dữ liệu người dùng
-    const userFriend = user?.id;
+  const handlePressMenu = async () => {
+    const infoGroup = await GroupService.getGroupByID(id);
+    console.log('Thông tin nhóm:', infoGroup);
     if (user) {
-      navigation.navigate('Detail_infoChatGroup', { userFriend,groupId:id });
+      navigation.navigate('Detail_infoChatGroup', { infoGroup: infoGroup.data, infoMemberGroup: infoMemberGroup });
     }
   };
-
-
-
-  // useEffect(() => {
-  //   getOnlineStatus();
-  // }, [id]);
 
   return (
     <View style={styles.container}>
@@ -67,7 +63,7 @@ useEffect(() => {
             <View style={{ flexDirection: 'row', alignItems: 'center' ,gap:5}}>
               <Ionicons name="people-outline" size={18} color="white" />
               <Text style={{ color: 'white', fontSize: 12 }}>
-                {countMember} thành viên
+                {infoMemberGroup.length} thành viên
               </Text>
 
             </View>
