@@ -114,7 +114,7 @@ const AddMemberModal = ({ onClose, groupId }) => {
                         <div className="friend-list" style={{ maxHeight: "300px", overflowY: "auto" }}>
                             {filteredFriends.map(friend => {
                                 const isMember = memberIdSet.has(String(friend.id));
-                                const isSelected = selectedFriends.includes(friend.id);
+                                const isSelected = isMember || selectedFriends.includes(friend.id);
 
                                 return (
                                     <div key={friend.id} className="form-check mb-3 me-3 d-flex align-items-center">
@@ -127,6 +127,7 @@ const AddMemberModal = ({ onClose, groupId }) => {
                                             onChange={() => toggleSelect(friend.id)}
                                             id={`friend-${friend.id}`}
                                         />
+
                                         <label className="form-check-label d-flex align-items-center" htmlFor={`friend-${friend.id}`}>
                                             <img
                                                 src={friend.avatar}
@@ -142,11 +143,6 @@ const AddMemberModal = ({ onClose, groupId }) => {
                                             />
                                             <span>
                                                 {friend.name}
-                                                {isMember && (
-                                                    <span style={{ fontSize: "0.8rem", color: "gray", marginLeft: "8px" }}>
-                                                        (Đã trong nhóm)
-                                                    </span>
-                                                )}
                                             </span>
                                         </label>
                                     </div>

@@ -337,6 +337,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 System.err.println("Error sending ADD_TO_GROUP notification: " + e.getMessage());
             }
         }
+        sendGroupUpdateNotification(userId, groupId);
     }
 
     // Thông báo khi nhóm bị xóa
@@ -372,6 +373,24 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 System.err.println("Error sending MEMBER_REMOVED notification: " + e.getMessage());
             }
         }
+        sendGroupUpdateNotification(userId, groupId);
+    }
+
+    public void sendLeaveGroupNotification(String userId, String groupId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "LEAVE_GROUP");
+            payload.put("groupId", groupId);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent LEAVE_GROUP notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending LEAVE_GROUP notification: " + e.getMessage());
+            }
+        }
+        sendGroupUpdateNotification(userId, groupId);
     }
 
     // Thông báo khi nhóm được cập nhật (cho các thành viên hiện tại)
