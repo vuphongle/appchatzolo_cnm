@@ -49,13 +49,11 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   
   const scrollViewRef = useRef(null);
 
-  // Set up component mount/unmount tracking
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
 
-  // Fetch message history from server
   const fetchMessages = async () => {
     if (!userId || !receiverID) return;
     
@@ -65,45 +63,38 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       );
       
       if (response && Array.isArray(response)) {
-        // Vérifier que response est un tableau avant de trier
+      
         const sortedMessages = response.sort(
           (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
         );
         
         setLocalMessages(sortedMessages);
       } else {
-        // Si response n'est pas un tableau, initialiser avec un tableau vide
+       
         setLocalMessages([]);
       }
     } catch (error) {
-      // console.error('Error fetching messages:', error);
-      if (isMounted) {
-        // Afficher une alerte uniquement si ce n'est pas une erreur 404
-        // if (error.response?.status !== 404) {
-        //   Alert.alert('Error', 'Failed to load message history');
-        // }
-      }
+      console.error('Error fetching messages:', error);
+     
     }
   };
 
-  // Initial message load and set up periodic refresh
   useEffect(() => {
     if (!userId || !receiverID) return;
     
-    // Initial load when entering the conversation
-  
     fetchMessages();
-    
-    // Set up interval to refresh messages every 1 second
+
     const intervalId = setInterval(() => {
       if (isMounted) {
         fetchMessages();
       }
-    }, 100);
+    }, 1000);
     
     return () => {
       clearInterval(intervalId);
     };
+
+
   }, [userId, receiverID]);
 
   // Initialize WebSocket message listener
@@ -258,11 +249,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
 
       sendMessage(message);
       setAudioFile(null);
-      
-      // Refresh messages after sending
-      setTimeout(() => {
-        fetchMessages();
-      }, 500);
     } catch (error) {
       console.error('Error uploading audio:', error);
       Alert.alert('Error', 'Failed to send audio message');
@@ -399,10 +385,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       setShowEmojiPicker(false);
     }
     
-    // Refresh messages after sending
-    setTimeout(() => {
-      fetchMessages();
-    }, 500);
+   
   };
 
   const removeImage = (index) => {
@@ -513,10 +496,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                       fileName={message.fileName}
                       isRead={index === lastMyMessageIndex ? message.isRead : undefined}
                       onDeleteMessage={() => {
-                        // Refresh messages after deletion
-                        setTimeout(() => {
-                          fetchMessages();
-                        }, 300);
+                       
                       }}
                     />
                   ) : (
@@ -531,10 +511,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                       messageType={message.type || 'text'}
                       fileName={message.fileName}
                       onDeleteMessage={() => {
-                        // Refresh messages after deletion
-                        setTimeout(() => {
-                          fetchMessages();
-                        }, 300);
+                       
                       }}
                     />
                   )}
@@ -543,15 +520,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
             });
           })()}
         </ScrollView>
-      
-      {/* Connection Status Indicator */}
-      {!isConnected && (
-        <View style={styles.connectionAlert}>
-          <Text style={styles.connectionAlertText}>
-            Đang kết nối lại...
-          </Text>
-        </View>
-      )}
+
 
       {/* Media Preview Section */}
       {(selectedImages.length > 0 || selectedFiles.length > 0) && (

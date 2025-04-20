@@ -112,6 +112,19 @@ const MessageService = {
         throw error.response ? error.response.data : error;
     }
 },
+fetchGroupMessages: async (groupId) => {
+  try {
+      const response = await axios.get(`${IPV4}/messages/group-messages`, {
+          params: {
+              groupId: groupId
+          }
+      });
+      return response.data; // Trả về danh sách tin nhắn nhóm
+  } catch (error) {
+      
+
+  }
+},
 };
 
 export default MessageService;

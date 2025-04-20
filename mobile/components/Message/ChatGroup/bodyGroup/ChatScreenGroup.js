@@ -49,20 +49,18 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   
   const scrollViewRef = useRef(null);
 
-  // Set up component mount/unmount tracking
+
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
 
-  // Fetch message history from server
   const fetchMessages = async () => {
     if (!userId || !receiverID) return;
     
     try {
-      const response = await MessageService.get(
-        `/messages/messages?senderID=${userId}&receiverID=${receiverID}`
-      );
+      let groupId = receiverID;
+      const response = await MessageService.fetchGroupMessages(groupId)
       
       if (response && Array.isArray(response)) {
       
@@ -76,12 +74,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
-      if (isMounted) {
-     
-        if (error.response?.status !== 404) {
-          console.error('Error details:', error);
-        }
-      }
+      
     }
   };
 
@@ -179,17 +172,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     
     requestPermissions();
   }, []);
-//   const sendMessageToGroup = (message, groupId, userIds) => {
-//     // Gửi tin nhắn đến tất cả thành viên trong nhóm
-//     userIds.forEach(userId => {
-//         // Gửi tin nhắn qua WebSocket
-//         sendMessage({
-//             ...message,
-//             receiverID: groupId, // Dùng receiverID là ID nhóm
-//             userId, // Gửi đến từng người dùng trong nhóm
-//         });
-//     });
-// };
+
   // Handle keyboard hide to show emoji picker
   useEffect(() => {
     const keyboardDidHideListener = Keyboard.addListener(
@@ -259,16 +242,14 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
         content: audioUrl,
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'audio'
+        type: 'audio',
+        status:'sent'
       };
 
       sendMessage(message);
       setAudioFile(null);
       
-      // Refresh messages after sending
-      setTimeout(() => {
-        fetchMessages();
-      }, 500);
+ 
     } catch (error) {
       console.error('Error uploading audio:', error);
       Alert.alert('Error', 'Failed to send audio message');
@@ -339,7 +320,8 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
               content: imageUrl,
               sendDate: new Date().toISOString(),
               isRead: false,
-              type: 'image'
+              type: 'image',
+              status:'sent'
             };
             
             sendMessage(imageMessage);
@@ -367,7 +349,8 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
               sendDate: new Date().toISOString(),
               isRead: false,
               type: 'file',
-              fileName: file.name
+              fileName: file.name,
+              status:'sent'
             };
             
             sendMessage(fileMessage);
@@ -389,7 +372,9 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
         content: messageText.trim(),
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'text'
+        type: 'text',
+        status:'sent'
+
       };
       
       sendMessage(textMessage);
@@ -400,11 +385,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     if (showEmojiPicker) {
       setShowEmojiPicker(false);
     }
-    
-    // Refresh messages after sending
-    setTimeout(() => {
-      fetchMessages();
-    }, 500);
+  
   };
 
   const removeImage = (index) => {
@@ -510,20 +491,17 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
                       messageId={message.id}
                       userId={userId}
                       receiverId={receiverID}
-                      avatar={user?.avatar}
+                      avatar={message?.avatar}
                       messageType={message.type || 'text'}
                       fileName={message.fileName}
                       isRead={index === lastMyMessageIndex ? message.isRead : undefined}
                       onDeleteMessage={() => {
-                        // Refresh messages after deletion
-                        setTimeout(() => {
-                          fetchMessages();
-                        }, 300);
+                        
                       }}
                     />
                   ) : (
                     <MessageItem
-                      avatar={avatar}
+                    avatar={message?.avatar}
                       name={name}
                       time={message.sendDate}
                       message={message.content}
@@ -533,10 +511,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
                       messageType={message.type || 'text'}
                       fileName={message.fileName}
                       onDeleteMessage={() => {
-                        // Refresh messages after deletion
-                        setTimeout(() => {
-                          fetchMessages();
-                        }, 300);
+                        
                       }}
                     />
                   )}
@@ -545,15 +520,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
             });
           })()}
         </ScrollView>
-      
-      {/* Connection Status Indicator */}
-      {/* {!isConnected && (
-        <View style={styles.connectionAlert}>
-          <Text style={styles.connectionAlertText}>
-            Đang kết nối lại...
-          </Text>
-        </View>
-      )} */}
+
 
       {/* Media Preview Section */}
       {(selectedImages.length > 0 || selectedFiles.length > 0) && (
