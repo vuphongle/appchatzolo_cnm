@@ -215,4 +215,17 @@ public class GroupController {
                         .build()
         );
     }
+
+    // Thăng cấp lên trưởng nhóm
+    @PutMapping("/promoteToLeader")
+    public ResponseEntity<BaseResponse<GroupResponse>> promoteToLeader(
+            @RequestBody GroupPromoteRequest request) throws GroupException {
+        GroupResponse groupResponse = groupService.promoteToLeader(request.getGroupId(), request.getTargetUserId(), request.getPromoterId());
+
+        return ResponseEntity.ok(BaseResponse.<GroupResponse>builder()
+                .data(groupResponse)
+                .success(true)
+                .message("Thăng cấp thành công")
+                .build());
+    }
 }

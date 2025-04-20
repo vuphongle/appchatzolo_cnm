@@ -483,4 +483,23 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    // Gửi thông báo cho tất cả các thành viên khi đổi trưởng nhóm
+    public void sendPromoteToLeader(String userId, String groupId, String targetUserId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "PROMOTE_TO_LEADER");
+            payload.put("groupId", groupId);
+            payload.put("targetUserId", targetUserId);
+            payload.put("message", "Vừa đổi quyền nhóm trưởng cho: "+ userRepository.findById(targetUserId).getName());
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent demoteToMember notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending demoteToMember notification: " + e.getMessage());
+            }
+        }
+    }
 }

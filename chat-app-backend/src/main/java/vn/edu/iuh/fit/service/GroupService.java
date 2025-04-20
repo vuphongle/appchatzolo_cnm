@@ -32,4 +32,5 @@ public interface GroupService {
     GroupResponse getGroupById(String groupId) throws GroupException;
     GroupResponse updateGroup(GroupRequest group) throws GroupException;
     void sendMessageToGroup (MessageRequest request) throws GroupException;
+    GroupResponse promoteToLeader(String groupId, String targetUserId, String actorUserId) throws GroupException;
 }

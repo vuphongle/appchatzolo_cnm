@@ -660,4 +660,67 @@ public class GroupServiceImpl implements GroupService {
             System.err.println("WebSocketHandler is not available.");
         }
     }
+
+    @Override
+    public GroupResponse promoteToLeader(String groupId, String targetUserId, String actorUserId) throws GroupException {
+        // Kiểm tra quyền của người thực hiện
+        GroupRole actorRole = getUserRole(groupId, actorUserId);
+        if (actorRole == null) {
+            throw new GroupException("Người thực hiện không phải thành viên nhóm.");
+        }
+        if (actorRole != GroupRole.LEADER) {
+            throw new GroupException("Chỉ nhóm trưởng mới có quyền thăng chức.");
+        }
+        // Kiểm tra xem người được thăng chức có phải là thành viên của nhóm không
+        GroupRole targetRole = getUserRole(groupId, targetUserId);
+        if (targetRole == null) {
+            throw new GroupException("Người được thăng chức không phải thành viên nhóm.");
+        }
+        if (targetRole == GroupRole.LEADER) {
+            throw new GroupException("Người được thăng chức đã là nhóm trưởng.");
+        }
+        // Thăng chức người dùng
+        UserGroup ug = groupRepository.getUserGroup(targetUserId, groupId);
+        if (ug != null) {
+            ug.setRole(GroupRole.LEADER.name());
+            groupRepository.addUserToGroup(ug);
+        }
+        // Hạ quyền người dùng cũ xuống phó nhóm
+        UserGroup oldLeader = groupRepository.getUserGroup(actorUserId, groupId);
+        if (oldLeader != null) {
+            oldLeader.setRole(GroupRole.CO_LEADER.name());
+            groupRepository.addUserToGroup(oldLeader);
+        }
+
+        // Lấy danh sách thành viên của nhóm
+        List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+        List<String> memberIds = members.stream()
+                .map(UserGroup::getUserId)
+                .toList();
+        // Gửi thông báo WebSocket đến tất cả thành viên
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                for (String memberId : memberIds) {
+                    myWebSocketHandler.sendPromoteToLeader(memberId, groupId, targetUserId);
+                }
+                // Thông báo cho các thành viên hiện tại của nhóm (người đã có trong nhóm)
+                for (String existingMemberId : memberIds) {
+                    myWebSocketHandler.sendGroupUpdateNotification(existingMemberId, groupId);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending promoteToLeader notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+        }
+
+        return GroupResponse.builder()
+                .id(groupId)
+                .groupName(groupRepository.getGroupById(groupId).getGroupName())
+                .image(groupRepository.getGroupById(groupId).getImage())
+                .creatorId(groupRepository.getGroupById(groupId).getCreatorId())
+                .createdAt(java.time.LocalDate.now().toString())
+                .build();
+    }
 }
