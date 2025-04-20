@@ -85,14 +85,14 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     fetchMessages();
     
     // Set up interval to refresh messages every 1 second
-    const intervalId = setInterval(() => {
-      if (isMounted) {
-        fetchMessages();
-      }
-    }, 100);
+    // const intervalId = setInterval(() => {
+    //   if (isMounted) {
+    //     fetchMessages();
+    //   }
+    // }, 100);
     
     return () => {
-      clearInterval(intervalId);
+      // clearInterval(intervalId);
     };
   }, [userId, receiverID]);
 
@@ -127,7 +127,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
       // Clean up WebSocket subscription
       if (unsubscribe) unsubscribe();
     };
-  }, [userId, receiverID]);
+  }, [onMessage]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -242,7 +242,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
         content: audioUrl,
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'audio',
+        type: 'GROUP_CHAT' ,
         status:'sent'
       };
 
@@ -320,7 +320,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
               content: imageUrl,
               sendDate: new Date().toISOString(),
               isRead: false,
-              type: 'image',
+              type: 'GROUP_CHAT',
               status:'sent'
             };
             
@@ -348,7 +348,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
               content: fileUrl,
               sendDate: new Date().toISOString(),
               isRead: false,
-              type: 'file',
+              type: 'GROUP_CHAT',
               fileName: file.name,
               status:'sent'
             };
