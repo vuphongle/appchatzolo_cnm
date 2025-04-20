@@ -337,6 +337,30 @@ public class GroupServiceImpl implements GroupService {
             ug.setRole(GroupRole.CO_LEADER.name());
             groupRepository.addUserToGroup(ug);
         }
+
+        // Lấy danh sách thành viên của nhóm
+        List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+        List<String> memberIds = members.stream()
+                .map(UserGroup::getUserId)
+                .toList();
+
+        // Gửi thông báo WebSocket đến tất cả thành viên
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                for (String memberId : memberIds) {
+                    myWebSocketHandler.sendPromoteToCoLeader(memberId, groupId, targetUserId);
+                }
+                // Thông báo cho các thành viên hiện tại của nhóm (người đã có trong nhóm)
+                for (String existingMemberId : memberIds) {
+                    myWebSocketHandler.sendGroupUpdateNotification(existingMemberId, groupId);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending CO_LEADER notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+        }
     }
 
 
@@ -351,6 +375,30 @@ public class GroupServiceImpl implements GroupService {
         if (ug != null) {
             ug.setRole(GroupRole.MEMBER.name());
             groupRepository.addUserToGroup(ug);
+        }
+
+        // Lấy danh sách thành viên của nhóm
+        List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+        List<String> memberIds = members.stream()
+                .map(UserGroup::getUserId)
+                .toList();
+
+        // Gửi thông báo WebSocket đến tất cả thành viên
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                for (String memberId : memberIds) {
+                    myWebSocketHandler.sendDemoteToMember(memberId, groupId, targetUserId);
+                }
+                // Thông báo cho các thành viên hiện tại của nhóm (người đã có trong nhóm)
+                for (String existingMemberId : memberIds) {
+                    myWebSocketHandler.sendGroupUpdateNotification(existingMemberId, groupId);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending demoteToMember notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
         }
     }
 
@@ -552,6 +600,10 @@ public class GroupServiceImpl implements GroupService {
             try {
                 for (String memberId : memberIds) {
                     myWebSocketHandler.sendGroupUpdateInfoNotification(memberId, group.getId(), group.getGroupName(), group.getImage());
+                }
+                // Thông báo cho các thành viên hiện tại của nhóm (người đã có trong nhóm)
+                for (String existingMemberId : memberIds) {
+                    myWebSocketHandler.sendGroupUpdateNotification(existingMemberId, group.getId());
                 }
             } catch (JsonProcessingException e) {
                 System.err.println("Error sending GROUP_UPDATE notification: " + e.getMessage());
