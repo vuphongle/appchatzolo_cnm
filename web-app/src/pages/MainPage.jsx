@@ -902,11 +902,7 @@ const MainPage = () => {
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
-<<<<<<< HEAD
-
-=======
                 return;
->>>>>>> origin/dat
             }
 
             if (incomingMessage.type === "CHAT") {
