@@ -117,5 +117,15 @@ const GroupService = {
           throw error.response ? error.response.data : error;
         }
       },
+
+    // Thăng cấp thành viên lên trưởng nhóm
+    promoteToLeader: async (data) => {
+        try {
+          const response = await axios.put(`${IPV4}/groups/promoteToLeader`, data);
+          return response.data;
+        } catch (error) {
+          throw error.response ? error.response.data : error;
+        }
+    },
   };
 export default GroupService;

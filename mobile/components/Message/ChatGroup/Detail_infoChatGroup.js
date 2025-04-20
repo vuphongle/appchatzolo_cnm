@@ -31,7 +31,9 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
   const [isBFF, setIsBFF] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const { user, setUser, infoGroup, infoMemberGroup } = useContext(UserContext);
-  const [isLeader, setIsLeader] = useState(infoGroup?.creatorId === user?.id); // Assuming leader is the creator of the group
+  const [isLeader, setIsLeader] = useState(
+    infoMemberGroup.some(member => member.userId === user?.id && member.role === 'LEADER')
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 

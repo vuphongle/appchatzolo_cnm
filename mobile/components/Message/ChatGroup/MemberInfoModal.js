@@ -4,7 +4,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import GroupService from '../../../services/GroupService';
 
 const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup, refreshMemberGroupData }) => {
-  const handlePromoteToLeader = async () => {
+  const handlePromoteToCoLeader = async () => {
       const isConfirmed = await new Promise((resolve) => {
           Alert.alert(
               'Xác nhận thăng cấp',
@@ -114,6 +114,44 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
       }
   }
 
+  const handlePromoteToLeader = async () => {
+    const isConfirmed = await new Promise((resolve) => {
+          Alert.alert(
+              'Xác nhận thăng cấp',
+              'Bạn có chắc chắn muốn thăng cấp thành viên này lên trưởng nhóm không?',
+              [
+                  {
+                      text: 'Hủy',
+                      onPress: () => resolve(false),
+                      style: 'cancel',
+                  },
+                  {
+                      text: 'Đồng ý',
+                      onPress: () => resolve(true),
+                  },
+              ],
+              { cancelable: false }
+          );
+      });
+
+      if (isConfirmed) {
+          try {
+              const response = await GroupService.promoteToLeader({
+                  groupId: infoGroup.id,
+                  targetUserId: member.userId,
+                  promoterId: filteredMembers.userId,
+              });
+              Alert.alert('Thăng cấp thành công', 'Thăng cấp thành viên lên trưởng nhóm thành công');
+              refreshMemberGroupData();
+              onClose();
+          } catch (error) {
+              console.error('Lỗi khi thăng cấp:', error);
+          }
+      } else {
+          console.log('Người dùng không đồng ý thăng cấp');
+      }
+  }
+
   if (!member) return null;
 
   return (
@@ -160,7 +198,7 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
             </TouchableOpacity>
 
             {(filteredMembers.role === 'LEADER' && filteredMembers.userId !== member.userId && member.role !== 'CO_LEADER') && (
-              <TouchableOpacity style={styles.actionButton} onPress={handlePromoteToLeader}>
+              <TouchableOpacity style={styles.actionButton} onPress={handlePromoteToCoLeader}>
                 <Text style={styles.actionButtonText}>Bổ nhiệm làm phó nhóm</Text>
               </TouchableOpacity>
             )}
@@ -168,6 +206,12 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
             {(filteredMembers.role === 'LEADER' && filteredMembers.userId !== member.userId && member.role === 'CO_LEADER') && (
                 <TouchableOpacity style={styles.actionButton} onPress={handleDemoteToMember}>
                     <Text style={styles.actionButtonText}>Hạ cấp thành viên</Text>
+                </TouchableOpacity>
+            )}
+
+            {(filteredMembers.role === 'LEADER' && filteredMembers.userId !== member.userId && member.role !== 'LEADER') && (
+                <TouchableOpacity style={styles.actionButton} onPress={handlePromoteToLeader}>
+                    <Text style={styles.actionButtonText}>Thăng cấp lên làm trưởng nhóm</Text>
                 </TouchableOpacity>
             )}
 
