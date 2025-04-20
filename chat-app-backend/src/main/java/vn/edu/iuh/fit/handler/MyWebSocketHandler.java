@@ -83,6 +83,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 for (UserGroup userGroup : userGroups) {
                     String userId = userGroup.getUserId();
                     WebSocketSession userSession = sessions.get(userId);
+
                     if (userSession != null && userSession.isOpen() && !userId.equals(chatMessage.getSenderID())) {
                         userSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(chatMessage)));
                         System.out.println("Message delivered to group member: " + userId);

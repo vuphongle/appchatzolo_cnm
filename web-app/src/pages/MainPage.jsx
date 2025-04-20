@@ -580,7 +580,6 @@ const MainPage = () => {
     }, [MyUser]);
 
     // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
-    // useEffect để tải tin nhắn khi chọn cuộc trò chuyện
     useEffect(() => {
         if (!MyUser || !MyUser.my_user || !MyUser.my_user.id || !selectedChat?.id) return;
 
@@ -1500,12 +1499,68 @@ const MainPage = () => {
         const unsubscribe = onMessage((msg) => {
 
             console.log('📨 Tin nhắn đến:', msg);
+            // Kiểm tra xem selectedChat có hợp lệ không và có thuộc tính type không
+            if (!selectedChat || !selectedChat.type) {
+
+                return;
+            }
+            if (selectedChat.type === 'group') {
+                // Gọi hàm lấy tin nhắn trong nhóm khi selectedChat là nhóm
+                MessageService.get(`/group-messages?groupId=${selectedChat.id}`)
+                    .then((data) => {
+                        // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
+                        const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
+
+                        // Cộng 7 giờ vào sendDate của mỗi tin nhắn
+                        const updatedMessages = sortedMessages.map((msg) => ({
+                            ...msg,
+                            senderName: msg.name, // Đảm bảo gửi tên người gửi từ BE
+                            senderAvatar: msg.avatar || "/default-avatar.jpg",
+                            sendDate: moment(msg.sendDate).add(7, 'hours').format("YYYY-MM-DDTHH:mm:ssZ") // Cộng 7 giờ vào sendDate
+                        }));
+
+                        //console.log("Updated Messages chứa gì:", updatedMessages); // Kiểm tra dữ liệu tin nhắn đã cập nhật
+                        // Cập nhật tin nhắn vào state
+                        setChatMessages(updatedMessages);
+
+
+                        // Lọc các tin nhắn chưa đọc
+                        const unreadMessages = updatedMessages.filter((msg) => msg.isRead === false);
+
+                        // Nếu có tin nhắn chưa đọc, gọi API để đánh dấu là đã đọc
+                        if (unreadMessages.length > 0) {
+                            // Gửi yêu cầu PUT để đánh dấu tin nhắn là đã đọc
+                            MessageService.savereadMessages(MyUser?.my_user?.id, selectedChat.id)
+                                .then(() => {
+                                    setChatMessages(updatedMessages);  // Cập nhật tin nhắn ngay lập tức
+
+                                    // Cập nhật số lượng tin nhắn chưa đọc cho bạn bè
+                                    const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
+                                        if (count.friendId === selectedChat.id) {
+                                            return { ...count, unreadCount: 0 };  // Đánh dấu đã đọc (unreadCount = 0)
+                                        }
+                                        return count;
+                                    });
+                                    setUnreadMessagesCounts(updatedUnreadCounts); // Cập nhật số lượng tin nhắn chưa đọc
+                                })
+                                .catch((error) => {
+                                    console.error("Lỗi khi đánh dấu tin nhắn là đã đọc", error);
+                                });
+                        } else {
+                            // Nếu không có tin nhắn chưa đọc, chỉ cần cập nhật lại danh sách tin nhắn
+                            setChatMessages(updatedMessages);
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching group messages:", err);
+                    });
+            }
 
         });
 
         return () => unsubscribe(); // Gỡ listener khi component unmount
 
-    }, [onMessage]);
+    }, [onMessage, selectedChat]); // Theo dõi sự thay đổi của selectedChat và unreadMessagesCounts
 
 
     useEffect(() => {
