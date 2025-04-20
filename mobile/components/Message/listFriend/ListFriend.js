@@ -53,11 +53,7 @@ function ListFriend({ userId }) {
       const groupsList = hasGroups ? groupsResponse.data : [];
       setGroups(groupsList);
       
-      if (hasGroups) {
-        console.log("groups : ", groupsResponse);
-      } else {
-        console.log("No groups found");
-      }
+      
       
       // Combine friends and groups with type identifier
       const friendsWithType = friendsList.map(friend => ({ ...friend, type: 'friend' }));

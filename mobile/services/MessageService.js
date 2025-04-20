@@ -121,7 +121,7 @@ fetchGroupMessages: async (groupId) => {
       });
       return response.data; // Trả về danh sách tin nhắn nhóm
   } catch (error) {
-      console.error("Error fetching group messages:", error);
+      
 
   }
 },

@@ -79,7 +79,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     }
   };
 
-  // Initial message load and set up periodic refresh
   useEffect(() => {
     if (!userId || !receiverID) return;
     
@@ -89,7 +88,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       if (isMounted) {
         fetchMessages();
       }
-    }, 100);
+    }, 1000);
     
     return () => {
       clearInterval(intervalId);
