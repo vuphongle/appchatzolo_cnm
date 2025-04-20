@@ -1,19 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import GroupService from "../services/GroupService";
 import EditGroupModal from "./EditGroupModal";
+import showToast from "../utils/AppUtils";
+import axios from 'axios';
 
 const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo, setSelectedConversation }) => {
 
-    useEffect(() => {
-        console.log("Updated conversation", conversation);
-    }, [conversation]);
-
+    // console.log("Group info", conversation);
 
     const [showMembers, setShowMembers] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [selectedNewLeader, setSelectedNewLeader] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [isEditingModalOpen, setIsEditingModalOpen] = useState(false); // Trạng thái để mở modal chỉnh sửa
+    const [showGroupManagementModal, setShowGroupManagementModal] = useState(false);
+
+    // State để lưu trạng thái checkbox đã chọn
+    const [checkboxState, setCheckboxState] = useState({
+        changeGroupName: false,
+        pinMessage: false,
+        createPost: false
+    });
 
     // Mở modal chỉnh sửa
     const handleEditClick = () => {
@@ -25,6 +32,16 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
         setIsEditingModalOpen(false); // Đóng modal khi nhấn vào nút đóng
     };
 
+    // Hàm mở modal quản lý nhóm
+    const handleGroupManagementClick = () => {
+        setShowGroupManagementModal(true);
+    };
+
+    // Hàm đóng modal quản lý nhóm
+    const closeGroupManagementModal = () => {
+        setShowGroupManagementModal(false);
+    };
+
     // Ngừng sự kiện click để không đóng modal khi nhấn vào nội dung modal
     const handleModalClick = (e) => {
         // Ngừng sự kiện nếu nhấn vào nội dung modal
@@ -32,6 +49,18 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
         closeEditModal(); // Đóng modal khi nhấn ra ngoài
     };
 
+    // Hàm xử lý sự kiện khi thay đổi checkbox
+    const handleCheckboxChange = (event) => {
+        const { id, checked } = event.target;
+        setCheckboxState(prevState => ({
+            ...prevState,
+            [id]: checked // Cập nhật trạng thái của checkbox
+        }));
+    };
+
+    const handleSave = async () => {
+        closeGroupManagementModal()
+    }
 
     // Hàm xóa nhóm
     const handleDeleteGroup = async () => {
@@ -45,7 +74,6 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                 if (onGroupDeleted) {
                     onGroupDeleted(conversation.id);
                 }
-
             } catch (error) {
                 console.error("Lỗi khi xóa nhóm:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
@@ -58,7 +86,6 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
         if (window.confirm(`Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm không?`)) {
             try {
                 await GroupService.removeMember(conversation.id, targetUserId, user?.id);
-                alert("Xóa thành viên thành công!");
                 // Cập nhật lại danh sách thành viên trong conversation
                 setSelectedConversation((prev) => ({
                     ...prev,
@@ -70,6 +97,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
             }
         }
     };
+
 
     // Hàm rời nhóm
     const handleLeaveGroup = async () => {
@@ -93,6 +121,41 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
         }
     };
 
+    // Hàm thêm phó nhóm
+    const handleAddCoLeader = async (targetUserId) => {
+        if (window.confirm(`Bạn có chắc chắn muốn thêm thành viên này làm phó nhóm không?`)) {
+            ;
+            try {
+                const data = {
+                    groupId: conversation.id,
+                    targetUserId: targetUserId,
+                    promoterId: user?.id
+                };
+
+                await GroupService.promoteToCoLeader(data);
+            } catch (error) {
+                console.error("Lỗi khi cấp quyền phó nhóm:", error);
+                alert(error?.message || "Đã có lỗi xảy ra.");
+            }
+        }
+    }
+
+    const handleRemoveCoLeader = async (targetUserId) => {
+        if (window.confirm(`Bạn có chắc chắn muốn gỡ phó nhóm này không?`)) {
+            try {
+                const data = {
+                    groupId: conversation.id,
+                    targetUserId: targetUserId,
+                    promoterId: user?.id
+                };
+                await GroupService.demoteToMember(data);
+            } catch (error) {
+                console.error("Lỗi khi gỡ phó nhóm:", error);
+                alert(error?.message || "Đã có lỗi xảy ra.");
+            }
+        }
+    };
+
     useEffect(() => {
         if (conversation.id) {
             // Lấy lại danh sách thành viên từ API khi nhóm được chọn lại
@@ -111,7 +174,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
 
 
     // Kiểm tra quyền của người dùng hiện tại
-    const userRole = conversation.userGroups?.find((member) => member.userId === user?.id)?.role;
+    const userRole = conversation.userGroups.find((member) => member.userId === user?.id)?.role;
 
     return (
         <div className="relative">
@@ -173,11 +236,68 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                         <i className="fas fa-user-plus"></i>
                         <div className="small">Thêm thành viên</div>
                     </div>
-                    <div className="col">
+                    <div className="col" onClick={handleGroupManagementClick} style={{ cursor: 'pointer' }}>
                         <i className="fas fa-cog"></i>
                         <div className="small">Quản lý nhóm</div>
                     </div>
                 </div>
+
+                {/* Modal quản lý nhóm */}
+                {showGroupManagementModal && (
+                    <div className="modal d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)', position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <div className="modal-dialog">
+                            <div className="modal-content" style={{ width: "550px", top: '150px', maxHeight: "90vh", overflow: "hidden" }}>
+                                <div className="modal-header">
+                                    <h5 className="modal-title">Quản lý nhóm</h5>
+                                    <i className="fas fa-times" onClick={closeGroupManagementModal} style={{ cursor: "pointer" }}></i>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="form-check">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            id="changeGroupName"
+                                            checked={checkboxState.changeGroupName}
+                                            onChange={handleCheckboxChange}
+                                        />
+                                        <label className="form-check-label" htmlFor="changeGroupName" style={{ textAlign: 'left' }}>
+                                            &nbsp;&nbsp;Chỉ nhóm trưởng có thể thay đổi thông tin nhóm
+                                        </label>
+                                    </div>
+                                    <div className="form-check">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            id="pinMessage"
+                                            checked={checkboxState.pinMessage}
+                                            onChange={handleCheckboxChange}
+                                        />
+                                        <label className="form-check-label" htmlFor="pinMessage" style={{ textAlign: 'left' }}>
+                                            &nbsp;&nbsp;Chỉ nhóm trưởng được thêm thành viên
+                                        </label>
+                                    </div>
+                                    <div className="form-check">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            id="createPost"
+                                            checked={checkboxState.createPost}
+                                            onChange={handleCheckboxChange}
+                                        />
+                                        <label className="form-check-label" htmlFor="createPost" style={{ textAlign: 'left' }}>
+                                            &nbsp;&nbsp;Nhóm phó được thêm/xóa thành viên
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button className="btn btn-secondary" onClick={closeGroupManagementModal}>Hủy</button>
+                                    <button className="btn btn-primary" onClick={handleSave}>Lưu</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
 
                 {/* Thành viên nhóm */}
                 <div className="d-flex justify-content-between align-items-center border-bottom py-2 px-2 pt-4 pb-4" onClick={() => setShowMembers(!showMembers)} style={{ cursor: 'pointer' }}>
@@ -185,7 +305,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                         <i className="fas fa-users text-secondary"></i>
                         <span className="small">Thành viên nhóm</span>
                     </div>
-                    <span className="small text-muted">{conversation.userGroups?.length} thành viên</span>
+                    <span className="small text-muted">{conversation.userGroups.length} thành viên</span>
 
                     <style>
                         {`
@@ -209,20 +329,56 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                                 <div>
                                     <div className="fw-medium">{member.userName}</div>
                                     <div className="text-muted small">
-                                        {member.role === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên'}
+                                        {member.role === 'LEADER'
+                                            ? 'Trưởng nhóm'
+                                            : member.role === 'CO_LEADER'
+                                                ? 'Phó nhóm'
+                                                : 'Thành viên'}
                                     </div>
                                 </div>
-                                {/* Nút xóa thành viên */}
-                                {(userRole === 'LEADER' || (userRole === 'CO_LEADER' && member.role === 'MEMBER')) && member.userId !== user?.id && (
-                                    <i
-                                        className="btn btn-danger btn-sm ms-auto"
-                                        onClick={() => handleRemoveMember(member.userId)}
-                                    >
-                                        <i className="fas fa-trash"></i>
-                                    </i>
+
+                                {/* Nút ba chấm */}
+                                {userRole === 'LEADER' && member.userId !== user?.id && (
+                                    <div className="ms-auto">
+                                        <button
+                                            className="btn btn-light btn-sm"
+                                            style={{ cursor: 'pointer', width: '30px' }}
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                        >
+                                            <i className="fas fa-ellipsis-h" style={{ marginRight: '20px' }}></i> {/* Icon ba chấm */}
+                                        </button>
+                                        <ul className="dropdown-menu">
+                                            {/* Nếu member là 'MEMBER', hiển thị 'Thêm phó nhóm' */}
+                                            {member.role === 'MEMBER' ? (
+                                                <li>
+                                                    <a className="dropdown-item" href="#" onClick={() => handleAddCoLeader(member.userId)}>
+                                                        Thêm phó nhóm
+                                                    </a>
+                                                </li>
+                                            ) : (
+                                                // Nếu member là 'CO_LEADER', hiển thị 'Gỡ phó nhóm'
+                                                member.role === 'CO_LEADER' && (
+                                                    <li>
+                                                        <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveCoLeader(member.userId)}>
+                                                            Gỡ phó nhóm
+                                                        </a>
+                                                    </li>
+                                                )
+                                            )}
+                                            {/* Thêm nút xóa thành viên */}
+                                            <li>
+                                                <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveMember(member.userId)}>
+                                                    Xóa thành viên
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 )}
+
                             </div>
                         ))}
+
                     </div>
                 )}
 
@@ -296,7 +452,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                     </div>
 
                     {/* Chỉ hiển thị nếu user là người tạo nhóm */}
-                    {userRole === 'LEADER' && (
+                    {user?.id === conversation.creatorId && (
                         <div className="d-flex align-items-center text-danger gap-2 mb-2 pb-3 pt-3"
                             style={{ cursor: 'pointer' }}
                             onClick={handleDeleteGroup}
@@ -394,70 +550,5 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
         </div>
     );
 };
-
-// // Modal chỉnh sửa nhóm
-// const EditGroupModal = ({ conversation, onClose, onUpdateGroupInfo }) => {
-//     const [groupName, setGroupName] = useState(conversation.groupName);
-//     const [groupAvatar, setGroupAvatar] = useState(conversation.img);
-
-//     const handleGroupNameChange = (e) => {
-//         setGroupName(e.target.value);
-//     };
-
-//     const handleAvatarChange = (e) => {
-//         const file = e.target.files[0];
-//         if (file) {
-//             const url = URL.createObjectURL(file);
-//             setGroupAvatar(url);
-//         }
-//     };
-
-//     const handleSaveChanges = () => {
-//         // Cập nhật thông tin nhóm
-//         onUpdateGroupInfo(groupName, groupAvatar);
-//         onClose();
-//     };
-
-//     return (
-//         <div className="modal show d-flex align-items-center justify-content-center" onClick={onClose}>
-//             <div className="modal-dialog modal-dialog-centered">
-//                 <div className="modal-content" style={{ width: "400px" }}>
-//                     <div className="modal-header">
-//                         <h5 className="modal-title">Chỉnh sửa thông tin nhóm</h5>
-//                         <button type="button" className="close" onClick={onClose}>×</button>
-//                     </div>
-//                     <div className="modal-body">
-//                         <div className="d-flex flex-column align-items-center">
-//                             {/* Hiển thị avatar */}
-//                             <img
-//                                 src={groupAvatar}
-//                                 alt="Avatar"
-//                                 className="rounded-circle"
-//                                 style={{ width: "80px", height: "80px", objectFit: "cover" }}
-//                             />
-//                             <input
-//                                 type="file"
-//                                 accept="image/*"
-//                                 onChange={handleAvatarChange}
-//                                 className="mt-2 mb-3"
-//                             />
-//                             <input
-//                                 type="text"
-//                                 value={groupName}
-//                                 onChange={handleGroupNameChange}
-//                                 className="form-control mb-2"
-//                                 placeholder="Tên nhóm"
-//                             />
-//                         </div>
-//                     </div>
-//                     <div className="modal-footer">
-//                         <button type="button" className="btn btn-secondary" onClick={onClose}>Hủy</button>
-//                         <button type="button" className="btn btn-primary" onClick={handleSaveChanges}>Lưu thay đổi</button>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// };
 
 export default GroupMenuModal;

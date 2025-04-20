@@ -776,7 +776,6 @@ const MainPage = () => {
                 const newGroupName = incomingMessage.groupName;
                 const newGroupAvatar = incomingMessage.image;
 
-                console.log("Conversations: ", conversations); // \\
                 // Cập nhật thông tin nhóm
                 setConversations((prev) =>
                     prev.map((conversation) =>
@@ -785,6 +784,99 @@ const MainPage = () => {
                             : conversation
                     )
                 );
+
+                // Tải thông tin nhóm mới và thêm vào danh sách nhóm
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const group = res?.data;
+                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
+                        if (group) {
+                            // Cập nhật groups
+                            if (!groups.some((g) => g.id === groupId)) {
+                                setGroups((prev) => [...prev, group]);
+                            } else {
+                                setGroups((prev) =>
+                                    prev.map((g) =>
+                                        g.id === groupId ? group : g
+                                    )
+                                );
+                            }
+                            // Cập nhật conversations
+                            setConversations((prev) =>
+                                prev.map((conv) =>
+                                    conv.id === groupId ? { ...group, type: 'group' } : conv
+                                )
+                            );
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching group:", err));
+                showToast(`${incomingMessage.message}`, "info");
+                return;
+            }
+            if (incomingMessage.type === "PROMOTE_CO_LEADER") {
+                console.log("Thêm phó nhóm", incomingMessage); // Log thông báo nhận được
+                const groupId = incomingMessage.groupId;
+
+                // Tải thông tin nhóm mới và thêm vào danh sách nhóm
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const group = res?.data;
+                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
+                        if (group) {
+                            // Cập nhật groups
+                            if (!groups.some((g) => g.id === groupId)) {
+                                setGroups((prev) => [...prev, group]);
+                            } else {
+                                setGroups((prev) =>
+                                    prev.map((g) =>
+                                        g.id === groupId ? group : g
+                                    )
+                                );
+                            }
+                            // Cập nhật conversations
+                            setConversations((prev) =>
+                                prev.map((conv) =>
+                                    conv.id === groupId ? { ...group, type: 'group' } : conv
+                                )
+                            );
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching group:", err));
+                showToast(`${incomingMessage.message}`, "info");
+                return;
+            }
+
+            if (incomingMessage.type === "DEMOTE_TO_MEMBER") {
+                console.log("Gỡ phó nhóm:", incomingMessage); // Log thông báo nhận được
+                const groupId = incomingMessage.groupId;
+
+                // Tải thông tin nhóm mới và thêm vào danh sách nhóm
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const group = res?.data;
+                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
+                        if (group) {
+                            // Cập nhật groups
+                            if (!groups.some((g) => g.id === groupId)) {
+                                setGroups((prev) => [...prev, group]);
+                            } else {
+                                setGroups((prev) =>
+                                    prev.map((g) =>
+                                        g.id === groupId ? group : g
+                                    )
+                                );
+                            }
+                            // Cập nhật conversations
+                            setConversations((prev) =>
+                                prev.map((conv) =>
+                                    conv.id === groupId ? { ...group, type: 'group' } : conv
+                                )
+                            );
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching group:", err));
+
+                showToast(`${incomingMessage.message}`, "info");
                 return;
             }
 

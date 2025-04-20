@@ -13,6 +13,7 @@ import vn.edu.iuh.fit.model.DTO.response.UserGroupResponse;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.model.UserGroup;
 import vn.edu.iuh.fit.repository.GroupRepository;
+import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.GroupService;
 import vn.edu.iuh.fit.service.MessageService;
 
@@ -30,13 +31,14 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     private final MessageService messageService;
     @Autowired
     private  GroupRepository groupRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public MyWebSocketHandler(MessageService messageService) {
         this.messageService = messageService;
         this.objectMapper.registerModule(new JavaTimeModule());
 
     }
-
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -441,6 +443,43 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 System.out.println("Sent GROUP_UPDATE notification to user: " + userId);
             } catch (IOException e) {
                 System.err.println("Error sending GROUP_UPDATE notification: " + e.getMessage());
+            }
+        }
+    }
+    // Gửi thông báo cho tất cả các thành viên trong nhóm khi thăng cấp nhóm phó
+    public void sendPromoteToCoLeader(String userId, String groupId, String targetUserId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "PROMOTE_CO_LEADER");
+            payload.put("groupId", groupId);
+            payload.put("targetUserId", targetUserId);
+            payload.put("message", "Nhóm trưởng vừa thăng cấp phó nhóm cho: "+ userRepository.findById(targetUserId).getName());
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent PROMOTE_CO_LEADER notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending PROMOTE_CO_LEADER notification: " + e.getMessage());
+            }
+        }
+    }
+
+    // Gửi thông báo cho tất cả các thành viên trong nhóm khi giáng xuống thành viên
+    public void sendDemoteToMember(String userId, String groupId, String targetUserId) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "DEMOTE_TO_MEMBER");
+            payload.put("groupId", groupId);
+            payload.put("targetUserId", targetUserId);
+            payload.put("message", "Nhóm trưởng vừa giáng xuống thành viên cho: "+ userRepository.findById(targetUserId).getName());
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent demoteToMember notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending demoteToMember notification: " + e.getMessage());
             }
         }
     }
