@@ -356,17 +356,50 @@ public class GroupServiceImpl implements GroupService {
     // Rời nhóm
     @Override
     public void leaveGroup(String groupId, String currentLeaderId, String newLeaderId) throws GroupException {
-        UserGroup currentLeader  = groupRepository.getUserGroup(currentLeaderId, groupId);
+        // Kiểm tra người dùng có phải là thành viên của nhóm không
+        UserGroup currentLeader = groupRepository.getUserGroup(currentLeaderId, groupId);
         if (currentLeader == null) {
             throw new GroupException("Người dùng không phải là thành viên của nhóm.");
         }
+
+        // Lấy danh sách thành viên của nhóm
+        List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
+        if (members == null || members.isEmpty()) {
+            throw new GroupException("Nhóm không tồn tại hoặc không có thành viên.");
+        }
+
+        // Xử lý trường hợp người dùng là nhóm trưởng
         if (currentLeader.getRole().equals(GroupRole.LEADER.name())) {
-            List<UserGroup> members = groupRepository.getMembersOfGroup(groupId);
             if (members.size() <= 1) {
-                throw new GroupException("Không thể rời nhóm khi bạn là nhóm trưởng và không có thành viên nào khác.");
+                // Nếu chỉ có nhóm trưởng trong nhóm, giải tán nhóm
+                groupRepository.deleteGroup(groupId);
+                System.out.println("Nhóm " + groupId + " đã được giải tán vì không còn thành viên nào.");
+
+                // Cập nhật groupIds của người dùng
+                User user = userRepository.findById(currentLeaderId);
+                if (user != null && user.getGroupIds() != null) {
+                    user.getGroupIds().remove(groupId);
+                    userRepository.save(user);
+                    System.out.println("Đã xóa groupId " + groupId + " khỏi danh sách groupIds của người dùng " + currentLeaderId);
+                }
+
+                // Gửi thông báo LEAVE_GROUP tới người dùng
+                MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+                if (myWebSocketHandler != null) {
+                    try {
+                        myWebSocketHandler.sendLeaveGroupNotification(currentLeaderId, groupId);
+                        System.out.println("Đã gửi thông báo LEAVE_GROUP tới người dùng " + currentLeaderId + " cho nhóm " + groupId);
+                    } catch (JsonProcessingException e) {
+                        System.err.println("Lỗi khi gửi thông báo LEAVE_GROUP tới người dùng " + currentLeaderId + ": " + e.getMessage());
+                    }
+                } else {
+                    System.err.println("WebSocketHandler không khả dụng. Không thể gửi thông báo LEAVE_GROUP.");
+                }
+                return;
             }
 
-            if (newLeaderId == null || newLeaderId.isEmpty()) {
+            // Kiểm tra và chuyển vai trò nhóm trưởng
+            if (newLeaderId == null || newLeaderId.isEmpty() || newLeaderId.equals("null")) {
                 throw new GroupException("Vui lòng chọn thành viên khác làm nhóm trưởng trước khi rời nhóm.");
             }
 
@@ -377,16 +410,44 @@ public class GroupServiceImpl implements GroupService {
 
             newLeader.setRole(GroupRole.LEADER.name());
             groupRepository.addUserToGroup(newLeader);
+            System.out.println("Đã chuyển vai trò nhóm trưởng cho người dùng " + newLeaderId + " trong nhóm " + groupId);
         }
 
         // Xóa người dùng khỏi nhóm
         groupRepository.removeUserFromGroup(currentLeaderId, groupId);
+        System.out.println("Đã xóa người dùng " + currentLeaderId + " khỏi nhóm " + groupId);
 
         // Cập nhật groupIds của người dùng
         User user = userRepository.findById(currentLeaderId);
         if (user != null && user.getGroupIds() != null) {
             user.getGroupIds().remove(groupId);
             userRepository.save(user);
+            System.out.println("Đã xóa groupId " + groupId + " khỏi danh sách groupIds của người dùng " + currentLeaderId);
+        }
+
+        // Gửi thông báo LEAVE_GROUP và GROUP_UPDATE
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                // Gửi thông báo LEAVE_GROUP tới người dùng đã rời nhóm
+                myWebSocketHandler.sendLeaveGroupNotification(currentLeaderId, groupId);
+                System.out.println("Đã gửi thông báo LEAVE_GROUP tới người dùng " + currentLeaderId + " cho nhóm " + groupId);
+
+                // Gửi thông báo GROUP_UPDATE tới tất cả thành viên còn lại trong nhóm
+                members = groupRepository.getMembersOfGroup(groupId); // Lấy lại danh sách thành viên sau khi xóa
+                if (members != null) {
+                    for (UserGroup member : members) {
+                        if (!member.getUserId().equals(currentLeaderId)) { // Không gửi lại cho người đã rời
+                            myWebSocketHandler.sendGroupUpdateNotification(member.getUserId(), groupId);
+                            System.out.println("Đã gửi thông báo GROUP_UPDATE tới người dùng " + member.getUserId() + " cho nhóm " + groupId);
+                        }
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Lỗi khi gửi thông báo WebSocket: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler không khả dụng. Không thể gửi thông báo.");
         }
     }
 

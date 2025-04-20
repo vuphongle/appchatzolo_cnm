@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import GroupService from "../services/GroupService";
 import EditGroupModal from "./EditGroupModal";
 
-const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo }) => {
+const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo, setSelectedConversation }) => {
 
-    console.log("Group info", conversation);
+    useEffect(() => {
+        console.log("Updated conversation", conversation);
+    }, [conversation]);
+
 
     const [showMembers, setShowMembers] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
@@ -42,6 +45,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo 
                 if (onGroupDeleted) {
                     onGroupDeleted(conversation.id);
                 }
+
             } catch (error) {
                 console.error("Lỗi khi xóa nhóm:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
@@ -55,6 +59,11 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo 
             try {
                 await GroupService.removeMember(conversation.id, targetUserId, user?.id);
                 alert("Xóa thành viên thành công!");
+                // Cập nhật lại danh sách thành viên trong conversation
+                setSelectedConversation((prev) => ({
+                    ...prev,
+                    userGroups: prev.userGroups.filter((member) => member.userId !== targetUserId),
+                }));
             } catch (error) {
                 console.error("Lỗi khi xóa thành viên:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
@@ -84,9 +93,25 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo 
         }
     };
 
+    useEffect(() => {
+        if (conversation.id) {
+            // Lấy lại danh sách thành viên từ API khi nhóm được chọn lại
+            GroupService.getGroupMembers(conversation.id)
+                .then((res) => {
+                    const data = res?.data || {};
+                    const members = Array.isArray(data) ? data[0]?.userGroups : data.userGroups;
+                    setSelectedConversation(prev => ({
+                        ...prev,
+                        userGroups: members, // Cập nhật lại danh sách thành viên
+                    }));
+                })
+                .catch((err) => console.error("Lỗi khi lấy thành viên nhóm:", err));
+        }
+    }, [conversation.id, setSelectedConversation]); // Mỗi lần chọn lại nhóm, gọi lại API
+
 
     // Kiểm tra quyền của người dùng hiện tại
-    const userRole = conversation.userGroups.find((member) => member.userId === user?.id)?.role;
+    const userRole = conversation.userGroups?.find((member) => member.userId === user?.id)?.role;
 
     return (
         <div className="relative">
@@ -160,7 +185,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo 
                         <i className="fas fa-users text-secondary"></i>
                         <span className="small">Thành viên nhóm</span>
                     </div>
-                    <span className="small text-muted">{conversation.userGroups.length} thành viên</span>
+                    <span className="small text-muted">{conversation.userGroups?.length} thành viên</span>
 
                     <style>
                         {`
@@ -271,7 +296,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo 
                     </div>
 
                     {/* Chỉ hiển thị nếu user là người tạo nhóm */}
-                    {user?.id === conversation.creatorId && (
+                    {userRole === 'LEADER' && (
                         <div className="d-flex align-items-center text-danger gap-2 mb-2 pb-3 pt-3"
                             style={{ cursor: 'pointer' }}
                             onClick={handleDeleteGroup}
