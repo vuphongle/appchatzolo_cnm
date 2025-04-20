@@ -478,6 +478,26 @@ public class GroupServiceImpl implements GroupService {
         existingGroup.setImage(group.getImage());
         groupRepository.saveGroup(existingGroup);
 
+        // Lấy danh sách thành viên của nhóm
+        List<UserGroup> members = groupRepository.getMembersOfGroup(group.getId());
+        List<String> memberIds = members.stream()
+                .map(UserGroup::getUserId)
+                .toList();
+
+        // Gửi thông báo WebSocket đến tất cả thành viên
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                for (String memberId : memberIds) {
+                    myWebSocketHandler.sendGroupUpdateInfoNotification(memberId, group.getId(), group.getGroupName(), group.getImage());
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending GROUP_UPDATE notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+        }
+
         return GroupResponse.builder()
                 .id(existingGroup.getId())
                 .groupName(existingGroup.getGroupName())

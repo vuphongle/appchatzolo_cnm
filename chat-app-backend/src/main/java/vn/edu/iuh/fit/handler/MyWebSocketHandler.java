@@ -352,13 +352,33 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    // Thông báo khi nhóm được cập nhật (cho các thành viên hiện tại)
+    // Thông báo khi nhóm có thành viên mới được thêm (cho các thành viên hiện tại)
     public void sendGroupUpdateNotification(String userId, String groupId) throws JsonProcessingException {
         WebSocketSession session = sessions.get(userId);
         if (session != null && session.isOpen()) {
             Map<String, Object> payload = new HashMap<>();
             payload.put("type", "GROUP_UPDATE");
             payload.put("groupId", groupId);
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent GROUP_UPDATE notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending GROUP_UPDATE notification: " + e.getMessage());
+            }
+        }
+    }
+
+    // Thông báo khi nhóm được cập nhật thông tin
+    public void sendGroupUpdateInfoNotification(String userId, String groupId, String groupName, String image) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "GROUP_UPDATE_INFO");
+            payload.put("groupId", groupId);
+            payload.put("groupName", groupName);
+            payload.put("image", image);
+            payload.put("message", "Thông tin nhóm vừa được cập nhật.");
             String jsonPayload = objectMapper.writeValueAsString(payload);
             try {
                 session.sendMessage(new TextMessage(jsonPayload));

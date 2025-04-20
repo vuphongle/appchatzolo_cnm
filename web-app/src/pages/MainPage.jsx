@@ -422,7 +422,6 @@ const MainPage = () => {
 
     //Hàm xử lý khi thay đổi thông tin nhóm
     const onUpdateGroupInfo = (groupId, newGroupName, newGroupAvatar) => {
-        // Cập nhật chỉ groupName và img trong conversations
         setConversations((prev) =>
             prev.map((conversation) =>
                 conversation.id === groupId
@@ -479,7 +478,7 @@ const MainPage = () => {
             // Tiếp tục xử lý các tin nhắn chưa đọc
             const unreadMsgs = await MessageService.getUnreadMessagesCountForAllFriends(MyUser?.my_user?.id, item.id);
             if (unreadMsgs.length > 0) {
-                await MessageService.savereadMessages(MyUser?.my_user?.id, item.id);
+                await MessageService.savereadMessages(MyUser.my_user.id, item.id);
             }
 
             setUnreadMessages([]);  // Đánh dấu tất cả tin nhắn là đã đọc
@@ -742,6 +741,23 @@ const MainPage = () => {
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
+                return;
+            }
+
+            if (incomingMessage.type === "GROUP_UPDATE_INFO") {
+                const groupId = incomingMessage.groupId;
+                const newGroupName = incomingMessage.groupName;
+                const newGroupAvatar = incomingMessage.image;
+
+                console.log("Conversations: ", conversations); // \\
+                // Cập nhật thông tin nhóm
+                setConversations((prev) =>
+                    prev.map((conversation) =>
+                        conversation.id === groupId
+                            ? { ...conversation, groupName: newGroupName, img: newGroupAvatar }
+                            : conversation
+                    )
+                );
                 return;
             }
 
@@ -1946,7 +1962,7 @@ const MainPage = () => {
                     </div>
                 );
             case "contacts":
-                return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser?.my_user?.id} friendRequests={friendRequests} onSelectChat={handleSelectChat}
+                return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} onSelectChat={handleSelectChat}
                     avatar_default={avatar_default}
                     MyUser={MyUser}
                     isUserInfoModalOpen={isUserInfoModalOpen}

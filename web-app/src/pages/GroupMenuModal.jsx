@@ -4,7 +4,7 @@ import EditGroupModal from "./EditGroupModal";
 
 const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo }) => {
 
-    console.log("Group info", conversation);
+    // console.log("Group info", conversation);
 
     const [showMembers, setShowMembers] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
@@ -356,7 +356,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo 
             </div>
             {/* Modal chỉnh sửa nhóm */}
             {isEditingModalOpen && (
-                <div className="modal show d-flex align-items-center justify-content-center" onClick={handleModalClick}>
+                <div className="modal-overlay show" onClick={handleModalClick}>
                     <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
                         <EditGroupModal
                             conversation={conversation}

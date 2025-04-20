@@ -1,0 +1,53 @@
+/* EditGroupModal.css */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);  /* Lớp phủ màu xám mờ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;  /* Đảm bảo modal nằm trên các phần tử khác */
+    pointer-events: auto;
+}
+
+.modal-dialog {
+    position: relative;
+    z-index: 1060;  /* Đảm bảo nội dung modal nằm trên lớp overlay */
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.modal-body {
+    padding: 20px 0;
+    text-align: center;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+}
+
+.modal-footer .btn {
+    width: 45%;
+}
