@@ -705,6 +705,7 @@ const MainPage = () => {
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
             //console.log("Incoming message loại:", incomingMessage); // Log thông báo nhận được
+
             if (incomingMessage.type === "DELETE_MESSAGE") {
                 // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
                 // thì xóa luôn phần hiển thị
@@ -1118,6 +1119,7 @@ const MainPage = () => {
             });
     }, [MyUser]);
 
+
     const handleSendMessage = async () => {
         const progress = document.getElementById('uploadProgress');
         const status = document.getElementById('status');
@@ -1201,6 +1203,7 @@ const MainPage = () => {
                 sendDate: new Date().toISOString(),
                 isRead: false,
                 type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                status: 'sent',
             };
             sendMessage(message); // Gửi qua WebSocket
             setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
@@ -1401,6 +1404,19 @@ const MainPage = () => {
     };
 
     useEffect(() => {
+
+        const unsubscribe = onMessage((msg) => {
+
+            console.log('📨 Tin nhắn đến:', msg);
+
+        });
+
+        return () => unsubscribe(); // Gỡ listener khi component unmount
+
+    }, [onMessage]);
+
+
+    useEffect(() => {
         if (searchQueryMessage === '') {
             setFilteredMessages(chatMessages);  // Trả về toàn bộ tin nhắn khi không có từ khóa tìm kiếm
             setResultsCount(0);  // Đặt lại kết quả trùng khớp là 0
@@ -1459,7 +1475,7 @@ const MainPage = () => {
         setIsMenuModalOpen((prev) => !prev);
     };
 
-    // const sendMessageToGroup = (message, groupId, userIds) => {
+    // const ss = (message, groupId, userIds) => {
     //     // Gửi tin nhắn đến tất cả thành viên trong nhóm
     //     userIds.forEach(userId => {
     //         // Gửi tin nhắn qua WebSocket

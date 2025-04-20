@@ -372,7 +372,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
         content: messageText.trim(),
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'text',
+        type: 'GROUP_CHAT',
         status:'sent'
 
       };

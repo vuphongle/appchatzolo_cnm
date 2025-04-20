@@ -36,6 +36,7 @@ export const WebSocketProvider = ({ children, userId }) => {
     const sendMessage = (message) => {
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
             socketRef.current.send(JSON.stringify(message));
+            console.log("Message sent:", message);
         }
     };
 

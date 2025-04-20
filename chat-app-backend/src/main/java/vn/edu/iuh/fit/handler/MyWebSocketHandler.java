@@ -74,6 +74,21 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             Message chatMessage = objectMapper.readValue(payload, Message.class);
 
             String receiverId = chatMessage.getReceiverID();
+
+            if(chatMessage.getType().equals("GROUP_CHAT")) {
+                String groupId = receiverId;
+                List<UserGroup> userGroups = groupRepository.getMembersOfGroup(groupId);
+                for (UserGroup userGroup : userGroups) {
+                    String userId = userGroup.getUserId();
+                    WebSocketSession userSession = sessions.get(userId);
+                    if (userSession != null && userSession.isOpen() && !userId.equals(chatMessage.getSenderID())) {
+                        userSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(chatMessage)));
+                        System.out.println("Message delivered to group member: " + userId);
+                    } else {
+                        System.out.println("Group member " + userId + " is offline. Message stored in database.");
+                    }
+                }
+            }
             WebSocketSession receiverSession = sessions.get(receiverId);
 
             if (receiverSession != null && receiverSession.isOpen()) {
