@@ -28,6 +28,8 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final MessageService messageService;
+    @Autowired
+    private  GroupRepository groupRepository;
 
     public MyWebSocketHandler(MessageService messageService) {
         this.messageService = messageService;
@@ -238,6 +240,26 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 System.out.println("Sent CHAT message to " + message.getReceiverID());
             } catch (IOException e) {
                 System.err.println("Error sending chat message: " + e.getMessage());
+            }
+        }
+    }
+    public void sendGroupChatMessage(String groupId, Message message) throws GroupException {
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(groupId);
+        for (UserGroup userGroup : userGroups) {
+            String userId = userGroup.getUserId();
+            WebSocketSession session = sessions.get(userId);
+            if (session != null && session.isOpen()) {
+                try {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "GROUP_CHAT");
+                    payload.put("message", message);
+
+                    String jsonPayload = objectMapper.writeValueAsString(payload);
+                    session.sendMessage(new TextMessage(jsonPayload));
+                    System.out.println("Sent GROUP_CHAT message to " + userId);
+                } catch (IOException e) {
+                    System.err.println("Error sending group chat message: " + e.getMessage());
+                }
             }
         }
     }
