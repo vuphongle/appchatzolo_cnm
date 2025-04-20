@@ -470,7 +470,7 @@ const MainPage = () => {
                 updatedUser = await UserService.getUserById(item.id);  // Lấy thông tin người dùng
                 setSelectedChat({
                     ...item,
-                    isOnline: updatedUser.isOnline,  // Trạng thái online của người dùng
+                    isOnline: updatedUser.online,  // Trạng thái online của người dùng
                     username: updatedUser.name,
                     avatar: updatedUser.avatar,
                 });
@@ -577,7 +577,7 @@ const MainPage = () => {
 
         if (selectedChat.type === 'group') {
             // Gọi hàm lấy tin nhắn trong nhóm khi selectedChat là nhóm
-            MessageService.get(`/group-messages?groupId=${MyUser?.my_user?.groupIds}`)
+            MessageService.get(`/group-messages?groupId=${selectedChat.id}`)
                 .then((data) => {
                     // Sắp xếp tin nhắn theo thời gian từ cũ đến mới
                     const sortedMessages = data.sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate));
@@ -842,19 +842,6 @@ const MainPage = () => {
                     })
                     .catch((err) => console.error("Error fetching group:", err));
 
-                // Làm mới danh sách thành viên nhóm
-                // GroupService.getGroupMembers(groupId)
-                //     .then((res) => {
-                //         const updatedMembers = res?.data || [];
-                //         setGroupMembers((prev) => {
-                //             // Loại bỏ thành viên cũ của nhóm này
-                //             const otherMembers = prev.filter((member) => member.groupId !== groupId);
-                //             // Thêm thành viên mới
-                //             return [...otherMembers, ...updatedMembers];
-                //         });
-                //     })
-                //     .catch((err) => console.error("Error fetching group members:", err));
-                // return;
             }
 
             if (incomingMessage.type === "CHAT") {
@@ -864,14 +851,24 @@ const MainPage = () => {
 
                 // Kiểm tra nếu selectedChat là nhóm
                 if (selectedChat.type === "group") {
-                    if (selectedChat && selectedChat.type === "group" && incomingMessage.receiverID === selectedChat.id) {
+                    console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
+                    // Nếu tin nhắn là của nhóm đang chọn
+                    if (incomingMessage.receiverID === selectedChat.id) {
                         const validSendDate = moment(incomingMessage.sendDate).isValid()
                             ? moment(incomingMessage.sendDate).toISOString()
                             : new Date().toISOString();
+
+                        // Cập nhật tin nhắn nhóm và tự động cuộn xuống
                         setChatMessages((prevMessages) => [
                             ...prevMessages,
                             { ...msg, sendDate: validSendDate },
                         ].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+
+                        // Cuộn xuống tin nhắn mới nhất (đảm bảo không cần reload trang)
+                        const chatContainer = document.querySelector(".chat-messages");
+                        if (chatContainer) {
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }
                     }
                 } else {
                     // Nếu là chat cá nhân
@@ -1126,6 +1123,7 @@ const MainPage = () => {
                 content: textContent,
                 sendDate: new Date().toISOString(),
                 isRead: false,
+                type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
             };
             sendMessage(message); // Gửi qua WebSocket
             setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));

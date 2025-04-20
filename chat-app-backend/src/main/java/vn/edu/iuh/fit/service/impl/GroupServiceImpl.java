@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.WebSocketSession;
 import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.DTO.request.GroupRequest;
@@ -512,5 +513,18 @@ public class GroupServiceImpl implements GroupService {
         message.setDeletedBySender(false);
         message.setDeletedByReceiver(false);
         messageRepository.save(message);
+
+
+        // Sau khi lưu tin nhắn, gọi WebSocket để gửi tin nhắn đến tất cả thành viên trong nhóm
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                myWebSocketHandler.sendGroupChatMessage(request.getReceiverID(), message); // Gửi tin nhắn nhóm
+            } catch (GroupException e) {
+                System.err.println("Error sending group chat message: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available.");
+        }
     }
 }
