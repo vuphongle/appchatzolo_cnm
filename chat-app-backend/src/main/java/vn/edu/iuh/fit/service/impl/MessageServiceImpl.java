@@ -154,6 +154,9 @@ public class MessageServiceImpl implements MessageService {
         List<String> friendIds = repository.getFriendsList(receiverID);  // Giả sử bạn đã có phương thức để lấy danh sách bạn bè
         List<UnreadMessagesCountDTO> unreadCounts = new ArrayList<>();
 
+        if (friendIds == null || friendIds.isEmpty()) {
+            return unreadCounts;
+        }
         for (String friendId : friendIds) {
             int unreadCount = repository.getUnreadMessagesCount(receiverID, friendId);
             unreadCounts.add(new UnreadMessagesCountDTO(friendId, unreadCount));

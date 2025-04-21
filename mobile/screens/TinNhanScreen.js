@@ -188,7 +188,7 @@ const TinNhanScreen = () => {
 
     try {
       // Kiểm tra nếu searchResult.id đã có trong friendIds
-      if (user?.friendIds.includes(searchResult.id)) {
+      if (user.friendIds && user?.friendIds.includes(searchResult.id)) {
         setFriendRequestStatus('Bạn bè');
       } else {
         // Kiểm tra xem có phải đã gửi lời mời kết bạn không

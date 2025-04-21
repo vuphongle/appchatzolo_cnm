@@ -33,7 +33,8 @@ const CreateGroupModal = ({ onClose }) => {
         UserService.findByPhoneNumber(formattedPhoneNumber)
             .then((data) => {
                 const users = Array.isArray(data) ? data : [data];
-                setSearchedUsers(users);
+                const filteredUsers = users.filter(user => user.id !== userId);
+                setSearchedUsers(filteredUsers);
             })
             .catch((err) => {
                 console.error("Error searching by phone number:", err);
@@ -57,12 +58,6 @@ const CreateGroupModal = ({ onClose }) => {
         ...filteredFriends,
         ...searchedUsers.filter(user => !friends.some(friend => friend.id === user.id)), // Loại bỏ trùng lặp
     ];
-
-    const handleModalClick = (e) => {
-        // Ngăn không cho đóng modal khi click vào trong nội dung modal
-        if (e.target.closest('.modal-dialog')) return;
-        onClose();
-    };
 
 
     const updateGroupList = (groupId) => {
@@ -174,7 +169,7 @@ const CreateGroupModal = ({ onClose }) => {
     };
 
     return (
-        <div className="modal show d-flex align-items-center justify-content-center" onClick={handleModalClick} tabIndex="-1">
+        <div className="modal show d-flex align-items-center justify-content-center" tabIndex="-1">
             <div className="modal-dialog modal-dialog-centered modal-xl">
                 <div className="modal-content" style={{ width: "500px", maxHeight: "90vh", overflow: "hidden" }}>
                     <div className="modal-header">
@@ -183,7 +178,7 @@ const CreateGroupModal = ({ onClose }) => {
                     </div>
                     <div className="modal-body" style={{ flexGrow: 1, overflowY: "auto" }}>
                         <div className="mb-3">
-                            <div className="d-flex align-items-center">
+                            <div className="d-flex align-items-center" style={{ marginLeft: "10px", marginRight: "10px" }}>
                                 <div className="d-flex align-items-center">
                                     <input
                                         type="file"

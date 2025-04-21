@@ -411,7 +411,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                                 </div>
 
                                 {/* Nút ba chấm */}
-                                {userRole === 'LEADER' && member.userId !== user?.id && (
+                                {(userRole === 'LEADER' || userRole === 'CO_LEADER') && member.userId !== user?.id && member.role !== 'LEADER' && (
                                     <div className="ms-auto">
                                         <button
                                             className="btn btn-light btn-sm"
@@ -422,15 +422,16 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                                             <i className="fas fa-ellipsis-h" style={{ marginRight: '20px' }}></i> {/* Icon ba chấm */}
                                         </button>
                                         <ul className="dropdown-menu">
-                                            {/* Thêm nút "Bổ nhiệm nhóm trưởng" */}
-                                            <li>
-                                                <a className="dropdown-item" href="#" onClick={() => handlePromoteToLeader(member.userId)}>
-                                                    Bổ nhiệm nhóm trưởng
-                                                </a>
-                                            </li>
+                                            {userRole === 'LEADER' && (
+                                                <li>
+                                                    <a className="dropdown-item" href="#" onClick={() => handlePromoteToLeader(member.userId)}>
+                                                        Bổ nhiệm nhóm trưởng
+                                                    </a>
+                                                </li>
+                                            )}
 
                                             {/* Nếu member là 'MEMBER', hiển thị 'Thêm phó nhóm' */}
-                                            {member.role === 'MEMBER' && (
+                                            {(member.role === 'MEMBER' && userRole === 'LEADER') && (
                                                 <li>
                                                     <a className="dropdown-item" href="#" onClick={() => handleAddCoLeader(member.userId)}>
                                                         Thêm phó nhóm
@@ -439,7 +440,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                                             )}
 
                                             {/* Nếu member là 'CO_LEADER', hiển thị 'Gỡ phó nhóm' */}
-                                            {member.role === 'CO_LEADER' && (
+                                            {(member.role === 'CO_LEADER' && userRole === 'LEADER') && (
                                                 <li>
                                                     <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveCoLeader(member.userId)}>
                                                         Gỡ phó nhóm
@@ -448,11 +449,13 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                                             )}
 
                                             {/* Thêm nút xóa thành viên */}
-                                            <li>
-                                                <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveMember(member.userId)}>
-                                                    Xóa thành viên
-                                                </a>
-                                            </li>
+                                            {(userRole === 'LEADER' || userRole === 'CO_LEADER') && (
+                                                <li>
+                                                    <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveMember(member.userId)}>
+                                                        Xóa thành viên
+                                                    </a>
+                                                </li>
+                                            )}
                                         </ul>
                                     </div>
                                 )}

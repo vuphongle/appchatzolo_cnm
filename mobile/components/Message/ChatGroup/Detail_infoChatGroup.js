@@ -25,17 +25,81 @@ import { IPV4 } from '@env';
 import { UserContext } from '../../../context/UserContext';
 import GroupService from '../../../services/GroupService';
 import SelectNewLeaderModal from './SelectNewLeaderModal';
+import ImageCropPicker from 'react-native-image-crop-picker';
+import axios from 'axios';
 
 const Detail_infoChatGroup = ({ route, navigation }) => {
   const [nameChange, setNameChange] = useState(infoGroup?.name);
   const [isBFF, setIsBFF] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
-  const { user, setUser, infoGroup, infoMemberGroup } = useContext(UserContext);
+  const { user, setUser, infoGroup, infoMemberGroup, updateInfoGroup } = useContext(UserContext);
   const [isLeader, setIsLeader] = useState(
     infoMemberGroup.some(member => member.userId === user?.id && member.role === 'LEADER')
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [avatarUri, setAvatarUri] = useState(infoGroup?.image || '');
+
+  const pickImage = async () => {
+      try {
+        const image = await ImageCropPicker.openPicker({
+          width: 300,
+          height: 300,
+          cropping: true,
+          compressImageQuality: 0.7,
+        });
+        if (image) {
+          setAvatarUri(image.path);
+        }
+
+        let groupAvatarUrl = infoGroup?.image || '';
+        // Upload image to S3
+        try {
+          const formData = new FormData();
+          const file = {
+            uri: image.path,
+            type: 'image/jpeg',
+            name: 'avatar.jpg',
+          };
+          formData.append('file', file);
+
+          const response = await axios.post(`${IPV4}/s3/image`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+
+          if (response.data.url) {
+            groupAvatarUrl = response.data.url;
+          } else {
+            Alert.alert('Lỗi', 'Không thể tải lên ảnh đại diện nhóm');
+            return;
+          }
+
+          // Update group information
+          const updateResponse = await GroupService.updateGroup({
+                id: infoGroup?.id,
+                groupName: infoGroup?.groupName,
+                image: groupAvatarUrl
+          })
+          if (updateResponse.success) {
+                await updateInfoGroup(infoGroup?.id);
+                Alert.alert('Thành công', 'Cập nhật ảnh đại diện nhóm thành công');
+          } else {
+                Alert.alert('Lỗi', updateResponse.message || 'Không thể cập nhật ảnh đại diện nhóm');
+          }
+        } catch (error) {
+            Alert.alert('Lỗi', 'Không thể tải lên ảnh đại diện nhóm');
+            console.log(error);
+          return;
+        }
+      } catch (error) {
+        if (error.code !== 'E_PICKER_CANCELLED') {
+          Alert.alert('Lỗi', 'Không thể chọn ảnh');
+          console.error(error);
+        }
+      }
+  };
 
   const handleDeleteGroupByleader = () => {
     Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa cuộc trò chuyện này?', [
@@ -143,8 +207,17 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
 
   const ProfileSection = () => (
     <View style={styles.profileSection}>
-      <Image source={{ uri: infoGroup?.image }} style={styles.profileImage} />
-      <Text style={styles.profileName}>{infoGroup?.groupName}</Text>
+      <TouchableOpacity style={styles.avatarContainer}  onPress={pickImage}   >
+        <Image source={{ uri: infoGroup?.image }} style={styles.profileImage} />
+        <View style={styles.editIconContainer}>
+            <Ionicons name="camera-outline" size={20} color="#FFF" />
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.editNameContainer}>
+        <Text style={styles.profileName}>{infoGroup?.groupName}</Text>
+        <Ionicons name="pencil" size={20} color="blue" />
+      </TouchableOpacity>
       <View style={styles.quickActions}>
         <QuickActionButton
           icon="search"
@@ -399,4 +472,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  editIconContainer: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      backgroundColor: '#0084FF',
+      borderRadius: 15,
+      padding: 5,
+  },
+  editNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  }
 });

@@ -49,8 +49,8 @@ const EditGroupModal = ({ conversation, onClose }) => {
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" >
+            <div className="modal-dialog">
                 <div className="modal-content">
                     <div className="modal-header">
                         <h5 className="modal-title">Chỉnh sửa thông tin nhóm</h5>
