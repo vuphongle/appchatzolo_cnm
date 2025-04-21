@@ -54,6 +54,19 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     return () => setIsMounted(false);
   }, []);
 
+  // const handleSendMessagesocket= (message) => {
+  //   if (!message) return;
+  //   setLocalMessages((prevMessages) => {
+  //     const updatedMessages = [...prevMessages, message].sort(
+  //       (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+  //     );
+  //     return updatedMessages;
+  //   });
+  //   sendMessage(message);
+  // };
+
+
+
   const fetchMessages = async () => {
     if (!userId || !receiverID) return;
     
@@ -84,15 +97,16 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     
     fetchMessages();
 
-    const intervalId = setInterval(() => {
-      if (isMounted) {
-        fetchMessages();
-      }
-    }, 1000);
+    // const intervalId = setInterval(() => {
+    //   if (isMounted) {
+    //     fetchMessages();
+    //   }
+    // }, 1000);
     
-    return () => {
-      clearInterval(intervalId);
-    };
+    // return () => {
+    //   clearInterval(intervalId);
+    // };
+    return ()=>{};
 
 
   }, [userId, receiverID]);
@@ -128,7 +142,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       // Clean up WebSocket subscription
       if (unsubscribe) unsubscribe();
     };
-  }, [userId, receiverID]);
+  }, [onMessage]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -243,11 +257,17 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         content: audioUrl,
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'audio',
+        type: 'PRIVATE_CHAT',
         status:'sent'
       };
 
       sendMessage(message);
+      setLocalMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages,message].sort(
+          (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+        );
+        return updatedMessages;
+      });
       setAudioFile(null);
     } catch (error) {
       console.error('Error uploading audio:', error);
@@ -319,11 +339,17 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
               content: imageUrl,
               sendDate: new Date().toISOString(),
               isRead: false,
-              type: 'image',
+              type: 'PRIVATE_CHAT',
               status: 'sent',
             };
             
             sendMessage(imageMessage);
+            setLocalMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages, imageMessage].sort(
+                (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+              );
+              return updatedMessages;
+            });
           }
         }
         setSelectedImages([]);
@@ -347,12 +373,18 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
               content: fileUrl,
               sendDate: new Date().toISOString(),
               isRead: false,
-              type: 'file',
+              type: 'PRIVATE_CHAT',
               fileName: file.name,
               status:'sent'
             };
             
             sendMessage(fileMessage);
+            setLocalMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages, fileMessage].sort(
+                (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+              );
+              return updatedMessages;
+            });
           }
         }
         setSelectedFiles([]);
@@ -371,12 +403,18 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         content: messageText.trim(),
         sendDate: new Date().toISOString(),
         isRead: false,
-        type: 'text',
+        type: 'PRIVATE_CHAT',
         status: 'sent'
 
       };
       
       sendMessage(textMessage);
+            setLocalMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages,textMessage].sort(
+                (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+              );
+              return updatedMessages;
+            });
       setMessageText('');
     }
 
