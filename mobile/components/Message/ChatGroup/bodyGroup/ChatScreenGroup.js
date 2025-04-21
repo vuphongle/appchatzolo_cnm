@@ -33,7 +33,7 @@ import { WebSocketContext } from '../../../../context/Websocket';
 const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const { user } = useContext(UserContext);
   const userId = user?.id;
-  const { sendMessage, onMessage, isConnected } = useContext(WebSocketContext);
+  const { sendMessage, onMessage } = useContext(WebSocketContext);
   
   const [localMessages, setLocalMessages] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -83,16 +83,10 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     if (!userId || !receiverID) return;
    
     fetchMessages();
-    
-    // Set up interval to refresh messages every 1 second
-    // const intervalId = setInterval(() => {
-    //   if (isMounted) {
-    //     fetchMessages();
-    //   }
-    // }, 100);
+  
     
     return () => {
-      // clearInterval(intervalId);
+      
     };
   }, [userId, receiverID]);
 
@@ -102,11 +96,10 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     
     // Function to handle incoming WebSocket messages
     const handleWebSocketMessage = (message) => {
-      // Check if message belongs to current conversation
-      if ((message.senderID === userId && message.receiverID === receiverID) || 
-          (message.senderID === receiverID && message.receiverID === userId)) {
+     
+      if ((message.senderID == userId && message.receiverID == receiverID) ) {
         setLocalMessages(prev => {
-          // Check if message already exists to prevent duplicates
+          // // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg.id === message.id);
           if (exists) return prev;
           
@@ -117,7 +110,9 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
           
           return newMessages;
         });
+       
       }
+    
     };
     
     // Subscribe to WebSocket messages
@@ -247,6 +242,12 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
       };
 
       sendMessage(message);
+      setLocalMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages,message].sort(
+          (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+        );
+        return updatedMessages;
+      });
       setAudioFile(null);
       
  
@@ -325,6 +326,12 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
             };
             
             sendMessage(imageMessage);
+            setLocalMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages, imageMessage].sort(
+                (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+              );
+              return updatedMessages;
+            });
           }
         }
         setSelectedImages([]);
@@ -354,6 +361,12 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
             };
             
             sendMessage(fileMessage);
+            setLocalMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages, fileMessage].sort(
+                (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+              );
+              return updatedMessages;
+            });
           }
         }
         setSelectedFiles([]);
@@ -378,6 +391,12 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
       };
       
       sendMessage(textMessage);
+      setLocalMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages,textMessage].sort(
+          (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+        );
+        return updatedMessages;
+      });
       setMessageText('');
     }
 

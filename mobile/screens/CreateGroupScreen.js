@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import { AVATAR_URL_DEFAULT } from '@env';
 import { UserContext } from '../context/UserContext';
-// import ImageCropPicker from 'react-native-image-crop-picker';
+import ImageCropPicker from 'react-native-image-crop-picker';
 import { formatPhoneNumber } from '../utils/formatPhoneNumber';
 import { IPV4 } from '@env';
 import { useNavigation } from '@react-navigation/native';
@@ -190,30 +190,30 @@ const CreateGroupScreen = () => {
     }
   };
 
-  // const handleAvatarChange = async() => {
-  //  try {
-  //      const image = await ImageCropPicker.openPicker({
-  //        width: 300,
-  //        height: 300,
-  //        cropping: true,
-  //        compressImageQuality: 0.7,
-  //      });
-  //      if (image) {
-  //        setGroupAvatar(image.path);
-  //      }
-  //    } catch (error) {
-  //      if (error.code !== 'E_PICKER_CANCELLED') {
-  //        Alert.alert('Lỗi', 'Không thể chọn ảnh');
-  //        console.error(error);
-  //      }
-  //    }
-  // };
+  const handleAvatarChange = async() => {
+   try {
+       const image = await ImageCropPicker.openPicker({
+         width: 300,
+         height: 300,
+         cropping: true,
+         compressImageQuality: 0.7,
+       });
+       if (image) {
+         setGroupAvatar(image.path);
+       }
+     } catch (error) {
+       if (error.code !== 'E_PICKER_CANCELLED') {
+         Alert.alert('Lỗi', 'Không thể chọn ảnh');
+         console.error(error);
+       }
+     }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.groupNameContainer}>
-      {/* onPress={handleAvatarChange} */}
-        <TouchableOpacity style={styles.avatarContainer} >
+  
+        <TouchableOpacity style={styles.avatarContainer}     onPress={handleAvatarChange} >
           {groupAvatar ? (
             <Image source={{ uri: groupAvatar }} style={styles.avatarImageLarge} />
           ) : (

@@ -11,7 +11,7 @@ function Header({ name, id, avatar }) {
   const [user, setUser] = useState(null); // Lưu dữ liệu người dùng
 
   const handlePressBack = () => {
-    navigation.navigate('MainTabs');
+    navigation.goBack();
   };
 
   const handlePressMenu = () => {
