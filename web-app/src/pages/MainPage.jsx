@@ -120,9 +120,11 @@ const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, isOwner, isMin
                     <i className="bi bi-arrow-counterclockwise me-2"></i> Thu hồi
                 </button>
             )}
-            <button className="dropdown-item text-danger" onClick={onDeleteForMe}>
-                <i className="bi bi-trash me-2"></i> Chỉ xóa ở phía tôi
-            </button>
+            {!isRecalled && (
+                <button className="dropdown-item text-danger" onClick={onDeleteForMe}>
+                    <i className="bi bi-trash me-2"></i> Chỉ xóa ở phía tôi
+                </button>
+            )}
         </div>
     );
 };

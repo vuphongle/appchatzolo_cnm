@@ -60,7 +60,7 @@ function HeaderGroup({ name, id, avatar }) {
         <View style={styles.container_friend_Name}>
           <View style={{  alignItems: 'center' }}>
             <Text style={styles.friend_Name}>
-              {name}
+              {infoGroup?.groupName}
              
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' ,gap:5}}>

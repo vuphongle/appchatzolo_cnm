@@ -31,6 +31,7 @@ import AudioRecord from 'react-native-audio-record';
 import { WebSocketContext } from '../../../../context/Websocket';
 import { userContext } from '../../../../context/UserContext';
 import { useNavigation } from '@react-navigation/native';
+import UserService from '../../../../services/UserService';
 
 const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const { user } = useContext(UserContext);
@@ -53,6 +54,8 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
+    if(!infoGroup || !infoMemberGroup) return;
+    if(infoGroup.id !== receiverID) return;
     if (!infoMemberGroup.find(item => item.userId === user?.id)) {
       Alert.alert(
         'Bạn đã bị xóa khỏi nhóm này',
@@ -67,7 +70,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
         ]
       );
     }
-  }, [infoMemberGroup, infoGroup]);
+  }, [infoMemberGroup]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -104,41 +107,52 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     if (!userId || !receiverID) return;
    
     fetchMessages();
-  
-    
     return () => {
       
     };
   }, [userId, receiverID]);
 
+  useEffect(() => {
+    if (typeof isChange === 'string') {
+            if(isChange.startsWith('RECALL_MESSAGE') || isChange.startsWith('CHAT')){
+                fetchMessages();
+            }
+    }
+  }, [isChange]);
+
   // Initialize WebSocket message listener
   useEffect(() => {
     if (!userId || !receiverID) return;
-    
     // Function to handle incoming WebSocket messages
-    const handleWebSocketMessage = (message) => {
-     
-      if ((message.senderID == userId && message.receiverID == receiverID) ) {
+    const handleWebSocketMessage = async(message) => {
+
+      if (message.senderID == receiverID || message.receiverID == receiverID ) {
+        const UserSender = await UserService.getUserById(message.senderID);
+        message = {
+            ...message,
+            avatar: UserSender.avatar,
+        };
+
         setLocalMessages(prev => {
           // // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg.id === message.id);
           if (exists) return prev;
-          
+
           // Add new message and sort by date
           const newMessages = [...prev, message].sort(
             (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
           );
-          
+
           return newMessages;
         });
-       
+
       }
-    
+
     };
-    
+
     // Subscribe to WebSocket messages
     const unsubscribe = onMessage(handleWebSocketMessage);
-    
+
     return () => {
       // Clean up WebSocket subscription
       if (unsubscribe) unsubscribe();

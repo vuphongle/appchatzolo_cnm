@@ -225,6 +225,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
 
   // Hiển thị menu tùy chọn khi nhấn giữ
   const handleLongPress = () => {
+    if (message === 'Tin nhắn đã được thu hồi') return;
     if (!showForwardRecall) return;
     
     const options = [

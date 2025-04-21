@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import GroupService from "../services/GroupService";
 import EditGroupModal from "./EditGroupModal";
 import showToast from "../utils/AppUtils";
@@ -581,7 +581,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                     </div>
 
                     {/* Chỉ hiển thị nếu user là người tạo nhóm */}
-                    {user?.id === conversation.creatorId && (
+                    {userRole == 'LEADER' && (
                         <div className="d-flex align-items-center text-danger gap-2 mb-2 pb-3 pt-3"
                             style={{ cursor: 'pointer' }}
                             onClick={handleDeleteGroup}

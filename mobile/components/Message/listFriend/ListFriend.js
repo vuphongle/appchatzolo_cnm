@@ -115,7 +115,7 @@ function ListFriend({ userId }) {
 
    useEffect(() => {
      if (typeof isChange === 'string') {
-       if(isChange.startsWith('REMOVE_FRIEND') || isChange.startsWith('SUBMIT_FRIEND_REQUEST') || isChange.startsWith('ADD_TO_GROUP') || isChange.startsWith('MEMBER_REMOVE') || isChange.startsWith('GROUP_UPDATE')){
+       if(isChange.startsWith('REMOVE_FRIEND') || isChange.startsWith('SUBMIT_FRIEND_REQUEST') || isChange.startsWith('ADD_TO_GROUP') || isChange.startsWith('MEMBER_REMOVE') || isChange.startsWith('GROUP_UPDATE') || isChange.startsWith('CREATE_GROUP') || isChange.startsWith('GROUP_DELETED')){
            fetchFriendsAndGroups();
        }
      }

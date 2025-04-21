@@ -111,7 +111,7 @@ const CreateGroupModal = ({ onClose }) => {
             return;
         }
 
-        let imageUrl = groupImage ? groupImage : group_default;
+        let imageUrl = groupImage ? groupImage : "https://nhom3-cmn-chatappzolo-s3.s3.ap-southeast-1.amazonaws.com/avatarGroup.png";
 
         // Kiểm tra nếu có ảnh, thì tải ảnh lên S3
         if (groupImage) {

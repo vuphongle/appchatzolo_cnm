@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Modal, Text, Alert, FlatList, Image, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
-import { AVATAR_URL_DEFAULT } from '@env';
+import { AVATAR_GROUP_URL_DEFAULT } from '@env';
 import { UserContext } from '../context/UserContext';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { formatPhoneNumber } from '../utils/formatPhoneNumber';
@@ -163,7 +163,7 @@ const CreateGroupScreen = () => {
 
     const groupData = {
         groupName: groupName,
-        image: groupAvatarUrl || AVATAR_URL_DEFAULT,
+        image: groupAvatarUrl || AVATAR_GROUP_URL_DEFAULT,
         creatorId: user?.id,
         memberIds: selectedFriends,
     }

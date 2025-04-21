@@ -26,6 +26,10 @@ const useFriendRequestCount = (user) => {
                     updateInfoGroup(message.groupId);
                     updateInfoMemberGroup(message.groupId);
                 }
+                if(message.type == 'GROUP_UPDATE_INFO' && message.groupId == infoGroup?.id){
+                    updateInfoGroup(message.groupId);
+                    updateInfoMemberGroup(message.groupId);
+                }
               }
               setIsChange(message.type + new Date());
           }
