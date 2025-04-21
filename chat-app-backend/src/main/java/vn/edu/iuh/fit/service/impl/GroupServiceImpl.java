@@ -29,7 +29,6 @@ public class GroupServiceImpl implements GroupService {
     private UserRepository userRepository;
     @Autowired
     private MessageRepository messageRepository;
-    @Autowired MessageServiceImpl messageServiceImpl;
     @Autowired
     private ObjectProvider<MyWebSocketHandler> myWebSocketHandlerProvider;
 

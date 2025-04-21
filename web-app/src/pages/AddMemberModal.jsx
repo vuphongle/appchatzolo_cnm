@@ -2,15 +2,17 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import UserService from "../services/UserService";
 import GroupService from "../services/GroupService";
-
+import { formatPhoneNumber } from "../utils/formatPhoneNumber";
 const AddMemberModal = ({ onClose, groupId }) => {
     const { MyUser } = useAuth();
     const userId = MyUser?.my_user?.id;
     const [friends, setFriends] = useState([]);
+    const [searchedUsers, setSearchedUsers] = useState([]); // Danh sách người dùng tìm được bằng số điện thoại
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [groupMembers, setGroupMembers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
 
+    // Lấy danh sách bạn bè
     useEffect(() => {
         if (userId) {
             UserService.getFriends(userId)
@@ -23,15 +25,13 @@ const AddMemberModal = ({ onClose, groupId }) => {
         }
     }, [userId]);
 
+    // Lấy danh sách thành viên nhóm
     useEffect(() => {
         if (groupId) {
             GroupService.getGroupMembers(groupId)
                 .then((res) => {
                     const data = res?.data || {};
-                    const members =
-                        Array.isArray(data)
-                            ? data[0]?.userGroups
-                            : data.userGroups;
+                    const members = Array.isArray(data) ? data[0]?.userGroups : data.userGroups;
 
                     if (members) {
                         setGroupMembers(members.map(member => member.userId));
@@ -42,6 +42,20 @@ const AddMemberModal = ({ onClose, groupId }) => {
                 .catch((err) => console.error("Error fetching group members:", err));
         }
     }, [groupId]);
+
+    // Tìm kiếm người dùng bằng số điện thoại khi searchTerm thay đổi
+    useEffect(() => {
+        const formattedPhoneNumber = formatPhoneNumber(searchTerm);
+        UserService.findByPhoneNumber(formattedPhoneNumber)
+            .then((data) => {
+                const users = Array.isArray(data) ? data : [data];
+                setSearchedUsers(users);
+            })
+            .catch((err) => {
+                console.error("Error searching by phone number:", err);
+                setSearchedUsers([]);
+            });
+    }, [searchTerm]);
 
     const memberIdSet = new Set(groupMembers.map(id => String(id)));
 
@@ -68,12 +82,18 @@ const AddMemberModal = ({ onClose, groupId }) => {
         }
     };
 
+    // Lọc danh sách bạn bè dựa trên tên
     const filteredFriends = friends.filter(friend => {
         const friendName = friend.name.toLowerCase();
-        const friendPhone = friend.phoneNumber ? friend.phoneNumber.toLowerCase() : ""; // Nếu có số điện thoại
         const searchQuery = searchTerm.toLowerCase();
-        return friendName.includes(searchQuery) || friendPhone.includes(searchQuery);
+        return friendName.includes(searchQuery);
     });
+
+    // Kết hợp danh sách bạn bè và người dùng tìm được
+    const combinedList = [
+        ...filteredFriends,
+        ...searchedUsers.filter(user => !friends.some(friend => friend.id === user.id)), // Loại bỏ trùng lặp
+    ];
 
     return (
         <div
@@ -103,8 +123,8 @@ const AddMemberModal = ({ onClose, groupId }) => {
                             <div className="input-group">
                                 <input
                                     type="text"
-                                    className="form-control rounded-pill "
-                                    placeholder="Nhập tên, số điện thoại, hoặc danh sách số điện thoại"
+                                    className="form-control rounded-pill"
+                                    placeholder="Nhập tên hoặc số điện thoại"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -112,42 +132,46 @@ const AddMemberModal = ({ onClose, groupId }) => {
                         </div>
                         <hr />
                         <div className="friend-list" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                            {filteredFriends.map(friend => {
-                                const isMember = memberIdSet.has(String(friend.id));
-                                const isSelected = isMember || selectedFriends.includes(friend.id);
+                            {combinedList.length > 0 ? (
+                                combinedList.map(user => {
+                                    friends.some(friend => friend.id === user.id);
+                                    const isMember = memberIdSet.has(String(user.id));
+                                    const isSelected = isMember || selectedFriends.includes(user.id);
 
-                                return (
-                                    <div key={friend.id} className="form-check mb-3 me-3 d-flex align-items-center">
-                                        <input
-                                            className="form-check-input me-2 rounded-pill"
-                                            type="checkbox"
-                                            value={friend.id}
-                                            checked={isSelected}
-                                            disabled={isMember}
-                                            onChange={() => toggleSelect(friend.id)}
-                                            id={`friend-${friend.id}`}
-                                        />
-
-                                        <label className="form-check-label d-flex align-items-center" htmlFor={`friend-${friend.id}`}>
-                                            <img
-                                                src={friend.avatar}
-                                                alt={friend.name}
-                                                className="rounded-circle me-2 ms-2"
-                                                style={{
-                                                    width: "40px",
-                                                    height: "40px",
-                                                    objectFit: "cover",
-                                                    filter: isMember ? "grayscale(100%)" : "none",
-                                                    opacity: isMember ? 0.6 : 1
-                                                }}
+                                    return (
+                                        <div key={user.id} className="form-check mb-3 me-3 d-flex align-items-center">
+                                            <input
+                                                className="form-check-input me-2 rounded-pill"
+                                                type="checkbox"
+                                                value={user.id}
+                                                checked={isSelected}
+                                                disabled={isMember}
+                                                onChange={() => toggleSelect(user.id)}
+                                                id={`user-${user.id}`}
                                             />
-                                            <span>
-                                                {friend.name}
-                                            </span>
-                                        </label>
-                                    </div>
-                                );
-                            })}
+                                            <label className="form-check-label d-flex align-items-center" htmlFor={`user-${user.id}`}>
+                                                <img
+                                                    src={user.avatar || "default-avatar.png"}
+                                                    alt={user.name}
+                                                    className="rounded-circle me-2 ms-2"
+                                                    style={{
+                                                        width: "40px",
+                                                        height: "40px",
+                                                        objectFit: "cover",
+                                                        filter: isMember ? "grayscale(100%)" : "none",
+                                                        opacity: isMember ? 0.6 : 1
+                                                    }}
+                                                />
+                                                <span>
+                                                    {user.name}
+                                                </span>
+                                            </label>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="text-muted text-center">Không tìm thấy người dùng</div>
+                            )}
                         </div>
                     </div>
                     <div className="modal-footer">

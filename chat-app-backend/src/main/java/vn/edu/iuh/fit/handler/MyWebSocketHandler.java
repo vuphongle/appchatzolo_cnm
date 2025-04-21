@@ -30,7 +30,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
     private final MessageService messageService;
     @Autowired
-    private  GroupRepository groupRepository;
+    private GroupRepository groupRepository;
     @Autowired
     private UserRepository userRepository;
 
@@ -77,7 +77,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
             String receiverId = chatMessage.getReceiverID();
 
-            if(chatMessage.getType().equals("GROUP_CHAT")) {
+            if (chatMessage.getType().equals("GROUP_CHAT")) {
                 String groupId = receiverId;
                 List<UserGroup> userGroups = groupRepository.getMembersOfGroup(groupId);
                 for (UserGroup userGroup : userGroups) {
@@ -205,61 +205,140 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void sendDeleteMessageNotification(String receiverId, String fromUserId) throws JsonProcessingException {
-        WebSocketSession receiverSession = sessions.get(receiverId);
-        if (receiverSession != null && receiverSession.isOpen()) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("type", "DELETE_MESSAGE");
-            payload.put("from", fromUserId); // Người gửi lệnh xóa
-            payload.put("to", receiverId);   // Người nhận thông báo
-
-            String jsonPayload = objectMapper.writeValueAsString(payload);
-            try {
-                receiverSession.sendMessage(new TextMessage(jsonPayload));
-                System.out.println("Sent DELETE_MESSAGE notification to " + receiverId);
-            } catch (IOException e) {
-                System.err.println("Error sending DELETE_MESSAGE notification: " + e.getMessage());
+        // Kiểm tra xem receiverId có phải là groupId không
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(receiverId);
+        if (userGroups != null && !userGroups.isEmpty()) {
+            // Nếu là nhóm, gửi thông báo đến tất cả thành viên trong nhóm
+            for (UserGroup userGroup : userGroups) {
+                String userId = userGroup.getUserId();
+                WebSocketSession session = sessions.get(userId);
+                if (session != null && session.isOpen()) {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "DELETE_MESSAGE");
+                    payload.put("from", fromUserId); // Người gửi lệnh xóa
+                    payload.put("to", userId);      // Người nhận thông báo (thành viên trong nhóm)
+                    String jsonPayload = objectMapper.writeValueAsString(payload);
+                    try {
+                        session.sendMessage(new TextMessage(jsonPayload));
+                        System.out.println("Sent DELETE_MESSAGE notification to group member: " + userId + " in group: " + receiverId);
+                    } catch (IOException e) {
+                        System.err.println("Error sending DELETE_MESSAGE notification to group member " + userId + ": " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("Không tìm thấy session WebSocket cho người dùng " + userId + " hoặc session đã đóng.");
+                }
             }
         } else {
-            System.err.println("Receiver session is null or closed for user: " + receiverId);
+            // Nếu không phải nhóm (tin nhắn cá nhân), gửi thông báo đến receiverId
+            WebSocketSession receiverSession = sessions.get(receiverId);
+            if (receiverSession != null && receiverSession.isOpen()) {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "DELETE_MESSAGE");
+                payload.put("from", fromUserId); // Người gửi lệnh xóa
+                payload.put("to", receiverId);   // Người nhận thông báo
+                String jsonPayload = objectMapper.writeValueAsString(payload);
+                try {
+                    receiverSession.sendMessage(new TextMessage(jsonPayload));
+                    System.out.println("Sent DELETE_MESSAGE notification to user: " + receiverId);
+                } catch (IOException e) {
+                    System.err.println("Error sending DELETE_MESSAGE notification to user " + receiverId + ": " + e.getMessage());
+                }
+            } else {
+                System.err.println("Receiver session is null or closed for user: " + receiverId);
+            }
         }
     }
 
-    public void sendRecallMessageNotification(String receiverId, String fromUserId, String messageId) throws JsonProcessingException {
-        WebSocketSession receiverSession = sessions.get(receiverId);
-        if (receiverSession != null && receiverSession.isOpen()) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("type", "RECALL_MESSAGE");
-            payload.put("from", fromUserId);     // Ai gọi thu hồi tin nhắn
-            payload.put("messageId", messageId);   // ID của tin nhắn cần thu hồi
-
-            String jsonPayload = objectMapper.writeValueAsString(payload);
-            try {
-                receiverSession.sendMessage(new TextMessage(jsonPayload));
-                System.out.println("Sent RECALL_MESSAGE notification to " + receiverId);
-            } catch (IOException e) {
-                System.err.println("Error sending RECALL_MESSAGE notification: " + e.getMessage());
+    public void sendRecallMessageNotification(String receiverId, String senderId, String messageId) throws JsonProcessingException {
+        // Kiểm tra xem receiverId có phải là groupId không
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(receiverId);
+        if (userGroups != null && !userGroups.isEmpty()) {
+            // Nếu là nhóm, gửi thông báo đến tất cả thành viên trong nhóm
+            for (UserGroup userGroup : userGroups) {
+                String userId = userGroup.getUserId();
+                WebSocketSession session = sessions.get(userId);
+                if (session != null && session.isOpen()) {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "RECALL_MESSAGE");
+                    payload.put("messageId", messageId);
+                    payload.put("senderId", senderId);
+                    String jsonPayload = objectMapper.writeValueAsString(payload);
+                    try {
+                        session.sendMessage(new TextMessage(jsonPayload));
+                        System.out.println("Sent RECALL_MESSAGE notification to group member: " + userId + " in group: " + receiverId);
+                    } catch (IOException e) {
+                        System.err.println("Error sending RECALL_MESSAGE notification to group member " + userId + ": " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("Không tìm thấy session WebSocket cho người dùng " + userId + " hoặc session đã đóng.");
+                }
             }
         } else {
-            System.err.println("Receiver session is null or closed for user: " + receiverId);
+            // Nếu không phải nhóm (tin nhắn cá nhân), gửi thông báo đến receiverId
+            WebSocketSession session = sessions.get(receiverId);
+            if (session != null && session.isOpen()) {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "RECALL_MESSAGE");
+                payload.put("messageId", messageId);
+                payload.put("senderId", senderId);
+                String jsonPayload = objectMapper.writeValueAsString(payload);
+                try {
+                    session.sendMessage(new TextMessage(jsonPayload));
+                    System.out.println("Sent RECALL_MESSAGE notification to user: " + receiverId);
+                } catch (IOException e) {
+                    System.err.println("Error sending RECALL_MESSAGE notification to user " + receiverId + ": " + e.getMessage());
+                }
+            } else {
+                System.out.println("Không tìm thấy session WebSocket cho người dùng " + receiverId + " hoặc session đã đóng.");
+            }
         }
     }
 
-    public void sendChatMessage(Message message) {
-        WebSocketSession session = sessions.get(message.getReceiverID());
-        if (session != null && session.isOpen()) {
-            try {
+    public void sendChatMessage(Message message) throws JsonProcessingException {
+        String receiverId = message.getReceiverID();
+
+        // Kiểm tra xem receiverId có phải là groupId không
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(receiverId);
+        if (userGroups != null && !userGroups.isEmpty()) {
+            // Nếu là nhóm, gửi tin nhắn đến tất cả thành viên trong nhóm
+            for (UserGroup userGroup : userGroups) {
+                String userId = userGroup.getUserId();
+                WebSocketSession session = sessions.get(userId);
+                if (session != null && session.isOpen()) {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "CHAT");
+                    payload.put("message", message); // Nguyên message
+                    String jsonPayload = objectMapper.writeValueAsString(payload);
+                    try {
+                        session.sendMessage(new TextMessage(jsonPayload));
+                        System.out.println("Sent CHAT message to group member: " + userId + " in group: " + receiverId);
+                    } catch (IOException e) {
+                        System.err.println("Error sending CHAT message to group member " + userId + ": " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("Không tìm thấy session WebSocket cho người dùng " + userId + " hoặc session đã đóng.");
+                }
+            }
+        } else {
+            // Nếu không phải nhóm (tin nhắn cá nhân), gửi tin nhắn đến receiverId
+            WebSocketSession session = sessions.get(receiverId);
+            if (session != null && session.isOpen()) {
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("type", "CHAT");
-                payload.put("message", message); // nguyên message
-
+                payload.put("message", message); // Nguyên message
                 String jsonPayload = objectMapper.writeValueAsString(payload);
-                session.sendMessage(new TextMessage(jsonPayload));
-                System.out.println("Sent CHAT message to " + message.getReceiverID());
-            } catch (IOException e) {
-                System.err.println("Error sending chat message: " + e.getMessage());
+                try {
+                    session.sendMessage(new TextMessage(jsonPayload));
+                    System.out.println("Sent CHAT message to user: " + receiverId);
+                } catch (IOException e) {
+                    System.err.println("Error sending CHAT message to user " + receiverId + ": " + e.getMessage());
+                }
+            } else {
+                System.out.println("Không tìm thấy session WebSocket cho người dùng " + receiverId + " hoặc session đã đóng.");
             }
         }
     }
+
     public void sendGroupChatMessage(String groupId, Message message) throws GroupException {
         List<UserGroup> userGroups = groupRepository.getMembersOfGroup(groupId);
         for (UserGroup userGroup : userGroups) {
@@ -317,8 +396,6 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 //            }
 //        }
 //    }
-
-
 
 
     //Socket Xóa bạn
@@ -446,6 +523,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
     // Gửi thông báo cho tất cả các thành viên trong nhóm khi thăng cấp nhóm phó
     public void sendPromoteToCoLeader(String userId, String groupId, String targetUserId) throws JsonProcessingException {
         WebSocketSession session = sessions.get(userId);
@@ -454,7 +532,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             payload.put("type", "PROMOTE_CO_LEADER");
             payload.put("groupId", groupId);
             payload.put("targetUserId", targetUserId);
-            payload.put("message", "Nhóm trưởng vừa thăng cấp phó nhóm cho: "+ userRepository.findById(targetUserId).getName());
+            payload.put("message", "Nhóm trưởng vừa thăng cấp phó nhóm cho: " + userRepository.findById(targetUserId).getName());
             String jsonPayload = objectMapper.writeValueAsString(payload);
             try {
                 session.sendMessage(new TextMessage(jsonPayload));
@@ -473,7 +551,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             payload.put("type", "DEMOTE_TO_MEMBER");
             payload.put("groupId", groupId);
             payload.put("targetUserId", targetUserId);
-            payload.put("message", "Nhóm trưởng vừa giáng xuống thành viên cho: "+ userRepository.findById(targetUserId).getName());
+            payload.put("message", "Nhóm trưởng vừa giáng xuống thành viên cho: " + userRepository.findById(targetUserId).getName());
             String jsonPayload = objectMapper.writeValueAsString(payload);
             try {
                 session.sendMessage(new TextMessage(jsonPayload));
@@ -492,7 +570,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             payload.put("type", "PROMOTE_TO_LEADER");
             payload.put("groupId", groupId);
             payload.put("targetUserId", targetUserId);
-            payload.put("message", "Vừa đổi quyền nhóm trưởng cho: "+ userRepository.findById(targetUserId).getName());
+            payload.put("message", "Vừa đổi quyền nhóm trưởng cho: " + userRepository.findById(targetUserId).getName());
             String jsonPayload = objectMapper.writeValueAsString(payload);
             try {
                 session.sendMessage(new TextMessage(jsonPayload));

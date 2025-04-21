@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import GroupService from "../services/GroupService";
 import group_default from '../image/group-default.png';
 import S3Service from "../services/S3Service";
+import { formatPhoneNumber } from "../utils/formatPhoneNumber";
 
 
 const CreateGroupModal = ({ onClose }) => {
@@ -12,7 +13,9 @@ const CreateGroupModal = ({ onClose }) => {
     const [friends, setFriends] = useState([]);
     const [selectedFriends, setSelectedFriends] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [searchedUsers, setSearchedUsers] = useState([]);
     const [groupList, setgroupList] = useState([]);
+
     useEffect(() => {
         if (userId) {
             UserService.getFriends(userId)
@@ -25,15 +28,35 @@ const CreateGroupModal = ({ onClose }) => {
         }
     }, [userId]);
 
+    useEffect(() => {
+        const formattedPhoneNumber = formatPhoneNumber(searchTerm);
+        UserService.findByPhoneNumber(formattedPhoneNumber)
+            .then((data) => {
+                const users = Array.isArray(data) ? data : [data];
+                setSearchedUsers(users);
+            })
+            .catch((err) => {
+                console.error("Error searching by phone number:", err);
+                setSearchedUsers([]);
+            });
+    }, [searchTerm]);
+
     const toggleSelect = (id) => {
         setSelectedFriends((prev) =>
             prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
         );
     };
 
-    const filteredFriends = friends.filter(friend =>
-        friend.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredFriends = friends.filter(friend => {
+        const friendName = friend.name.toLowerCase();
+        const searchQuery = searchTerm.toLowerCase();
+        return friendName.includes(searchQuery);
+    });
+
+    const combinedList = [
+        ...filteredFriends,
+        ...searchedUsers.filter(user => !friends.some(friend => friend.id === user.id)), // Loại bỏ trùng lặp
+    ];
 
     const handleModalClick = (e) => {
         // Ngăn không cho đóng modal khi click vào trong nội dung modal
@@ -201,7 +224,7 @@ const CreateGroupModal = ({ onClose }) => {
                         </div>
                         <hr />
                         <div className="friend-list" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                            {filteredFriends.map(friend => (
+                            {combinedList.map(friend => (
                                 <div key={friend.id} className="d-flex align-items-center py-2 border-bottom">
                                     <input
                                         type="checkbox"
