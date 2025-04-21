@@ -95,6 +95,7 @@ public class GroupServiceImpl implements GroupService {
                 memberUser.getGroupIds().add(newGroup.getId());  // Thêm ID nhóm vào groupIds của thành viên
                 userRepository.save(memberUser);  // Cập nhật lại người dùng
             }
+            
             UserGroup memberGroup = new UserGroup();
             memberGroup.setUserId(memberId);
             memberGroup.setGroupId(newGroup.getId());
@@ -104,6 +105,21 @@ public class GroupServiceImpl implements GroupService {
         }
 
         groupRepository.addUserToGroup(userGroup);
+
+        // Gửi thông báo WebSocket đến tất cả thành viên
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(newGroup.getId());
+        if (myWebSocketHandler != null) {
+            try {
+                for (String memberId : memberIds) {
+                    myWebSocketHandler.sendCreateGroupNotification(memberId, newGroup, userGroups);
+                }
+            } catch (JsonProcessingException e) {
+                System.err.println("Error sending GROUP_CREATED notification: " + e.getMessage());
+            }
+        } else {
+            System.err.println("WebSocketHandler is not available. Cannot send notifications.");
+        }
 
         return GroupResponse.builder()
                 .id(newGroup.getId())

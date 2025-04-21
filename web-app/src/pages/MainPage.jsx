@@ -678,7 +678,45 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            //console.log("Incoming message loại:", incomingMessage); // Log thông báo nhận được
+            if (incomingMessage.type === "CREATE_GROUP") {
+                console.log("Incoming message:", incomingMessage); // Log thông báo nhận được
+                const newGroup = incomingMessage.newGroup;
+
+                // Thêm mới groupMember vào danh sách
+                setGroupMembers((prevMembers) => [
+                    ...prevMembers,
+                    {
+                        id: newGroup.id,
+                        groupName: newGroup.groupName,
+                        image: newGroup.image,
+                        userGroups: incomingMessage.userGroups,
+                        createAt: newGroup.createAt,
+                        createtorId: newGroup.creatorId,
+                    },
+                ]);
+                // Cập nhật lại groupIds trong state và context
+                const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
+                const updatedGroupIds = [...groupIds, newGroup.id];
+
+                const updatedUserData = {
+                    ...MyUser,
+                    my_user: {
+                        ...MyUser.my_user,
+                        groupIds: updatedGroupIds,  // Cập nhật groupIds mới
+                    },
+                };
+
+                // Cập nhật lại MyUser trong context
+                updateUserInfo(updatedUserData);
+
+                // Cập nhật lại my_user trong local storage
+                localStorage.setItem('my_user', JSON.stringify(updatedUserData.my_user));
+
+                // Lấy lại thông tin người dùng mới từ localStorage
+                const updatedUserFromStorage = JSON.parse(localStorage.getItem('my_user'));
+                showToast(`${incomingMessage.message}`, "info");
+                return;
+            }
 
             if (incomingMessage.type === "DELETE_MESSAGE") {
                 // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
@@ -749,7 +787,7 @@ const MainPage = () => {
 
                 console.log("selectChat:", selectedChat); // Log thông báo nhận được
 
-                // Cập nhật lại selectedChat nếu nhóm hiện tại thay đổi
+                // Cập nhật lại selectedChat 
                 setSelectedChat((prevChat) =>
                     prevChat.id === groupId
                         ? { ...prevChat, groupName: newGroupName, avatar: newGroupAvatar, img: newGroupAvatar }
