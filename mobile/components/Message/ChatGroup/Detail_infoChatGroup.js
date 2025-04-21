@@ -175,9 +175,27 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
     }
   };
 
-  const updateName = () => {
-    Alert.alert('Thông báo', 'Đổi tên thành công!');
-    setIsDialogVisible(false);
+  const updateName = async () => {
+    try {
+      const response = await GroupService.updateGroup({
+        id: infoGroup?.id,
+        groupName: nameChange,
+        image: infoGroup?.image,
+      });
+
+      if (response.success) {
+        updateInfoGroup(infoGroup?.id);
+
+        Alert.alert('Thành công', 'Đổi tên thành công!');
+      } else {
+        Alert.alert('Lỗi', response.message || 'Không thể đổi tên');
+      }
+    } catch (error) {
+      Alert.alert('Lỗi', 'Có lỗi xảy ra khi cập nhật tên');
+      console.error(error);
+    } finally {
+      setIsDialogVisible(false);
+    }
   };
 
   const handleImagePicker = async () => {
@@ -214,7 +232,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.editNameContainer}>
+      <TouchableOpacity style={styles.editNameContainer} onPress={() => setIsDialogVisible(true)}>
         <Text style={styles.profileName}>{infoGroup?.groupName}</Text>
         <Ionicons name="pencil" size={20} color="blue" />
       </TouchableOpacity>
@@ -262,7 +280,6 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
 
           <TouchableOpacity
             style={styles.settingsItem}
-            onPress={() => setIsDialogVisible(true)}
           >
             <View style={styles.leftContainer}>
                 <Ionicons name="pencil" size={24}/>
@@ -365,7 +382,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
             visible={isDialogVisible}
             onDismiss={() => setIsDialogVisible(false)}
           >
-            <Dialog.Title>Đổi tên gợi nhớ</Dialog.Title>
+            <Dialog.Title>Nhập tên cần đổi</Dialog.Title>
             <Dialog.Content>
               <TextInput
                 value={nameChange}
