@@ -21,6 +21,16 @@ const GroupService = {
         return res.data;
     },
 
+    getGroupById: async (groupId) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/getGroupById/${groupId}`);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching group by ID:", error.response || error);
+            throw error; // Nếu muốn xử lý lỗi cụ thể sau
+        }
+    },
+
     getGroupsByIds: async (userId) => {
         try {
             const response = await axios.get(`${API_BASE_URL}/getGroupsByUserId`, { params: { userId } });

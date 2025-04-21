@@ -4,7 +4,7 @@ import EditGroupModal from "./EditGroupModal";
 import showToast from "../utils/AppUtils";
 import axios from 'axios';
 
-const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo, setSelectedConversation, chatMessages }) => {
+const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConversation, chatMessages }) => {
 
     // console.log("Group info", conversation);
 
@@ -671,7 +671,6 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                         <EditGroupModal
                             conversation={conversation}
                             onClose={closeEditModal}
-                            onUpdateGroupInfo={onUpdateGroupInfo}
                         />
                     </div>
                 </div>

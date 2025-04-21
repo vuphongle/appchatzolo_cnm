@@ -3,7 +3,7 @@ import '../css/EditGroupModal.css'; // Import CSS file for styling
 import S3Service from "../services/S3Service";
 import GroupService from "../services/GroupService";
 
-const EditGroupModal = ({ conversation, onClose, onUpdateGroupInfo }) => {
+const EditGroupModal = ({ conversation, onClose }) => {
     const [groupName, setGroupName] = useState(conversation.groupName);
     const [groupAvatar, setGroupAvatar] = useState(conversation.img);
     const [groupImage, setGroupImage] = useState(null);
@@ -22,7 +22,7 @@ const EditGroupModal = ({ conversation, onClose, onUpdateGroupInfo }) => {
     };
 
     const handleSaveChanges = async () => {
-        let imageUrl = groupImage;
+        let imageUrl = groupAvatar;
         if (groupAvatar !== conversation.img) {
             try {
                 imageUrl = await S3Service.uploadImage(groupImage);
@@ -40,12 +40,7 @@ const EditGroupModal = ({ conversation, onClose, onUpdateGroupInfo }) => {
                 creatorId: conversation.creatorId,
             }
             await GroupService.updateGroup(group);
-            alert("cập nhật nhóm thành công!");
 
-            // Gọi callback để thông báo cho component cha
-            if (onUpdateGroupInfo) {
-                onUpdateGroupInfo(conversation.id, groupName, groupAvatar);
-            }
         } catch (error) {
             console.error("Lỗi khi cập nhật nhóm:", error);
             alert(error?.message || "Đã có lỗi xảy ra.");

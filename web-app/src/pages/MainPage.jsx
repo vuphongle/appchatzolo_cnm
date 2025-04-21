@@ -422,34 +422,6 @@ const MainPage = () => {
         localStorage.setItem("my_user", JSON.stringify(updatedUser));
     };
 
-    //Hàm xử lý khi thay đổi thông tin nhóm
-    const onUpdateGroupInfo = (groupId, newGroupName, newGroupAvatar) => {
-        setConversations((prev) =>
-            prev.map((conversation) =>
-                conversation.id === groupId
-                    ? { ...conversation, groupName: newGroupName, img: newGroupAvatar }
-                    : conversation
-            )
-        );
-
-        // Cập nhật lại MyUser trong context, không thay đổi các thuộc tính khác
-        const updatedUser = {
-            ...MyUser,
-            my_user: {
-                ...MyUser.my_user,
-                groupIds: MyUser.my_user.groupIds,
-            },
-        };
-
-        // Cập nhật lại MyUser trong context
-        setMyUser(updatedUser);
-
-        // Cập nhật lại my_user trong localStorage
-        localStorage.setItem("my_user", JSON.stringify(updatedUser));
-
-    };
-
-
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
     const handleSelectChat = async (item) => {
@@ -751,20 +723,17 @@ const MainPage = () => {
                         const group = res?.data;
                         console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
                         if (group) {
-                            // Cập nhật groups
-                            if (!groups.some((g) => g.id === group.id)) {
-                                setGroups((prev) => [...prev, group]);
-                            } else {
-                                setGroups((prev) =>
-                                    prev.map((g) =>
-                                        g.id === groupId ? group : g
-                                    )
-                                );
-                            }
-                            // Cập nhật conversations
+                            // Cập nhật lại thông tin nhóm trong `groups`
+                            setGroups((prev) =>
+                                prev.map((g) => (g.id === groupId ? { ...g, ...group } : g)) // Cập nhật nhóm với dữ liệu mới
+                            );
+
+                            // Cập nhật lại thông tin nhóm trong `conversations`
                             setConversations((prev) =>
                                 prev.map((conv) =>
-                                    conv.id === groupId ? { ...group, type: 'group' } : conv
+                                    conv.id === groupId
+                                        ? { ...conv, groupName: group.groupName, img: group.image, type: 'group' } // Cập nhật các thuộc tính thông tin nhóm
+                                        : conv
                                 )
                             );
                         }
@@ -778,40 +747,37 @@ const MainPage = () => {
                 const newGroupName = incomingMessage.groupName;
                 const newGroupAvatar = incomingMessage.image;
 
-                // Cập nhật thông tin nhóm
-                setConversations((prev) =>
-                    prev.map((conversation) =>
-                        conversation.id === groupId
-                            ? { ...conversation, groupName: newGroupName, img: newGroupAvatar }
-                            : conversation
-                    )
+                console.log("selectChat:", selectedChat); // Log thông báo nhận được
+
+                // Cập nhật lại selectedChat nếu nhóm hiện tại thay đổi
+                setSelectedChat((prevChat) =>
+                    prevChat.id === groupId
+                        ? { ...prevChat, groupName: newGroupName, avatar: newGroupAvatar, img: newGroupAvatar }
+                        : prevChat
                 );
 
-                // Tải thông tin nhóm mới và thêm vào danh sách nhóm
+                // Cập nhật lại groupMembers sau khi nhận thông tin nhóm mới
                 GroupService.getGroupMembers(groupId)
                     .then((res) => {
                         const group = res?.data;
-                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
                         if (group) {
-                            // Cập nhật groups
-                            if (!groups.some((g) => g.id === groupId)) {
-                                setGroups((prev) => [...prev, group]);
-                            } else {
-                                setGroups((prev) =>
-                                    prev.map((g) =>
-                                        g.id === groupId ? group : g
-                                    )
-                                );
-                            }
-                            // Cập nhật conversations
-                            setConversations((prev) =>
-                                prev.map((conv) =>
-                                    conv.id === groupId ? { ...group, type: 'group' } : conv
+                            // Cập nhật lại groupMembers
+                            setGroupMembers((prevMembers) =>
+                                prevMembers.map((member) =>
+                                    member.id === groupId ? { ...member, groupName: newGroupName, image: newGroupAvatar } : member
+                                )
+                            );
+                            // Cập nhật lại conversations với thông tin nhóm mới
+                            setConversations((prevConversations) =>
+                                prevConversations.map((conv) =>
+                                    conv.id === groupId ? { ...conv, groupName: group.groupName, img: group.image } : conv
                                 )
                             );
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
+
+
                 showToast(`${incomingMessage.message}`, "info");
                 return;
             }
@@ -2675,7 +2641,6 @@ const MainPage = () => {
                     setSelectedConversation={setSelectedChat}
                     user={MyUser?.my_user}
                     onGroupDeleted={handleGroupDeleted}
-                    onUpdateGroupInfo={onUpdateGroupInfo}
                     chatMessages={chatMessages}
                     onClose={() => setIsMenuModalOpen(false)}
                 />
