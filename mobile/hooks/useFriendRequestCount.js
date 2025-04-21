@@ -5,7 +5,7 @@ import { UserContext } from '../context/UserContext';
 const useFriendRequestCount = (user) => {
   const [friendRequestsCount, setFriendRequestsCount] = useState(0);
   const { onMessage } = useContext(WebSocketContext);
-  const { notification, setNotification, isChange, setIsChange } = useContext(UserContext);
+  const { notification, setNotification, isChange, setIsChange,  updateInfoGroup, updateInfoMemberGroup, infoGroup } = useContext(UserContext);
 
   useEffect(() => {
     if (user) {
@@ -21,8 +21,13 @@ const useFriendRequestCount = (user) => {
                     setNotification(prevCount => prevCount - 1);
                 }
               }
-              console.log('Notification ' , isChange);
-              setIsChange(message.type);
+              if (infoGroup !== undefined) {
+                if(message.type == 'GROUP_UPDATE' && message.groupId == infoGroup?.id){
+                    updateInfoGroup(message.groupId);
+                    updateInfoMemberGroup(message.groupId);
+                }
+              }
+              setIsChange(message.type + new Date());
           }
       });
       return () => {

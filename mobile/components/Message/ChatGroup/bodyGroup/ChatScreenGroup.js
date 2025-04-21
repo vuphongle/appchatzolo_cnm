@@ -29,6 +29,8 @@ import MessageService from '../../../../services/MessageService';
 import S3Service from '../../../../services/S3Service';
 import AudioRecord from 'react-native-audio-record';
 import { WebSocketContext } from '../../../../context/Websocket';
+import { userContext } from '../../../../context/UserContext';
+import { useNavigation } from '@react-navigation/native';
 
 const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const { user } = useContext(UserContext);
@@ -45,13 +47,32 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const [isMounted, setIsMounted] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
-  
+  const { isChange, setIsChange,  updateInfoGroup, updateInfoMemberGroup, infoGroup, infoMemberGroup } = useContext(UserContext);
+  const navigation = useNavigation();
   
   const scrollViewRef = useRef(null);
 
+  useEffect(() => {
+    if (!infoMemberGroup.find(item => item.userId === user?.id)) {
+      Alert.alert(
+        'Bạn đã bị xóa khỏi nhóm này',
+        '',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('MainTabs');
+            },
+          },
+        ]
+      );
+    }
+  }, [infoMemberGroup, infoGroup]);
 
   useEffect(() => {
     setIsMounted(true);
+    updateInfoMemberGroup(receiverID);
+    updateInfoGroup(receiverID);
     return () => setIsMounted(false);
   }, []);
 

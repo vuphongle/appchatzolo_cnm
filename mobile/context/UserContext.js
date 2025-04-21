@@ -72,13 +72,14 @@ export const UserProvider = ({ children }) => {
   // Hàm update infoGroup
     const updateInfoGroup = async (groupId) => {
         try {
-        const response = await fetch(`${IPV4}/groups/getGroupById/${groupId}`);
-        if (response.success) {
-            const groupData = await response.json();
-            setInfoGroup(groupData.data);
-        } else {
-            console.error('Error fetching group data');
-        }
+            const response = await fetch(`${IPV4}/groups/getGroupById/${groupId}`);
+            // Chắc chắn phản hồi trả về thành công và có thuộc tính success
+            const data = await response.json();  // Chuyển đổi phản hồi sang JSON
+            if (data.success) {
+                setInfoGroup(data.data);  // Gán dữ liệu nhóm vào state
+            } else {
+                console.error('Error fetching group data:', data.message);
+            }
         } catch (error) {
             console.error('Error fetching group data:', error);
         }
@@ -127,6 +128,7 @@ export const UserProvider = ({ children }) => {
         infoMemberGroup,
         setInfoMemberGroup,
         updateInfoMemberGroup,
+        updateInfoGroup,
       }}
     >
       {!loading && children}

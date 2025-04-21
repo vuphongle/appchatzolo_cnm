@@ -114,7 +114,11 @@ function ListFriend({ userId }) {
   );
 
    useEffect(() => {
-    fetchFriendsAndGroups();
+     if (typeof isChange === 'string') {
+       if(isChange.startsWith('REMOVE_FRIEND') || isChange.startsWith('SUBMIT_FRIEND_REQUEST') || isChange.startsWith('ADD_TO_GROUP') || isChange.startsWith('MEMBER_REMOVE') || isChange.startsWith('GROUP_UPDATE')){
+           fetchFriendsAndGroups();
+       }
+     }
    }, [isChange]);
 
   // Hàm xử lý ghim
