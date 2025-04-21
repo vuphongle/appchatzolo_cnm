@@ -1536,7 +1536,7 @@ const MainPage = () => {
 
                                     // Cập nhật số lượng tin nhắn chưa đọc cho bạn bè
                                     const updatedUnreadCounts = unreadMessagesCounts.map((count) => {
-                                        if (count.friendId === selectedChat.id) {
+                                        if (count.groupId === selectedChat.id) {
                                             return { ...count, unreadCount: 0 };  // Đánh dấu đã đọc (unreadCount = 0)
                                         }
                                         return count;
