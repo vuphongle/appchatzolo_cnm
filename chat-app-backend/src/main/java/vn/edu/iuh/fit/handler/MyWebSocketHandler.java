@@ -10,6 +10,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.model.DTO.response.GroupResponse;
 import vn.edu.iuh.fit.model.DTO.response.UserGroupResponse;
+import vn.edu.iuh.fit.model.Group;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.model.UserGroup;
 import vn.edu.iuh.fit.repository.GroupRepository;
@@ -499,6 +500,26 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 System.out.println("Sent demoteToMember notification to user: " + userId);
             } catch (IOException e) {
                 System.err.println("Error sending demoteToMember notification: " + e.getMessage());
+            }
+        }
+    }
+
+    // Thông báo khi tạo nhóm
+    public void sendCreateGroupNotification(String userId, Group newGroup, List<UserGroup> userGroups) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(userId);
+        if (session != null && session.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "CREATE_GROUP");
+            payload.put("newGroup", newGroup);
+            payload.put("userGroups", userGroups);
+            payload.put("message", "Bạn đã được thêm vào nhóm " + newGroup.getGroupName());
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            try {
+                session.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent ADD_TO_GROUP notification to user: " + userId);
+            } catch (IOException e) {
+                System.err.println("Error sending ADD_TO_GROUP notification: " + e.getMessage());
             }
         }
     }

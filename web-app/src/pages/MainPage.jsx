@@ -278,6 +278,8 @@ const MainPage = () => {
                     content: url,
                     sendDate: new Date().toISOString(),
                     isRead: false,
+                    type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                    status: 'sent',
                 };
                 sendMessage(message);
                 setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
@@ -419,34 +421,6 @@ const MainPage = () => {
         setMyUser(updatedUser);
         localStorage.setItem("my_user", JSON.stringify(updatedUser));
     };
-
-    //Hàm xử lý khi thay đổi thông tin nhóm
-    const onUpdateGroupInfo = (groupId, newGroupName, newGroupAvatar) => {
-        setConversations((prev) =>
-            prev.map((conversation) =>
-                conversation.id === groupId
-                    ? { ...conversation, groupName: newGroupName, img: newGroupAvatar }
-                    : conversation
-            )
-        );
-
-        // Cập nhật lại MyUser trong context, không thay đổi các thuộc tính khác
-        const updatedUser = {
-            ...MyUser,
-            my_user: {
-                ...MyUser.my_user,
-                groupIds: MyUser.my_user.groupIds,
-            },
-        };
-
-        // Cập nhật lại MyUser trong context
-        setMyUser(updatedUser);
-
-        // Cập nhật lại my_user trong localStorage
-        localStorage.setItem("my_user", JSON.stringify(updatedUser));
-
-    };
-
 
     //set trang thái online/offline ------------- ở đây
     // Khi người dùng chọn một bạn từ danh sách tìm kiếm
@@ -704,7 +678,45 @@ const MainPage = () => {
 
     useEffect(() => {
         const unsubscribe = onMessage((incomingMessage) => {
-            //console.log("Incoming message loại:", incomingMessage); // Log thông báo nhận được
+            if (incomingMessage.type === "CREATE_GROUP") {
+                console.log("Incoming message:", incomingMessage); // Log thông báo nhận được
+                const newGroup = incomingMessage.newGroup;
+
+                // Thêm mới groupMember vào danh sách
+                setGroupMembers((prevMembers) => [
+                    ...prevMembers,
+                    {
+                        id: newGroup.id,
+                        groupName: newGroup.groupName,
+                        image: newGroup.image,
+                        userGroups: incomingMessage.userGroups,
+                        createAt: newGroup.createAt,
+                        createtorId: newGroup.creatorId,
+                    },
+                ]);
+                // Cập nhật lại groupIds trong state và context
+                const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
+                const updatedGroupIds = [...groupIds, newGroup.id];
+
+                const updatedUserData = {
+                    ...MyUser,
+                    my_user: {
+                        ...MyUser.my_user,
+                        groupIds: updatedGroupIds,  // Cập nhật groupIds mới
+                    },
+                };
+
+                // Cập nhật lại MyUser trong context
+                updateUserInfo(updatedUserData);
+
+                // Cập nhật lại my_user trong local storage
+                localStorage.setItem('my_user', JSON.stringify(updatedUserData.my_user));
+
+                // Lấy lại thông tin người dùng mới từ localStorage
+                const updatedUserFromStorage = JSON.parse(localStorage.getItem('my_user'));
+                showToast(`${incomingMessage.message}`, "info");
+                return;
+            }
 
             if (incomingMessage.type === "DELETE_MESSAGE") {
                 // Kiểm tra: nếu cuộc chat đang được chọn thuộc về người gửi lệnh xóa,
@@ -749,20 +761,17 @@ const MainPage = () => {
                         const group = res?.data;
                         console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
                         if (group) {
-                            // Cập nhật groups
-                            if (!groups.some((g) => g.id === group.id)) {
-                                setGroups((prev) => [...prev, group]);
-                            } else {
-                                setGroups((prev) =>
-                                    prev.map((g) =>
-                                        g.id === groupId ? group : g
-                                    )
-                                );
-                            }
-                            // Cập nhật conversations
+                            // Cập nhật lại thông tin nhóm trong `groups`
+                            setGroups((prev) =>
+                                prev.map((g) => (g.id === groupId ? { ...g, ...group } : g)) // Cập nhật nhóm với dữ liệu mới
+                            );
+
+                            // Cập nhật lại thông tin nhóm trong `conversations`
                             setConversations((prev) =>
                                 prev.map((conv) =>
-                                    conv.id === groupId ? { ...group, type: 'group' } : conv
+                                    conv.id === groupId
+                                        ? { ...conv, groupName: group.groupName, img: group.image, type: 'group' } // Cập nhật các thuộc tính thông tin nhóm
+                                        : conv
                                 )
                             );
                         }
@@ -776,20 +785,47 @@ const MainPage = () => {
                 const newGroupName = incomingMessage.groupName;
                 const newGroupAvatar = incomingMessage.image;
 
-                // Cập nhật thông tin nhóm
-                setConversations((prev) =>
-                    prev.map((conversation) =>
-                        conversation.id === groupId
-                            ? { ...conversation, groupName: newGroupName, img: newGroupAvatar }
-                            : conversation
-                    )
+                console.log("selectChat:", selectedChat); // Log thông báo nhận được
+
+                // Cập nhật lại selectedChat 
+                setSelectedChat((prevChat) =>
+                    prevChat.id === groupId
+                        ? { ...prevChat, groupName: newGroupName, avatar: newGroupAvatar, img: newGroupAvatar }
+                        : prevChat
                 );
+
+                // Cập nhật lại groupMembers sau khi nhận thông tin nhóm mới
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const group = res?.data;
+                        if (group) {
+                            // Cập nhật lại groupMembers
+                            setGroupMembers((prevMembers) =>
+                                prevMembers.map((member) =>
+                                    member.id === groupId ? { ...member, groupName: newGroupName, image: newGroupAvatar } : member
+                                )
+                            );
+                            // Cập nhật lại conversations với thông tin nhóm mới
+                            setConversations((prevConversations) =>
+                                prevConversations.map((conv) =>
+                                    conv.id === groupId ? { ...conv, groupName: group.groupName, img: group.image } : conv
+                                )
+                            );
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching group:", err));
+
+
+                showToast(`${incomingMessage.message}`, "info");
+                return;
+            }
+            if (incomingMessage.type === "PROMOTE_CO_LEADER") {
+                const groupId = incomingMessage.groupId;
 
                 // Tải thông tin nhóm mới và thêm vào danh sách nhóm
                 GroupService.getGroupMembers(groupId)
                     .then((res) => {
                         const group = res?.data;
-                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
                         if (group) {
                             // Cập nhật groups
                             if (!groups.some((g) => g.id === groupId)) {
@@ -813,15 +849,14 @@ const MainPage = () => {
                 showToast(`${incomingMessage.message}`, "info");
                 return;
             }
-            if (incomingMessage.type === "PROMOTE_CO_LEADER") {
-                console.log("Thêm phó nhóm", incomingMessage); // Log thông báo nhận được
+
+            if (incomingMessage.type === "PROMOTE_TO_LEADER") {
                 const groupId = incomingMessage.groupId;
 
                 // Tải thông tin nhóm mới và thêm vào danh sách nhóm
                 GroupService.getGroupMembers(groupId)
                     .then((res) => {
                         const group = res?.data;
-                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
                         if (group) {
                             // Cập nhật groups
                             if (!groups.some((g) => g.id === groupId)) {
@@ -1248,6 +1283,8 @@ const MainPage = () => {
                         content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
+                        type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                        status: 'sent',
                     };
                     sendMessage(message); // Gửi qua WebSocket
                     setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
@@ -1275,6 +1312,8 @@ const MainPage = () => {
                         content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
+                        type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                        status: 'sent',
                     };
                     sendMessage(message); // Gửi qua WebSocket
                     setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
@@ -2273,7 +2312,7 @@ const MainPage = () => {
     //Phiên đăng nhập
     const [sessionExpired, setSessionExpired] = useState(false);
 
-    const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 phút
+    const SESSION_TIMEOUT = 20 * 3 * 3 * 60 * 1000; // 20 phút
     const [lastActivity, setLastActivity] = useState(Date.now());
 
     useEffect(() => {
@@ -2640,7 +2679,7 @@ const MainPage = () => {
                     setSelectedConversation={setSelectedChat}
                     user={MyUser?.my_user}
                     onGroupDeleted={handleGroupDeleted}
-                    onUpdateGroupInfo={onUpdateGroupInfo}
+                    chatMessages={chatMessages}
                     onClose={() => setIsMenuModalOpen(false)}
                 />
             )}
