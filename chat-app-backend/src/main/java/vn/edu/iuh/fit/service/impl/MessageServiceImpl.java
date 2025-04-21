@@ -9,6 +9,7 @@ import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
 import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.model.User;
+import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.MessageService;
@@ -23,6 +24,8 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository repository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private GroupRepository groupRepository;
     @Autowired
     private ObjectProvider<MyWebSocketHandler> myWebSocketHandlerProvider;
 
@@ -199,8 +202,14 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void forwardMessage(String originalMessageId, String senderID, List<String> receiverIDs) {
         Message original = repository.getMessageById(originalMessageId);
-        if (original == null) throw new RuntimeException("Không tìm thấy tin nhắn gốc");
+        if (original == null) {
+            throw new RuntimeException("Không tìm thấy tin nhắn gốc");
+        }
+
         for (String receiverId : receiverIDs) {
+            // Kiểm tra xem receiverId có phải là groupId không
+            boolean isGroup = groupRepository.getMembersOfGroup(receiverId) != null;
+
             Message newMsg = new Message();
             newMsg.setId(UUID.randomUUID().toString());
             newMsg.setSenderID(senderID);
@@ -208,17 +217,23 @@ public class MessageServiceImpl implements MessageService {
             newMsg.setContent(original.getContent());
             newMsg.setSendDate(LocalDateTime.now(ZoneOffset.UTC));
             newMsg.setIsRead(false);
+            newMsg.setType(isGroup ? "GROUP_CHAT" : "PRIVATE_CHAT"); // Đặt type phù hợp
 
+            // Lưu tin nhắn vào cơ sở dữ liệu
             repository.save(newMsg);
+            System.out.println("Saved forwarded message to " + receiverId + ", type: " + newMsg.getType());
 
+            // Gửi tin nhắn qua WebSocket
             MyWebSocketHandler handler = myWebSocketHandlerProvider.getIfAvailable();
             if (handler != null) {
                 try {
-                    handler.sendChatMessage(newMsg); // gửi cho người nhận
-
+                    handler.sendChatMessage(newMsg); // Gửi cho người nhận (hoặc nhóm)
                 } catch (Exception e) {
+                    System.err.println("Error forwarding message to " + receiverId + ": " + e.getMessage());
                     e.printStackTrace();
                 }
+            } else {
+                System.err.println("MyWebSocketHandler bean không khả dụng. Không thể gửi tin nhắn.");
             }
         }
     }

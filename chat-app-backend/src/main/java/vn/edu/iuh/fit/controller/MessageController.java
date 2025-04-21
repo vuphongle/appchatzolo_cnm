@@ -132,7 +132,7 @@ public class MessageController {
     // Lấy tất cả tin nhắn trong nhóm
     @GetMapping("/group-messages")
     public ResponseEntity<List<MessageResponse>> getMessagesInGroup(@RequestParam String groupId ) {
-        List<MessageResponse> groupMessages = service.getMessagesInGroup(groupId );
+        List<MessageResponse> groupMessages = service.getMessagesInGroup(groupId);
         return ResponseEntity.ok(groupMessages);
     }
 

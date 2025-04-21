@@ -31,7 +31,7 @@ import VideoCallComponent from '../context/VideoCallComponent';  // Import Video
 import showToast from "../utils/AppUtils";
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
-const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat, groupId }) => (
+const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
     <li className="message-item" tabIndex={0} onClick={onClick}>
         <img src={img} alt="Avatar" className="avatar" />
         <div className="message-info">
@@ -47,7 +47,7 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], 
             )}
         </div>
         {unreadCount > 0 && <span className="badge">{unreadCount}</span>}  {/* Hiển thị số tin nhắn chưa đọc */}
-        <div className="dropdown position-absolute top-0 end-0 mt-2 me-2">
+        <div className="dropdown position-absolute top-0 end-0 mt-2 me-3">
             <button
                 className="btn btn-light border-0 p-0"
                 data-bs-toggle="dropdown"
@@ -96,7 +96,7 @@ const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, isOwner, isMin
             // Lấy vị trí của menu so với cửa sổ
             const menuRect = menuRef.current.getBoundingClientRect();
             const windowHeight = window.innerHeight;
-            if (menuRect.top < windowHeight / 2) {
+            if (menuRect.top < windowHeight / 3) {
                 setMenuDirection('open-down');
             } else {
                 setMenuDirection('open-up');
@@ -127,7 +127,7 @@ const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, isOwner, isMin
     );
 };
 
-const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, messageContent }) => {
+const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, groups, messageContent }) => {
     const [selected, setSelected] = useState([]);
     const [isForwarding, setIsForwarding] = useState(false);
 
@@ -137,6 +137,7 @@ const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, messageConte
             prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
         );
     };
+
 
     if (!isOpen) return null;
 
@@ -190,6 +191,31 @@ const ForwardMessageModal = ({ isOpen, onClose, onForward, friends, messageConte
                                                 </label>
                                             </div>
                                         ))}
+                                        {groups.length === 0 ? (
+                                            <p className="text-muted">Không có nhóm để chia sẻ.</p>
+                                        ) : (
+                                            groups.map(group => (
+                                                <div key={group.id} className="form-check mb-2 d-flex align-items-center">
+                                                    <input
+                                                        className="form-check-input me-2"
+                                                        type="checkbox"
+                                                        value={group.id}
+                                                        checked={selected.includes(group.id)}
+                                                        onChange={() => toggleSelect(group.id)}
+                                                        id={`group-${group.id}`}
+                                                    />
+                                                    <label className="form-check-label d-flex align-items-center" htmlFor={`group-${group.id}`}>
+                                                        <img
+                                                            src={group.image}
+                                                            alt={group.groupName}
+                                                            className="rounded-circle me-2 ms-2"
+                                                            style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                                                        />
+                                                        <span>{group.groupName}</span>
+                                                    </label>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1054,7 +1080,7 @@ const MainPage = () => {
                 if (!selectedChat) return; // Nếu không có selectedChat, không làm gì cả
 
                 // Kiểm tra nếu selectedChat là nhóm
-                if (selectedChat.type === "group") {
+                if (selectedChat.type === "GROUP_CHAT") {
                     console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
                     // Nếu tin nhắn là của nhóm đang chọn
                     if (incomingMessage.receiverID === selectedChat.id) {
@@ -1920,6 +1946,7 @@ const MainPage = () => {
                                                             onClose={() => setShowForwardModal(false)}
                                                             onForward={handleForward}
                                                             friends={friends}
+                                                            groups={groupMembers}
                                                             messageContent={chatMessages.find(m => m.id === forwardMessageId)?.content}
                                                         />
                                                     </div>

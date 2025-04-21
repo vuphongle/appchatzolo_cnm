@@ -80,6 +80,16 @@ const UserService = {
       throw error.response ? error.response.data : error;
     }
   },
+  findByPhoneNumber: async (phone) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/findByPhoneNumber`, {
+        phoneNumber: phone
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error;
+    }
+  },
 };
 
 
