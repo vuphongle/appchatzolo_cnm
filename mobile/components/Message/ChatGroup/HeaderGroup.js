@@ -11,12 +11,18 @@ import { UserContext } from '../../../context/UserContext';
 function HeaderGroup({ name, id, avatar }) {
   const navigation = useNavigation();
   const [onlineStatus, setOnlineStatus] = useState(false);
-  const { user, setUser, infoMemberGroup, setInfoMemberGroup, infoGroup, setInfoGroup } = useContext(UserContext);
+  const { user, setUser, infoMemberGroup, setInfoMemberGroup, infoGroup, setInfoGroup, createGroup, setCreateGroup } = useContext(UserContext);
   useEffect(() => {
     getGroupMembers(); // Gọi hàm để lấy danh sách thành viên nhóm khi component được mount
   }, [id]); // Chỉ chạy một lần khi component được mount
   const handlePressBack = () => {
-    navigation.navigate('MainTabs'); //
+    if (createGroup) {
+        navigation.navigate('MainTabs'); //
+        setCreateGroup(false);
+    } else {
+        navigation.goBack();
+    }
+
   };
   const getGroupMembers = async () => {
     try {

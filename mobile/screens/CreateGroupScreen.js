@@ -20,7 +20,7 @@ const CreateGroupScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
 
-  const { user } = useContext(UserContext);
+  const { user, setCreateGroup } = useContext(UserContext);
 
   useEffect(() => {
     const fetchFriendsList = async () => {
@@ -173,6 +173,7 @@ const CreateGroupScreen = () => {
         setIsLoading(false);
         if (response.data.success) {
               Alert.alert('Tạo nhóm thành công', `Tên nhóm: ${response.data.data.groupName}`);
+              setCreateGroup(true);
               navigation.navigate('ChatGroup', {
                 receiverid: response.data.data.id,
                 name: response.data.data.groupName,
