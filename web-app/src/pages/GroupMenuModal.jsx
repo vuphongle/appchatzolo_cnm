@@ -4,7 +4,7 @@ import EditGroupModal from "./EditGroupModal";
 import showToast from "../utils/AppUtils";
 import axios from 'axios';
 
-const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo, setSelectedConversation }) => {
+const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo, setSelectedConversation, chatMessages }) => {
 
     // console.log("Group info", conversation);
 
@@ -14,6 +14,10 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
     const [searchTerm, setSearchTerm] = useState("");
     const [isEditingModalOpen, setIsEditingModalOpen] = useState(false); // Trạng thái để mở modal chỉnh sửa
     const [showGroupManagementModal, setShowGroupManagementModal] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [imageInfo, setImageInfo] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
+
 
     // State để lưu trạng thái checkbox đã chọn
     const [checkboxState, setCheckboxState] = useState({
@@ -61,6 +65,55 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
     const handleSave = async () => {
         closeGroupManagementModal()
     }
+
+
+    // Hàm lấy media và file từ chatMessages
+    const getMediaFromMessages = () => {
+        const media = [];
+        const files = [];
+        chatMessages.forEach((msg) => {
+            // Kiểm tra nếu tin nhắn là ảnh, video, hoặc file
+            if (msg.content?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/i)) {
+                media.push(msg.content);
+            } else if (msg.content?.match(/\.(mp4|wmv)$/i)) {
+                media.push(msg.content);
+            } else if (msg.content?.match(/\.(mov|webm|mp3|wav|ogg|ppdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql|.mobileprovision)$/i)) {
+                files.push(msg.content);
+            }
+        });
+        return { media, files };
+    };
+
+    const { media, files } = getMediaFromMessages();
+    // Hàm cắt bỏ phần trước dấu _ đầu tiên trong tên file
+    const getFileNameWithoutPrefix = (filePath) => {
+        // Tìm chỉ số của dấu _
+        const firstUnderscoreIndex = filePath.indexOf('_');
+        if (firstUnderscoreIndex === -1) {
+            // Nếu không có dấu _ trong tên, trả về tên file nguyên gốc
+            return filePath;
+        }
+        // Cắt chuỗi từ sau dấu _ đầu tiên
+        return filePath.slice(firstUnderscoreIndex + 1);
+    };
+
+    // Hàm mở modal và hiển thị ảnh
+    const handleImageClick = (src, message) => {
+        setSelectedImage(src);
+        setImageInfo({
+            senderName: message.senderName,
+            senderAvatar: message.senderAvatar,
+            sendDate: message.sendDate,
+        });
+        setShowModal(true);
+    };
+
+    // Hàm đóng modal
+    const closeModal = () => {
+        setShowModal(false);
+        setSelectedImage(null);
+        setImageInfo(null);
+    };
 
     // Hàm xóa nhóm
     const handleDeleteGroup = async () => {
@@ -140,6 +193,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
         }
     }
 
+    // Hàm giáng trưởng nhóm xuống thành viên
     const handleRemoveCoLeader = async (targetUserId) => {
         if (window.confirm(`Bạn có chắc chắn muốn gỡ phó nhóm này không?`)) {
             try {
@@ -155,6 +209,25 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
             }
         }
     };
+
+    // Hàm bổ nhiệm trưởng nhóm mới
+    const handlePromoteToLeader = async (targetUserId) => {
+        if (window.confirm(`Bạn có chắc chắn muốn bổ nhiệm thành viên này làm trưởng nhóm không?`)) {
+            try {
+                const data = {
+                    groupId: conversation.id,
+                    targetUserId: targetUserId,
+                    promoterId: user?.id
+                };
+                await GroupService.promoteToLeader(data);
+                alert("Bổ nhiệm trưởng nhóm thành công!");
+            } catch (error) {
+                console.error("Lỗi khi bổ nhiệm trưởng nhóm:", error);
+                alert(error?.message || "Đã có lỗi xảy ra.");
+            }
+        }
+    };
+
 
     useEffect(() => {
         if (conversation.id) {
@@ -349,23 +422,31 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                                             <i className="fas fa-ellipsis-h" style={{ marginRight: '20px' }}></i> {/* Icon ba chấm */}
                                         </button>
                                         <ul className="dropdown-menu">
+                                            {/* Thêm nút "Bổ nhiệm nhóm trưởng" */}
+                                            <li>
+                                                <a className="dropdown-item" href="#" onClick={() => handlePromoteToLeader(member.userId)}>
+                                                    Bổ nhiệm nhóm trưởng
+                                                </a>
+                                            </li>
+
                                             {/* Nếu member là 'MEMBER', hiển thị 'Thêm phó nhóm' */}
-                                            {member.role === 'MEMBER' ? (
+                                            {member.role === 'MEMBER' && (
                                                 <li>
                                                     <a className="dropdown-item" href="#" onClick={() => handleAddCoLeader(member.userId)}>
                                                         Thêm phó nhóm
                                                     </a>
                                                 </li>
-                                            ) : (
-                                                // Nếu member là 'CO_LEADER', hiển thị 'Gỡ phó nhóm'
-                                                member.role === 'CO_LEADER' && (
-                                                    <li>
-                                                        <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveCoLeader(member.userId)}>
-                                                            Gỡ phó nhóm
-                                                        </a>
-                                                    </li>
-                                                )
                                             )}
+
+                                            {/* Nếu member là 'CO_LEADER', hiển thị 'Gỡ phó nhóm' */}
+                                            {member.role === 'CO_LEADER' && (
+                                                <li>
+                                                    <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveCoLeader(member.userId)}>
+                                                        Gỡ phó nhóm
+                                                    </a>
+                                                </li>
+                                            )}
+
                                             {/* Thêm nút xóa thành viên */}
                                             <li>
                                                 <a className="dropdown-item text-danger" href="#" onClick={() => handleRemoveMember(member.userId)}>
@@ -375,6 +456,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                                         </ul>
                                     </div>
                                 )}
+
 
                             </div>
                         ))}
@@ -386,19 +468,30 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                 <div className="my-2" style={{ height: '8px', backgroundColor: '#ebecf0' }}></div>
 
                 {/* Ảnh/Video */}
+                {/* Ảnh/Video */}
                 <div className="px-2 py-2 pb-3">
                     <div className="fw-semibold mb-2" style={{ color: 'black', fontSize: '18px', fontWeight: 'bold' }}>Ảnh/Video</div>
                     <div className="d-flex gap-2 overflow-auto">
-                        {conversation.media?.length > 0 ? (
-                            conversation.media.map((src, index) => (
-                                <img
-                                    key={index}
-                                    src={src}
-                                    alt={`media-${index}`}
-                                    className="rounded"
-                                    style={{ width: '80px', height: '80px', objectFit: 'cover' }}
-                                />
-                            ))
+                        {media?.length > 0 ? (
+                            media.map((src, index) => {
+                                // Tìm message tương ứng với ảnh (Giả sử src là message content)
+                                const message = chatMessages.find(msg => msg.content === src);
+                                return (
+                                    <img
+                                        key={index}
+                                        src={src}
+                                        alt={`media-${index}`}
+                                        className="rounded"
+                                        style={{
+                                            width: '80px',
+                                            height: '80px',
+                                            objectFit: 'cover',
+                                            cursor: 'pointer', // Hiện con trỏ pointer khi di chuột vào ảnh
+                                        }}
+                                        onClick={() => handleImageClick(src, message)} // Click vào ảnh để mở modal
+                                    />
+                                );
+                            })
                         ) : (
                             <div
                                 style={{
@@ -410,28 +503,64 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, onUpdateGroupInfo,
                     </div>
                 </div>
 
+                {/* Modal xem ảnh */}
+                {showModal && (
+                    <div className="modal-overlay" style={{
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                    }} onClick={closeModal}>
+                        <div className="modal-content" style={{
+                            backgroundColor: 'white', padding: '20px', borderRadius: '10px', maxWidth: '80%', textAlign: 'center'
+                        }} onClick={e => e.stopPropagation()}>
+                            <img src={selectedImage} alt="large-view" style={{ width: '100%', maxHeight: '500px', objectFit: 'contain' }} />
+                            <div style={{ marginTop: '15px' }}>
+                                <img src={imageInfo?.senderAvatar} alt="avatar" className="rounded-circle" style={{ width: '30px', height: '30px', objectFit: 'cover' }} />
+                                <span style={{ marginLeft: '10px', fontWeight: 'bold' }}>{imageInfo?.senderName}</span>
+                                <div style={{ fontSize: '12px', color: '#555' }}>{new Date(imageInfo?.sendDate).toLocaleString()}</div>
+                            </div>
+                            <button onClick={closeModal} style={{
+                                marginTop: '10px', padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'
+                            }}>Đóng</button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Gạch ngang */}
                 <div className="my-2" style={{ height: '8px', backgroundColor: '#ebecf0' }}></div>
 
                 {/* File */}
                 <div className="px-2 py-2 pb-3">
                     <div className="fw-semibold mb-2" style={{ color: 'black', fontSize: '18px', fontWeight: 'bold' }}>File</div>
-                    <div className="d-flex gap-2 overflow-auto">
-                        {conversation.file?.length > 0 ? (
-                            conversation.file.map((src, index) => (
-                                <img
-                                    key={index}
-                                    src={src}
-                                    alt={`file-${index}`}
-                                    className="rounded"
-                                    style={{ width: '80px', height: '80px', objectFit: 'cover' }}
-                                />
+                    <div className="d-flex flex-column gap-2 overflow-y-auto no-hover" style={{ maxHeight: '150px', height: '150px', overflowY: 'auto', }}>
+                        {files?.length > 0 ? (
+                            files.map((src, index) => (
+                                <div key={index} className="d-flex align-items-center justify-content-between file-message">
+                                    <div className="d-flex align-items-center">
+                                        <span className="file-icon">
+                                            <i className="fa fa-file-alt"></i>
+                                        </span>
+                                        <span
+                                            style={{
+                                                marginLeft: '10px',
+                                                maxWidth: '160px',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            {getFileNameWithoutPrefix(src.split('/').pop())}
+                                        </span>
+                                    </div>
+
+                                    {/* Nút tải xuống */}
+                                    <div className="d-flex justify-content-end">
+                                        <a href={src} download className="btn btn-blue">
+                                            <button className="download-btn" style={{ marginLeft: 'auto', padding: '3px 5px', fontSize: '12px', height: '30px' }}>Tải xuống</button>
+                                        </a>
+                                    </div>
+                                </div>
                             ))
                         ) : (
-                            <div
-                                style={{
-                                    textAlign: 'center', paddingLeft: '10px', paddingRight: '10px'
-                                }}>
+                            <div style={{ textAlign: 'center', paddingLeft: '10px', paddingRight: '10px', top: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex', height: '100%' }}>
                                 Chưa có File được chia sẻ trong nhóm này
                             </div>
                         )}

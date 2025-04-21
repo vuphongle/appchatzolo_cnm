@@ -71,6 +71,16 @@ const GroupService = {
         }
     },
 
+    // Hàm bổ nhiệm trưởng nhóm mới
+    promoteToLeader: async (data) => {
+        try {
+            const response = await axios.put(`${API_BASE_URL}/promoteToLeader`, data);
+            return response.data;
+        } catch (error) {
+            throw error.response ? error.response.data : error;
+        }
+    },
+
     // Xóa nhóm
     deleteGroup: async (userId, groupId) => {
         try {

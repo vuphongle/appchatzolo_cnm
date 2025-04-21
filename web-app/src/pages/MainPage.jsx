@@ -278,6 +278,8 @@ const MainPage = () => {
                     content: url,
                     sendDate: new Date().toISOString(),
                     isRead: false,
+                    type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                    status: 'sent',
                 };
                 sendMessage(message);
                 setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
@@ -814,14 +816,43 @@ const MainPage = () => {
                 return;
             }
             if (incomingMessage.type === "PROMOTE_CO_LEADER") {
-                console.log("Thêm phó nhóm", incomingMessage); // Log thông báo nhận được
                 const groupId = incomingMessage.groupId;
 
                 // Tải thông tin nhóm mới và thêm vào danh sách nhóm
                 GroupService.getGroupMembers(groupId)
                     .then((res) => {
                         const group = res?.data;
-                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
+                        if (group) {
+                            // Cập nhật groups
+                            if (!groups.some((g) => g.id === groupId)) {
+                                setGroups((prev) => [...prev, group]);
+                            } else {
+                                setGroups((prev) =>
+                                    prev.map((g) =>
+                                        g.id === groupId ? group : g
+                                    )
+                                );
+                            }
+                            // Cập nhật conversations
+                            setConversations((prev) =>
+                                prev.map((conv) =>
+                                    conv.id === groupId ? { ...group, type: 'group' } : conv
+                                )
+                            );
+                        }
+                    })
+                    .catch((err) => console.error("Error fetching group:", err));
+                showToast(`${incomingMessage.message}`, "info");
+                return;
+            }
+
+            if (incomingMessage.type === "PROMOTE_TO_LEADER") {
+                const groupId = incomingMessage.groupId;
+
+                // Tải thông tin nhóm mới và thêm vào danh sách nhóm
+                GroupService.getGroupMembers(groupId)
+                    .then((res) => {
+                        const group = res?.data;
                         if (group) {
                             // Cập nhật groups
                             if (!groups.some((g) => g.id === groupId)) {
@@ -1248,6 +1279,8 @@ const MainPage = () => {
                         content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
+                        type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                        status: 'sent',
                     };
                     sendMessage(message); // Gửi qua WebSocket
                     setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
@@ -1275,6 +1308,8 @@ const MainPage = () => {
                         content: url,
                         sendDate: new Date().toISOString(),
                         isRead: false,
+                        type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                        status: 'sent',
                     };
                     sendMessage(message); // Gửi qua WebSocket
                     setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
@@ -2273,7 +2308,7 @@ const MainPage = () => {
     //Phiên đăng nhập
     const [sessionExpired, setSessionExpired] = useState(false);
 
-    const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 phút
+    const SESSION_TIMEOUT = 20 * 3 * 3 * 60 * 1000; // 20 phút
     const [lastActivity, setLastActivity] = useState(Date.now());
 
     useEffect(() => {
@@ -2641,6 +2676,7 @@ const MainPage = () => {
                     user={MyUser?.my_user}
                     onGroupDeleted={handleGroupDeleted}
                     onUpdateGroupInfo={onUpdateGroupInfo}
+                    chatMessages={chatMessages}
                     onClose={() => setIsMenuModalOpen(false)}
                 />
             )}
