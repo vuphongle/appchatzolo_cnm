@@ -23,6 +23,7 @@ public class Message {
     private boolean deletedBySender = false;
     private boolean deletedByReceiver = false;
     private String typeWeb;
+    private List<Reaction> reactions;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -131,5 +132,14 @@ public class Message {
 
     public void setDeletedByReceiver(boolean deletedByReceiver) {
         this.deletedByReceiver = deletedByReceiver;
+    }
+
+    @DynamoDbAttribute("reactions")
+    public List<Reaction> getReactions() {
+        return reactions;
+    }
+
+    public void setReactions(List<Reaction> reactions) {
+        this.reactions = reactions;
     }
 }
