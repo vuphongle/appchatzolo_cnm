@@ -2,8 +2,10 @@ package vn.edu.iuh.fit.model.DTO.response;
 
 import lombok.*;
 import vn.edu.iuh.fit.model.Media;
+import vn.edu.iuh.fit.model.Reaction;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,4 +29,7 @@ public class MessageResponse {
     // Thêm thông tin người gửi vào MessageResponse
     private String name;  // Tên người gửi
     private String avatar;  // Avatar người gửi
+
+    //phần react tin nhắn
+    private List<Reaction> reactions;
 }

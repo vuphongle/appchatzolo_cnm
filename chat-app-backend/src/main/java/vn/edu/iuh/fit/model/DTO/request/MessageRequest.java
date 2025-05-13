@@ -2,8 +2,10 @@ package vn.edu.iuh.fit.model.DTO.request;
 
 import lombok.*;
 import vn.edu.iuh.fit.model.Media;
+import vn.edu.iuh.fit.model.Reaction;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,4 +23,7 @@ public class MessageRequest {
     private String type;
     private boolean deletedBySender = false;
     private boolean deletedByReceiver = false;
+
+    // Thêm reactions vào MessageRequest
+    private List<Reaction> reactions;
 }

@@ -4,12 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.iuh.fit.model.DTO.ForwardRequest;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
+import vn.edu.iuh.fit.model.DTO.request.ReactRequest;
 import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
+import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.service.MessageService;
 import vn.edu.iuh.fit.service.impl.MessageServiceImpl;
 
@@ -21,7 +22,8 @@ public class MessageController {
 
     private final MessageService service;
     private final MessageServiceImpl messageServiceImpl;
-
+    @Autowired
+    private MessageRepository messageRepository;
 
     @Autowired
     public MessageController(MessageService service, MessageServiceImpl messageServiceImpl) {
@@ -201,4 +203,35 @@ public class MessageController {
                     .body("Lỗi khi xóa tin nhắn: " + e.getMessage());
         }
     }
+
+    // Thêm react vào tin nhắn
+    @PostMapping("/{messageId}/react")
+    public ResponseEntity<Message> addReact(@PathVariable String messageId, @RequestBody ReactRequest reactRequest) {
+        try {
+            // Gọi service để thêm react vào tin nhắn
+            service.addReactToMessage(messageId, reactRequest.getUserId(), reactRequest.getReactType());
+
+            // Lấy lại tin nhắn đã cập nhật từ repository
+            Message updatedMessage = messageRepository.getMessageById(messageId);
+
+            // Trả về tin nhắn đã cập nhật
+            return ResponseEntity.ok(updatedMessage);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+
+    @DeleteMapping("/{messageId}/react/{userId}")
+    public ResponseEntity<String> removeReact(@PathVariable String messageId, @PathVariable String userId) {
+        try {
+            // Gọi service để xóa reaction của người dùng
+            messageServiceImpl.removeReactFromMessage(messageId, userId);
+            return ResponseEntity.ok("Reaction removed successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi xóa reaction tin nhắn: " + e.getMessage());
+        }
+    }
+
 }

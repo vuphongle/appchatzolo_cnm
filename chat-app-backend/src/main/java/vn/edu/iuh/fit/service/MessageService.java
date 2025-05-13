@@ -1,6 +1,7 @@
 package vn.edu.iuh.fit.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import vn.edu.iuh.fit.enums.ReactType;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
 import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
@@ -30,4 +31,8 @@ public interface MessageService {
     void recallMessage(String messageId, String senderID, String receiverID);
     void forwardMessage(String originalMessageId, String senderID, List<String> receiverIDs);
     void deleteMessageForUser(String messageId, String userId);
+
+    //hàm thêm react
+    void addReactToMessage (String messageId, String userId, ReactType reactType);
+    void removeReactFromMessage (String messageId, String userId);
 }

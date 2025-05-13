@@ -4,15 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import vn.edu.iuh.fit.enums.ReactType;
 import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
 import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
+import vn.edu.iuh.fit.model.Reaction;
 import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.MessageService;
+import vn.edu.iuh.fit.utils.SystemConstraints;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -278,6 +281,43 @@ public class MessageServiceImpl implements MessageService {
         }
 
         return messageResponses;
+    }
+
+    //thêm react vào tin nhắn
+    @Override
+    public void addReactToMessage(String messageId, String userId, ReactType reactType) {
+        // Tìm tin nhắn theo ID
+        Message message = repository.getMessageById(messageId);
+        if(message == null) {
+            System.out.println("Message not found - trong hàm addReactToMessage ");
+        }
+        // Kiểm tra nếu reactions chưa được khởi tạo, tạo một mảng mới
+        if (message.getReactions() == null) {
+            message.setReactions(new ArrayList<>());  // Khởi tạo mảng reactions nếu chưa có
+        }
+
+        // Tạo reaction mới với ID duy nhất
+        Reaction newReaction = new Reaction(userId, reactType); // Tạo reaction mới
+        message.getReactions().add(newReaction);  // Thêm reaction mới vào mảng reactions
+
+        // Lưu lại tin nhắn đã cập nhật reaction
+        repository.save(message);  // Lưu tin nhắn với reactions mới
+    }
+
+    @Override
+    public void removeReactFromMessage(String messageId, String userId) {
+        // Tìm tin nhắn theo ID
+        Message message = repository.getMessageById(messageId);
+        if(message == null) {
+            System.out.println("Message not found - trong hàm removeReactFromMessage ");
+        }
+
+
+        // Xóa reaction của người dùng khỏi danh sách reactions
+        message.getReactions().removeIf(reaction -> reaction.getUserId().equals(userId));
+
+        // Lưu lại tin nhắn sau khi xóa reaction
+        repository.save(message);
     }
 
 

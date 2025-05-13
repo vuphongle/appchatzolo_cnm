@@ -4,8 +4,11 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import vn.edu.iuh.fit.enums.ReactType;
 
+import java.util.UUID;
+
 @DynamoDbBean
 public class Reaction {
+    private String id;
     private String userId;
     private ReactType reactionType;
 
@@ -16,11 +19,20 @@ public class Reaction {
     public Reaction() {
     }
 
-    public Reaction(String userId, ReactType reactionType) {
+    // Constructor với ID
+    public Reaction( String userId, ReactType reactionType) {
+        this.id = UUID.randomUUID().toString();
         this.userId = userId;
         this.reactionType = reactionType;
     }
+    @DynamoDbAttribute("id")
+    public String getId() {
+        return id;
+    }
 
+    public void setId(String id) {
+        this.id = id;
+    }
     @DynamoDbAttribute("userId")
     public String getUserId() {
         return userId;
@@ -42,6 +54,7 @@ public class Reaction {
     @Override
     public String toString() {
         return "Reaction{" +
+                "id='" + id + '\'' +
                 "userId='" + userId + '\'' +
                 ", reactionType=" + reactionType +
                 '}';

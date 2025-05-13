@@ -7,6 +7,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @DynamoDbBean
@@ -23,7 +24,7 @@ public class Message {
     private boolean deletedBySender = false;
     private boolean deletedByReceiver = false;
     private String typeWeb;
-    private List<Reaction> reactions;
+    private List<Reaction> reactions = new ArrayList<>();;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
