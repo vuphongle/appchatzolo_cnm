@@ -30,6 +30,8 @@ import { v4 as uuidv4 } from 'uuid';
 import VideoCallComponent from '../context/VideoCallComponent';  // Import VideoCallComponent
 import showToast from "../utils/AppUtils";
 
+import MessageReaction from "./MessageReaction";
+
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
     <li className="message-item" tabIndex={0} onClick={onClick}>
@@ -1908,6 +1910,13 @@ const MainPage = () => {
                                                             {isLastMessageByMe && isSentByMe && msg.isRead && (
                                                                 <span className="message-status read-status">✔✔ Đã nhận</span>
                                                             )}
+                                                            {/* Thêm phần Reaction dưới tin nhắn */}
+                                                            <MessageReaction
+                                                                messageId={msg.id}
+                                                                userId={MyUser?.my_user?.id}
+                                                                initialReactions={msg.reactions}
+                                                            />
+
                                                             {showMenuForMessageId === msg.id && (
                                                                 <MessageOptionsMenu
                                                                     isOwner={msg.senderID === MyUser?.my_user?.id}

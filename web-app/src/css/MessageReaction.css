@@ -1,0 +1,49 @@
+.reactions {
+  display: flex;
+  justify-content: flex-start; /* Căn trái */
+  gap: 8px; /* Khoảng cách giữa các emoji */
+  margin-top: 5px;
+  margin-bottom: 5px; /* Đảm bảo có khoảng cách dưới */
+  position: relative;
+}
+
+.emoji {
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.3s ease;
+  opacity: 0; /* Ẩn các emoji mặc định */
+}
+
+.emoji:hover {
+  transform: scale(1.2); /* Phóng to khi di chuột */
+}
+
+.reactions .like {
+  opacity: 1; /* Chỉ hiển thị nút like */
+}
+
+.reactions:hover .emoji {
+  opacity: 1; /* Hiển thị tất cả emoji khi hover vào container reactions */
+}
+
+.emoji.active {
+  color: #007bff; /* Thêm màu sắc cho reactions đã chọn */
+}
+
+.reactions .reaction-count {
+  font-size: 10px; /* Điều chỉnh kích thước chữ cho số lượng */
+  margin-left: 4px; /* Khoảng cách giữa icon và số lượng */
+  color: #555; /* Màu sắc cho số lượng */
+}
+/* Nút x để thu hồi reactions */
+.reactions .close-reactions {
+  font-size: 18px;
+  cursor: pointer;
+  color: red;
+  margin-left: 8px;
+  transition: transform 0.2s ease;
+}
+
+.reactions .close-reactions:hover {
+  transform: scale(1.2);
+}

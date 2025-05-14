@@ -131,6 +131,32 @@ const MessageService = {
         }
     },
 
+
+    // Thêm reaction vào tin nhắn
+    addReact: async (messageId, userId, reactType) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/${messageId}/react`, {
+                userId: userId,
+                reactType: reactType // LIKE, LOVE, HAHA, WOW, SAD, ANGRY
+            });
+            return response.data; // Trả về tin nhắn đã cập nhật
+        } catch (error) {
+            console.error("Lỗi khi thêm reaction:", error.response || error);
+            throw error.response ? error.response.data : error;
+        }
+    },
+
+    // Xóa reaction khỏi tin nhắn
+    removeReact: async (messageId, userId) => {
+        try {
+            const response = await axios.delete(`${API_BASE_URL}/${messageId}/react/${userId}`);
+            return response.data; // Trả về phản hồi thành công từ API
+        } catch (error) {
+            console.error("Lỗi khi xóa reaction:", error.response || error);
+            throw error.response ? error.response.data : error;
+        }
+    },
+
 };
 
 export default MessageService;
