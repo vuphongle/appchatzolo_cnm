@@ -1,14 +1,14 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 
-const MessageOptionsModal = ({ visible, onClose, onForward, onDelete, message }) => {
+const MessageOptionsModal = ({ visible, onClose, onForward, onReact, onDelete, message }) => {
   const reactions = [
-    { emoji: '❤️', label: 'Heart', onPress: () => onForward('❤️') },
-    { emoji: '👍', label: 'Thumbs Up', onPress: () => onForward('👍') },
-    { emoji: '😂', label: 'Laugh', onPress: () => onForward('😂') },
-    { emoji: '😲', label: 'Surprised', onPress: () => onForward('😲') },
-    { emoji: '😭', label: 'Crying', onPress: () => onForward('😭') },
-    { emoji: '😡', label: 'Angry', onPress: () => onForward('😡') },
+    { emoji: '❤️', label: 'Heart', onPress: () => onReact('LOVE') },
+    { emoji: '👍', label: 'Thumbs Up', onPress: () => onReact('LIKE') },
+    { emoji: '😂', label: 'Laugh', onPress: () => onReact('HAHA') },
+    { emoji: '😲', label: 'Surprised', onPress: () => onReact('WOW') },
+    { emoji: '😭', label: 'Crying', onPress: () => onReact('SAD') },
+    { emoji: '😡', label: 'Angry', onPress: () => onReact('ANGRY') },
   ];
 
   const options = [
@@ -25,6 +25,7 @@ const MessageOptionsModal = ({ visible, onClose, onForward, onDelete, message })
     { icon: '⏰', text: 'Nhắc hẹn', onPress: () => onForward('reminder') },
     { icon: 'ℹ️', text: 'Chi tiết', onPress: () => onForward('details') },
     { icon: '🗑️', text: 'Xóa', onPress: onDelete },
+    { icon: '❌', text: 'Xóa cảm xúc', onPress: () => onReact('REMOVE') },
   ];
 
   return (
@@ -162,12 +163,12 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 10,
-    color: '#D1D5DB',
+    color: 'black',
     textAlign: 'center',
   },
   closeButton: {
     marginTop: 8,
-    backgroundColor: '#FF4500',
+    backgroundColor: '#629af7',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 40,

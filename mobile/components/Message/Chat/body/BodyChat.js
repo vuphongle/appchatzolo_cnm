@@ -547,9 +547,10 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                       userId={userId}
                       receiverId={receiverID}
                       messageType={message.type || 'text'}
+                      messageInfo={message}
                       fileName={message.fileName}
                       onDeleteMessage={() => {
-                       
+
                       }}
                     />
                   )}

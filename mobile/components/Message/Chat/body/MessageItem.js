@@ -17,12 +17,15 @@ import ForwardMessageModal from '../ForwardMessageModal';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
 import MessageOptionsModal from './MessageOptionsModal';
-
+import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { IPV4 } from '@env';
+import { UserContext } from '../../../../context/UserContext';
 
-function MessageItem({ avatar, time, message, messageId, userId, receiverId, showForwardRecall = true }) {
+function MessageItem({ avatar, time, message, messageId, userId, receiverId, messageInfo: initialMessageInfo, showForwardRecall = true }) {
+  const { user } = React.useContext(UserContext);
   const navigation = useNavigation();
-  const [emojiIndex, setEmojiIndex] = useState(null);
+  const [emojiIndex, setEmojiIndex] = useState([]);
   const [StatusRead, setStatusRead] = useState(false);
   const [isRecalled, setIsRecalled] = useState(false);
   const [forwardModalVisible, setForwardModalVisible] = useState(false);
@@ -30,6 +33,8 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
+  const [reactCount, setReactCount] = useState(messageInfo.reactions.length);
   const messageTime = moment(time);
   const displayTime = messageTime.isValid()
     ? messageTime.add(7, 'hour').format("HH:mm")
@@ -220,15 +225,63 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
     setMessageOptionsVisible(false);
     if(info === 'forward') {
         setForwardModalVisible(true);
-    } else {
+    } else if (info === '❤️') {
+        console.log('Phản ứng với emoji:', info);
+    } else if (info === '👍') {
+        console.log('Phản ứng với emoji:', info);
+    }
+    else {
         Alert.alert('Thông báo', 'Chức năng này chưa khả dụng.');
     }
   };
 
   // Hàm phản ứng emoji
-  const reactMessage = (reaction) => {
-    setEmojiIndex(reaction);
+  const reactMessage = async (reaction) => {
+      const reactionMap = {
+          "LIKE": "👍",
+          "LOVE": "❤️",
+          "HAHA": "😂",
+          "WOW": "😲",
+          "SAD": "😢",
+          "ANGRY": "😡"
+      };
+
+      try {
+        const response = await axios.post(`${IPV4}/messages/${messageInfo.id}/react`, {
+          userId: user.id,
+          reactType: reaction,
+        });
+        setReactCount(response.data.reactions.length);
+        setMessageInfo(response.data);
+        setMessageOptionsVisible(false);
+      } catch (error) {
+        console.error("Error reacting to message:", error);
+      }
   };
+
+  useEffect(() => {
+    if (!messageInfo.reactions || messageInfo.reactions.length === 0) {
+      setEmojiIndex([]);  // mảng rỗng khi không có reactions
+    } else {
+      const reactionToEmoji = {
+        "LIKE": "👍",
+        "LOVE": "❤️",
+        "HAHA": "😂",
+        "WOW": "😲",
+        "SAD": "😢",
+        "ANGRY": "😡"
+      };
+
+      const allEmojis = messageInfo.reactions
+        .map(r => reactionToEmoji[r.reactionType])
+        .filter(e => e !== undefined);
+
+      // Loại bỏ emoji trùng lặp bằng cách dùng Set
+      const uniqueEmojis = [...new Set(allEmojis)];
+
+      setEmojiIndex(uniqueEmojis.slice(0, 3));
+    }
+  }, [messageInfo]);
 
   // Hiển thị menu tùy chọn khi nhấn giữ
   const handleLongPress = () => {
@@ -316,7 +369,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
            <View style={styles.iconHandlemedia}>
            <TouchableOpacity 
 //               onPress={() => downloadAndOpenFile(message)}
-onLongPress={handleLongPress}
+                onLongPress={handleLongPress}
                style={styles.smallDownloadButtonContainer}
                disabled={isDownloading}
              >
@@ -378,7 +431,7 @@ onLongPress={handleLongPress}
             <View style={styles.mediaContainer}>
             <View style={styles.fileContainer}>
               <Text style={styles.fileIcon}>{getFileIcon(message)}</Text>
-              <Text style={styles.fileText}>{getFileNameFromUrl(message)}</Text> 
+              <Text style={styles.fileText}>{getFileNameFromUrl(message)}</Text>
             </View>
             
           </View>
@@ -439,9 +492,10 @@ onLongPress={handleLongPress}
           <Text style={styles.time}>{displayTime}</Text>
 
           {/* Emoji phản ứng */}
-          {emojiIndex && (
+          {emojiIndex && emojiIndex.length > 0 && (
             <View style={styles.emojiContainer}>
               <Text style={styles.emoji}>{emojiIndex}</Text>
+              <Text style={styles.count}>{reactCount}</Text>
             </View>
           )}
         </View>
@@ -464,6 +518,7 @@ onLongPress={handleLongPress}
         onForward={forwardMessage}
         onDelete={deleteMessageForMe}
         message={message}
+        onReact={reactMessage}
       />
     </>
   );
@@ -628,10 +683,15 @@ const styles = StyleSheet.create({
   emojiContainer: {
     marginTop: 5,
     alignItems: 'flex-end',
+    flexDirection: 'row',
   },
   emoji: {
     fontSize: 20,
     color: '#ff6347',
+  },
+  count: {
+    fontSize: 16,
+    marginLeft: 10,
   },
   downloadButtonContainer: {
     padding: 8,
