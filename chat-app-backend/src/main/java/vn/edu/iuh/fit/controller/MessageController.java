@@ -223,14 +223,17 @@ public class MessageController {
 
 
     @DeleteMapping("/{messageId}/react/{userId}")
-    public ResponseEntity<String> removeReact(@PathVariable String messageId, @PathVariable String userId) {
+    public ResponseEntity<Message> removeReact(@PathVariable String messageId, @PathVariable String userId) {
         try {
             // Gọi service để xóa reaction của người dùng
             messageServiceImpl.removeReactFromMessage(messageId, userId);
-            return ResponseEntity.ok("Reaction removed successfully.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Lỗi xóa reaction tin nhắn: " + e.getMessage());
+            // Lấy lại tin nhắn đã cập nhật từ repository
+            Message updatedMessage = messageRepository.getMessageById(messageId);
+
+            // Trả về tin nhắn đã cập nhật
+            return ResponseEntity.ok(updatedMessage);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 

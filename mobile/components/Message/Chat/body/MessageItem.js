@@ -283,6 +283,18 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
     }
   }, [messageInfo]);
 
+  // Xóa reaction
+  const deleteReaction = async () => {
+    try {
+      const response = await axios.delete(`${IPV4}/messages/${messageInfo.id}/react/${user.id}`);
+      setReactCount(response.data.reactions.length);
+      setMessageInfo(response.data);
+      setMessageOptionsVisible(false);
+    } catch (error) {
+      console.error("Error deleting reaction:", error);
+    }
+  }
+
   // Hiển thị menu tùy chọn khi nhấn giữ
   const handleLongPress = () => {
     if (message === 'Tin nhắn đã được thu hồi') return;
@@ -517,8 +529,10 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
         onClose={() => setMessageOptionsVisible(false)}
         onForward={forwardMessage}
         onDelete={deleteMessageForMe}
-        message={message}
+        message={messageInfo}
+        userId={userId}
         onReact={reactMessage}
+        onUnReact={deleteReaction}
       />
     </>
   );

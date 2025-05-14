@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 
-const MessageOptionsModal = ({ visible, onClose, onForward, onReact, onDelete, message }) => {
+const MessageOptionsModal = ({ visible, onClose, userId, onForward, onReact, onUnReact, onDelete, message }) => {
   const reactions = [
     { emoji: '❤️', label: 'Heart', onPress: () => onReact('LOVE') },
     { emoji: '👍', label: 'Thumbs Up', onPress: () => onReact('LIKE') },
@@ -12,12 +12,7 @@ const MessageOptionsModal = ({ visible, onClose, onForward, onReact, onDelete, m
   ];
 
   const options = [
-    { icon: '➡️', text: 'Chuyển tiếp',
-          onPress: () => {
-            onClose();
-            onForward('forward');
-          }
-    },
+    { icon: '➡️', text: 'Chuyển tiếp', onPress: () => { onClose(); onForward('forward'); } },
     { icon: '☁️', text: 'Lưu Cloud', onPress: () => onForward('saveCloud') },
     { icon: '↩️', text: 'Thu hồi', onPress: () => onForward('revoke') },
     { icon: '📋', text: 'Sao chép', onPress: () => onForward('copy') },
@@ -25,7 +20,10 @@ const MessageOptionsModal = ({ visible, onClose, onForward, onReact, onDelete, m
     { icon: '⏰', text: 'Nhắc hẹn', onPress: () => onForward('reminder') },
     { icon: 'ℹ️', text: 'Chi tiết', onPress: () => onForward('details') },
     { icon: '🗑️', text: 'Xóa', onPress: onDelete },
-    { icon: '❌', text: 'Xóa cảm xúc', onPress: () => onReact('REMOVE') },
+    // Xóa cảm xúc chỉ hiển thị nếu có ID của người dùng trong reactions
+    ...(message.reactions && message.reactions.some(reaction => reaction.userId === userId)
+      ? [{ icon: '❌', text: 'Xóa cảm xúc', onPress: () => onUnReact('REMOVE') }]
+      : [])
   ];
 
   return (
@@ -33,7 +31,7 @@ const MessageOptionsModal = ({ visible, onClose, onForward, onReact, onDelete, m
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.messageBubble}>
-            <Text style={styles.messageText}>{message}</Text>
+            <Text style={styles.messageText}>{message.content}</Text>
           </View>
 
           {/* Reaction bar */}
@@ -52,7 +50,7 @@ const MessageOptionsModal = ({ visible, onClose, onForward, onReact, onDelete, m
 
           {/* Options grid */}
           <View style={styles.optionsGrid}>
-            {options.map(({ icon, text, beta, onPress }, index) => (
+            {options.map(({ icon, text, onPress }, index) => (
               <TouchableOpacity
                 key={index}
                 onPress={onPress}
@@ -60,8 +58,7 @@ const MessageOptionsModal = ({ visible, onClose, onForward, onReact, onDelete, m
                 accessibilityLabel={text}
               >
                 <View style={styles.optionIconWrapper}>
-                  <Text style={[styles.optionIcon, beta && styles.betaIcon]}>{icon}</Text>
-                  {beta && <Text style={styles.betaBadge}>BETA</Text>}
+                  <Text style={styles.optionIcon}>{icon}</Text>
                 </View>
                 <Text style={styles.optionText}>{text}</Text>
               </TouchableOpacity>
