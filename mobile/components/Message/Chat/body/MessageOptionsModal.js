@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 
-const MessageOptionsModal = ({ visible, onClose, userId, onForward, onRecall, onReact, onUnReact, onDelete, message}) => {
+const MessageOptionsModal = ({ visible, onClose, userId, onForward, type, onRecall, onReact, onUnReact, onDelete, message}) => {
   const reactions = [
     { emoji: '❤️', label: 'Heart', onPress: () => onReact('LOVE') },
     { emoji: '👍', label: 'Thumbs Up', onPress: () => onReact('LIKE') },
@@ -32,9 +32,13 @@ const MessageOptionsModal = ({ visible, onClose, userId, onForward, onRecall, on
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <View style={styles.messageBubble}>
-            <Text style={styles.messageText}>{message.content}</Text>
-          </View>
+          {(
+            message.type === 'text' && message.text !== '' && (
+              <View style={styles.messageBubble}>
+                <Text style={styles.messageText}>{message.text}</Text>
+              </View>
+            )
+          )}
 
           {/* Reaction bar */}
           <View style={styles.reactionBar}>

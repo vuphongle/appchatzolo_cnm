@@ -528,6 +528,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
         userId={userId}
         onReact={reactMessage}
         onUnReact={deleteReaction}
+        type={type}
       />
     </>
   );
