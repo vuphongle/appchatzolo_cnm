@@ -16,6 +16,7 @@ import { formatDate } from '../../../../utils/formatDate';
 import ForwardMessageModal from '../ForwardMessageModal';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
+import MessageOptionsModal from './MessageOptionsModal';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -33,6 +34,8 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   const displayTime = messageTime.isValid()
     ? messageTime.add(7, 'hour').format("HH:mm")
     : moment().format("HH:mm");
+
+  const [messageOptionsVisible, setMessageOptionsVisible] = useState(false);
 
   // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
   const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
@@ -213,9 +216,13 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
     }
   };
 
-  // Hàm hiển thị modal chuyển tiếp tin nhắn
-  const forwardMessage = () => {
-    setForwardModalVisible(true);
+  const forwardMessage = (info) => {
+    setMessageOptionsVisible(false);
+    if(info === 'forward') {
+        setForwardModalVisible(true);
+    } else {
+        Alert.alert('Thông báo', 'Chức năng này chưa khả dụng.');
+    }
   };
 
   // Hàm phản ứng emoji
@@ -227,39 +234,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   const handleLongPress = () => {
     if (message === 'Tin nhắn đã được thu hồi') return;
     if (!showForwardRecall) return;
-    
-    const options = [
-      // { text: '❤', onPress: () => reactMessage('❤') },
-      // { text: '👍', onPress: () => reactMessage('👍') },
-      // { text: '😀', onPress: () => reactMessage('😀') },
-      // { text: '😭', onPress: () => reactMessage('😭') },
-      // { text: '😡', onPress: () => reactMessage('😡') },
-      {
-        text: 'Hủy',
-        onPress: () => {},
-        style: 'cancel'
-      },
-      // { text: 'Tải xuống', onPress: () => downloadAndOpenFile(message) },
-      { text: 'Chuyển tiếp', onPress: forwardMessage },
-     { text: 'Xóa ở phía tôi', onPress: () => {
-        Alert.alert(
-          'Xóa tin nhắn',
-          'Tin nhắn sẽ bị xóa ở phía bạn. Bạn có chắc chắn muốn xóa?',
-          [
-            { text: 'Hủy', style: 'cancel' },
-            { text: 'Xóa', onPress: deleteMessageForMe, style: 'destructive' }
-          ]
-        );
-      }},
-     
-    ];
-
-    // Hiển thị Alert với các tùy chọn
-    Alert.alert('Tùy chọn tin nhắn', '', options.map(option => ({
-      text: option.text,
-      onPress: option.onPress,
-      style: option.style
-    })));
+        setMessageOptionsVisible(true);
   };
 
   // Lấy tên file từ URL
@@ -480,6 +455,15 @@ onLongPress={handleLongPress}
         senderID={userId}
         message={message}
         type={type}
+      />
+
+      {/* Modal tùy chọn tin nhắn */}
+      <MessageOptionsModal
+        visible={messageOptionsVisible}
+        onClose={() => setMessageOptionsVisible(false)}
+        onForward={forwardMessage}
+        onDelete={deleteMessageForMe}
+        message={message}
       />
     </>
   );
