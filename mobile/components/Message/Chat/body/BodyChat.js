@@ -526,6 +526,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                     <MyMessageItem
                       time={formatDate(message.sendDate)}
                       message={message.content}
+                      messageInfo={message}
                       messageId={message.id}
                       userId={userId}
                       receiverId={receiverID}

@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 
-const MessageOptionsModal = ({ visible, onClose, userId, onForward, onReact, onUnReact, onDelete, message }) => {
+const MessageOptionsModal = ({ visible, onClose, userId, onForward, onRecall, onReact, onUnReact, onDelete, message}) => {
   const reactions = [
     { emoji: '❤️', label: 'Heart', onPress: () => onReact('LOVE') },
     { emoji: '👍', label: 'Thumbs Up', onPress: () => onReact('LIKE') },
@@ -14,10 +14,12 @@ const MessageOptionsModal = ({ visible, onClose, userId, onForward, onReact, onU
   const options = [
     { icon: '➡️', text: 'Chuyển tiếp', onPress: () => { onClose(); onForward('forward'); } },
     { icon: '☁️', text: 'Lưu Cloud', onPress: () => onForward('saveCloud') },
-    { icon: '↩️', text: 'Thu hồi', onPress: () => onForward('revoke') },
+    // Nếu không phải tin nhắn mình gửi không hiện thu hồi
+    ...(message.senderID === userId
+          ? [{ icon: '↩️', text: 'Thu hồi', onPress: () => onRecall() }]
+          : []),
     { icon: '📋', text: 'Sao chép', onPress: () => onForward('copy') },
     { icon: '📌', text: 'Ghim', onPress: () => onForward('pin') },
-    { icon: '⏰', text: 'Nhắc hẹn', onPress: () => onForward('reminder') },
     { icon: 'ℹ️', text: 'Chi tiết', onPress: () => onForward('details') },
     { icon: '🗑️', text: 'Xóa', onPress: onDelete },
     // Xóa cảm xúc chỉ hiển thị nếu có ID của người dùng trong reactions
@@ -124,11 +126,12 @@ const styles = StyleSheet.create({
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     width: '100%',
   },
   optionButton: {
-    width: '22%',
+    width: '25%',
     marginBottom: 20,
     alignItems: 'center',
   },

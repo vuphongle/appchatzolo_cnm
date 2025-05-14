@@ -34,7 +34,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
-  const [reactCount, setReactCount] = useState(messageInfo.reactions.length);
+  const [reactCount, setReactCount] = useState(messageInfo.reactions?.length);
   const messageTime = moment(time);
   const displayTime = messageTime.isValid()
     ? messageTime.add(7, 'hour').format("HH:mm")
@@ -222,13 +222,8 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
   };
 
   const forwardMessage = (info) => {
-    setMessageOptionsVisible(false);
     if(info === 'forward') {
         setForwardModalVisible(true);
-    } else if (info === '❤️') {
-        console.log('Phản ứng với emoji:', info);
-    } else if (info === '👍') {
-        console.log('Phản ứng với emoji:', info);
     }
     else {
         Alert.alert('Thông báo', 'Chức năng này chưa khả dụng.');

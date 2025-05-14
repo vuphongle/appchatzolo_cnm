@@ -542,6 +542,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
                     <MyMessageItem
                       time={formatDate(message.sendDate)}
                       message={message.content}
+                      messageInfo={message}
                       messageId={message.id}
                       userId={userId}
                       receiverId={receiverID}
@@ -559,6 +560,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
                       name={name}
                       time={message.sendDate}
                       message={message.content}
+                      messageInfo={message}
                       messageId={message.id}
                       userId={userId}
                       receiverId={receiverID}
