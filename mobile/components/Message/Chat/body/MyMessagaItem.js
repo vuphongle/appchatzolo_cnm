@@ -17,19 +17,29 @@ import FileViewer from 'react-native-file-viewer';
 import { Button } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, showForwardRecall = true }) {
+import MessageOptionsModal from './MessageOptionsModal';
+import axios from 'axios';
+import { IPV4 } from '@env';
+import { UserContext } from '../../../../context/UserContext';
+
+function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, messageInfo: initialMessageInfo, showForwardRecall = true }) {
   const [messIndex, setMessIndex] = useState(message);
-  const [emojiIndex, setEmojiIndex] = useState(null);
+  const [emojiIndex, setEmojiIndex] = useState([]);
   const [isRecalled, setIsRecalled] = useState(false);
   const [forwardModalVisible, setForwardModalVisible] = useState(false);
   const [sound, setSound] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
-   const navigation = useNavigation();
+  const { user } = React.useContext(UserContext);
+  const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
+  const [reactCount, setReactCount] = useState(messageInfo.reactions?.length);
+  const navigation = useNavigation();
   // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
   const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
-  
+
+  const [messageOptionsVisible, setMessageOptionsVisible] = useState(false);
+
   // Kiểm tra xem tin nhắn có phải là URL của video hay không
   const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i) != null;
   
@@ -182,21 +192,18 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
     };
   }, [sound]);
 
-  // Hàm phản ứng emoji
-  const reactMessage = (reaction) => {
-    setEmojiIndex(reaction);
-  };
-
   // Xác định loại tin nhắn hiện tại (cho modal chuyển tiếp)
   const type = isRecalled ? 'unsend' : typeIndex;
 
   // Hàm thu hồi tin nhắn
   const recallMessage = async () => {
+  console.log('Thu hồi tin nhắn:', messageId);
     try {
       await MessageService.recallMessage(messageId, userId, receiverId);
       setMessIndex('Tin nhắn đã thu hồi');
       setTypeIndex('unsend');
       setIsRecalled(true);
+      setMessageOptionsVisible(false);
     } catch (error) {
       console.error('Lỗi khi thu hồi tin nhắn:', error);
       Alert.alert('Lỗi', 'Không thể thu hồi tin nhắn. Vui lòng thử lại sau.');
@@ -204,74 +211,79 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
   };
 
   // Hàm hiển thị modal chuyển tiếp tin nhắn
-  const forwardMessage = () => {
-    setForwardModalVisible(true);
-  };
-  const handleDeleteOrRecall = () => {
-    Alert.alert(
-      'Hành động với tin nhắn',
-      'Bạn muốn thực hiện hành động nào?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa ở phía tôi',
-          onPress:deleteMessageForMe, style: 'destructive' 
-          //  () => {
-            // Alert.alert(
-            //   'Xóa tin nhắn',
-            //   'Tin nhắn sẽ bị xóa ở phía bạn. Bạn có chắc chắn muốn xóa?',
-            //   [
-            //     { text: 'Hủy', style: 'cancel' },
-            //     { text: 'Xóa', onPress: deleteMessageForMe, style: 'destructive' }
-            //   ]
-            // );
-          // },
-          // style: 'default',
-        },
-        {
-          text: 'Thu hồi',
-          onPress:  recallMessage, style: 'destructive'
-          // () => {
-          //   Alert.alert(
-          //     'Thu hồi tin nhắn',
-          //     'Bạn có chắc chắn muốn thu hồi tin nhắn này?',
-          //     [
-          //       { text: 'Hủy', style: 'cancel' },
-          //       { text: 'Thu hồi',  }
-          //     ]
-          //   );
-          // },
-          // style: 'default',
-        },
-       
-      ]
-    );
+  const forwardMessage = (info) => {
+    if(info === 'forward') {
+        setForwardModalVisible(true);
+    } else {
+        Alert.alert('Thông báo', 'Chức năng này chưa khả dụng.');
+    }
   };
 
   // Hiển thị menu tùy chọn khi nhấn giữ tin nhắn
   const handleLongPress = () => {
     // Nếu tin nhắn đã thu hồi, không hiển thị menu
     if (!showForwardRecall) return;
-
-    const options = [
-      {
-        text: 'Hủy',
-        onPress: () => {},
-        style: 'cancel'
-      },
-      // { text: 'Tải xuống', onPress: () => downloadAndOpenFile(messIndex) },
-      { text: 'Chuyển tiếp', onPress: forwardMessage },
-      { text: 'Xóa hoặc Thu hồi', onPress: handleDeleteOrRecall },
-     
-    ];
-
-    // Hiển thị Alert với các tùy chọn
-    Alert.alert('Tùy chọn tin nhắn', '', options.map(option => ({
-      text: option.text,
-      onPress: option.onPress,
-      style: option.style
-    })));
+        setMessageOptionsVisible(true);
   };
+
+  const reactMessage = async (reaction) => {
+      const reactionMap = {
+          "LIKE": "👍",
+          "LOVE": "❤️",
+          "HAHA": "😂",
+          "WOW": "😲",
+          "SAD": "😢",
+          "ANGRY": "😡"
+      };
+
+      try {
+        const response = await axios.post(`${IPV4}/messages/${messageInfo.id}/react`, {
+          userId: user.id,
+          reactType: reaction,
+        });
+        setReactCount(response.data.reactions.length);
+        setMessageInfo(response.data);
+        setMessageOptionsVisible(false);
+      } catch (error) {
+        console.error("Error reacting to message:", error);
+      }
+  };
+
+  useEffect(() => {
+      if (!messageInfo.reactions || messageInfo.reactions.length === 0) {
+        setEmojiIndex([]);  // mảng rỗng khi không có reactions
+      } else {
+        const reactionToEmoji = {
+          "LIKE": "👍",
+          "LOVE": "❤️",
+          "HAHA": "😂",
+          "WOW": "😲",
+          "SAD": "😢",
+          "ANGRY": "😡"
+        };
+
+        const allEmojis = messageInfo.reactions
+          .map(r => reactionToEmoji[r.reactionType])
+          .filter(e => e !== undefined);
+
+        // Loại bỏ emoji trùng lặp bằng cách dùng Set
+        const uniqueEmojis = [...new Set(allEmojis)];
+
+        setEmojiIndex(uniqueEmojis.slice(0, 3));
+      }
+    }, [messageInfo]);
+
+    // Xóa reaction
+    const deleteReaction = async () => {
+      try {
+        const response = await axios.delete(`${IPV4}/messages/${messageInfo.id}/react/${user.id}`);
+        setReactCount(response.data.reactions.length);
+        setMessageInfo(response.data);
+        setMessageOptionsVisible(false);
+      } catch (error) {
+        console.error("Error deleting reaction:", error);
+      }
+    }
 
   // Hiển thị danh sách emoji
   const handlePressIcon = () => {
@@ -517,9 +529,10 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
           <Text style={styles.time}>{time}</Text>
 
           {/* Emoji */}
-          {emojiIndex && (
+          {emojiIndex && emojiIndex.length > 0 && (
             <View style={styles.emojiContainer}>
               <Text style={styles.emoji}>{emojiIndex}</Text>
+              <Text style={styles.count}>{reactCount}</Text>
             </View>
           )}
         </View>
@@ -533,6 +546,19 @@ function MyMessageItem({ messageId,avatar, userId, receiverId, time, message, sh
         senderID={userId}
         message={messIndex}
         type={type}
+      />
+
+      {/* Modal tùy chọn tin nhắn */}
+      <MessageOptionsModal
+        visible={messageOptionsVisible}
+        onClose={() => setMessageOptionsVisible(false)}
+        onForward={forwardMessage}
+        onDelete={deleteMessageForMe}
+        onRecall={recallMessage}
+        message={messageInfo}
+        userId={userId}
+        onReact={reactMessage}
+        onUnReact={deleteReaction}
       />
     </>
   );
@@ -691,9 +717,15 @@ const styles = StyleSheet.create({
   emojiContainer: {
     marginTop: 5,
     alignItems: 'flex-end',
+    flexDirection: 'row',
+    borderRadius: 15,
   },
   emoji: {
     fontSize: 20,
+  },
+  count: {
+    fontSize: 16,
+    marginLeft: 10,
   },
   boxMessagemedia:
   { flexDirection: 'row', gap:5,alignItems:'center',width:'100%' },

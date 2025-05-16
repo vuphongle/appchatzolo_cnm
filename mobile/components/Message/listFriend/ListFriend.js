@@ -249,7 +249,7 @@ function ListFriend({ userId }) {
   return (
     <View style={styles.container}>
       <CloudItem timestamp="23 tiếng" />
-      {friends.length > 0 ? (
+      {items.length > 0 ? (
         <SwipeListView
           data={items}
           keyExtractor={(item) => item.id}

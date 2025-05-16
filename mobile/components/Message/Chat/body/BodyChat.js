@@ -526,6 +526,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                     <MyMessageItem
                       time={formatDate(message.sendDate)}
                       message={message.content}
+                      messageInfo={message}
                       messageId={message.id}
                       userId={userId}
                       receiverId={receiverID}
@@ -547,9 +548,10 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                       userId={userId}
                       receiverId={receiverID}
                       messageType={message.type || 'text'}
+                      messageInfo={message}
                       fileName={message.fileName}
                       onDeleteMessage={() => {
-                       
+
                       }}
                     />
                   )}

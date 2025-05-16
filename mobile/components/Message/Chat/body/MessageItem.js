@@ -16,12 +16,16 @@ import { formatDate } from '../../../../utils/formatDate';
 import ForwardMessageModal from '../ForwardMessageModal';
 import RNFS from 'react-native-fs';
 import FileViewer from 'react-native-file-viewer';
-
+import MessageOptionsModal from './MessageOptionsModal';
+import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { IPV4 } from '@env';
+import { UserContext } from '../../../../context/UserContext';
 
-function MessageItem({ avatar, time, message, messageId, userId, receiverId, showForwardRecall = true }) {
+function MessageItem({ avatar, time, message, messageId, userId, receiverId, messageInfo: initialMessageInfo, showForwardRecall = true }) {
+  const { user } = React.useContext(UserContext);
   const navigation = useNavigation();
-  const [emojiIndex, setEmojiIndex] = useState(null);
+  const [emojiIndex, setEmojiIndex] = useState([]);
   const [StatusRead, setStatusRead] = useState(false);
   const [isRecalled, setIsRecalled] = useState(false);
   const [forwardModalVisible, setForwardModalVisible] = useState(false);
@@ -29,10 +33,14 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
+  const [reactCount, setReactCount] = useState(messageInfo.reactions?.length);
   const messageTime = moment(time);
   const displayTime = messageTime.isValid()
     ? messageTime.add(7, 'hour').format("HH:mm")
     : moment().format("HH:mm");
+
+  const [messageOptionsVisible, setMessageOptionsVisible] = useState(false);
 
   // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
   const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
@@ -213,53 +221,80 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
     }
   };
 
-  // Hàm hiển thị modal chuyển tiếp tin nhắn
-  const forwardMessage = () => {
-    setForwardModalVisible(true);
+  const forwardMessage = (info) => {
+    if(info === 'forward') {
+        setForwardModalVisible(true);
+    }
+    else {
+        Alert.alert('Thông báo', 'Chức năng này chưa khả dụng.');
+    }
   };
 
   // Hàm phản ứng emoji
-  const reactMessage = (reaction) => {
-    setEmojiIndex(reaction);
+  const reactMessage = async (reaction) => {
+      const reactionMap = {
+          "LIKE": "👍",
+          "LOVE": "❤️",
+          "HAHA": "😂",
+          "WOW": "😲",
+          "SAD": "😢",
+          "ANGRY": "😡"
+      };
+
+      try {
+        const response = await axios.post(`${IPV4}/messages/${messageInfo.id}/react`, {
+          userId: user.id,
+          reactType: reaction,
+        });
+        setReactCount(response.data.reactions.length);
+        setMessageInfo(response.data);
+        setMessageOptionsVisible(false);
+      } catch (error) {
+        console.error("Error reacting to message:", error);
+      }
   };
+
+  useEffect(() => {
+    if (!messageInfo.reactions || messageInfo.reactions.length === 0) {
+      setEmojiIndex([]);  // mảng rỗng khi không có reactions
+    } else {
+      const reactionToEmoji = {
+        "LIKE": "👍",
+        "LOVE": "❤️",
+        "HAHA": "😂",
+        "WOW": "😲",
+        "SAD": "😢",
+        "ANGRY": "😡"
+      };
+
+      const allEmojis = messageInfo.reactions
+        .map(r => reactionToEmoji[r.reactionType])
+        .filter(e => e !== undefined);
+
+      // Loại bỏ emoji trùng lặp bằng cách dùng Set
+      const uniqueEmojis = [...new Set(allEmojis)];
+
+      setEmojiIndex(uniqueEmojis.slice(0, 3));
+    }
+  }, [messageInfo]);
+
+  // Xóa reaction
+  const deleteReaction = async () => {
+    try {
+      const response = await axios.delete(`${IPV4}/messages/${messageInfo.id}/react/${user.id}`);
+      setReactCount(response.data.reactions.length);
+      setMessageInfo(response.data);
+      setMessageOptionsVisible(false);
+    } catch (error) {
+      console.error("Error deleting reaction:", error);
+    }
+  }
 
   // Hiển thị menu tùy chọn khi nhấn giữ
   const handleLongPress = () => {
     if (message === 'Tin nhắn đã được thu hồi') return;
     if (!showForwardRecall) return;
-    
-    const options = [
-      // { text: '❤', onPress: () => reactMessage('❤') },
-      // { text: '👍', onPress: () => reactMessage('👍') },
-      // { text: '😀', onPress: () => reactMessage('😀') },
-      // { text: '😭', onPress: () => reactMessage('😭') },
-      // { text: '😡', onPress: () => reactMessage('😡') },
-      {
-        text: 'Hủy',
-        onPress: () => {},
-        style: 'cancel'
-      },
-      // { text: 'Tải xuống', onPress: () => downloadAndOpenFile(message) },
-      { text: 'Chuyển tiếp', onPress: forwardMessage },
-     { text: 'Xóa ở phía tôi', onPress: () => {
-        Alert.alert(
-          'Xóa tin nhắn',
-          'Tin nhắn sẽ bị xóa ở phía bạn. Bạn có chắc chắn muốn xóa?',
-          [
-            { text: 'Hủy', style: 'cancel' },
-            { text: 'Xóa', onPress: deleteMessageForMe, style: 'destructive' }
-          ]
-        );
-      }},
-     
-    ];
-
-    // Hiển thị Alert với các tùy chọn
-    Alert.alert('Tùy chọn tin nhắn', '', options.map(option => ({
-      text: option.text,
-      onPress: option.onPress,
-      style: option.style
-    })));
+        setMessageOptionsVisible(true);
   };
 
   // Lấy tên file từ URL
@@ -341,7 +376,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
            <View style={styles.iconHandlemedia}>
            <TouchableOpacity 
 //               onPress={() => downloadAndOpenFile(message)}
-onLongPress={handleLongPress}
+                onLongPress={handleLongPress}
                style={styles.smallDownloadButtonContainer}
                disabled={isDownloading}
              >
@@ -403,7 +438,7 @@ onLongPress={handleLongPress}
             <View style={styles.mediaContainer}>
             <View style={styles.fileContainer}>
               <Text style={styles.fileIcon}>{getFileIcon(message)}</Text>
-              <Text style={styles.fileText}>{getFileNameFromUrl(message)}</Text> 
+              <Text style={styles.fileText}>{getFileNameFromUrl(message)}</Text>
             </View>
             
           </View>
@@ -464,9 +499,10 @@ onLongPress={handleLongPress}
           <Text style={styles.time}>{displayTime}</Text>
 
           {/* Emoji phản ứng */}
-          {emojiIndex && (
+          {emojiIndex && emojiIndex.length > 0 && (
             <View style={styles.emojiContainer}>
               <Text style={styles.emoji}>{emojiIndex}</Text>
+              <Text style={styles.count}>{reactCount}</Text>
             </View>
           )}
         </View>
@@ -479,6 +515,19 @@ onLongPress={handleLongPress}
         originalMessageId={messageId}
         senderID={userId}
         message={message}
+        type={type}
+      />
+
+      {/* Modal tùy chọn tin nhắn */}
+      <MessageOptionsModal
+        visible={messageOptionsVisible}
+        onClose={() => setMessageOptionsVisible(false)}
+        onForward={forwardMessage}
+        onDelete={deleteMessageForMe}
+        message={messageInfo}
+        userId={userId}
+        onReact={reactMessage}
+        onUnReact={deleteReaction}
         type={type}
       />
     </>
@@ -644,10 +693,15 @@ const styles = StyleSheet.create({
   emojiContainer: {
     marginTop: 5,
     alignItems: 'flex-end',
+    flexDirection: 'row',
   },
   emoji: {
     fontSize: 20,
     color: '#ff6347',
+  },
+  count: {
+    fontSize: 16,
+    marginLeft: 10,
   },
   downloadButtonContainer: {
     padding: 8,

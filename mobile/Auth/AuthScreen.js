@@ -164,6 +164,7 @@ const AuthScreen = () => {
       <Text style={styles.title}>{isRegister ? 'Đăng ký' : 'Đăng nhập'}</Text>
       {isRegister && step === 1 ? (
         <>
+          <Text style={styles.label}>Tên</Text>
           <TextInput
             style={styles.input}
             placeholder="Tên"
@@ -172,6 +173,7 @@ const AuthScreen = () => {
             keyboardType="default"
             autoCorrect={false}
           />
+            <Text style={styles.label}>Ngày sinh</Text>
           <TouchableOpacity
             style={styles.input}
             onPress={() => setShowDatePicker(true)}
@@ -290,6 +292,11 @@ const styles = StyleSheet.create({
   toggleText: {
     color: '#1E90FF',
     fontSize: 16,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 10,
+    marginLeft: 5,
   },
 });
 
