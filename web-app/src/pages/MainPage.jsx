@@ -275,11 +275,12 @@ const MainPage = () => {
     const [isUserChangePWVisible, setIsUserChangePWVisible] = useState(false);
     const [messageInputKey, setMessageInputKey] = useState(Date.now());
 
+    const [invitationCount, setInvitationCount] = useState(0);
+
     const [isRecording, setIsRecording] = useState(false);
     const [mediaRecorder, setMediaRecorder] = useState(null);
-    const [audioChunks, setAudioChunks] = useState([]);
-
-    const [invitationCount, setInvitationCount] = useState(0);
+    const [audioFile, setAudioFile] = useState(null); // Lưu file âm thanh tạm thời
+    const [showModal, setShowModal] = useState(false); // Hiển thị modal để người dùng chọn gửi hay hủy
 
     const startRecording = async () => {
         try {
@@ -297,22 +298,10 @@ const MainPage = () => {
 
             recorder.onstop = async () => {
                 const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-                const audioFile = new File([audioBlob], `record-${Date.now()}.webm`, { type: 'audio/webm' });
+                const audioFileTemp = new File([audioBlob], `record-${Date.now()}.webm`, { type: 'audio/webm' });
+                setAudioFile(audioFileTemp); // Lưu file ghi âm tạm thời
 
-                // Gửi lên S3 hoặc API upload
-                const url = await S3Service.uploadFile(audioFile); // dùng chung như uploadFile/image
-                const message = {
-                    id: new Date().getTime().toString(),
-                    senderID: MyUser?.my_user?.id,
-                    receiverID: selectedChat.id,
-                    content: url,
-                    sendDate: new Date().toISOString(),
-                    isRead: false,
-                    type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
-                    status: 'sent',
-                };
-                sendMessage(message);
-                setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+                setShowModal(true); // Mở modal để người dùng kiểm tra
             };
 
             recorder.start();
@@ -327,6 +316,33 @@ const MainPage = () => {
             setIsRecording(false);
         }
     };
+
+    // Xử lý khi người dùng chọn gửi ghi âm
+    const handleSendRecording = async () => {
+        if (audioFile) {
+            const url = await S3Service.uploadFile(audioFile); // Upload lên S3
+            const message = {
+                id: new Date().getTime().toString(),
+                senderID: MyUser?.my_user?.id,
+                receiverID: selectedChat.id,
+                content: url,
+                sendDate: new Date().toISOString(),
+                isRead: false,
+                type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                status: 'sent',
+            };
+            sendMessage(message);
+            setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
+        }
+        setShowModal(false); // Đóng modal sau khi gửi
+    };
+
+    // Xử lý khi người dùng chọn hủy ghi âm
+    const handleCancelRecording = () => {
+        setAudioFile(null); // Hủy file ghi âm
+        setShowModal(false); // Đóng modal
+    };
+
 
 
     const handleUserInfoToggle = () => {
@@ -2776,6 +2792,24 @@ const MainPage = () => {
                     onClose={() => setIsMenuModalOpen(false)}
                 />
             )}
+
+            {/* Hiển thị lại đoạn ghi âm */}
+            {showModal && (
+                <div className="modal">
+                    <div className="modal-content">
+                        <h3>Xem lại đoạn ghi âm</h3>
+                        <audio controls>
+                            <source src={URL.createObjectURL(audioFile)} type="audio/webm" />
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div className="modal-buttons-audio">
+                            <button className="btn-audio-confirm" onClick={handleSendRecording}>Gửi</button>
+                            <button className="btn-audio-cancel" onClick={handleCancelRecording}>Hủy</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
         </div>
     );
