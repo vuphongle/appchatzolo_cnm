@@ -363,6 +363,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     if (selectedFiles.length > 0) {
       try {
         for (let file of selectedFiles) {
+          console.log(" file upload s3:", file);
           const fileUrl = await S3Service.uploadFile(file);
           
           if (fileUrl) {
@@ -374,7 +375,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
               sendDate: new Date().toISOString(),
               isRead: false,
               type: 'PRIVATE_CHAT',
-              fileName: file.name,
+            
               status:'sent'
             };
             
@@ -623,16 +624,37 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
             <SimpleLineIcons name="picture" size={24} color="#0091ff" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={isRecording ? stopRecording : startRecording}>
-            <FontAwesome 
-              name={isRecording ? 'stop' : 'microphone'} 
-              size={24} 
-              color={isRecording ? '#ff4d4d' : '#0091ff'} 
-            />
-            {isRecording && (
-              <View style={styles.recordingIndicator} />
-            )}
-          </TouchableOpacity>
+          <TouchableOpacity 
+  onPress={() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      Alert.alert(
+        "Xác nhận",
+        "Bạn có muốn bắt đầu ghi âm không?",
+        [
+          {
+            text: "Hủy",
+            style: "cancel"
+          },
+          { 
+            text: "Đồng ý", 
+            onPress: startRecording 
+          }
+        ]
+      );
+    }
+  }}
+>
+  <FontAwesome
+    name={isRecording ? 'stop' : 'microphone'}
+    size={24}
+    color={isRecording ? '#ff4d4d' : '#0091ff'}
+  />
+  {isRecording && (
+    <View style={styles.recordingIndicator} />
+  )}
+</TouchableOpacity>
 
           <TouchableOpacity 
             onPress={handleSendMessage}

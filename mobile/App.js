@@ -132,14 +132,12 @@ const AppNavigator = () => {
         <Stack.Screen
           name="MemberGroupScreen"
           component={MemberGroupScreen}
-          options={{ headerTitle: 'Thành viên nhóm' }}
-          options={{ headerShown: false }}
+            options={{ headerTitle: 'Thành viên nhóm', headerShown: false }}
         />
         <Stack.Screen
           name="AddMemberGroupScreen"
           component={AddMemberGroupScreen}
-          options={{ headerTitle: 'Thêm thành viên' }}
-          options={{ headerShown: false }}
+          options={{ headerTitle: 'thêm Thành viên', headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

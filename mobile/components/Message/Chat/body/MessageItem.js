@@ -55,6 +55,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
 
   // Tải và mở file
   const downloadAndOpenFile = async (fileUrl, openAfterDownload = false) => {
+    console.log('downloadAndOpenFile is called with:')
     try {
       setIsDownloading(true);
       const fileName = fileUrl.split('/').pop();
@@ -301,7 +302,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
           </View>
           <View style={styles.iconHandlemedia}>
           <TouchableOpacity 
-//              onPress={() => downloadAndOpenFile(message)}
+             onPress={() => downloadAndOpenFile(message)}
               style={styles.smallDownloadButtonContainer}
               disabled={isDownloading}
             >
@@ -339,7 +340,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, sho
           </View>
            <View style={styles.iconHandlemedia}>
            <TouchableOpacity 
-//               onPress={() => downloadAndOpenFile(message)}
+              onPress={() => downloadAndOpenFile(message)}
 onLongPress={handleLongPress}
                style={styles.smallDownloadButtonContainer}
                disabled={isDownloading}
@@ -408,7 +409,7 @@ onLongPress={handleLongPress}
           </View>
            <View style={styles.iconHandlemedia}>
            <TouchableOpacity 
-               onLongPress={handleLongPress}
+               onPress={handleLongPress}
                style={styles.smallDownloadButtonContainer}
                disabled={isDownloading}
              >

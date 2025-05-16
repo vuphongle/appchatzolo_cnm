@@ -97,7 +97,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     // Function to handle incoming WebSocket messages
     const handleWebSocketMessage = (message) => {
      
-      if ((message.senderID == userId && message.receiverID == receiverID) ) {
+      if (message.senderID == receiverID || message.receiverID == receiverID ) {
         setLocalMessages(prev => {
           // // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg.id === message.id);
@@ -356,7 +356,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
               sendDate: new Date().toISOString(),
               isRead: false,
               type: 'GROUP_CHAT',
-              fileName: file.name,
+              
               status:'sent'
             };
             
@@ -604,7 +604,26 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
             <SimpleLineIcons name="picture" size={24} color="#0091ff" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={isRecording ? stopRecording : startRecording}>
+          <TouchableOpacity  onPress={() => {
+              if (isRecording) {
+                stopRecording();
+              } else {
+                Alert.alert(
+                  "Xác nhận",
+                  "Bạn có muốn bắt đầu ghi âm không?",
+                  [
+                    {
+                      text: "Hủy",
+                      style: "cancel"
+                    },
+                    { 
+                      text: "Đồng ý", 
+                      onPress: startRecording 
+                    }
+                  ]
+                );
+              }
+            }}>
             <FontAwesome 
               name={isRecording ? 'stop' : 'microphone'} 
               size={24} 
