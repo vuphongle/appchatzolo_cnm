@@ -419,12 +419,14 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     }
 
     // Thông báo khi người dùng được thêm vào nhóm
-    public void sendAddToGroupNotification(String userId, String groupId) throws JsonProcessingException {
+    public void sendAddToGroupNotification(String userId, String groupId, String newMemberId) throws JsonProcessingException {
         WebSocketSession session = sessions.get(userId);
         if (session != null && session.isOpen()) {
             Map<String, Object> payload = new HashMap<>();
             payload.put("type", "ADD_TO_GROUP");
             payload.put("groupId", groupId);
+            payload.put("newMemberId", newMemberId);
+            payload.put("message", userRepository.findById(newMemberId).getName() + " đã được thêm vào nhóm.");
             String jsonPayload = objectMapper.writeValueAsString(payload);
             try {
                 session.sendMessage(new TextMessage(jsonPayload));
@@ -433,7 +435,6 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 System.err.println("Error sending ADD_TO_GROUP notification: " + e.getMessage());
             }
         }
-        sendGroupUpdateNotification(userId, groupId);
     }
 
     // Thông báo khi nhóm bị xóa
@@ -461,6 +462,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             payload.put("type", "MEMBER_REMOVED");
             payload.put("groupId", groupId);
             payload.put("removedUserId", removedUserId);
+            payload.put("message", userRepository.findById(removedUserId).getName() + " đã bị xóa khỏi nhóm.");
             String jsonPayload = objectMapper.writeValueAsString(payload);
             try {
                 session.sendMessage(new TextMessage(jsonPayload));
@@ -472,22 +474,24 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         sendGroupUpdateNotification(userId, groupId);
     }
 
-    public void sendLeaveGroupNotification(String userId, String groupId) throws JsonProcessingException {
-        WebSocketSession session = sessions.get(userId);
+    public void sendLeaveGroupNotification(String recipientUserId, String groupId, String leaverName) throws JsonProcessingException {
+        WebSocketSession session = sessions.get(recipientUserId);
         if (session != null && session.isOpen()) {
             Map<String, Object> payload = new HashMap<>();
             payload.put("type", "LEAVE_GROUP");
             payload.put("groupId", groupId);
+            payload.put("message", leaverName + " đã rời khỏi nhóm");
             String jsonPayload = objectMapper.writeValueAsString(payload);
             try {
                 session.sendMessage(new TextMessage(jsonPayload));
-                System.out.println("Sent LEAVE_GROUP notification to user: " + userId);
+                System.out.println("Sent LEAVE_GROUP notification to user: " + recipientUserId);
             } catch (IOException e) {
                 System.err.println("Error sending LEAVE_GROUP notification: " + e.getMessage());
             }
         }
-        sendGroupUpdateNotification(userId, groupId);
+        sendGroupUpdateNotification(recipientUserId, groupId);
     }
+
 
     // Thông báo khi nhóm có thành viên mới được thêm (cho các thành viên hiện tại)
     public void sendGroupUpdateNotification(String userId, String groupId) throws JsonProcessingException {
