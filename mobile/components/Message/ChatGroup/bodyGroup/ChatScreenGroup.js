@@ -122,48 +122,37 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
 
   // Initialize WebSocket message listener
   useEffect(() => {
-    if (!userId || !receiverID) return;
-    // Function to handle incoming WebSocket messages
-<<<<<<< HEAD
-    const handleWebSocketMessage = async(message) => {
+      if (!userId || !receiverID) return;
 
-      if (message.senderID == receiverID || message.receiverID == receiverID ) {
-        const UserSender = await UserService.getUserById(message.senderID);
-        message = {
-            ...message,
-            avatar: UserSender.avatar,
-        };
+      // Function to handle incoming WebSocket messages
+      const handleWebSocketMessage = (message) => {
 
-=======
-    const handleWebSocketMessage = (message) => {
-     
-      if (message.senderID == receiverID || message.receiverID == receiverID ) {
->>>>>>> origin/Phandev
-        setLocalMessages(prev => {
-          // // Check if message already exists to prevent duplicates
-          const exists = prev.some(msg => msg.id === message.id);
-          if (exists) return prev;
+        if (message.senderID == receiverID || message.receiverID == receiverID ) {
+          setLocalMessages(prev => {
+            // // Check if message already exists to prevent duplicates
+            const exists = prev.some(msg => msg.id === message.id);
+            if (exists) return prev;
 
-          // Add new message and sort by date
-          const newMessages = [...prev, message].sort(
-            (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
-          );
+            // Add new message and sort by date
+            const newMessages = [...prev, message].sort(
+              (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
+            );
 
-          return newMessages;
-        });
+            return newMessages;
+          });
 
-      }
+        }
 
-    };
+      };
 
-    // Subscribe to WebSocket messages
-    const unsubscribe = onMessage(handleWebSocketMessage);
+      // Subscribe to WebSocket messages
+      const unsubscribe = onMessage(handleWebSocketMessage);
 
-    return () => {
-      // Clean up WebSocket subscription
-      if (unsubscribe) unsubscribe();
-    };
-  }, [onMessage]);
+      return () => {
+        // Clean up WebSocket subscription
+        if (unsubscribe) unsubscribe();
+      };
+    }, [onMessage]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
