@@ -259,10 +259,16 @@ public class GroupServiceImpl implements GroupService {
         MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
         if (myWebSocketHandler != null) {
             try {
-                // Thông báo cho các thành viên mới (người vừa được thêm)
+                // Gửi thông báo WebSocket đến tất cả thành viên
+                List<String> allMemberIds = new ArrayList<>(currentMemberIds);
+                allMemberIds.addAll(memberIds);
+
                 for (String newMemberId : memberIds) {
-                    myWebSocketHandler.sendAddToGroupNotification(newMemberId, groupId);
+                    for (String receiverId : allMemberIds) {
+                        myWebSocketHandler.sendAddToGroupNotification(receiverId, groupId, newMemberId);
+                    }
                 }
+
                 // Thông báo cho các thành viên hiện tại của nhóm (người đã có trong nhóm)
                 for (String existingMemberId : currentMemberIds) {
                     myWebSocketHandler.sendGroupUpdateNotification(existingMemberId, groupId);
@@ -431,7 +437,7 @@ public class GroupServiceImpl implements GroupService {
         if (members == null || members.isEmpty()) {
             throw new GroupException("Nhóm không tồn tại hoặc không có thành viên.");
         }
-
+        String leaverName = userRepository.findById(currentLeaderId).getName();
         // Xử lý trường hợp người dùng là nhóm trưởng
         if (currentLeader.getRole().equals(GroupRole.LEADER.name())) {
             if (members.size() <= 1) {
@@ -451,7 +457,7 @@ public class GroupServiceImpl implements GroupService {
                 MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
                 if (myWebSocketHandler != null) {
                     try {
-                        myWebSocketHandler.sendLeaveGroupNotification(currentLeaderId, groupId);
+                        myWebSocketHandler.sendLeaveGroupNotification(currentLeaderId, groupId, leaverName);
                         System.out.println("Đã gửi thông báo LEAVE_GROUP tới người dùng " + currentLeaderId + " cho nhóm " + groupId);
                     } catch (JsonProcessingException e) {
                         System.err.println("Lỗi khi gửi thông báo LEAVE_GROUP tới người dùng " + currentLeaderId + ": " + e.getMessage());
@@ -493,20 +499,23 @@ public class GroupServiceImpl implements GroupService {
         MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
         if (myWebSocketHandler != null) {
             try {
-                // Gửi thông báo LEAVE_GROUP tới người dùng đã rời nhóm
-                myWebSocketHandler.sendLeaveGroupNotification(currentLeaderId, groupId);
-                System.out.println("Đã gửi thông báo LEAVE_GROUP tới người dùng " + currentLeaderId + " cho nhóm " + groupId);
+                // Gửi thông báo LEAVE_GROUP tới tất cả thành viên (bao gồm cả người rời nhóm)
+
+
+                for (UserGroup member : members) {
+                    myWebSocketHandler.sendLeaveGroupNotification(member.getUserId(), groupId, leaverName);
+                    System.out.println("Đã gửi thông báo LEAVE_GROUP tới người dùng " + member.getUserId() + " cho nhóm " + groupId);
+                }
+
 
                 // Gửi thông báo GROUP_UPDATE tới tất cả thành viên còn lại trong nhóm
-                members = groupRepository.getMembersOfGroup(groupId); // Lấy lại danh sách thành viên sau khi xóa
-                if (members != null) {
+//                members = groupRepository.getMembersOfGroup(groupId); // Lấy lại danh sách thành viên sau khi xóa
                     for (UserGroup member : members) {
                         if (!member.getUserId().equals(currentLeaderId)) { // Không gửi lại cho người đã rời
                             myWebSocketHandler.sendGroupUpdateNotification(member.getUserId(), groupId);
                             System.out.println("Đã gửi thông báo GROUP_UPDATE tới người dùng " + member.getUserId() + " cho nhóm " + groupId);
                         }
                     }
-                }
             } catch (JsonProcessingException e) {
                 System.err.println("Lỗi khi gửi thông báo WebSocket: " + e.getMessage());
             }

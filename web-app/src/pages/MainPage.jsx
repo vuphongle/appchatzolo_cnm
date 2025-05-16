@@ -422,6 +422,7 @@ const MainPage = () => {
     const [conversations, setConversations] = useState([]);
     const [groups, setGroups] = useState([]);
     const [groupMembers, setGroupMembers] = useState([]);
+    const [notification, setNotification] = useState([]);
     const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
     useEffect(() => {
         const fetchGroupMembers = async () => {
@@ -485,7 +486,7 @@ const MainPage = () => {
                 setSelectedChat({
                     ...item,
                     isOnline: true,  // Trạng thái online không cần thiết cho nhóm
-                    username: item.groupName,
+                    username: item?.groupName,
                     avatar: item.img,
                     type: 'group'
                 });
@@ -815,13 +816,26 @@ const MainPage = () => {
                             setConversations((prev) =>
                                 prev.map((conv) =>
                                     conv.id === groupId
-                                        ? { ...conv, groupName: group.groupName, img: group.image, type: 'group' } // Cập nhật các thuộc tính thông tin nhóm
+                                        ? { ...conv, groupName: group?.groupName, img: group.image, type: 'group' } // Cập nhật các thuộc tính thông tin nhóm
                                         : conv
                                 )
                             );
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
+                // setNotification("Bạn đã được thêm vào nhóm mới!");
+                const notificationMessage = {
+                    id: `notif-${Date.now()}`, // ID duy nhất
+                    type: "notification",
+                    content: incomingMessage.message,
+                    sendDate: incomingMessage.sendDate || moment().toISOString(),
+                    groupId: groupId,
+                };
+                setNotification((prev) => [...prev, notificationMessage]);
+                // setChatMessages((prevMessages) => {
+                //     const updatedMessages = [...prevMessages, notificationMessage];
+                //     return updatedMessages;
+                // });
                 return;
             }
 
@@ -891,7 +905,15 @@ const MainPage = () => {
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
-                showToast(`${incomingMessage.message}`, "info");
+                // showToast(`${incomingMessage.message}`, "info");
+                const notificationMessage = {
+                    id: `notif-${Date.now()}`, // ID duy nhất
+                    type: "notification",
+                    content: incomingMessage.message,
+                    sendDate: incomingMessage.sendDate || moment().toISOString(),
+                    groupId: groupId,
+                };
+                setNotification((prev) => [...prev, notificationMessage]);
                 return;
             }
 
@@ -922,7 +944,14 @@ const MainPage = () => {
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
-                showToast(`${incomingMessage.message}`, "info");
+                const notificationMessage = {
+                    id: `notif-${Date.now()}`, // ID duy nhất
+                    type: "notification",
+                    content: incomingMessage.message,
+                    sendDate: incomingMessage.sendDate || moment().toISOString(),
+                    groupId: groupId,
+                };
+                setNotification((prev) => [...prev, notificationMessage]);
                 return;
             }
 
@@ -956,7 +985,14 @@ const MainPage = () => {
                     })
                     .catch((err) => console.error("Error fetching group:", err));
 
-                showToast(`${incomingMessage.message}`, "info");
+                const notificationMessage = {
+                    id: `notif-${Date.now()}`, // ID duy nhất
+                    type: "notification",
+                    content: incomingMessage.message,
+                    sendDate: incomingMessage.sendDate || moment().toISOString(),
+                    groupId: groupId,
+                };
+                setNotification((prev) => [...prev, notificationMessage]);
                 return;
             }
 
@@ -982,8 +1018,7 @@ const MainPage = () => {
                     };
                     setMyUser(updatedUser);
                     localStorage.setItem("my_user", JSON.stringify(updatedUser));
-                    showToast("Bạn đã bị xóa khỏi nhóm!", "info");
-                    return;
+                    // showToast("Bạn đã bị xóa khỏi nhóm!", "info");
                 }
 
                 // Cập nhật danh sách thành viên của nhóm
@@ -1007,7 +1042,19 @@ const MainPage = () => {
                             : group
                     )
                 );
-                showToast(`Một thành viên đã bị xóa khỏi nhóm!`, "info");
+                // showToast(`Một thành viên đã bị xóa khỏi nhóm!`, "info");
+                const notificationMessage = {
+                    id: `notif-${Date.now()}`, // ID duy nhất
+                    type: "notification",
+                    content: incomingMessage.message,
+                    sendDate: incomingMessage.sendDate || moment().toISOString(),
+                    groupId: groupId,
+                };
+                setNotification((prev) => [...prev, notificationMessage]);
+                // setChatMessages((prevMessages) => {
+                //     const updatedMessages = [...prevMessages, notificationMessage];
+                //     return updatedMessages;
+                // });
                 return;
             }
 
@@ -1016,8 +1063,8 @@ const MainPage = () => {
                 // Cập nhật danh sách hội thoại: Xóa nhóm bị xóa
                 setConversations((prev) => prev.filter((conv) => conv.id !== groupId));
                 setGroups((prev) => prev.filter((group) => group.id !== groupId));
-
                 // Nếu nhóm bị xóa là selectedChat, xóa selectedChat
+                // showToast(`Nhóm ${selectedChat?.groupName} đã bị giải tán!`, "info");
                 if (selectedChat?.id === groupId) {
                     setSelectedChat(null);
                     setChatMessages([]);
@@ -1035,7 +1082,6 @@ const MainPage = () => {
                 setMyUser(updatedUser);
                 localStorage.setItem("my_user", JSON.stringify(updatedUser));
 
-                showToast(`Nhóm ${selectedChat.groupName} đã bị giải tán!`, "info");
                 return;
             }
 
@@ -1060,9 +1106,17 @@ const MainPage = () => {
                     };
                     setMyUser(updatedUser);
                     localStorage.setItem("my_user", JSON.stringify(updatedUser));
-                    showToast("Bạn đã rời nhóm!", "info");
-                    return;
                 }
+                const notificationMessage = {
+                    id: `notif-${Date.now()}`, // ID duy nhất
+                    type: "notification",
+                    content: incomingMessage.message,
+                    sendDate: incomingMessage.sendDate || moment().toISOString(),
+                    groupId: groupId,
+                };
+                console.log("notificationMessage là gì:", notificationMessage); // Kiểm tra dữ liệu thông báo
+                setNotification((prev) => [...prev, notificationMessage]);
+                return;
             }
 
             if (incomingMessage.type === "GROUP_UPDATE") {
@@ -1444,7 +1498,7 @@ const MainPage = () => {
             const unreadCount = unreadMessagesCounts.find(u => u.groupId === group.id)?.unreadCount || 0;
             return {
                 id: group.id,
-                groupName: group.groupName,
+                groupName: group?.groupName,
                 creatorId: group.creatorId,
                 createdAt: group.createdAt,
                 userGroups: group.userGroups,
@@ -1750,7 +1804,7 @@ const MainPage = () => {
                                 <header className="content-header">
                                     <div className="profile">
                                         <img src={selectedChat.avatar || selectedChat.img || avatar_default} alt="Avatar" className="avatar" />
-                                        <span className="username">{selectedChat.groupName || selectedChat.username}</span>
+                                        <span className="username">{selectedChat?.groupName || selectedChat.username}</span>
                                         <span className="user-status">
                                             {selectedChat.isOnline ? (
                                                 <span className="status-dot online"></span>
@@ -1822,163 +1876,172 @@ const MainPage = () => {
                                     setIsVideoCallVisible={setIsVideoCallVisible} // Truyền hàm để đóng VideoCallComponent
 
                                 />
+
                                 <section className="chat-section">
                                     <div className="chat-messages">
-                                        {chatMessages.length > 0 ? (
-                                            chatMessages.map((msg, index) => {
-                                                const isSentByMe = msg.senderID === MyUser?.my_user?.id;
 
-                                                const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
+                                        {[...notification.filter((notif) => notif.groupId === selectedChat?.id), ...chatMessages].length > 0 ? (
+                                            [...notification.filter((notif) => notif.groupId === selectedChat?.id), ...chatMessages]
+                                                .sort((a, b) => moment(a.sendDate).diff(moment(b.sendDate))) // Sắp xếp chung theo thời gian
+                                                .map((msg, index) => {
+                                                    const isSentByMe = msg.senderID === MyUser?.my_user?.id;
+                                                    const combinedMessages = [...notification.filter((notif) => notif.groupId === selectedChat?.id), ...chatMessages]
+                                                        .sort((a, b) => moment(a.sendDate).diff(moment(b.sendDate)));
+                                                    const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
 
-                                                // 📌 Lấy thời gian gửi tin nhắn và chuyển đổi sang múi giờ Việt Nam
+                                                    // 📌 Lấy thời gian gửi tin nhắn và chuyển đổi sang múi giờ Việt Nam
 
 
-                                                const messageTime = moment(msg.sendDate); // Giả sử msg.sendDate là thời gian nhận được
-                                                const displayTime = messageTime.isValid() ? messageTime.format("HH:mm") : moment().format("HH:mm");
+                                                    const messageTime = moment(msg.sendDate); // Giả sử msg.sendDate là thời gian nhận được
+                                                    const displayTime = messageTime.isValid() ? messageTime.format("HH:mm") : moment().format("HH:mm");
+
+                                                    const messageDate = moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY");
+
+                                                    // 📌 Lấy ngày của tin nhắn trước đó
+                                                    {/* const prevMessage = chatMessages[index - 1]; */ }
+                                                    {/* const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY") : null; */ }
+
+                                                    // 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó
+                                                    {/* const shouldShowDate = index === 0 || prevMessageDate !== messageDate; */ }
+                                                    const filteredMessages = combinedMessages.filter((m) => m.type !== "notification");
+                                                    const filteredIndex = filteredMessages.findIndex((m) => m.id === msg.id);
+                                                    const prevMessage = filteredIndex > 0 ? filteredMessages[filteredIndex - 1] : null;
+                                                    const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY") : null;
+                                                    const shouldShowDate = msg.type !== "notification" && (filteredIndex === 0 || (prevMessageDate !== messageDate));
 
 
-                                                const messageDate = moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY");
+                                                    // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
+                                                    const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
 
-                                                // 📌 Lấy ngày của tin nhắn trước đó
-                                                const prevMessage = chatMessages[index - 1];
-                                                const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY") : null;
+                                                    const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i);
 
-                                                // 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó
-                                                const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
+                                                    const isAudioMessage = (url) => url?.match(/\.(mp3|wav|ogg)$/i);
 
-                                                // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
-                                                const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
+                                                    const isDocumentFile = (url) =>
+                                                        url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql|.mobileprovision)$/i);
 
-                                                const isVideoMessage = (url) => url?.match(/\.(mp4|wmv|webm|mov)$/i);
+                                                    return (
+                                                        <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}
+                                                            onContextMenu={(e) => {
+                                                                e.preventDefault();
+                                                                setShowMenuForMessageId(msg.id);
+                                                            }}
+                                                            onClick={() => setShowMenuForMessageId(null)}>
+                                                            {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
 
-                                                const isAudioMessage = (url) => url?.match(/\.(mp3|wav|ogg)$/i);
-
-                                                const isDocumentFile = (url) =>
-                                                    url?.match(/\.(pdf|doc|docx|ppt|mpp|pptx|xls|xlsx|csv|txt|odt|ods|odp|json|xml|yaml|yml|ini|env|conf|cfg|toml|properties|java|js|ts|jsx|tsx|c|cpp|cs|py|rb|go|php|swift|rs|kt|scala|sh|bat|ipynb|h5|pkl|pb|ckpt|onnx|zip|rar|tar|gz|7z|jar|war|dll|so|deb|rpm|apk|ipa|whl|html|htm|css|scss|sass|vue|md|sql|.mobileprovision)$/i);
-
-                                                return (
-                                                    <div key={msg.id} id={`message-${msg.id}`} style={{ display: "flex", flexDirection: "column" }}
-                                                        onContextMenu={(e) => {
-                                                            e.preventDefault();
-                                                            setShowMenuForMessageId(msg.id);
-                                                        }}
-                                                        onClick={() => setShowMenuForMessageId(null)}>
-                                                        {/* 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó */}
-                                                        {shouldShowDate && (
-                                                            <div className="message-date-center">
-                                                                {moment(msg.sendDate).add(7, 'hours').isValid()
-                                                                    ? moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').calendar(null, {
-                                                                        sameDay: "[Hôm nay] DD/MM/YYYY",
-                                                                        lastDay: "[Hôm qua] DD/MM/YYYY",
-                                                                        lastWeek: "[Tuần trước] DD/MM/YYYY",
-                                                                        sameElse: "DD/MM/YYYY"
-                                                                    })
-                                                                    : "Invalid date"}
-                                                            </div>
-                                                        )}
-
-                                                        <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
-                                                            {/* Nếu là tin nhắn nhóm, hiển thị tên và avatar người gửi */}
-
-                                                            {msg.type === 'group' && (
-                                                                <div style={{ display: "flex", alignItems: "center" }}>
-                                                                    <img
-                                                                        src={msg.senderAvatar || "/default-avatar.jpg"}
-                                                                        alt="Avatar"
-                                                                        style={{ width: "30px", height: "30px", borderRadius: "50%", marginRight: "10px" }}
-                                                                    />
-                                                                    <span style={{ fontWeight: 'bold' }}>{msg.senderName}</span>
+                                                            {shouldShowDate && (
+                                                                <div className="message-date-center">
+                                                                    {moment(msg.sendDate).add(7, 'hours').isValid()
+                                                                        ? moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').calendar(null, {
+                                                                            sameDay: "[Hôm nay] DD/MM/YYYY",
+                                                                            lastDay: "[Hôm qua] DD/MM/YYYY",
+                                                                            lastWeek: "[Tuần trước] DD/MM/YYYY",
+                                                                            sameElse: "DD/MM/YYYY"
+                                                                        })
+                                                                        : "Invalid date"}
                                                                 </div>
                                                             )}
-                                                            {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
-                                                            {isImageMessage(msg.content) ? (
-                                                                <img src={msg.content} alt="Image" className="message-image" />
-                                                            ) : isVideoMessage(msg.content) ? (
-                                                                <video controls className="message-video">
-                                                                    <source src={msg.content} type="video/mp4" />
-                                                                    Trình duyệt không hỗ trợ video.
-                                                                </video>
-                                                            ) : isAudioMessage(msg.content) ? (
-                                                                <audio controls className="message-audio">
-                                                                    <source src={msg.content} type="audio/mp3" />
-                                                                    Trình duyệt không hỗ trợ audio.
-                                                                </audio>
-                                                            ) : isDocumentFile(msg.content) ? (
-                                                                <div className="file-message">
-                                                                    <span className="file-icon">
-                                                                        <i className="fa fa-file-alt"></i>
-                                                                    </span>
-                                                                    <span className="file-name"> {getPureFileUrl(msg.content).split('/').pop()}</span>
-                                                                    <div>
-                                                                        <a href={msg.content} download className="btn btn-blue">
-                                                                            <button className="download-btn">Tải xuống</button>
-                                                                        </a>
-                                                                    </div>
+                                                            {msg.type === "notification" ? (
+                                                                <div className="message-date-center">
+                                                                    <p>{msg.content}</p>
                                                                 </div>
                                                             ) : (
-                                                                <p>{highlightText(msg.content)}</p>
-                                                            )}
+                                                                <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
+                                                                    {/* Nếu là tin nhắn nhóm, hiển thị tên và avatar người gửi */}
 
-                                                            {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}
-                                                            <span className="message-time">{displayTime}</span>
+                                                                    {msg.type === 'group' && (
+                                                                        <div style={{ display: "flex", alignItems: "center" }}>
+                                                                            <img
+                                                                                src={msg.senderAvatar || "/default-avatar.jpg"}
+                                                                                alt="Avatar"
+                                                                                style={{ width: "30px", height: "30px", borderRadius: "50%", marginRight: "10px" }}
+                                                                            />
+                                                                            <span style={{ fontWeight: 'bold' }}>{msg.senderName}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {/* Kiểm tra xem có phải là ảnh không và hiển thị ảnh nếu đúng */}
+                                                                    {isImageMessage(msg.content) ? (
+                                                                        <img src={msg.content} alt="Image" className="message-image" />
+                                                                    ) : isVideoMessage(msg.content) ? (
+                                                                        <video controls className="message-video">
+                                                                            <source src={msg.content} type="video/mp4" />
+                                                                            Trình duyệt không hỗ trợ video.
+                                                                        </video>
+                                                                    ) : isAudioMessage(msg.content) ? (
+                                                                        <audio controls className="message-audio">
+                                                                            <source src={msg.content} type="audio/mp3" />
+                                                                            Trình duyệt không hỗ trợ audio.
+                                                                        </audio>
+                                                                    ) : isDocumentFile(msg.content) ? (
+                                                                        <div className="file-message">
+                                                                            <span className="file-icon">
+                                                                                <i className="fa fa-file-alt"></i>
+                                                                            </span>
+                                                                            <span className="file-name"> {getPureFileUrl(msg.content).split('/').pop()}</span>
+                                                                            <div>
+                                                                                <a href={msg.content} download className="btn btn-blue">
+                                                                                    <button className="download-btn">Tải xuống</button>
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <p>{highlightText(msg.content)}</p>
+                                                                    )}
 
-                                                            {/* 📌 Nếu là tin nhắn cuối cùng bạn gửi và đã đọc => hiển thị "✔✔ Đã nhận" */}
-                                                            {isLastMessageByMe && isSentByMe && msg.isRead && (
-                                                                <span className="message-status read-status">✔✔ Đã nhận</span>
+                                                                    {/* 📌 Hiển thị thời gian bên dưới tin nhắn */}
+                                                                    <span className="message-time">{displayTime}</span>
+
+                                                                    {/* 📌 Nếu là tin nhắn cuối cùng bạn gửi và đã đọc => hiển thị "✔✔ Đã nhận" */}
+                                                                    {isLastMessageByMe && isSentByMe && msg.isRead && (
+                                                                        <span className="message-status read-status">✔✔ Đã nhận</span>
+                                                                    )}
+                                                                    {showMenuForMessageId === msg.id && (
+                                                                        <MessageOptionsMenu
+                                                                            isOwner={msg.senderID === MyUser?.my_user?.id}
+                                                                            isMine={msg.senderID === MyUser?.my_user?.id}
+                                                                            isRecalled={msg.content === "Tin nhắn đã được thu hồi"}
+                                                                            onRecall={async () => {
+                                                                                setShowMenuForMessageId(null);
+                                                                                try {
+                                                                                    await MessageService.recallMessage(msg.id, MyUser?.my_user?.id, selectedChat.id);
+                                                                                    setChatMessages((prev) => prev.map((m) =>
+                                                                                        m.id === msg.id ? { ...m, content: "Tin nhắn đã được thu hồi" } : m
+                                                                                    ));
+                                                                                } catch (err) {
+                                                                                    console.error("Lỗi thu hồi:", err);
+                                                                                }
+                                                                            }}
+                                                                            onForward={() => {
+                                                                                // selectedChatIdAtShareRef.current = selectedChat?.id;
+                                                                                setShowMenuForMessageId(null);
+                                                                                setForwardMessageId(msg.id); // Gán ID tin nhắn đang muốn chia sẻ
+                                                                                setShowForwardModal(true);   // Hiện modal chia sẻ
+                                                                            }}
+                                                                            onDeleteForMe={async () => {
+                                                                                setShowMenuForMessageId(null);
+                                                                                try {
+                                                                                    await MessageService.deleteSingleMessageForUser(msg.id, MyUser?.my_user?.id);
+                                                                                    setChatMessages((prev) => prev.filter(m => m.id !== msg.id));
+                                                                                } catch (err) {
+                                                                                    console.error("Lỗi khi xóa ở phía tôi:", err);
+                                                                                }
+                                                                            }}
+                                                                            onClose={() => setShowMenuForMessageId(null)}
+                                                                        />
+                                                                    )}
+                                                                </div>
                                                             )}
-                                                            {/* Thêm phần Reaction dưới tin nhắn */}
-                                                            <MessageReaction
-                                                                messageId={msg.id}
-                                                                userId={MyUser?.my_user?.id}
-                                                                initialReactions={msg.reactions}
+                                                            <ForwardMessageModal
+                                                                isOpen={showForwardModal}
+                                                                onClose={() => setShowForwardModal(false)}
+                                                                onForward={handleForward}
+                                                                friends={friends}
+                                                                groups={groupMembers}
+                                                                messageContent={chatMessages.find(m => m.id === forwardMessageId)?.content}
                                                             />
-
-                                                            {showMenuForMessageId === msg.id && (
-                                                                <MessageOptionsMenu
-                                                                    isOwner={msg.senderID === MyUser?.my_user?.id}
-                                                                    isMine={msg.senderID === MyUser?.my_user?.id}
-                                                                    isRecalled={msg.content === "Tin nhắn đã được thu hồi"}
-                                                                    onRecall={async () => {
-                                                                        setShowMenuForMessageId(null);
-                                                                        try {
-                                                                            await MessageService.recallMessage(msg.id, MyUser?.my_user?.id, selectedChat.id);
-                                                                            setChatMessages((prev) => prev.map((m) =>
-                                                                                m.id === msg.id ? { ...m, content: "Tin nhắn đã được thu hồi" } : m
-                                                                            ));
-                                                                        } catch (err) {
-                                                                            console.error("Lỗi thu hồi:", err);
-                                                                        }
-                                                                    }}
-                                                                    onForward={() => {
-                                                                        // selectedChatIdAtShareRef.current = selectedChat?.id;
-                                                                        setShowMenuForMessageId(null);
-                                                                        setForwardMessageId(msg.id); // Gán ID tin nhắn đang muốn chia sẻ
-                                                                        setShowForwardModal(true);   // Hiện modal chia sẻ
-                                                                    }}
-                                                                    onDeleteForMe={async () => {
-                                                                        setShowMenuForMessageId(null);
-                                                                        try {
-                                                                            await MessageService.deleteSingleMessageForUser(msg.id, MyUser?.my_user?.id);
-                                                                            setChatMessages((prev) => prev.filter(m => m.id !== msg.id));
-                                                                        } catch (err) {
-                                                                            console.error("Lỗi khi xóa ở phía tôi:", err);
-                                                                        }
-                                                                    }}
-                                                                    onClose={() => setShowMenuForMessageId(null)}
-                                                                />
-                                                            )}
                                                         </div>
-                                                        <ForwardMessageModal
-                                                            isOpen={showForwardModal}
-                                                            onClose={() => setShowForwardModal(false)}
-                                                            onForward={handleForward}
-                                                            friends={friends}
-                                                            groups={groupMembers}
-                                                            messageContent={chatMessages.find(m => m.id === forwardMessageId)?.content}
-                                                        />
-                                                    </div>
-                                                );
-                                            })
+                                                    );
+                                                })
 
                                         ) : (
                                             <p>Bắt đầu trò chuyện với {selectedChat?.groupName}</p>
@@ -2054,7 +2117,7 @@ const MainPage = () => {
                                                         handleSendMessage();
                                                     }
                                                 }}
-                                                data-placeholder={`Nhập tin nhắn tới ${selectedChat.groupName}`}
+                                                data-placeholder={`Nhập tin nhắn tới ${selectedChat?.groupName}`}
                                             >
                                                 {attachedFiles.map((file, index) => (
                                                     <span key={index} contentEditable={false} className="file-tag">
@@ -2585,11 +2648,17 @@ const MainPage = () => {
                                 {searchQuery === "" ? (
                                     // Sắp xếp các message item sao cho các item có unreadCount > 0 sẽ hiển thị đầu tiên
                                     allMessagesAndFriends
+                                        .filter((item) => {
+                                            if (item.type === "group") {
+                                                return MyUser?.my_user?.groupIds?.includes(item.id);
+                                            }
+                                            return true;
+                                        })
                                         .sort((a, b) => b.unreadCount - a.unreadCount) // Sắp xếp các tin nhắn theo unreadCount (tin nhắn chưa đọc lên đầu)
                                         .map((item) => (
                                             <MessageItem
                                                 key={item.id}
-                                                groupName={item.groupName}
+                                                groupName={item?.groupName}
                                                 unreadCount={item.unreadCount}
                                                 img={item.img || avatar_default}
                                                 onClick={() => handleSelectChat(item)} // Cập nhật selectedChat khi chọn người bạn

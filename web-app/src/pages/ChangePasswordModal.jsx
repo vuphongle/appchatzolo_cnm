@@ -63,7 +63,7 @@ const ChangePasswordModal = ({ user, onClose, logout }) => {
                             <h5 className="modal-title fw-bold">Đổi mật khẩu</h5>
                             <i className="fas fa-times" onClick={onClose} style={{ cursor: "pointer" }}></i>
                         </div>
-                        <div className="modal-body">
+                        <div className="modal-body text-start">
                             <form>
                                 <div className="mb-3">
                                     <label htmlFor="currentPassword" className="form-label">Mật khẩu hiện tại</label>

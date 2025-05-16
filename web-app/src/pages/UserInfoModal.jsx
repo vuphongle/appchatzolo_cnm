@@ -286,7 +286,7 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
 
                             <div className="modal-body">
                                 {isEditing ? (
-                                    <div>
+                                    <div className="modal-body text-start">
                                         <div className="mb-3">
                                             <h6 className="form-label">Tên hiển thị</h6>
                                             <input
@@ -334,7 +334,7 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div>
+                                    <div className="modal-body text-start">
                                         <p><strong>Giới tính:</strong> {(MyUser?.gender || initialUser?.gender) || "Chưa cập nhật"}</p>
                                         <p><strong>Ngày sinh:</strong> {(MyUser?.dob || initialUser?.dob) || "Chưa cập nhật"}</p>
                                         <p><strong>Điện thoại:</strong> {(MyUser?.phoneNumber || initialUser?.phoneNumber) || "Chưa cập nhật"}</p>
