@@ -340,7 +340,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
                     <View style={styles.boxMessagemedia}>
                       <View style={styles.iconHandlemedia}>
                     <TouchableOpacity 
-//                        onPress={() => downloadAndOpenFile(message)}
+                       onPress={() => downloadAndOpenFile(message)}
 
                         style={styles.smallDownloadButtonContainer}
                         disabled={isDownloading}
@@ -413,8 +413,8 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
             <View style={styles.boxMessagemedia}>
             <View style={styles.iconHandlemedia}>
           <TouchableOpacity
-            onLongPress={handleLongPress}
-//              onPress={() => downloadAndOpenFile(message)}
+            // onLongPress={handleLongPress}
+             onPress={() => downloadAndOpenFile(message)}
               style={styles.smallDownloadButtonContainer}
               disabled={isDownloading}
             >

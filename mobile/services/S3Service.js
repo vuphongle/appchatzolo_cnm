@@ -149,6 +149,8 @@ const S3Service = {
 
   uploadFile: async (file) => {
     const timestamp = Date.now();
+    file.name = file.name.replace(/[^\w.-]/g, "");
+
 
     // Lấy tên gốc hoặc tạo tên mặc định
     let originalName = file.fileName || `file_${timestamp}`;
