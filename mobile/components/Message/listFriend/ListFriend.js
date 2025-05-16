@@ -19,7 +19,7 @@ import UserService from '../../../services/UserService';
 import MessageService from '../../../services/MessageService';
 import {UserContext} from '../../../context/UserContext';
 import GroupService from '../../../services/GroupService';
-function ListFriend({ userId }) {
+function ListFriend({ userId, requestType }) {
   const [openRow, setOpenRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,34 +32,37 @@ function ListFriend({ userId }) {
   const fetchFriendsAndGroups = async () => {
     try {
       setLoading(true);
-      
+
+      let friendsList = [];
+      let groupsList = [];
+
       // Fetch friends and groups data
-      const response = await UserService.getFriends(userId);
+      if (requestType !== "Group") {
+        const response = await UserService.getFriends(userId);
+
+        // Process friends data - remove duplicates
+        friendsList = response;
+        const uniqueFriendsMap = new Map();
+        friendsList.forEach((friend) => {
+          if (!uniqueFriendsMap.has(friend.id)) {
+            uniqueFriendsMap.set(friend.id, friend);
+          }
+        });
+        friendsList = Array.from(uniqueFriendsMap.values());
+        setFriends(friendsList);
+      }
+
+      // Always fetch groups data
       const groupsResponse = await GroupService.getGroupsByIds(userId);
-      
-      // Process friends data - remove duplicates
-      let friendsList = response;
-      const uniqueFriendsMap = new Map();
-      friendsList.forEach((friend) => {
-        if (!uniqueFriendsMap.has(friend.id)) {
-          uniqueFriendsMap.set(friend.id, friend);
-        }
-      });
-      friendsList = Array.from(uniqueFriendsMap.values());
-      setFriends(friendsList);
-      
-      // Process groups data
       const hasGroups = groupsResponse?.data && groupsResponse.data.length > 0;
-      const groupsList = hasGroups ? groupsResponse.data : [];
+      groupsList = hasGroups ? groupsResponse.data : [];
       setGroups(groupsList);
-      
-      
-      
-      // Combine friends and groups with type identifier
+
+      // Combine friends and groups with type identifier, only add friends if not "Group"
       const friendsWithType = friendsList.map(friend => ({ ...friend, type: 'friend' }));
       const groupsWithType = groupsList.map(group => ({ ...group, type: 'group' }));
-      const mergedItems = [...friendsWithType, ...groupsWithType];
-      
+      const mergedItems = requestType === "Group" ? groupsWithType : [...friendsWithType, ...groupsWithType];
+
       // Get latest messages for all items (both friends and groups)
       const itemsWithMessages = await Promise.all(
         mergedItems.map(async (item) => {
@@ -248,7 +251,9 @@ function ListFriend({ userId }) {
 
   return (
     <View style={styles.container}>
-      <CloudItem timestamp="23 tiếng" />
+        {requestType !== "Group" && (
+            <CloudItem timestamp="23 tiếng" />
+        )}
       {items.length > 0 ? (
         <SwipeListView
           data={items}

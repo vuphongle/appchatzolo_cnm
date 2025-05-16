@@ -444,15 +444,7 @@ const DanhBaScreen = () => {
 
   const renderGroupsTab = () => {
     return (
-      <ScrollView style={styles.content}>
-        {dummyGroups.map((group) => (
-          <View key={group.id} style={styles.groupItem}>
-            <Text style={styles.groupName}>
-              {group.name} - {group.membersCount} thành viên
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
+      <ListFriend userId={user?.id} requestType="Group"/>
     );
   };
 
