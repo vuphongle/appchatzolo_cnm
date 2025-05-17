@@ -7,9 +7,32 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
     // Đảm bảo reactions luôn là mảng nếu không có dữ liệu
     const [reactions, setReactions] = useState(Array.isArray(initialReactions) ? initialReactions : []);
     const [reactionCount, setReactionCount] = useState({});
+
+
+
     useEffect(() => {
-        setReactions(Array.isArray(initialReactions) ? initialReactions : []);
-    }, [initialReactions]);
+        const isEqual = JSON.stringify(initialReactions) === JSON.stringify(reactions);
+        if (!isEqual) {
+            setReactions(Array.isArray(initialReactions) ? initialReactions : []);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialReactions]);  // chỉ phụ thuộc initialReactions
+
+
+    useEffect(() => {
+        const counts = {};
+        reactions.forEach(reaction => {
+            const type = typeof reaction === 'string' ? reaction : reaction.reactionType;
+            if (type) {
+                counts[type] = (counts[type] || 0) + 1;
+            }
+        });
+        const isEqual = JSON.stringify(counts) === JSON.stringify(reactionCount);
+        if (!isEqual) {
+            setReactionCount(counts);
+        }
+    }, [reactions, reactionCount]);
+
     // Hàm để xử lý thêm reaction vào tin nhắn
     const handleAddReaction = (reactionType) => {
         if (messageId) {
@@ -43,30 +66,18 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
         }
     };
 
-    // Cập nhật số lượng reactions cho mỗi loại
-    const updateReactionCount = (newReactions) => {
-        const counts = {};
-        newReactions.forEach(reaction => {
-            // Nếu là object, lấy reactionType; nếu là string thì dùng luôn
-            const type = typeof reaction === 'string' ? reaction : reaction.reactionType;
-            if (type) {
-                counts[type] = (counts[type] || 0) + 1;
-            }
-        });
-        setReactionCount(counts);
-    };
 
     const displayedReactions = (reactions || []).slice(0, 3);
     const isLikeDisabled = !reactions || reactions.length === 0;
 
 
-    // Cập nhật lại reaction count khi reactions thay đổi
-    useEffect(() => {
-        updateReactionCount(reactions);
-    }, [reactions]);
-    useEffect(() => {
-        console.log("reactionCount:", reactionCount);
-    }, [reactionCount]);
+    // // Cập nhật lại reaction count khi reactions thay đổi
+    // useEffect(() => {
+    //     updateReactionCount(reactions);
+    // }, [reactions]);
+    // useEffect(() => {
+    //     console.log("reactionCount:", reactionCount);
+    // }, [reactionCount]);
 
     // Tạo mảng các loại reaction và số lượng, sắp xếp giảm dần, lấy tối đa 3 loại nhiều nhất
     const sortedReactions = Object.entries(reactionCount)
