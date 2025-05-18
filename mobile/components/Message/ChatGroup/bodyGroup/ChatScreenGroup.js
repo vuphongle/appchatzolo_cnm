@@ -532,6 +532,13 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
                       <Text style={styles.dateText}>{headerText}</Text>
                     </View>
                   )}
+                  {message.status==="Notification" && (
+                    <View>
+                       <View style={styles.NotiHeader}>
+                      <Text style={styles.NotiText}>{message.content||''}</Text>
+                    </View>
+                    </View>
+                  ) }
                   
                   {isMyMessage ? (
                     <MyMessageItem
@@ -550,21 +557,23 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
                       }}
                     />
                   ) : (
-                    <MessageItem
-                    avatar={message?.avatar}
-                      name={name}
-                      time={message.sendDate}
-                      message={message.content}
-                      messageInfo={message}
-                      messageId={message.id}
-                      userId={userId}
-                      receiverId={receiverID}
-                      messageType={message.type || 'text'}
-                      fileName={message.fileName}
-                      onDeleteMessage={() => {
-                        
-                      }}
-                    />
+                    message.status === "Notification" ? null : (
+                      <MessageItem
+                        avatar={message?.avatar}
+                        name={name}
+                        time={message.sendDate}
+                        message={message.content}
+                        messageInfo={message}
+                        messageId={message.id}
+                        userId={userId}
+                        receiverId={receiverID}
+                        messageType={message.type || 'text'}
+                        fileName={message.fileName}
+                        onDeleteMessage={() => {
+                          
+                        }}
+                      />
+                    )
                   )}
                 </View>
               );
@@ -755,6 +764,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
   },
+   NotiHeader: {
+    alignSelf: 'center',
+   
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+    NotiText: {
+    fontSize: 12,
+    color: '#555',
+  },
+
+
   mediaPreviewContainer: {
     borderTopWidth: 1,
     borderColor: '#ddd',

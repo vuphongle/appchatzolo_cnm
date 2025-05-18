@@ -2,8 +2,11 @@ import React from 'react';
 import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import GroupService from '../../../services/GroupService';
-
+import { WebSocketContext } from '../../../context/Websocket';
+import UserService from '../../../services/UserService';
 const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup, refreshMemberGroupData }) => {
+ 
+  const { sendMessage } = React.useContext(WebSocketContext);
   const handlePromoteToCoLeader = async () => {
       const isConfirmed = await new Promise((resolve) => {
           Alert.alert(
@@ -32,6 +35,9 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
                   promoterId: filteredMembers.userId,
               });
               Alert.alert('Thăng cấp thành công', 'Thăng cấp thành viên lên phó nhóm thành công');
+               const user = await UserService.getUserById(member.userId);
+            
+              handleNotifiMessageGroup(`${user.name} đã được thăng cấp lên phó nhóm`);
               refreshMemberGroupData();
               onClose();
           } catch (error) {
@@ -41,6 +47,8 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
           console.log('Người dùng không đồng ý thăng cấp');
       }
   };
+
+          
 
   const handleDemoteToMember = async () => {
       const isConfirmed = await new Promise((resolve) => {
@@ -70,6 +78,9 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
                   promoterId: filteredMembers.userId,
               });
               Alert.alert('Hạ cấp thành công', 'Hạ cấp thành viên thành công');
+                const user = await UserService.getUserById(member.userId);
+                console.log('user', user);
+              handleNotifiMessageGroup(`${user.name} đã bị hạ cấp thành viên`);
               refreshMemberGroupData();
               onClose();
           } catch (error) {
@@ -105,6 +116,8 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
               const response = await GroupService.removeMember(infoGroup.id, member.userId, filteredMembers.userId);
               Alert.alert('Xoa thành công', 'Xóa thành viên thành công');
               refreshMemberGroupData();
+              const user = await UserService.getUserById(member.userId);
+              handleNotifiMessageGroup(`${user.name} đã bị xóa khỏi nhóm`);
               onClose();
           } catch (error) {
               console.error('Lỗi khi xóa:', error);
@@ -113,6 +126,22 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
           console.log('Người dùng không đồng ý xóa');
       }
   }
+    const handleNotifiMessageGroup = (mess) => {
+      
+       const ContentMessage = {
+                id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+                senderID: infoGroup.id,
+                receiverID: infoGroup.id,
+                content: mess,
+                sendDate: new Date().toISOString(),
+                isRead: false,
+                type: 'GROUP_CHAT',
+                
+                status:'Notification',
+              };
+      sendMessage(ContentMessage);
+      console.log('sendMessage', ContentMessage);
+    }
 
   const handlePromoteToLeader = async () => {
     const isConfirmed = await new Promise((resolve) => {
@@ -143,6 +172,9 @@ const MemberInfoModal = ({ visible, onClose, member, filteredMembers, infoGroup,
               });
               Alert.alert('Thăng cấp thành công', 'Thăng cấp thành viên lên trưởng nhóm thành công');
               refreshMemberGroupData();
+               const user = await UserService.getUserById(member.userId);
+             
+              handleNotifiMessageGroup(`${user.name} đã được thăng cấp lên trưởng nhóm`);
               onClose();
           } catch (error) {
               console.error('Lỗi khi thăng cấp:', error);
