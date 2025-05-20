@@ -302,6 +302,24 @@ public class MessageServiceImpl implements MessageService {
 
         // Lưu lại tin nhắn đã cập nhật reaction
         repository.save(message);  // Lưu tin nhắn với reactions mới
+
+        // Gửi thông báo qua WebSocket cho người nhận
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            // Userid người cần thông báo
+            if(userId.equals(message.getSenderID())) {
+                userId = message.getReceiverID();
+            } else {
+                userId = message.getSenderID();
+            }
+            try {
+                myWebSocketHandler.sendReactNotification(userId, messageId , String.valueOf(reactType));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("MyWebSocketHandler bean is not available.");
+        }
     }
 
     @Override
@@ -318,7 +336,17 @@ public class MessageServiceImpl implements MessageService {
 
         // Lưu lại tin nhắn sau khi xóa reaction
         repository.save(message);
+
+        // Gửi thông báo qua WebSocket cho người nhận
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            try {
+                myWebSocketHandler.sendRemoveReactNotification(messageId, userId);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("MyWebSocketHandler bean is not available.");
+        }
     }
-
-
 }

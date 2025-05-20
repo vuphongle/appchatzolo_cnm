@@ -45,6 +45,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const [isMounted, setIsMounted] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
+  const { isChange } = useContext(UserContext);
   
   
   const scrollViewRef = useRef(null);
@@ -53,6 +54,14 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
+
+  useEffect(() => {
+       if (typeof isChange === 'string') {
+         if(isChange.startsWith('REACT') ){
+             fetchMessages();
+         }
+       }
+  }, [isChange]);
 
   // const handleSendMessagesocket= (message) => {
   //   if (!message) return;
@@ -80,7 +89,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         const sortedMessages = response.sort(
           (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
         );
-        
+        console.log('Fetched messages:', sortedMessages);
         setLocalMessages(sortedMessages);
       } else {
        
