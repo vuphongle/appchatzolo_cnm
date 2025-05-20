@@ -242,7 +242,7 @@ const TinNhanScreen = () => {
             onFocus={handleSearchBarFocus}
             inputRef={searchInputRef}
           />
-          <ListFriend userId={user?.id} />
+          <ListFriend userId={user?.id} requestType=""/>
         </>
       ) : (
         <View style={styles.searchScreen}>
