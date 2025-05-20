@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext"; // Import custom hook để s�
 import FriendRequestsTab from "./ListFriend_RequestTab";
 import FriendInfoModal from "./FriendInfoModal";
 import showToast from "../utils/AppUtils";
+import GroupService from "../services/GroupService";
 
 const FriendItem = ({
     userId,
@@ -155,13 +156,6 @@ const FriendItem = ({
     );
 };
 
-const groupList = [
-    { id: 1, groupName: "IUH - DHKTPM17A - CT7", member: 86, img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
-    { id: 2, groupName: "Team Ổn CN Mới", member: 6, img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg" },
-    { id: 3, groupName: "Team Ổn", member: 20, img: "https://cdn.mhnse.com/news/photo/202105/74850_47849_2150.jpg" },
-    { id: 4, groupName: "Nhóm 4 PTUD JAVA", member: 30, img: "https://cdn.idntimes.com/content-images/community/2024/04/img-4316-f6d361070de3766c8e441e12129828b1-3d6a4e7ff5fede70fceb066160f52e37.jpeg" },
-];
-
 const GroupItem = ({ img, groupName, member }) => {
 
     return (
@@ -182,7 +176,7 @@ const GroupItem = ({ img, groupName, member }) => {
                     {/* <h5 className="mb-0 ms-2">{groupName}</h5> */}
                     <div className="d-flex flex-column align-items-start mb-0 ms-3">
                         <h4 className="mb-0 text-dark fw-bold">{groupName}</h4>
-                        <small className="text-muted">{member} thành viên</small>
+                        {/* <small className="text-muted">{member} thành viên</small> */}
                     </div>
                 </div>
                 <div className="dropdown">
@@ -225,6 +219,8 @@ function ContactsTab({ userId,
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [sortOrder, setSortOrder] = useState("name-asc");
+    const [groupList, setGroupList] = useState([]);
+
 
     useEffect(() => {
         if (userId) {
@@ -317,6 +313,32 @@ function ContactsTab({ userId,
         setFriends((prevFriends) => prevFriends.filter(friend => friend.id !== removedFriendId));
     };
 
+    const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
+    useEffect(() => {
+        const fetchGroupMembers = async () => {
+            if (groupIds.length > 0) {
+                try {
+                    const memberPromises = groupIds.map(async (groupId) => {
+                        const response = await GroupService.getGroupMembers(groupId);
+                        return response.data;
+                    });
+
+                    const allMembers = await Promise.all(memberPromises);
+                    setGroupList(allMembers.flat());  // Flat để gộp tất cả thành viên lại
+                } catch (error) {
+                    console.error("Lỗi khi lấy thành viên nhóm:", error);
+
+                }
+            }
+        };
+
+        fetchGroupMembers();
+    }, [groupIds]);
+    const filteredGroups = groupList.filter(group =>
+        group.groupName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+
     return (
         <div>
             <div className="tab-content" id="v-pills-tabContent">
@@ -368,9 +390,11 @@ function ContactsTab({ userId,
                     </div>
                     <hr />
                     <div className="vh-100 container">
-                        <h6>Nhóm ({groupList.length})</h6>
+                        <h6>Nhóm ({filteredGroups.length})</h6>
                         <div className="d-flex align-items-center gap-2 mb-3">
-                            <input type="text" className="form-control me-2" placeholder="Tìm kiếm..." />
+                            <input type="text" className="form-control me-2" placeholder="Tìm kiếm..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)} />
                             <select className="form-select">
                                 <option value="name-asc">Tên (A-Z)</option>
                                 <option value="name-desc">Tên (Z-A)</option>
@@ -378,10 +402,10 @@ function ContactsTab({ userId,
                                 <option value="name-desc">Hoạt động (cũ - mới)</option>
                             </select>
                         </div>
-                        {groupList.map((group) => (
+                        {filteredGroups.map((group) => (
                             <GroupItem
                                 key={group.id}
-                                img={group.img}
+                                img={group.image || avatar_default}
                                 groupName={group.groupName}
                                 member={group.member}
                             />
@@ -415,7 +439,7 @@ function ContactsTab({ userId,
 
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
 
