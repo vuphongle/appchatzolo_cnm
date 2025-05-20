@@ -250,37 +250,11 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public List<MessageResponse> getMessagesInGroup(String groupId) {
+    public List<Message> getMessagesInGroup(String groupId) {
         // Truy vấn tất cả tin nhắn trong nhóm từ DynamoDB (dựa vào receiverID là groupId)
         List<Message> messages = repository.findMessagesInGroup(groupId);
 
-        List<MessageResponse> messageResponses = new ArrayList<>();
-        for (Message message : messages) {
-            // Lấy thông tin người gửi từ bảng User
-            User sender = userRepository.findById(message.getSenderID());
-
-            // Tạo MessageResponse từ Message
-            MessageResponse response = MessageResponse.builder()
-                    .id(message.getId())
-                    .content(message.getContent())
-                    .sendDate(message.getSendDate())
-                    .senderID(message.getSenderID())
-                    .receiverID(message.getReceiverID())
-                    .isRead(message.getIsRead())
-                    .media(message.getMedia())
-                    .status(message.getStatus())
-                    .type("group")
-                    .deletedBySender(message.isDeletedBySender())
-                    .deletedByReceiver(message.isDeletedByReceiver())
-                    .typeWeb(message.getTypeWeb())
-                    .name(sender != null ? sender.getName() : "Unknown")  // Lấy tên người gửi
-                    .avatar(sender != null ? sender.getAvatar() : "")  // Lấy avatar người gửi
-                    .build();
-
-            messageResponses.add(response);
-        }
-
-        return messageResponses;
+        return messages;
     }
 
     //thêm react vào tin nhắn

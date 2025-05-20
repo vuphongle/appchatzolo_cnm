@@ -114,7 +114,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
 
   useEffect(() => {
     if (typeof isChange === 'string') {
-            if(isChange.startsWith('RECALL_MESSAGE') || isChange.startsWith('CHAT')){
+            if(isChange.startsWith('RECALL_MESSAGE') || isChange.startsWith('CHAT') || isChange.startsWith('REACT') || isChange.startsWith('REMOVE_REACT')){
                 fetchMessages();
             }
     }
@@ -526,7 +526,8 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
               }
 
               return (
-                <View key={message.id || `msg-${index}-${message.sendDate}`}>
+                <View key={`${message.id}${message.reactions?.length != null ? `-${message.reactions.length}` : ''}`
+                || `msg-${index}-${message.sendDate}`}>
                   {showDateHeader && formattedDate && (
                     <View style={styles.dateHeader}>
                       <Text style={styles.dateText}>{headerText}</Text>

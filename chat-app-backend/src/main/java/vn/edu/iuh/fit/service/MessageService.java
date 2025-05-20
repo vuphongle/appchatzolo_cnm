@@ -26,7 +26,7 @@ public interface MessageService {
     Message getLatestMessageBetweenUsers(String senderID, String receiverID);
     void saveReadMess(List<Message> messages);
     //lấy tin nhắn trong group
-    List<MessageResponse> getMessagesInGroup(String groupId);
+    List<Message> getMessagesInGroup(String groupId);
     List<UnreadMessagesCountDTO> getUnreadCountForAllFriends(String receiverID);
     void deleteMessagesBetweenUsers(String senderID, String receiverID);
     void recallMessage(String messageId, String senderID, String receiverID);
