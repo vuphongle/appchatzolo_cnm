@@ -3,6 +3,7 @@ import GroupService from "../services/GroupService";
 import EditGroupModal from "./EditGroupModal";
 import showToast from "../utils/AppUtils";
 import axios from 'axios';
+import AddMemberModal from "./AddMemberModal";
 
 const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConversation, chatMessages }) => {
 
@@ -17,6 +18,10 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
     const [showModal, setShowModal] = useState(false);
     const [imageInfo, setImageInfo] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [isModalMemberOpen, setIsModalMemberOpen] = useState(false);
+    const handleCloseMemberModal = () => {
+        setIsModalMemberOpen(false);
+    };
 
 
     // State để lưu trạng thái checkbox đã chọn
@@ -305,10 +310,18 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
 
                 {/* Hành động nhóm */}
                 <div className="row text-center text-muted border-bottom py-3">
-                    <div className="col">
+                    <div className="col" onClick={() => setIsModalMemberOpen(true)} style={{ cursor: 'pointer' }}>
                         <i className="fas fa-user-plus"></i>
                         <div className="small">Thêm thành viên</div>
                     </div>
+                    {isModalMemberOpen && (
+                        <AddMemberModal
+                            onClose={handleCloseMemberModal}
+                            groupId={conversation.id}
+                            setSelectedConversation={setSelectedConversation}
+                            conversation={conversation}
+                        />
+                    )}
                     <div className="col" onClick={handleGroupManagementClick} style={{ cursor: 'pointer' }}>
                         <i className="fas fa-cog"></i>
                         <div className="small">Quản lý nhóm</div>
@@ -332,6 +345,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                                             id="changeGroupName"
                                             checked={checkboxState.changeGroupName}
                                             onChange={handleCheckboxChange}
+                                            disabled={userRole !== 'LEADER'} // Chỉ cho LEADER được tick
                                         />
                                         <label className="form-check-label" htmlFor="changeGroupName" style={{ textAlign: 'left' }}>
                                             &nbsp;&nbsp;Chỉ nhóm trưởng có thể thay đổi thông tin nhóm
@@ -344,6 +358,7 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                                             id="pinMessage"
                                             checked={checkboxState.pinMessage}
                                             onChange={handleCheckboxChange}
+                                            disabled={userRole !== 'LEADER'} // Chỉ cho LEADER được tick
                                         />
                                         <label className="form-check-label" htmlFor="pinMessage" style={{ textAlign: 'left' }}>
                                             &nbsp;&nbsp;Chỉ nhóm trưởng được thêm thành viên
@@ -356,9 +371,10 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                                             id="createPost"
                                             checked={checkboxState.createPost}
                                             onChange={handleCheckboxChange}
+                                            disabled={userRole !== 'LEADER'} // Chỉ cho LEADER được tick
                                         />
                                         <label className="form-check-label" htmlFor="createPost" style={{ textAlign: 'left' }}>
-                                            &nbsp;&nbsp;Nhóm phó được thêm/xóa thành viên
+                                            &nbsp;&nbsp;Nhóm phó được xóa thành viên
                                         </label>
                                     </div>
                                 </div>
@@ -370,7 +386,6 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                         </div>
                     </div>
                 )}
-
 
                 {/* Thành viên nhóm */}
                 <div className="d-flex justify-content-between align-items-center border-bottom py-2 px-2 pt-4 pb-4" onClick={() => setShowMembers(!showMembers)} style={{ cursor: 'pointer' }}>

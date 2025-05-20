@@ -25,6 +25,7 @@ import { IPV4 } from '@env';
 import { UserContext } from '../../../context/UserContext';
 import GroupService from '../../../services/GroupService';
 import SelectNewLeaderModal from './SelectNewLeaderModal';
+import { WebSocketContext } from '../../../context/Websocket';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import axios from 'axios';
 
@@ -36,6 +37,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
   const [isLeader, setIsLeader] = useState(
     infoMemberGroup.some(member => member.userId === user?.id && member.role === 'LEADER')
   );
+   const { sendMessage } = useContext(WebSocketContext);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [avatarUri, setAvatarUri] = useState(infoGroup?.image || '');
@@ -127,6 +129,22 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
       },
     ]);
   };
+  const handleNotifiMessageGroup = (mess) => {
+      
+       const ContentMessage = {
+                id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+                senderID: infoGroup.id,
+                receiverID: infoGroup.id,
+                content: mess,
+                sendDate: new Date().toISOString(),
+                isRead: false,
+                type: 'GROUP_CHAT',
+                
+                status:'Notification',
+              };
+      sendMessage(ContentMessage);
+      console.log('sendMessage', ContentMessage);
+    }
 
   const handleSelectNewLeader = async (newLeader) => {
     try {
@@ -160,6 +178,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
             try {
               const response = await GroupService.leaveGroup(infoGroup.id, user?.id, null);
               if (response.success) {
+                handleNotifiMessageGroup(`${user?.name} đã rời nhóm`);
                 navigation.navigate('MainTabs');
               } else {
                 Alert.alert('Lỗi', response.message || 'Không thể rời nhóm');
@@ -225,7 +244,8 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
 
   const ProfileSection = () => (
     <View style={styles.profileSection}>
-      <TouchableOpacity style={styles.avatarContainer}  onPress={pickImage}   >
+  
+      <TouchableOpacity style={styles.avatarContainer}       onPress={pickImage}  >
         <Image source={{ uri: infoGroup?.image }} style={styles.profileImage} />
         <View style={styles.editIconContainer}>
             <Ionicons name="camera-outline" size={20} color="#FFF" />

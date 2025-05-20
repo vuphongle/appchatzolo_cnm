@@ -1492,6 +1492,7 @@ const MainPage = () => {
                 groupName: friend.name,
                 unreadCount: unreadCount,  // Đảm bảo tính toán số tin nhắn chưa đọc
                 img: friend.avatar,
+                chatMessages: [],
             };
         }) : []),
         ...(Array.isArray(groupMembers) ? groupMembers.map((group) => {

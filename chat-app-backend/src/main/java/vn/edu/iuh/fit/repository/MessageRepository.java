@@ -135,23 +135,19 @@ public class MessageRepository {
         System.out.println("Added friend relationship between: " + senderID + " and " + receiverID);
     }
 
-    // Lấy tất cả tin nhắn giữa người gửi và người nhận
     public List<Message> findMessagesBetweenUsers(String currentUserId, String otherUserId) {
         return table.scan().items().stream()
                 .filter(message ->
-                        (
-                                message.getSenderID().equals(currentUserId) && message.getReceiverID().equals(otherUserId)
-                                        && !message.isDeletedBySender()
-                        ) ||
+                        message.getSenderID() != null &&
+                                message.getReceiverID() != null &&
                                 (
-                                        message.getSenderID().equals(otherUserId) && message.getReceiverID().equals(currentUserId)
-                                                && !message.isDeletedByReceiver()
+                                        (message.getSenderID().equals(currentUserId) && message.getReceiverID().equals(otherUserId) && !message.isDeletedBySender())
+                                                ||
+                                                (message.getSenderID().equals(otherUserId) && message.getReceiverID().equals(currentUserId) && !message.isDeletedByReceiver())
                                 )
                 )
                 .collect(Collectors.toList());
     }
-
-
 
     //hàm tăng tốc độ lấy tin nhắn
     public List<Message> findUnreadMessages(String receiverID, String senderID) {
@@ -179,20 +175,26 @@ public class MessageRepository {
 
         return table.scan().items().stream()
                 .filter(message ->
-                        (message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID)) ||
-                                (message.getSenderID().equals(receiverID) && message.getReceiverID().equals(senderID)))
+                        (message.getReceiverID() != null && message.getSenderID() != null) &&
+                                ((message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID)) ||
+                                (message.getSenderID().equals(receiverID) && message.getReceiverID().equals(senderID))))
                 .max(Comparator.comparing(m -> m.getSendDate().atZone(zoneId).toInstant())) // So sánh theo múi giờ Việt Nam
                 .orElse(null);
     }
 
     public int getUnreadMessagesCount(String receiverID, String senderID) {
         List<Message> unreadMessages = table.scan().items().stream()
-                .filter(message -> message.getReceiverID().equals(receiverID)
-                        && message.getSenderID().equals(senderID)
-                        && !message.getIsRead())
+                .filter(message ->
+                        message.getReceiverID() != null &&
+                                message.getSenderID() != null &&
+                                message.getReceiverID().equals(receiverID) &&
+                                message.getSenderID().equals(senderID) &&
+                                !message.getIsRead()
+                )
                 .collect(Collectors.toList());
         return unreadMessages.size();
     }
+
 
     public List<String> getFriendsList(String receiverID) {
         User user = userTable.getItem(Key.builder().partitionValue(receiverID).build());
@@ -277,7 +279,7 @@ public class MessageRepository {
     public List<Message> findMessagesInGroup(String groupId) {
         // Truy vấn tất cả các tin nhắn trong nhóm từ DynamoDB (dựa vào receiverID là groupId)
         return table.scan().items().stream()
-                .filter(message -> message.getReceiverID().equals(groupId))  // Lọc tin nhắn có receiverID là groupId
+                .filter(message -> message.getReceiverID() != null && message.getReceiverID().equals(groupId))  // Kiểm tra null trước khi so sánh
                 .collect(Collectors.toList());
     }
 }

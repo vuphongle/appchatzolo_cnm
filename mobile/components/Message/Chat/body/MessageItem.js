@@ -375,20 +375,15 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
             </View>
           </View>
            <View style={styles.iconHandlemedia}>
-           <TouchableOpacity 
-<<<<<<< HEAD
-//               onPress={() => downloadAndOpenFile(message)}
-                onLongPress={handleLongPress}
-=======
+           <TouchableOpacity
               onPress={() => downloadAndOpenFile(message)}
-onLongPress={handleLongPress}
->>>>>>> origin/Phandev
-               style={styles.smallDownloadButtonContainer}
-               disabled={isDownloading}
-             >
-               <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
-             </TouchableOpacity>
-             <TouchableOpacity 
+              onLongPress={handleLongPress}
+              style={styles.smallDownloadButtonContainer}
+              disabled={isDownloading}
+           >
+           <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
+           </TouchableOpacity>
+           <TouchableOpacity
                onPress={forwardMessage}
 
                style={styles.smallDownloadButtonContainer}           
