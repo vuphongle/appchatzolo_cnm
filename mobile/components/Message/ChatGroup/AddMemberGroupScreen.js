@@ -7,7 +7,7 @@ import axios from 'axios';
 import { IPV4 } from '@env';
 import GroupService from '../../../services/GroupService';
 import { formatPhoneNumber } from '../../../utils/formatPhoneNumber';
-
+import { WebSocketContext } from '../../../context/Websocket';
 const AddMemberGroupScreen = ({ route }) => {
   const { user, infoGroup, infoMemberGroup, updateInfoMemberGroup } = React.useContext(UserContext);
   const navigation = useNavigation();
@@ -17,11 +17,27 @@ const AddMemberGroupScreen = ({ route }) => {
   const [filteredFriends, setFilteredFriends] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
+   const { sendMessage, onMessage } = React.useContext(WebSocketContext);
   const [searchResult, setSearchResult] = useState(null);
 
   const clearSearch = () => {
     setNewMember('');
   };
+    const handleNotifiMessageGroup = (mess) => {
+       const ContentMessage = {
+                id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+                senderID: infoGroup.id,
+                receiverID: infoGroup.id,
+                content: mess,
+                sendDate: new Date().toISOString(),
+                isRead: false,
+                type: 'GROUP_CHAT',
+                
+                status:'Notification',
+              };
+      sendMessage(ContentMessage);
+      console.log('sendMessage', ContentMessage);
+    }
 
   useEffect(() => {
     const fetchFriendsList = async () => {
@@ -108,6 +124,8 @@ const AddMemberGroupScreen = ({ route }) => {
       if (response.success) {
         Alert.alert('Thông báo', 'Thêm thành viên vào nhóm thành công');
         await updateInfoMemberGroup(infoGroup.id);
+        console.log('selectedmembers', searchResult);
+        handleNotifiMessageGroup(`Thêm thành viên ${searchResult.name} vào nhóm.`);  
         navigation.goBack();
       } else {
         Alert.alert('Thông báo', 'Có lỗi xảy ra khi thêm thành viên vào nhóm');
