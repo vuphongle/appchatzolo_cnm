@@ -312,6 +312,9 @@ public class MessageServiceImpl implements MessageService {
             } else {
                 userId = message.getSenderID();
             }
+            if(message.getType().equals("GROUP_CHAT")) {
+                userId = message.getReceiverID();
+            }
             try {
                 myWebSocketHandler.sendReactNotification(userId, messageId , String.valueOf(reactType));
             } catch (JsonProcessingException e) {
@@ -332,7 +335,8 @@ public class MessageServiceImpl implements MessageService {
 
 
         // Xóa reaction của người dùng khỏi danh sách reactions
-        message.getReactions().removeIf(reaction -> reaction.getUserId().equals(userId));
+        String finalUserId = userId;
+        message.getReactions().removeIf(reaction -> reaction.getUserId().equals(finalUserId));
 
         // Lưu lại tin nhắn sau khi xóa reaction
         repository.save(message);
@@ -340,8 +344,14 @@ public class MessageServiceImpl implements MessageService {
         // Gửi thông báo qua WebSocket cho người nhận
         MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
         if (myWebSocketHandler != null) {
+            // Userid người cần thông báo
+            if(userId.equals(message.getSenderID())) {
+                userId = message.getReceiverID();
+            } else {
+                userId = message.getSenderID();
+            }
             try {
-                myWebSocketHandler.sendRemoveReactNotification(messageId, userId);
+                myWebSocketHandler.sendRemoveReactNotification(userId, messageId);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }

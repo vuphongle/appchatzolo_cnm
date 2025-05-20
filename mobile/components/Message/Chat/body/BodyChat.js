@@ -57,7 +57,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
 
   useEffect(() => {
        if (typeof isChange === 'string') {
-         if(isChange.startsWith('REACT') ){
+         if(isChange.startsWith('REACT') || isChange.startsWith('REMOVE_REACT')){
              fetchMessages();
          }
        }
@@ -525,7 +525,9 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
               }
 
               return (
-                <View key={message.id || `msg-${index}-${message.sendDate}`}>
+                <View key={`${message.id}${
+                               message.reactions?.length != null ? `-${message.reactions.length}` : ''
+                             }` || `msg-${index}-${message.sendDate}`}>
                   {showDateHeader && formattedDate && (
                     <View style={styles.dateHeader}>
                       <Text style={styles.dateText}>{headerText}</Text>

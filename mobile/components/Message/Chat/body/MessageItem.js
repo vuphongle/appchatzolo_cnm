@@ -61,6 +61,10 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
     return isDocumentFile(url) || isVideoMessage(url) || isAudioMessage(url) || isImageMessage(url);
   };
 
+//  useEffect(() => {
+//   console.log('MessageInfo:', messageInfo);
+//  }, []);
+
   // Tải và mở file
   const downloadAndOpenFile = async (fileUrl, openAfterDownload = false) => {
     console.log('downloadAndOpenFile is called with:')

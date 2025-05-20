@@ -609,35 +609,83 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
     // Gửi thông báo khi người dùng gửi phản ứng (reaction) cho một tin nhắn
     public void sendReactNotification(String userId, String messageId, String reactionType) throws JsonProcessingException {
-        WebSocketSession session = sessions.get(userId);
-        if (session != null && session.isOpen()) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("type", "REACT");
-            payload.put("messageId", messageId);
-            payload.put("reactionType", reactionType);
-            String jsonPayload = objectMapper.writeValueAsString(payload);
-            try {
-                session.sendMessage(new TextMessage(jsonPayload));
-                System.out.println("Sent REACT notification to user: " + userId);
-            } catch (IOException e) {
-                System.err.println("Error sending REACT notification: " + e.getMessage());
+        // Kiểm tra xem userID có phải là groupId không
+        System.out.println("sendRemoveReactNotification: " + userId);
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(userId);
+        if (userGroups != null && !userGroups.isEmpty()) {
+            // Nếu là nhóm, gửi thông báo đến tất cả thành viên trong nhóm
+            for (UserGroup userGroup : userGroups) {
+                WebSocketSession groupSession = sessions.get(userGroup.getUserId());
+                if (groupSession != null && groupSession.isOpen()) {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "REACT");
+                    payload.put("messageId", messageId);
+                    payload.put("reactionType", reactionType);
+                    String jsonPayload = objectMapper.writeValueAsString(payload);
+                    try {
+                        groupSession.sendMessage(new TextMessage(jsonPayload));
+                        System.out.println("Sent REACT notification to group member: " + userGroup.getUserId());
+                    } catch (IOException e) {
+                        System.err.println("Error sending REACT notification: " + e.getMessage());
+                    }
+                }
+            }
+        } else {
+            // Nếu không phải nhóm (tin nhắn cá nhân), gửi thông báo đến userId
+            WebSocketSession userSession = sessions.get(userId);
+            if (userSession != null && userSession.isOpen()) {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "REACT");
+                payload.put("messageId", messageId);
+                payload.put("reactionType", reactionType);
+                String jsonPayload = objectMapper.writeValueAsString(payload);
+                try {
+                    userSession.sendMessage(new TextMessage(jsonPayload));
+                    System.out.println("Sent REACT notification to user: " + userId);
+                } catch (IOException e) {
+                    System.err.println("Error sending REACT notification: " + e.getMessage());
+                }
             }
         }
     }
 
     // Gửi thông báo khi người dùng xóa phản ứng (reaction) cho một tin nhắn
     public void sendRemoveReactNotification(String userId, String messageId) throws JsonProcessingException {
-        WebSocketSession session = sessions.get(userId);
-        if (session != null && session.isOpen()) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("type", "REMOVE_REACT");
-            payload.put("messageId", messageId);
-            String jsonPayload = objectMapper.writeValueAsString(payload);
-            try {
-                session.sendMessage(new TextMessage(jsonPayload));
-                System.out.println("Sent REMOVE_REACT notification to user: " + userId);
-            } catch (IOException e) {
-                System.err.println("Error sending REMOVE_REACT notification: " + e.getMessage());
+        // Kiểm tra xem userID có phải là groupId không
+        System.out.println("sendRemoveReactNotification: " + userId);
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(userId);
+        if (userGroups != null && !userGroups.isEmpty()) {
+            // Nếu là nhóm, gửi thông báo đến tất cả thành viên trong nhóm
+            for (UserGroup userGroup : userGroups) {
+                System.out.println("userGroup: " + userGroup);
+                WebSocketSession groupSession = sessions.get(userGroup.getUserId());
+                if (groupSession != null && groupSession.isOpen()) {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "REMOVE_REACT");
+                    payload.put("messageId", messageId);
+                    String jsonPayload = objectMapper.writeValueAsString(payload);
+                    try {
+                        groupSession.sendMessage(new TextMessage(jsonPayload));
+                        System.out.println("Sent REMOVE_REACT notification to group member: " + userGroup.getUserId());
+                    } catch (IOException e) {
+                        System.err.println("Error sending REMOVE_REACT notification: " + e.getMessage());
+                    }
+                }
+            }
+        } else {
+            // Nếu không phải nhóm (tin nhắn cá nhân), gửi thông báo đến userId
+            WebSocketSession userSession = sessions.get(userId);
+            if (userSession != null && userSession.isOpen()) {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "REMOVE_REACT");
+                payload.put("messageId", messageId);
+                String jsonPayload = objectMapper.writeValueAsString(payload);
+                try {
+                    userSession.sendMessage(new TextMessage(jsonPayload));
+                    System.out.println("Sent REMOVE_REACT notification to user: " + userId);
+                } catch (IOException e) {
+                    System.err.println("Error sending REMOVE_REACT notification: " + e.getMessage());
+                }
             }
         }
     }
