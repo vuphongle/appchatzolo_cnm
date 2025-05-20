@@ -1996,6 +1996,12 @@ const MainPage = () => {
                                                                     {isLastMessageByMe && isSentByMe && msg.isRead && (
                                                                         <span className="message-status read-status">✔✔ Đã nhận</span>
                                                                     )}
+                                                                    {/* Thêm phần Reaction dưới tin nhắn */}
+                                                                    <MessageReaction
+                                                                        messageId={msg.id}
+                                                                        userId={MyUser?.my_user?.id}
+                                                                        initialReactions={msg.reactions}
+                                                                    />
                                                                     {showMenuForMessageId === msg.id && (
                                                                         <MessageOptionsMenu
                                                                             isOwner={msg.senderID === MyUser?.my_user?.id}
