@@ -1058,6 +1058,33 @@ const MainPage = () => {
                 return;
             }
 
+            if (incomingMessage.type === "REACT_NOTIFICATION") {
+                const { messageId, reactionType, userId } = incomingMessage;
+
+                setChatMessages((prevMessages) =>
+                    prevMessages.map((msg) => {
+                        if (msg.id === messageId) {
+                            const oldReactions = Array.isArray(msg.reactions) ? msg.reactions : [];
+
+                            // Thêm reaction mới (không cần lọc nếu bạn cho phép nhiều lần)
+                            const newReaction = { userId, reactionType };
+                            const updatedReactions = [...oldReactions, newReaction];
+
+                            // ✅ Clone toàn bộ message để chắc chắn trigger re-render
+                            return {
+                                ...msg,
+                                reactions: updatedReactions,
+                            };
+                        }
+                        return msg;
+                    })
+                );
+                return;
+            }
+
+
+
+
             if (incomingMessage.type === "GROUP_DELETED") {
                 const groupId = incomingMessage.groupId;
                 // Cập nhật danh sách hội thoại: Xóa nhóm bị xóa
@@ -1998,10 +2025,12 @@ const MainPage = () => {
                                                                     )}
                                                                     {/* Thêm phần Reaction dưới tin nhắn */}
                                                                     <MessageReaction
+                                                                        key={JSON.stringify(msg.reactions)} // 👈 ép render lại khi reactions thay đổi
                                                                         messageId={msg.id}
                                                                         userId={MyUser?.my_user?.id}
                                                                         initialReactions={msg.reactions}
                                                                     />
+
                                                                     {showMenuForMessageId === msg.id && (
                                                                         <MessageOptionsMenu
                                                                             isOwner={msg.senderID === MyUser?.my_user?.id}
