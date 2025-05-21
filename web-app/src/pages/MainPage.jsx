@@ -917,6 +917,24 @@ const MainPage = () => {
                 return;
             }
 
+            if (incomingMessage.type === "REMOVE_REACT") {
+                const { messageId, userId } = incomingMessage;
+
+                setChatMessages((prevMessages) =>
+                    prevMessages.map((msg) => {
+                        if (msg.id === messageId) {
+                            const updatedReactions = Array.isArray(msg.reactions)
+                                ? msg.reactions.filter((r) => r.userId !== userId)
+                                : [];
+
+                            return { ...msg, reactions: updatedReactions };
+                        }
+                        return msg;
+                    })
+                );
+                return;
+            }
+
             if (incomingMessage.type === "PROMOTE_TO_LEADER") {
                 const groupId = incomingMessage.groupId;
 
@@ -1057,32 +1075,6 @@ const MainPage = () => {
                 // });
                 return;
             }
-
-            if (incomingMessage.type === "REACT_NOTIFICATION") {
-                const { messageId, reactionType, userId } = incomingMessage;
-
-                setChatMessages((prevMessages) =>
-                    prevMessages.map((msg) => {
-                        if (msg.id === messageId) {
-                            const oldReactions = Array.isArray(msg.reactions) ? msg.reactions : [];
-
-                            // Thêm reaction mới (không cần lọc nếu bạn cho phép nhiều lần)
-                            const newReaction = { userId, reactionType };
-                            const updatedReactions = [...oldReactions, newReaction];
-
-                            // ✅ Clone toàn bộ message để chắc chắn trigger re-render
-                            return {
-                                ...msg,
-                                reactions: updatedReactions,
-                            };
-                        }
-                        return msg;
-                    })
-                );
-                return;
-            }
-
-
 
 
             if (incomingMessage.type === "GROUP_DELETED") {
@@ -2025,7 +2017,7 @@ const MainPage = () => {
                                                                     )}
                                                                     {/* Thêm phần Reaction dưới tin nhắn */}
                                                                     <MessageReaction
-                                                                        key={JSON.stringify(msg.reactions)} // 👈 ép render lại khi reactions thay đổi
+                                                                        key={msg.id + JSON.stringify(msg.reactions)}  // 👈 ép render lại khi reactions thay đổi
                                                                         messageId={msg.id}
                                                                         userId={MyUser?.my_user?.id}
                                                                         initialReactions={msg.reactions}

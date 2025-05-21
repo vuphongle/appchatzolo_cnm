@@ -2,13 +2,49 @@ import React, { useState, useEffect } from 'react';
 import MessageService from "../services/MessageService";
 import '../css/MessageReaction.css'; // Đảm bảo rằng bạn đã import CSS cho các emoji
 import "../css/MainPage.css"; // CSS riêng cho giao diện
+import { useWebSocket } from "../context/WebSocket";
 
 const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
     // Đảm bảo reactions luôn là mảng nếu không có dữ liệu
     const [reactions, setReactions] = useState(Array.isArray(initialReactions) ? initialReactions : []);
     const [reactionCount, setReactionCount] = useState({});
+    const { onMessage } = useWebSocket();
 
 
+    useEffect(() => {
+        const unsubscribe = onMessage((incomingMessage) => {
+            if (incomingMessage.type === "REACT" && incomingMessage.messageId === messageId) {
+                setReactions(prev => [
+                    ...prev,
+                    {
+                        userId: incomingMessage.userId || "unknown",
+                        reactionType: incomingMessage.reactionType,
+                    }
+                ]);
+            }
+            if (incomingMessage.type === "REMOVE_REACT") {
+                const { messageId, userId } = incomingMessage;
+                setReactions(prevMessages =>
+                    prevMessages.map(msg => {
+                        if (msg.id === messageId) {
+                            const updatedReactions = msg.reactions.filter(
+                                r => r.userId !== userId
+                            );
+                            return { ...msg, reactions: updatedReactions };
+                        }
+                        return msg;
+                    })
+                );
+            }
+
+
+
+
+
+        });
+
+        return () => unsubscribe();
+    }, [messageId, onMessage]);
 
     useEffect(() => {
         const isEqual = JSON.stringify(initialReactions) === JSON.stringify(reactions);
@@ -32,6 +68,8 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
             setReactionCount(counts);
         }
     }, [reactions, reactionCount]);
+    const totalReactions = Object.values(reactionCount).reduce((sum, count) => sum + count, 0);
+
 
     // Hàm để xử lý thêm reaction vào tin nhắn
     const handleAddReaction = (reactionType) => {
@@ -49,7 +87,7 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
     // Hàm để xử lý xóa reaction khỏi tin nhắn
     const handleRemoveReaction = (reactionType) => {
         if (messageId) {
-            MessageService.removeReact(messageId, userId)
+            MessageService.removeReact(messageId, userId, reactionType)
                 .then(() => {
                     setReactions(prev =>
                         Array.isArray(prev)
@@ -86,8 +124,22 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
 
     return (
         <div className="reactions">
+            {/* Tổng số reaction (đặt ở đầu nút Like) */}
+            {totalReactions > 0 && (
+                <span style={{
+                    fontSize: "0.75rem",
+                    fontWeight: "bold",
+                    color: "#555",
+                    marginRight: 1,
+                    position: "absolute",
+                    top: 18,
+                    verticalAlign: "middle"
+                }}>
+                    {totalReactions}
+                </span>
+            )}
             <span
-                className={`emoji like ${reactions.includes('LIKE') ? 'active' : ''}`}
+                className={`emoji like ${reactions.some(r => r.reactionType === 'LIKE' && r.userId === userId) ? 'active' : ''}`}
                 onClick={() => {
                     if (reactions.includes('LIKE')) {
                         handleRemoveReaction('LIKE');
@@ -100,9 +152,7 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
                 style={isLikeDisabled ? { opacity: 0.5 } : {}}
             >
                 👍
-                {reactionCount['LIKE'] > 0 && (
-                    <span className="reaction-count">{reactionCount['LIKE']}</span>
-                )}
+
             </span>
 
 
@@ -125,10 +175,9 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
                     {reaction === 'WOW' && '😮'}
                     {reaction === 'SAD' && '😢'}
                     {reaction === 'ANGRY' && '😡'}
-                    {reactionCount[reaction] > 0 && (
-                        <span className="reaction-count">{reactionCount[reaction]}</span>
-                    )}
+
                 </span>
+
             ))}
             {/* Nút X để thu hồi reactions */}
             {reactions.length > 0 && (
