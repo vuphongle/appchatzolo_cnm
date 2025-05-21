@@ -65,6 +65,25 @@ const DanhBaScreen = () => {
   const swipeableRefs = useRef(new Map());
 
   useEffect(() => {
+    if (searchResult) {
+      checkFriendRequestStatus();
+    }
+  }, [searchResult]);
+
+  useEffect(() => {
+    updateUserProfile();
+  }, [isChange]);
+
+  useEffect(() => {
+    if(isChange != "SUBMIT_FRIEND_REQUEST")
+        checkFriendRequestStatus();
+  }, [isChange]);
+
+  useEffect(() => {
+    checkFriendRequestStatus();
+  }, [user]);
+
+  useEffect(() => {
     const fetchFriends = async () => {
       if (!user?.id) return;
       try {
