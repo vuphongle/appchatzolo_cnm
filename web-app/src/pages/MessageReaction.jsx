@@ -85,16 +85,13 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
     };
 
     // Hàm để xử lý xóa reaction khỏi tin nhắn
-    const handleRemoveReaction = (reactionType) => {
+    const handleRemoveReaction = () => {  // ko cần reactionType
         if (messageId) {
-            MessageService.removeReact(messageId, userId, reactionType)
+            MessageService.removeReact(messageId, userId)
                 .then(() => {
                     setReactions(prev =>
                         Array.isArray(prev)
-                            ? prev.filter(r =>
-                                (typeof r === 'string') ||
-                                (typeof r === 'object' && r.userId !== userId)
-                            )
+                            ? prev.filter(r => r.userId !== userId)
                             : []
                     );
                 })
@@ -103,6 +100,7 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
             console.error("Không tìm thấy ID của tin nhắn.");
         }
     };
+
 
 
     const displayedReactions = (reactions || []).slice(0, 3);
@@ -198,7 +196,7 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
 
             ))}
             {/* Nút X để thu hồi reactions */}
-            {reactions.length > 0 && (
+            {reactions.some(r => r.userId === userId) && (
                 <span
                     className="close-reactions"
                     onClick={handleRemoveReaction}
