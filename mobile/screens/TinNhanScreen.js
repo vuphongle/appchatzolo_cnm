@@ -17,6 +17,7 @@ import { UserContext } from '../context/UserContext';
 import ListFriend from '../components/Message/listFriend/ListFriend';
 import { v4 as uuidv4 } from 'uuid';
 import { REGION, ACCESS_KEY_ID, SECRET_ACCESS_KEY, IPV4 } from '@env';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Hàm định dạng số điện thoại
 const formatPhoneNumber = (phone) => {
@@ -46,6 +47,19 @@ const TinNhanScreen = () => {
   const [friendRequestStatus, setFriendRequestStatus] = useState('Kết bạn');
   const [message, setMessage] = useState('Kết bạn với mình nhé.');
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Mỗi khi màn hình focus vào thì bạn không làm gì hoặc giữ nguyên trạng thái
+
+      return () => {
+        // Khi màn hình mất focus, reset isSearching về false
+        setIsSearching(false);
+        setSearchText('');
+        setSearchResult(null);
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (searchResult) {

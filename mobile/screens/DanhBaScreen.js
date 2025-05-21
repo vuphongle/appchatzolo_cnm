@@ -60,6 +60,19 @@ const DanhBaScreen = () => {
   const [message, setMessage] = useState('Kết bạn với mình nhé.');
   const [friendRequestStatus, setFriendRequestStatus] = useState('Kết bạn');
 
+  useFocusEffect(
+      React.useCallback(() => {
+        // Mỗi khi màn hình focus vào thì bạn không làm gì hoặc giữ nguyên trạng thái
+
+        return () => {
+          // Khi màn hình mất focus, reset isSearching về false
+          setIsSearching(false);
+          setSearchText('');
+          setSearchResult(null);
+        };
+      }, [])
+  );
+
   // Ref để quản lý Swipeable đang mở
   const currentlyOpenSwipeable = useRef(null);
   const swipeableRefs = useRef(new Map());
