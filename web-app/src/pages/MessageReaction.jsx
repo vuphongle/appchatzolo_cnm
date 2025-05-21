@@ -126,18 +126,36 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
         <div className="reactions">
             {/* Tổng số reaction (đặt ở đầu nút Like) */}
             {totalReactions > 0 && (
-                <span style={{
-                    fontSize: "0.75rem",
-                    fontWeight: "bold",
-                    color: "#555",
-                    marginRight: 1,
-                    position: "absolute",
-                    top: 18,
-                    verticalAlign: "middle"
-                }}>
-                    {totalReactions}
-                </span>
+                <div
+                    className="reaction-icons-wrapper"
+                    style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                    {sortedReactions.slice(0, 3).map(([reactionType, count], index, arr) => (
+                        <span
+                            key={reactionType}
+                            className="reaction-icon"
+                            role="img"
+                            aria-label={reactionType}
+                            title={`${reactionType}: ${count}`}
+                        >
+                            {reactionType === 'LIKE' && '👍'}
+                            {reactionType === 'LOVE' && '❤️'}
+                            {reactionType === 'HAHA' && '😂'}
+                            {reactionType === 'WOW' && '😮'}
+                            {reactionType === 'SAD' && '😢'}
+                            {reactionType === 'ANGRY' && '😡'}
+
+
+                            {/* Hiển thị tổng reactions bên cạnh reaction cuối cùng */}
+                            {index === arr.length - 1 && (
+                                <span className="total-reactions-badge">{totalReactions}</span>
+                            )}
+                        </span>
+                    ))}
+                </div>
             )}
+
+
             <span
                 className={`emoji like ${reactions.some(r => r.reactionType === 'LIKE' && r.userId === userId) ? 'active' : ''}`}
                 onClick={() => {
@@ -186,8 +204,7 @@ const MessageReaction = ({ messageId, userId, initialReactions = [] }) => {
                     onClick={handleRemoveReaction}
                     role="img"
                     aria-label="Close"
-                >
-                    x
+                > x
                 </span>
             )}
         </div>

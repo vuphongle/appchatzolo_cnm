@@ -4,8 +4,9 @@ import EditGroupModal from "./EditGroupModal";
 import showToast from "../utils/AppUtils";
 import axios from 'axios';
 import AddMemberModal from "./AddMemberModal";
+import { v4 as uuidv4 } from 'uuid';
 
-const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConversation, chatMessages }) => {
+const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConversation, chatMessages, sendMessage, groupId }) => {
 
     // console.log("Group info", conversation);
 
@@ -145,10 +146,25 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
             try {
                 await GroupService.removeMember(conversation.id, targetUserId, user?.id);
                 // Cập nhật lại danh sách thành viên trong conversation
+
                 setSelectedConversation((prev) => ({
                     ...prev,
                     userGroups: prev.userGroups.filter((member) => member.userId !== targetUserId),
                 }));
+                const removedUser = conversation.userGroups.find(member => member.userId === targetUserId);
+                const removedUserName = removedUser?.userName || "Một thành viên";
+
+                const notificationMessage = {
+                    id: uuidv4(),
+                    senderID: groupId,
+                    receiverID: groupId,
+                    content: `${removedUserName} đã bị xóa khỏi nhóm`,
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                    type: "GROUP_CHAT",
+                    status: "Notification",
+                };
+                sendMessage(notificationMessage);
             } catch (error) {
                 console.error("Lỗi khi xóa thành viên:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
@@ -172,6 +188,17 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                 if (onGroupDeleted) {
                     onGroupDeleted(conversation.id);
                 }
+                const notificationMessage = {
+                    id: uuidv4(),
+                    senderID: groupId,
+                    receiverID: groupId,
+                    content: `${user.name} đã rời khỏi nhóm`,
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                    type: "GROUP_CHAT",
+                    status: "Notification",
+                };
+                sendMessage(notificationMessage);
             } catch (error) {
                 console.error("Lỗi khi rời nhóm:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
@@ -190,7 +217,21 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                     promoterId: user?.id
                 };
 
+                const promotedUser = conversation.userGroups.find(member => member.userId === targetUserId);
+                const promotedUserName = promotedUser?.userName || "Một thành viên";
+
                 await GroupService.promoteToCoLeader(data);
+                const notificationMessage = {
+                    id: uuidv4(),
+                    senderID: groupId,
+                    receiverID: groupId,
+                    content: `${promotedUserName} đã được thăng cấp lên phó nhóm`,
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                    type: "GROUP_CHAT",
+                    status: "Notification",
+                };
+                sendMessage(notificationMessage);
             } catch (error) {
                 console.error("Lỗi khi cấp quyền phó nhóm:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
@@ -207,7 +248,21 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                     targetUserId: targetUserId,
                     promoterId: user?.id
                 };
+
                 await GroupService.demoteToMember(data);
+                const demotedUser = conversation.userGroups.find(member => member.userId === targetUserId);
+                const demotedUserName = demotedUser?.userName || "Một thành viên";
+                const notificationMessage = {
+                    id: uuidv4(),
+                    senderID: groupId,
+                    receiverID: groupId,
+                    content: `${demotedUserName} đã bị hạ cấp thành viên`,
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                    type: "GROUP_CHAT",
+                    status: "Notification",
+                };
+                sendMessage(notificationMessage);
             } catch (error) {
                 console.error("Lỗi khi gỡ phó nhóm:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
@@ -225,7 +280,19 @@ const GroupMenuModal = ({ conversation, user, onGroupDeleted, setSelectedConvers
                     promoterId: user?.id
                 };
                 await GroupService.promoteToLeader(data);
-                alert("Bổ nhiệm trưởng nhóm thành công!");
+                const promotedUser = conversation.userGroups.find(member => member.userId === targetUserId);
+                const promotedUserName = promotedUser?.userName || "Một thành viên";
+                const notificationMessage = {
+                    id: uuidv4(),
+                    senderID: groupId,
+                    receiverID: groupId,
+                    content: `${promotedUserName} đã được thăng cấp lên trưởng nhóm`,
+                    sendDate: new Date().toISOString(),
+                    isRead: false,
+                    type: "GROUP_CHAT",
+                    status: "Notification",
+                };
+                sendMessage(notificationMessage);
             } catch (error) {
                 console.error("Lỗi khi bổ nhiệm trưởng nhóm:", error);
                 alert(error?.message || "Đã có lỗi xảy ra.");
