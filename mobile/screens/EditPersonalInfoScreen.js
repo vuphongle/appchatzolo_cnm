@@ -133,7 +133,7 @@ const EditPersonalInfoScreen = ({ navigation }) => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Chỉnh sửa thông tin cá nhân</Text>
 
-      <TouchableOpacity style={styles.avatarContainer}  onPress={pickImage}   >
+      <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}   >
         <Image
           source={{ uri: avatarUri || AVATAR_URL_DEFAULT }}
           style={styles.avatar}

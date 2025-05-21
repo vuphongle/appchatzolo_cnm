@@ -32,7 +32,8 @@ import { WebSocketContext } from '../../../../context/Websocket';
 import { userContext } from '../../../../context/UserContext';
 import { useNavigation } from '@react-navigation/native';
 import UserService from '../../../../services/UserService';
-
+import Sound from 'react-native-sound';
+Sound.setCategory('Playback');
 const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const { user } = useContext(UserContext);
   const userId = user?.id;
@@ -52,6 +53,13 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   const navigation = useNavigation();
   
   const scrollViewRef = useRef(null);
+  const recordingTimerRef = useRef(null);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioSound, setAudioSound] = useState(null);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [recordingStartTime, setRecordingStartTime] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
 
   useEffect(() => {
     if(!infoGroup || !infoMemberGroup) return;
@@ -76,7 +84,18 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     setIsMounted(true);
     updateInfoMemberGroup(receiverID);
     updateInfoGroup(receiverID);
-    return () => setIsMounted(false);
+
+     return () => {
+      setIsMounted(false);
+      // Clean up audio resources
+      if (audioSound) {
+        audioSound.release();
+      }
+      // Clear any timers
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
   }, []);
 
   const fetchMessages = async () => {
@@ -101,7 +120,13 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
       
     }
   };
-
+  //tính thời gian ghi âm 
+const formatDuration = (milliseconds) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
  
   useEffect(() => {
     if (!userId || !receiverID) return;
@@ -223,7 +248,21 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
     
     try {
       await AudioRecord.start();
-      setIsRecording(true);
+       if (audioSound) {
+        audioSound.release();
+        setAudioSound(null);
+      }
+      setAudioFile(null);
+      setIsRecording(true); 
+      const startTime = Date.now();
+      setRecordingStartTime(startTime);
+      
+      
+      recordingTimerRef.current = setInterval(() => {
+        const current = Date.now();
+        setRecordingDuration(current - startTime);
+      }, 1000);
+
     } catch (error) {
       console.error('Error starting recording:', error);
       Alert.alert('Error', 'Failed to start recording');
@@ -233,6 +272,9 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
   // Stop audio recording and send
   const stopRecording = async () => {
     try {
+       if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
       const audioPath = await AudioRecord.stop();
       setIsRecording(false);
       
@@ -242,19 +284,68 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
         type: 'audio/wav',
       };
       
-      handleSendAudioMessage(file);
+      setAudioFile(file);
+      
+      // Load the recorded audio for playback
+      loadAudioForPlayback(audioPath);
     } catch (error) {
       console.error('Error stopping recording:', error);
       Alert.alert('Error', 'Failed to process recording');
     }
   };
+  const loadAudioForPlayback = (audioPath) => {
+    const sound = new Sound(audioPath, '', (error) => {
+      if (error) {
+        console.error('Failed to load sound', error);
+        Alert.alert('Error', 'Failed to load audio for playback');
+        return;
+      }
+      
+      setAudioSound(sound);
+      setAudioDuration(sound.getDuration());
+    });
+  };
+  
+  // Play recorded audio
+  const playRecordedAudio = () => {
+    if (!audioSound) return;
+    
+    if (isPlaying) {
+      audioSound.pause();
+      setIsPlaying(false);
+      return;
+    }
+    
+    // Reset position before playing
+    audioSound.setCurrentTime(0);
+    
+    audioSound.play((success) => {
+      if (success) {
+        setIsPlaying(false);
+      } else {
+        console.error('Playback failed');
+      }
+    });
+    
+    setIsPlaying(true);
+  };
+  
+  // Cancel recording (delete current audio file)
+  const cancelRecording = () => {
+    if (audioSound) {
+      audioSound.release();
+    }
+    setAudioSound(null);
+    setAudioFile(null);
+    setIsPlaying(false);
+  };
 
   // Upload and send audio message
-  const handleSendAudioMessage = async (file) => {
-    if (!file) return;
+  const handleSendAudioMessage = async () => {
+    if (!audioFile) return;
 
     try {
-      const audioUrl = await S3Service.uploadAudio(file);
+      const audioUrl = await S3Service.uploadAudio(audioFile);
       
       if (!audioUrl) {
         throw new Error('Audio upload failed');
@@ -278,7 +369,12 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
         );
         return updatedMessages;
       });
+      if (audioSound) {
+        audioSound.release();
+      }
+      setAudioSound(null);
       setAudioFile(null);
+      setIsPlaying(false);
       
  
     } catch (error) {
@@ -622,6 +718,58 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
           </ScrollView>
         </View>
       )}
+      {audioFile && (
+        <View style={styles.audioPreviewContainer}>
+          <View style={styles.audioPreviewContent}>
+            <MaterialIcons name="mic" size={24} color="#0091ff" />
+            <Text style={styles.audioPreviewText}>
+              Ghi âm {formatDuration(audioDuration * 1000)}
+            </Text>
+            <TouchableOpacity
+              style={[styles.audioButton, isPlaying ? styles.audioButtonActive : null]}
+              onPress={playRecordedAudio}
+            >
+              <MaterialIcons name={isPlaying ? "pause" : "play-arrow"} size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.audioActionButtons}>
+            <TouchableOpacity
+              style={[styles.audioActionButton, styles.cancelButton]}
+              onPress={cancelRecording}
+            >
+              <MaterialIcons name="delete" size={18} color="#fff" />
+              <Text style={styles.audioActionButtonText}>Hủy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.audioActionButton, styles.sendButton]}
+              onPress={handleSendAudioMessage}
+            >
+              <MaterialIcons name="send" size={18} color="#fff" />
+              <Text style={styles.audioActionButtonText}>Gửi</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Recording in progress indicator */}
+      {isRecording && (
+        <View style={styles.recordingContainer}>
+          <View style={styles.recordingContent}>
+            <View style={styles.recordingIndicatorPulse}>
+              <View style={styles.recordingIndicatorDot} />
+            </View>
+            <Text style={styles.recordingText}>
+              Đang ghi âm... {formatDuration(recordingDuration)}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.stopRecordingButton}
+            onPress={stopRecording}
+          >
+            <MaterialIcons name="stop" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.footerContainer}>
         <View style={styles.inputContainer}>
@@ -647,9 +795,8 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
           </TouchableOpacity>
 
           <TouchableOpacity  onPress={() => {
-              if (isRecording) {
-                stopRecording();
-              } else {
+              if (!isRecording && !audioFile) {
+                
                 Alert.alert(
                   "Xác nhận",
                   "Bạn có muốn bắt đầu ghi âm không?",
@@ -667,9 +814,9 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
               }
             }}>
             <FontAwesome 
-              name={isRecording ? 'stop' : 'microphone'} 
+             name="microphone"
               size={24} 
-              color={isRecording ? '#ff4d4d' : '#0091ff'} 
+              color="#0091ff"
             />
             {isRecording && (
               <View style={styles.recordingIndicator} />
@@ -842,4 +989,106 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#ff4d4d',
   },
+  audioPreviewContainer: {
+  backgroundColor: '#f2f8ff',
+  borderRadius: 12,
+  padding: 15,
+  marginHorizontal: 10,
+  marginBottom: 10,
+  borderWidth: 1,
+  borderColor: '#e0e0e0',
+},
+audioPreviewContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 10,
+},
+audioPreviewText: {
+  flex: 1,
+  fontSize: 14,
+  color: '#333',
+  marginLeft: 10,
+},
+audioButton: {
+  backgroundColor: '#0091ff',
+  borderRadius: 20,
+  width: 36,
+  height: 36,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+audioButtonActive: {
+  backgroundColor: '#ff4d4d',
+},
+audioActionButtons: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+  gap: 10,
+},
+audioActionButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 16,
+  justifyContent: 'center',
+},
+audioActionButtonText: {
+  color: '#fff',
+  fontSize: 14,
+  marginLeft: 6,
+},
+cancelButton: {
+  backgroundColor: '#ff4d4d',
+},
+sendButton: {
+  backgroundColor: '#0091ff',
+},
+recordingContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  backgroundColor: '#fff6f6',
+  borderRadius: 12,
+  padding: 12,
+  marginHorizontal: 10,
+  marginBottom: 10,
+  borderWidth: 1,
+  borderColor: '#ffdddd',
+},
+recordingContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flex: 1,
+},
+recordingText: {
+  fontSize: 14,
+  color: '#ff4d4d',
+  marginLeft: 10,
+},
+recordingIndicatorPulse: {
+  width: 24,
+  height: 24,
+  borderRadius: 12,
+  backgroundColor: 'rgba(255, 77, 77, 0.2)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  animation: 'pulse 1.5s infinite',
+},
+recordingIndicatorDot: {
+  width: 12,
+  height: 12,
+  borderRadius: 6,
+  backgroundColor: '#ff4d4d',
+},
+stopRecordingButton: {
+  backgroundColor: '#ff4d4d',
+  borderRadius: 20,
+  width: 40,
+  height: 40,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
 });
