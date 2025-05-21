@@ -127,6 +127,7 @@ const FriendInvitesScreen = () => {
         }
       } else {
         console.error('Action failed:', action);
+        console.log('Response:', res);
       }
     } catch (error) {
       console.error('Error in handleRequestResponse:', error);

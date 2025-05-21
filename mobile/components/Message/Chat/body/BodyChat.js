@@ -346,7 +346,6 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         isRead: false,
         type: 'PRIVATE_CHAT',
         status: 'sent',
-        audioDuration: audioDuration
       };
 
       sendMessage(message);

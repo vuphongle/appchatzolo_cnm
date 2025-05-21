@@ -65,7 +65,7 @@ public class MessageRepository {
     public void deleteInvitation(String senderID, String receiverID) {
         // Sử dụng scan để tìm tất cả các item phù hợp
         List<Message> messagesToDelete = table.scan().items().stream()
-                .filter(message -> message.getStatus() != null && message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID) && message.getStatus().equals("Chờ đồng ý"))
+                .filter(message ->message.getSenderID() != null && message.getReceiverID() != null && message.getStatus() != null && message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID) && message.getStatus().equals("Chờ đồng ý"))
                 .collect(Collectors.toList());
 
         for (Message message : messagesToDelete) {
@@ -93,7 +93,7 @@ public class MessageRepository {
     // Cập nhật trạng thái của lời mời kết bạn thành "Đã kết bạn"
     public void updateInvitationStatus(String senderID, String receiverID, String newStatus) {
         List<Message> messagesInvitationUpdate = table.scan().items().stream()
-                .filter(message ->message.getStatus() != null && message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID))
+                .filter(message ->message.getSenderID() != null && message.getReceiverID() != null && message.getStatus() != null && message.getSenderID().equals(senderID) && message.getReceiverID().equals(receiverID))
                 .collect(Collectors.toList());
 
         for (Message message : messagesInvitationUpdate) {

@@ -286,7 +286,7 @@ public class MessageServiceImpl implements MessageService {
             } else {
                 userId = message.getSenderID();
             }
-            if(message.getType().equals("GROUP_CHAT")) {
+            if(message.getType() != null && message.getType().equals("GROUP_CHAT")) {
                 userId = message.getReceiverID();
             }
             try {
