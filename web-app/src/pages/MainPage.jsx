@@ -422,7 +422,6 @@ const MainPage = () => {
     const [conversations, setConversations] = useState([]);
     const [groups, setGroups] = useState([]);
     const [groupMembers, setGroupMembers] = useState([]);
-    const [notification, setNotification] = useState([]);
     const groupIds = Array.isArray(MyUser?.my_user?.groupIds) ? MyUser.my_user.groupIds : [];
     useEffect(() => {
         const fetchGroupMembers = async () => {
@@ -805,7 +804,6 @@ const MainPage = () => {
                 GroupService.getGroupMembers(groupId)
                     .then((res) => {
                         const group = res?.data;
-                        console.log("Group data là gì:", group); // Kiểm tra dữ liệu nhóm
                         if (group) {
                             // Cập nhật lại thông tin nhóm trong `groups`
                             setGroups((prev) =>
@@ -823,19 +821,6 @@ const MainPage = () => {
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
-                // setNotification("Bạn đã được thêm vào nhóm mới!");
-                const notificationMessage = {
-                    id: `notif-${Date.now()}`, // ID duy nhất
-                    type: "notification",
-                    content: incomingMessage.message,
-                    sendDate: incomingMessage.sendDate || moment().toISOString(),
-                    groupId: groupId,
-                };
-                setNotification((prev) => [...prev, notificationMessage]);
-                // setChatMessages((prevMessages) => {
-                //     const updatedMessages = [...prevMessages, notificationMessage];
-                //     return updatedMessages;
-                // });
                 return;
             }
 
@@ -905,15 +890,6 @@ const MainPage = () => {
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
-                // showToast(`${incomingMessage.message}`, "info");
-                const notificationMessage = {
-                    id: `notif-${Date.now()}`, // ID duy nhất
-                    type: "notification",
-                    content: incomingMessage.message,
-                    sendDate: incomingMessage.sendDate || moment().toISOString(),
-                    groupId: groupId,
-                };
-                setNotification((prev) => [...prev, notificationMessage]);
                 return;
             }
 
@@ -962,14 +938,6 @@ const MainPage = () => {
                         }
                     })
                     .catch((err) => console.error("Error fetching group:", err));
-                const notificationMessage = {
-                    id: `notif-${Date.now()}`, // ID duy nhất
-                    type: "notification",
-                    content: incomingMessage.message,
-                    sendDate: incomingMessage.sendDate || moment().toISOString(),
-                    groupId: groupId,
-                };
-                setNotification((prev) => [...prev, notificationMessage]);
                 return;
             }
 
@@ -1003,14 +971,6 @@ const MainPage = () => {
                     })
                     .catch((err) => console.error("Error fetching group:", err));
 
-                const notificationMessage = {
-                    id: `notif-${Date.now()}`, // ID duy nhất
-                    type: "notification",
-                    content: incomingMessage.message,
-                    sendDate: incomingMessage.sendDate || moment().toISOString(),
-                    groupId: groupId,
-                };
-                setNotification((prev) => [...prev, notificationMessage]);
                 return;
             }
 
@@ -1060,22 +1020,33 @@ const MainPage = () => {
                             : group
                     )
                 );
-                // showToast(`Một thành viên đã bị xóa khỏi nhóm!`, "info");
-                const notificationMessage = {
-                    id: `notif-${Date.now()}`, // ID duy nhất
-                    type: "notification",
-                    content: incomingMessage.message,
-                    sendDate: incomingMessage.sendDate || moment().toISOString(),
-                    groupId: groupId,
-                };
-                setNotification((prev) => [...prev, notificationMessage]);
-                // setChatMessages((prevMessages) => {
-                //     const updatedMessages = [...prevMessages, notificationMessage];
-                //     return updatedMessages;
-                // });
+
                 return;
             }
 
+            if (incomingMessage.type === "REACT_NOTIFICATION") {
+                const { messageId, reactionType, userId } = incomingMessage;
+
+                setChatMessages((prevMessages) =>
+                    prevMessages.map((msg) => {
+                        if (msg.id === messageId) {
+                            const oldReactions = Array.isArray(msg.reactions) ? msg.reactions : [];
+
+                            // Thêm reaction mới (không cần lọc nếu bạn cho phép nhiều lần)
+                            const newReaction = { userId, reactionType };
+                            const updatedReactions = [...oldReactions, newReaction];
+
+                            // ✅ Clone toàn bộ message để chắc chắn trigger re-render
+                            return {
+                                ...msg,
+                                reactions: updatedReactions,
+                            };
+                        }
+                        return msg;
+                    })
+                );
+                return;
+            }
 
             if (incomingMessage.type === "GROUP_DELETED") {
                 const groupId = incomingMessage.groupId;
@@ -1126,15 +1097,6 @@ const MainPage = () => {
                     setMyUser(updatedUser);
                     localStorage.setItem("my_user", JSON.stringify(updatedUser));
                 }
-                const notificationMessage = {
-                    id: `notif-${Date.now()}`, // ID duy nhất
-                    type: "notification",
-                    content: incomingMessage.message,
-                    sendDate: incomingMessage.sendDate || moment().toISOString(),
-                    groupId: groupId,
-                };
-                console.log("notificationMessage là gì:", notificationMessage); // Kiểm tra dữ liệu thông báo
-                setNotification((prev) => [...prev, notificationMessage]);
                 return;
             }
 
@@ -1147,7 +1109,6 @@ const MainPage = () => {
                 GroupService.getGroupMembers(groupId)
                     .then((res) => {
                         const updatedGroup = res?.data;
-                        console.log("Updated group data là gì:", updatedGroup); // Kiểm tra dữ liệu nhóm
                         if (updatedGroup) {
                             // Cập nhật groups
                             setGroups((prev) =>
@@ -1169,12 +1130,11 @@ const MainPage = () => {
 
             if (incomingMessage.type === "CHAT") {
                 const msg = incomingMessage.message;
-
                 if (!selectedChat) return; // Nếu không có selectedChat, không làm gì cả
 
                 // Kiểm tra nếu selectedChat là nhóm
                 if (selectedChat.type === "GROUP_CHAT") {
-                    console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
+                    console.log("Incoming message :", incomingMessage); // Kiểm tra dữ liệu tin nhắn
                     // Nếu tin nhắn là của nhóm đang chọn
                     if (incomingMessage.receiverID === selectedChat.id) {
                         const validSendDate = moment(incomingMessage.sendDate).isValid()
@@ -1227,7 +1187,7 @@ const MainPage = () => {
                 // Cập nhật số lời mời kết bạn chưa đọc
                 setInvitationCount(incomingMessage.count);
             }
-            console.log("Incoming message:", incomingMessage); // Kiểm tra dữ liệu tin nhắn
+            console.log("Incoming message :", incomingMessage); // Kiểm tra dữ liệu tin nhắn
             // Tin nhắn socket đồng ý kết bạn
             if (incomingMessage.type === "SUBMIT_FRIEND_REQUEST") {
                 updateFriendList(incomingMessage.sender);
@@ -1404,7 +1364,7 @@ const MainPage = () => {
                         type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
                         status: 'sent',
                     };
-                    sendMessage(message); // Gửi qua WebSocket
+                    sendMessage(message);
                     setChatMessages(prev => [...prev, message].sort((a, b) => new Date(a.sendDate) - new Date(b.sendDate)));
                 }
             } catch (error) {
@@ -1656,7 +1616,6 @@ const MainPage = () => {
     useEffect(() => {
 
         const unsubscribe = onMessage((msg) => {
-
             console.log('📨 Tin nhắn đến:', msg);
             // Kiểm tra xem selectedChat có hợp lệ không và có thuộc tính type không
             if (!selectedChat || !selectedChat.type) {
@@ -1851,6 +1810,7 @@ const MainPage = () => {
                                                 groupId={selectedChat.id}
                                                 setSelectedConversation={setSelectedChat}
                                                 conversation={selectedChat}
+                                                sendMessage={sendMessage}
                                             />
                                         )}
 
@@ -1900,13 +1860,10 @@ const MainPage = () => {
                                 <section className="chat-section">
                                     <div className="chat-messages">
 
-                                        {[...notification.filter((notif) => notif.groupId === selectedChat?.id), ...chatMessages].length > 0 ? (
-                                            [...notification.filter((notif) => notif.groupId === selectedChat?.id), ...chatMessages]
-                                                .sort((a, b) => moment(a.sendDate).diff(moment(b.sendDate))) // Sắp xếp chung theo thời gian
+                                        {chatMessages.length > 0 ? (
+                                            chatMessages
                                                 .map((msg, index) => {
                                                     const isSentByMe = msg.senderID === MyUser?.my_user?.id;
-                                                    const combinedMessages = [...notification.filter((notif) => notif.groupId === selectedChat?.id), ...chatMessages]
-                                                        .sort((a, b) => moment(a.sendDate).diff(moment(b.sendDate)));
                                                     const isLastMessageByMe = isSentByMe && index === chatMessages.length - 1;
 
                                                     // 📌 Lấy thời gian gửi tin nhắn và chuyển đổi sang múi giờ Việt Nam
@@ -1918,17 +1875,11 @@ const MainPage = () => {
                                                     const messageDate = moment(msg.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY");
 
                                                     // 📌 Lấy ngày của tin nhắn trước đó
-                                                    {/* const prevMessage = chatMessages[index - 1]; */ }
-                                                    {/* const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY") : null; */ }
+                                                    const prevMessage = chatMessages[index - 1];
+                                                    const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY") : null;
 
                                                     // 📌 Hiển thị ngày giữa màn hình nếu là tin đầu tiên hoặc khác ngày trước đó
-                                                    {/* const shouldShowDate = index === 0 || prevMessageDate !== messageDate; */ }
-                                                    const filteredMessages = combinedMessages.filter((m) => m.type !== "notification");
-                                                    const filteredIndex = filteredMessages.findIndex((m) => m.id === msg.id);
-                                                    const prevMessage = filteredIndex > 0 ? filteredMessages[filteredIndex - 1] : null;
-                                                    const prevMessageDate = prevMessage ? moment(prevMessage.sendDate).tz('Asia/Ho_Chi_Minh').format("DD/MM/YYYY") : null;
-                                                    const shouldShowDate = msg.type !== "notification" && (filteredIndex === 0 || (prevMessageDate !== messageDate));
-
+                                                    const shouldShowDate = index === 0 || prevMessageDate !== messageDate;
 
                                                     // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
                                                     const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
@@ -1961,7 +1912,7 @@ const MainPage = () => {
                                                                         : "Invalid date"}
                                                                 </div>
                                                             )}
-                                                            {msg.type === "notification" ? (
+                                                            {msg.status === "Notification" ? (
                                                                 <div className="message-date-center">
                                                                     <p>{msg.content}</p>
                                                                 </div>
@@ -2886,6 +2837,8 @@ const MainPage = () => {
                     user={MyUser?.my_user}
                     onGroupDeleted={handleGroupDeleted}
                     chatMessages={chatMessages}
+                    sendMessage={sendMessage}
+                    groupId={selectedChat.id}
                     onClose={() => setIsMenuModalOpen(false)}
                 />
             )}

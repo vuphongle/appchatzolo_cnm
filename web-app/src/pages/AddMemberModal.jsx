@@ -3,7 +3,8 @@ import { useAuth } from "../context/AuthContext";
 import UserService from "../services/UserService";
 import GroupService from "../services/GroupService";
 import { formatPhoneNumber } from "../utils/formatPhoneNumber";
-const AddMemberModal = ({ onClose, groupId }) => {
+import { v4 as uuidv4 } from 'uuid';
+const AddMemberModal = ({ onClose, groupId, sendMessage }) => {
     const { MyUser } = useAuth();
     const userId = MyUser?.my_user?.id;
     const [friends, setFriends] = useState([]);
@@ -73,7 +74,19 @@ const AddMemberModal = ({ onClose, groupId }) => {
             };
 
             await GroupService.addMember(data);
-
+            const addedMembers = combinedList.filter(user => selectedFriends.includes(user.id));
+            const memberNames = addedMembers.map(user => user.name).join(", ");
+            const notificationMessage = {
+                id: uuidv4(),
+                senderID: groupId,
+                receiverID: groupId,
+                content: `Thêm thành viên ${memberNames} vào nhóm`,
+                sendDate: new Date().toISOString(),
+                isRead: false,
+                type: "GROUP_CHAT",
+                status: "Notification",
+            };
+            sendMessage(notificationMessage);
             alert("Thêm thành viên thành công!");
             onClose();
         } catch (error) {
