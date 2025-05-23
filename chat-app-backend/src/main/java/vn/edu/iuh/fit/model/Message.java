@@ -24,7 +24,8 @@ public class Message {
     private boolean deletedBySender = false;
     private boolean deletedByReceiver = false;
     private String typeWeb;
-    private List<Reaction> reactions = new ArrayList<>();;
+    private List<Reaction> reactions = new ArrayList<>();
+    private boolean pinned = false;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")
@@ -142,5 +143,13 @@ public class Message {
 
     public void setReactions(List<Reaction> reactions) {
         this.reactions = reactions;
+    }
+
+    @DynamoDbAttribute("pinned")
+    public boolean isPinned() {
+        return pinned;
+    }
+    public void setPinned(boolean pinned) {
+        this.pinned = pinned;
     }
 }

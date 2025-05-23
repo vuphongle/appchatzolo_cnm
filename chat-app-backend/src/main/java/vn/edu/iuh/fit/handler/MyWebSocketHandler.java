@@ -689,4 +689,43 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    public void sendPinMessageNotification(String userId, String messageId) throws JsonProcessingException {
+        // Kiểm tra xem userID có phải là groupId không
+        System.out.println("sendPinMessageNotification: " + userId);
+        List<UserGroup> userGroups = groupRepository.getMembersOfGroup(userId);
+        if (userGroups != null && !userGroups.isEmpty()) {
+            // Nếu là nhóm, gửi thông báo đến tất cả thành viên trong nhóm
+            for (UserGroup userGroup : userGroups) {
+                WebSocketSession groupSession = sessions.get(userGroup.getUserId());
+                if (groupSession != null && groupSession.isOpen()) {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "PIN_MESSAGE");
+                    payload.put("messageId", messageId);
+                    String jsonPayload = objectMapper.writeValueAsString(payload);
+                    try {
+                        groupSession.sendMessage(new TextMessage(jsonPayload));
+                        System.out.println("Sent PIN_MESSAGE notification to group member: " + userGroup.getUserId());
+                    } catch (IOException e) {
+                        System.err.println("Error sending PIN_MESSAGE notification: " + e.getMessage());
+                    }
+                }
+            }
+        } else {
+            // Nếu không phải nhóm (tin nhắn cá nhân), gửi thông báo đến userId
+            WebSocketSession userSession = sessions.get(userId);
+            if (userSession != null && userSession.isOpen()) {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "PIN_MESSAGE");
+                payload.put("messageId", messageId);
+                String jsonPayload = objectMapper.writeValueAsString(payload);
+                try {
+                    userSession.sendMessage(new TextMessage(jsonPayload));
+                    System.out.println("Sent PIN_MESSAGE notification to user: " + userId);
+                } catch (IOException e) {
+                    System.err.println("Error sending PIN_MESSAGE notification: " + e.getMessage());
+                }
+            }
+        }
+    }
 }

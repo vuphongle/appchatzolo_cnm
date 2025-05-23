@@ -282,4 +282,20 @@ public class MessageRepository {
                 .filter(message -> message.getReceiverID() != null && message.getReceiverID().equals(groupId))  // Kiểm tra null trước khi so sánh
                 .collect(Collectors.toList());
     }
+
+    // Lấy các tin nhắn đã ghim
+    public List<Message> findPinnedMessages(String senderId, String receiverId) {
+        return table.scan().items().stream()
+                .filter(message ->
+                        message.getSenderID() != null &&
+                                message.getReceiverID() != null &&
+                                (
+                                        (message.getSenderID().equals(senderId) && message.getReceiverID().equals(receiverId) && message.isPinned())
+                                                ||
+                                                (message.getSenderID().equals(receiverId) && message.getReceiverID().equals(senderId) && message.isPinned())
+                                )
+                )
+                .collect(Collectors.toList());
+
+    }
 }

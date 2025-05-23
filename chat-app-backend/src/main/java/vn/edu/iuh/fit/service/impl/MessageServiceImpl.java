@@ -1,21 +1,20 @@
 package vn.edu.iuh.fit.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import vn.edu.iuh.fit.enums.ReactType;
+import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
-import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.model.Reaction;
-import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
 import vn.edu.iuh.fit.service.MessageService;
-import vn.edu.iuh.fit.utils.SystemConstraints;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -324,6 +323,9 @@ public class MessageServiceImpl implements MessageService {
             } else {
                 userId = message.getSenderID();
             }
+            if(message.getType() != null && message.getType().equals("GROUP_CHAT")) {
+                userId = message.getReceiverID();
+            }
             try {
                 myWebSocketHandler.sendRemoveReactNotification(userId, messageId);
             } catch (JsonProcessingException e) {
@@ -332,6 +334,69 @@ public class MessageServiceImpl implements MessageService {
         } else {
             System.err.println("MyWebSocketHandler bean is not available.");
         }
+    }
+
+    @Override
+    public Message pinMessage(String messageId, String userId) throws GroupException {
+        Message message = repository.getMessageById(messageId);
+        if(message == null) {
+            throw new GroupException("Tin nhắn không tồn tại");
+        }
+
+        if(message.isPinned()) {
+            throw new GroupException("Tin nhắn đã được ghim trước đó");
+        } else {
+            List<Message> pinnedMessages = repository.findPinnedMessages(message.getSenderID(), message.getReceiverID());
+            if(pinnedMessages.size() >= 3) {
+                throw new GroupException("Đã đạt giới hạn 3 tin nhắn ghim trong đoạn chat này");
+            } else {
+                message.setPinned(true);
+                repository.save(message);
+            }
+            // Gửi thông báo qua WebSocket cho người nhận
+            return getMessage(messageId, userId, message);
+        }
+    }
+
+    @Override
+    public Message unpinMessage(String messageId, String userId) throws GroupException {
+        Message message = repository.getMessageById(messageId);
+        if(message == null) {
+            throw new GroupException("Tin nhắn không tồn tại");
+        }
+
+        if(!message.isPinned()) {
+            throw new GroupException("Tin nhắn chưa được ghim trước đó");
+        } else {
+            message.setPinned(false);
+            repository.save(message);
+            // Gửi thông báo qua WebSocket cho người nhận
+            return getMessage(messageId, userId, message);
+        }
+    }
+
+    @NotNull
+    private Message getMessage(String messageId, String userId, Message message) throws GroupException {
+        MyWebSocketHandler myWebSocketHandler = myWebSocketHandlerProvider.getIfAvailable();
+        if (myWebSocketHandler != null) {
+            // Userid người cần thông báo
+            if(userId.equals(message.getSenderID())) {
+                userId = message.getReceiverID();
+            } else {
+                userId = message.getSenderID();
+            }
+            if(message.getType() != null && message.getType().equals("GROUP_CHAT")) {
+                userId = message.getReceiverID();
+            }
+            try {
+                myWebSocketHandler.sendPinMessageNotification(userId, messageId);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        } else {
+            throw new GroupException("MyWebSocketHandler bean is not available.");
+        }
+        return message;
     }
 }
 
