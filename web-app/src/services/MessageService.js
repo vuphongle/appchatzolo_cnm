@@ -131,6 +131,28 @@ const MessageService = {
         }
     },
 
+    // Ghim tin nhắn
+    pinMessage: async (messageId, userId) => {
+        try {
+            const response = await axios.put(`${API_BASE_URL}/${messageId}/pin/${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error("Lỗi khi ghim tin nhắn:", error.response || error);
+            throw error.response ? error.response.data : error;
+        }
+    },
+
+
+    // Bỏ ghim tin nhắn
+    unpinMessage: async (messageId, userId) => {
+        try {
+            const response = await axios.delete(`${API_BASE_URL}/${messageId}/unpin/${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error("Lỗi khi bỏ ghim tin nhắn:", error.response || error);
+            throw error.response ? error.response.data : error;
+        }
+    },
 
     // Thêm reaction vào tin nhắn
     addReact: async (messageId, userId, reactType) => {

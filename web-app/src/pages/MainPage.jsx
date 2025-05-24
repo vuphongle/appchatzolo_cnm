@@ -89,7 +89,7 @@ const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], 
     </li>
 );
 
-const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, isOwner, isMine, isRecalled }) => {
+const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, onPinMessage, isOwner, isMine, isRecalled, isPinned }) => {
     const menuRef = useRef(null);
     const [menuDirection, setMenuDirection] = useState('open-up'); // Mặc định mở lên trên
 
@@ -114,6 +114,11 @@ const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, isOwner, isMin
             {!isRecalled && (
                 <button className="dropdown-item" onClick={onForward}>
                     <i className="bi bi-share me-2"></i> Chia sẻ
+                </button>
+            )}
+            {!isRecalled && !isPinned && (
+                <button className="dropdown-item" onClick={onPinMessage} >
+                    <i className="bi bi-share me-2"></i> Ghim tin nhắn
                 </button>
             )}
             <div className="dropdown-divider"></div>
@@ -782,6 +787,18 @@ const MainPage = () => {
                     )
                 );
                 return; // Kết thúc xử lý cho RECALL_MESSAGE
+            }
+
+            // pin message and unpin message chung luôn
+            if (incomingMessage.type === "PIN_MESSAGE") {
+                const pinnedMessageId = incomingMessage.messageId;
+                // Giả sử chatMessages được lưu ở state, bạn cập nhật trạng thái pin cho tin nhắn
+                setChatMessages((prevMessages) =>
+                    prevMessages.map((msg) =>
+                        msg.id === pinnedMessageId ? { ...msg, pinned: !msg.pinned } : msg
+                    )
+                );
+                return;
             }
 
             if (incomingMessage.type === "ADD_TO_GROUP") {
@@ -1770,6 +1787,7 @@ const MainPage = () => {
         });
         return () => unsubscribe();
     }, [selectedChat, onMessage]);
+    const [showAllPinned, setShowAllPinned] = useState(false);
 
 
     // Hàm render nội dung theo tab
@@ -1858,6 +1876,96 @@ const MainPage = () => {
                                 />
 
                                 <section className="chat-section">
+                                    {chatMessages && chatMessages.some(msg => msg.pinned) && (() => {
+                                        const pinnedMessages = chatMessages.filter(msg => msg.pinned);
+                                        const displayMessages = showAllPinned ? pinnedMessages : [pinnedMessages[0]];
+                                        const extraCount = pinnedMessages.length - 1;
+
+                                        return (
+                                            <div className="pinned-messages p-1">
+                                                {displayMessages.map((msg) => {
+                                                    const isLong = msg.content.length > 15;
+                                                    const displayContent = msg.showFullContent
+                                                        ? msg.content
+                                                        : `${msg.content.slice(0, 15)}${isLong ? "..." : ""}`;
+
+                                                    return (
+                                                        <div key={msg.id} className="card bg-light mb-2 shadow-sm">
+                                                            <div className="card-body py-0 px-3 d-flex justify-content-between align-items-center">
+                                                                <div className="d-flex align-items-center">
+                                                                    <i className="fas fa-thumbtack me-2"></i>
+                                                                    <p className="mb-0 small"
+                                                                        style={{ whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                                                                        {displayContent}
+                                                                        {isLong && (
+                                                                            <i
+                                                                                className="btn btn-link btn-sm text-decoration-none ps-2"
+                                                                                onClick={() => {
+                                                                                    setChatMessages(prev =>
+                                                                                        prev.map(m =>
+                                                                                            m.id === msg.id
+                                                                                                ? { ...m, showFullContent: !m.showFullContent }
+                                                                                                : m
+                                                                                        )
+                                                                                    );
+                                                                                }}
+                                                                            >
+                                                                                {msg.showFullContent ? "Thu gọn" : "Xem thêm"}
+                                                                            </i>
+                                                                        )}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="d-flex align-items-center gap-2">
+                                                                    {pinnedMessages.length > 1 && (
+                                                                        <div className="text-end">
+                                                                            <button
+                                                                                className="btn btn-sm btn-outline-secondary"
+                                                                                onClick={() => setShowAllPinned(prev => !prev)}
+                                                                            >
+                                                                                {showAllPinned ? "Thu gọn" : `+${extraCount} ghim`}
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                    <button
+                                                                        className="btn btn-sm btn-outline-danger"
+                                                                        onClick={() => {
+                                                                            MessageService.unpinMessage(msg.id, MyUser?.my_user?.id)
+                                                                                .then(() => {
+                                                                                    setChatMessages(prev =>
+                                                                                        prev.map(m =>
+                                                                                            m.id === msg.id ? { ...m, pinned: false } : m
+                                                                                        )
+                                                                                    );
+                                                                                })
+                                                                                .catch((error) => {
+                                                                                    console.error("Lỗi khi bỏ ghim tin nhắn:", error);
+                                                                                });
+
+                                                                            const notificationMessage = {
+                                                                                id: uuidv4(),
+                                                                                senderID: selectedChat.id,
+                                                                                receiverID: selectedChat.id,
+                                                                                content: `${MyUser?.my_user?.name} đã bỏ ghim một tin nhắn`,
+                                                                                sendDate: new Date().toISOString(),
+                                                                                isRead: false,
+                                                                                type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                                                                                status: "Notification",
+                                                                            };
+                                                                            sendMessage(notificationMessage);
+                                                                        }}
+                                                                    >
+                                                                        <i>Bỏ ghim</i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
+
+
                                     <div className="chat-messages">
 
                                         {chatMessages.length > 0 ? (
@@ -1979,6 +2087,7 @@ const MainPage = () => {
                                                                             isOwner={msg.senderID === MyUser?.my_user?.id}
                                                                             isMine={msg.senderID === MyUser?.my_user?.id}
                                                                             isRecalled={msg.content === "Tin nhắn đã được thu hồi"}
+                                                                            isPinned={msg.pinned}
                                                                             onRecall={async () => {
                                                                                 setShowMenuForMessageId(null);
                                                                                 try {
@@ -2003,6 +2112,28 @@ const MainPage = () => {
                                                                                     setChatMessages((prev) => prev.filter(m => m.id !== msg.id));
                                                                                 } catch (err) {
                                                                                     console.error("Lỗi khi xóa ở phía tôi:", err);
+                                                                                }
+                                                                            }}
+                                                                            onPinMessage={async () => {
+                                                                                setShowMenuForMessageId(null);
+                                                                                try {
+                                                                                    await MessageService.pinMessage(msg.id, MyUser?.my_user?.id);
+                                                                                    setChatMessages((prev) => prev.map((m) =>
+                                                                                        m.id === msg.id ? { ...m, pinned: true } : m
+                                                                                    ));
+                                                                                    const notificationMessage = {
+                                                                                        id: uuidv4(),
+                                                                                        senderID: selectedChat.id,
+                                                                                        receiverID: selectedChat.id,
+                                                                                        content: `${MyUser?.my_user?.name} đã ghim một tin nhắn`,
+                                                                                        sendDate: new Date().toISOString(),
+                                                                                        isRead: false,
+                                                                                        type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                                                                                        status: "Notification",
+                                                                                    };
+                                                                                    sendMessage(notificationMessage);
+                                                                                } catch (err) {
+                                                                                    console.error("Lỗi khi ghim tin nhắn:", err);
                                                                                 }
                                                                             }}
                                                                             onClose={() => setShowMenuForMessageId(null)}
@@ -2317,8 +2448,9 @@ const MainPage = () => {
                                     </p>
                                 </section>
                             </>
-                        )}
-                    </div>
+                        )
+                        }
+                    </div >
                 );
             case "contacts":
                 return MyUser && MyUser.my_user ? <ContactsTab userId={MyUser.my_user.id} friendRequests={friendRequests} onSelectChat={handleSelectChat}
