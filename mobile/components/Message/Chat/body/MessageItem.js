@@ -22,8 +22,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { IPV4 } from '@env';
 import { UserContext } from '../../../../context/UserContext';
 
+import { WebSocketContext } from '../../../../context/Websocket';
+import UserService from '../../../../services/UserService';
+
+
 function MessageItem({ avatar, time, message, messageId, userId, receiverId, messageInfo: initialMessageInfo, showForwardRecall = true }) {
-  const { user } = React.useContext(UserContext);
+  const { user, setIsChange } = React.useContext(UserContext);
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState([]);
   const [StatusRead, setStatusRead] = useState(false);
@@ -36,6 +40,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
   const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
   const [reactCount, setReactCount] = useState(messageInfo.reactions?.length);
   const messageTime = moment(time);
+  const {sendMessage} = React.useContext(WebSocketContext);
   const displayTime = messageTime.isValid()
     ? messageTime.add(7, 'hour').format("HH:mm")
     : moment().format("HH:mm");
@@ -109,7 +114,24 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
       return null;
     }
   };
+   const handlePinMessage = async () => {
+      try {
+        const response = await MessageService.PinMessageByUserId(messageId, userId);
+        console.log('Ghim tin nhắn:', response);
+        const user = await UserService.getUserById(userId);
+        setIsChange("PIN_MESSAGE");
   
+        if (response.success) {
+          Alert.alert('Thành công', 'Tin nhắn đã được ghim thành công.');
+          handleNotifiMessageGroup(`${user.name} đã ghim tin nhắn "${message}"`);
+        } else {
+          Alert.alert('Thất bại', 'Không thể ghim tin nhắn này.');
+        }
+      } catch (error) {
+        console.error('Lỗi khi ghim tin nhắn:', error);
+        Alert.alert('Lỗi', 'Không thể ghim tin nhắn này. Vui lòng thử lại sau.');
+      }
+    };
   // Phát/dừng audio với react-native-sound
   const playAudio = async (audioUrl) => {
     try {
@@ -214,7 +236,21 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
       image: message,
     });
   };
-
+const handleNotifiMessageGroup = (mess) => {
+       const ContentMessage = {
+                id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+                senderID: userId,
+                receiverID: receiverId,
+                content: mess,
+                sendDate: new Date().toISOString(),
+                isRead: false,
+                type: 'PRIVATE_CHAT',
+                
+                status:'Notification',
+              };
+      sendMessage(ContentMessage);
+      console.log('sendMessage', ContentMessage);
+    }
   // Hàm thu hồi tin nhắn
   const recallMessage = async () => {
     try {
@@ -534,6 +570,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
         onReact={reactMessage}
         onUnReact={deleteReaction}
         type={type}
+           onPin={handlePinMessage}
       />
     </>
   );

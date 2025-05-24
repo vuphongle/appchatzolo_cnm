@@ -125,6 +125,36 @@ fetchGroupMessages: async (groupId) => {
 
   }
 },
+  PinMessageByUserId: async (messageId, userId) => {
+    try {
+      const response = await axios.put(`${IPV4}/messages/${messageId}/pin/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error pinning message:', error);
+      throw error.response ? error.response.data : error;
+    }
+  },
+  UnpinMessageByUserId: async (messageId, userId) => {
+  if (!messageId || !userId) {
+    throw new Error("messageId hoặc userId không hợp lệ");
+  }
+
+  try {
+    const url = `${IPV4}/messages/${messageId}/unpin/${userId}`;
+    console.log("DELETE", url);
+    
+    const response = await axios.delete(url, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error unpinning message:', error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
+  }
+
 };
 
 export default MessageService;
