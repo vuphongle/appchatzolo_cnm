@@ -21,6 +21,9 @@ import MessageOptionsModal from './MessageOptionsModal';
 import axios from 'axios';
 import { IPV4 } from '@env';
 import { UserContext } from '../../../../context/UserContext';
+// import {PinMessageByUserId} from '../../../../services/MessageService';
+import { WebSocketContext } from '../../../../context/Websocket';
+import UserService from '../../../../services/UserService';
 
 function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, messageInfo: initialMessageInfo, showForwardRecall = true }) {
   const [messIndex, setMessIndex] = useState(message);
@@ -31,10 +34,11 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
-  const { user } = React.useContext(UserContext);
+  const { user,setIsChange } = React.useContext(UserContext);
   const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
   const [reactCount, setReactCount] = useState(messageInfo.reactions?.length);
   const navigation = useNavigation();
+  const {sendMessage} = React.useContext(WebSocketContext);
   // Kiểm tra xem tin nhắn có phải là URL của ảnh hay không
   const isImageMessage = (url) => url?.match(/\.(jpg|jpeg|png|gif|bmp|webp|tiff|heif|heic)$/) != null;
 
@@ -58,6 +62,21 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
     if (isDocumentFile(msg)) return 'document';
     return 'text';
   };
+   const handleNotifiMessageGroup = (mess) => {
+       const ContentMessage = {
+                id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+                senderID: userId,
+                receiverID: receiverId,
+                content: mess,
+                sendDate: new Date().toISOString(),
+                isRead: false,
+                type: 'PRIVATE_CHAT',
+                
+                status:'Notification',
+              };
+      sendMessage(ContentMessage);
+      console.log('sendMessage', ContentMessage);
+    }
 
   // Lưu trạng thái loại tin nhắn
   const [typeIndex, setTypeIndex] = useState(() => getMessageType(message));
@@ -105,9 +124,12 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
       return null;
     }
   };
+    // handleNotifiPin function is not implemented or needed, so remove or comment it out
+  // handleNotifiPin= () => {
+  
   
   // Phát/dừng audio với react-native-sound
-  const playAudio = async (audioUrl) => {
+    const playAudio = async (audioUrl) => {
     try {
       if (sound && isAudioPlaying) {
         sound.pause();
@@ -272,7 +294,24 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
         setEmojiIndex(uniqueEmojis.slice(0, 3));
       }
     }, [messageInfo]);
+  const handlePinMessage = async () => {
+    try {
+      const response = await MessageService.PinMessageByUserId(messageId, userId);
+      console.log('Ghim tin nhắn:', response);
+      const user = await UserService.getUserById(userId);
+      setIsChange("PIN_MESSAGE");
 
+      if (response.success) {
+        Alert.alert('Thành công', 'Tin nhắn đã được ghim thành công.');
+        handleNotifiMessageGroup(`${user.name} đã ghim tin nhắn "${message}"`);
+      } else {
+        Alert.alert('Thất bại', 'Không thể ghim tin nhắn này.');
+      }
+    } catch (error) {
+      console.error('Lỗi khi ghim tin nhắn:', error);
+      Alert.alert('Lỗi', `Không thể ghim tin nhắn này.${response.error}`);
+    }
+  };
     // Xóa reaction
     const deleteReaction = async () => {
       try {
@@ -282,7 +321,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
         setMessageOptionsVisible(false);
       } catch (error) {
         console.error("Error deleting reaction:", error);
-      }
+    }
     }
 
   // Hiển thị danh sách emoji
@@ -559,6 +598,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
         userId={userId}
         onReact={reactMessage}
         onUnReact={deleteReaction}
+        onPin={handlePinMessage}
       />
     </>
   );

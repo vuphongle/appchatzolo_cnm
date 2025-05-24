@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 
-const MessageOptionsModal = ({ visible, onClose, userId, onForward, type, onRecall, onReact, onUnReact, onDelete, message}) => {
+const MessageOptionsModal = ({ visible, onClose, userId, onForward, type, onRecall, onReact, onUnReact, onDelete, message,onPin}) => {
   const reactions = [
     { emoji: '❤️', label: 'Heart', onPress: () => onReact('LOVE') },
     { emoji: '👍', label: 'Thumbs Up', onPress: () => onReact('LIKE') },
@@ -19,7 +19,7 @@ const MessageOptionsModal = ({ visible, onClose, userId, onForward, type, onReca
           ? [{ icon: '↩️', text: 'Thu hồi', onPress: () => onRecall() }]
           : []),
     { icon: '📋', text: 'Sao chép', onPress: () => onForward('copy') },
-    { icon: '📌', text: 'Ghim', onPress: () => onForward('pin') },
+    { icon: '📌', text: 'Ghim', onPress: () => onPin() },
     { icon: 'ℹ️', text: 'Chi tiết', onPress: () => onForward('details') },
     { icon: '🗑️', text: 'Xóa', onPress: onDelete },
     // Xóa cảm xúc chỉ hiển thị nếu có ID của người dùng trong reactions
@@ -27,6 +27,7 @@ const MessageOptionsModal = ({ visible, onClose, userId, onForward, type, onReca
       ? [{ icon: '❌', text: 'Xóa cảm xúc', onPress: () => onUnReact('REMOVE') }]
       : [])
   ];
+    
 
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>

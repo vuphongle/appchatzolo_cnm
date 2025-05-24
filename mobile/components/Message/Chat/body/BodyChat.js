@@ -20,6 +20,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import MyMessageItem from './MyMessagaItem';
 import MessageItem from './MessageItem';
+import TruncatedText from '../../../../utils/TruncatedText';
+import PinnedMessagesComponent from '../PinnedMessagesComponent';
 import { UserContext } from '../../../../context/UserContext';
 import EmojiSelector from '../../../../utils/EmojiSelector';
 import { formatDate } from '../../../../utils/formatDate';
@@ -77,7 +79,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
 
   useEffect(() => {
        if (typeof isChange === 'string') {
-         if(isChange.startsWith('REACT') || isChange.startsWith('REMOVE_REACT')){
+         if(isChange.startsWith('REACT') || isChange.startsWith('REMOVE_REACT')||isChange.startsWith('PIN_MESSAGE')|| isChange.startsWith('UNPIN_MESSAGE')){
              fetchMessages();
          }
        }
@@ -96,7 +98,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         const sortedMessages = response.sort(
           (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
         );
-        console.log('Fetched messages:', sortedMessages);
+        // console.log('Fetched messages:', sortedMessages);
         setLocalMessages(sortedMessages);
       } else {
        
@@ -156,7 +158,15 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       }, 100);
     }
   }, [localMessages]);
+// const handleMessagePress = (message) => {
+//     const index = localMessages.findIndex(m => m.id === message.id);
 
+//     if (index !== -1 && scrollViewRef.current) {
+//       scrollViewRef.current.scrollTo({ y: 100, animated: true });
+//     } else {
+//       Alert.alert('Không tìm thấy tin nhắn này trong danh sách.');
+//     }
+//   };
  
   useEffect(() => {
     const options = {
@@ -413,6 +423,11 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       }
     }
   };
+  function truncateTextlimit(text, maxLength) {
+  if (!text) return '';
+  return text.length > maxLength ? text.slice(0, maxLength) + '..."' : text;
+}
+
 
   // Handle sending messages (text, images, files)
   const handleSendMessage = async () => {
@@ -488,6 +503,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         Alert.alert('Error', 'Failed to send one or more files');
       }
     }
+
 
    
     if (messageText.trim()) {
@@ -568,6 +584,12 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
+      < PinnedMessagesComponent  userId={userId}
+  receiverId={receiverID}
+  messageshistory={localMessages}
+  receiverName={name}
+  // onMessagePress={handleMessagePress}
+            />
         <ScrollView
           style={styles.messageContainer}
           ref={scrollViewRef}
@@ -614,42 +636,53 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
                       <Text style={styles.dateText}>{headerText}</Text>
                     </View>
                   )}
+                   {message.status==="Notification" && (
+                    <View>
+                       <View style={styles.NotiHeader}>
+                      <Text style={styles.NotiText}>{truncateTextlimit(message.content,40)||''}</Text>
+                    </View>
+                    </View>
+                  ) }
+                 
                   
-                  {isMyMessage ? (
-                    <MyMessageItem
-                      time={formatDate(message.sendDate)}
-                      message={message.content}
-                      messageInfo={message}
-                      messageId={message.id}
-                      userId={userId}
-                      receiverId={receiverID}
-                      avatar={user?.avatar}
-                      messageType={message.type || 'text'}
-                      fileName={message.fileName}
-                      isRead={index === lastMyMessageIndex ? message.isRead : undefined}
-                      audioDuration={message.audioDuration}
-                      onDeleteMessage={() => {
-                       
-                      }}
-                    />
-                  ) : (
-                    <MessageItem
-                      avatar={avatar}
-                      name={name}
-                      time={message.sendDate}
-                      message={message.content}
-                      messageId={message.id}
-                      userId={userId}
-                      receiverId={receiverID}
-                      messageType={message.type || 'text'}
-                      messageInfo={message}
-                      fileName={message.fileName}
-                      audioDuration={message.audioDuration}
-                      onDeleteMessage={() => {
+                  {message.status === "Notification" ? null : (
+  isMyMessage ? (
+    <MyMessageItem
+      time={formatDate(message.sendDate)}
+      message={message.content}
+      messageInfo={message}
+      messageId={message.id}
+      userId={userId}
+      receiverId={receiverID}
+      avatar={user?.avatar}
+      messageType={message.type || 'text'}
+      fileName={message.fileName}
+      isRead={index === lastMyMessageIndex ? message.isRead : undefined}
+      audioDuration={message.audioDuration}
+      onDeleteMessage={() => {
+        // TODO: handle delete
+      }}
+    />
+  ) : (
+    <MessageItem
+      avatar={avatar}
+      name={name}
+      time={message.sendDate}
+      message={message.content}
+      messageId={message.id}
+      userId={userId}
+      receiverId={receiverID}
+      messageType={message.type || 'text'}
+      messageInfo={message}
+      fileName={message.fileName}
+      audioDuration={message.audioDuration}
+      onDeleteMessage={() => {
+        // TODO: handle delete
+      }}
+    />
+  )
+)}
 
-                      }}
-                    />
-                  )}
                 </View>
               );
             });
@@ -909,6 +942,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
+   NotiHeader: {
+    alignSelf: 'center',
+   
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+    NotiText: {
+    fontSize: 12,
+    color: '#555',
+  },
+
   filePreview: {
     width: 100,
     height: 60,

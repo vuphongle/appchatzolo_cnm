@@ -18,6 +18,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import PinnedMessagesComponent from '../../Chat/PinnedMessagesComponent';
 import MyMessageItem from '../../Chat/body/MyMessagaItem'
 import MessageItem from '../../Chat/body/MessageItem';
 import { UserContext } from '../../../../context/UserContext'
@@ -97,6 +98,12 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
       }
     };
   }, []);
+   function truncateTextlimit(text, maxLength) {
+  if (!text) return '';
+  return text.length > maxLength ? text.slice(0, maxLength) + '..."' : text;
+}
+
+
 
   const fetchMessages = async () => {
     if (!userId || !receiverID) return;
@@ -139,7 +146,7 @@ const formatDuration = (milliseconds) => {
 
   useEffect(() => {
     if (typeof isChange === 'string') {
-            if(isChange.startsWith('RECALL_MESSAGE') || isChange.startsWith('CHAT') || isChange.startsWith('REACT') || isChange.startsWith('REMOVE_REACT')){
+            if(isChange.startsWith('RECALL_MESSAGE') || isChange.startsWith('CHAT') || isChange.startsWith('REACT') || isChange.startsWith('REMOVE_REACT')||isChange.startsWith('PIN_MESSAGE')|| isChange.startsWith('UNPIN_MESSAGE')){
                 fetchMessages();
             }
     }
@@ -147,6 +154,7 @@ const formatDuration = (milliseconds) => {
 
   // Initialize WebSocket message listener
   useEffect(() => {
+    
       if (!userId || !receiverID) return;
 
       // Function to handle incoming WebSocket messages
@@ -583,7 +591,12 @@ const formatDuration = (milliseconds) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-
+       < PinnedMessagesComponent  userId={userId}
+        receiverId={receiverID}
+        messageshistory={localMessages}
+        receiverName={name}
+        // onMessagePress={handleMessagePress}
+                  />
         <ScrollView
           style={styles.messageContainer}
           ref={scrollViewRef}
@@ -632,12 +645,13 @@ const formatDuration = (milliseconds) => {
                   {message.status==="Notification" && (
                     <View>
                        <View style={styles.NotiHeader}>
-                      <Text style={styles.NotiText}>{message.content||''}</Text>
+                      <Text style={styles.NotiText}>{truncateTextlimit(message.content,40)||''}</Text>
                     </View>
                     </View>
                   ) }
+
                   
-                  {isMyMessage ? (
+                  {message.status === "Notification" ? null : (isMyMessage ? (
                     <MyMessageItem
                       time={formatDate(message.sendDate)}
                       message={message.content}
@@ -654,7 +668,7 @@ const formatDuration = (milliseconds) => {
                       }}
                     />
                   ) : (
-                    message.status === "Notification" ? null : (
+                   
                       <MessageItem
                         avatar={message?.avatar}
                         name={name}
@@ -670,8 +684,8 @@ const formatDuration = (milliseconds) => {
                           
                         }}
                       />
-                    )
-                  )}
+                    
+                  ))}
                 </View>
               );
             });
