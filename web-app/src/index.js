@@ -6,20 +6,20 @@ import { WebSocketProvider } from "./context/WebSocket"; // Import WebSocketProv
 import { AuthProvider, useAuth } from "./context/AuthContext"; // Import AuthContext
 
 const WebSocketWrapper = () => {
-  const { MyUser } = useAuth(); // Lấy thông tin người dùng từ AuthContext
+    const { MyUser } = useAuth(); // Lấy thông tin người dùng từ AuthContext
 
-  return (
-    <WebSocketProvider userId={MyUser?.my_user?.id || "defaultUserId"}>
-      <App />
-    </WebSocketProvider>
-  );
+    return (
+        <WebSocketProvider userId={MyUser?.my_user?.id || "defaultUserId"}>
+            <App />
+        </WebSocketProvider>
+    );
 };
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <BrowserRouter>
-    <AuthProvider>
-      <WebSocketWrapper />
-    </AuthProvider>
-  </BrowserRouter>
+    <BrowserRouter>
+        <AuthProvider>
+            <WebSocketWrapper />
+        </AuthProvider>
+    </BrowserRouter>
 );

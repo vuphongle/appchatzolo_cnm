@@ -1,5 +1,6 @@
 package vn.edu.iuh.fit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
@@ -9,8 +10,10 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @DynamoDbBean
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
     private String id;
     private String content;
@@ -24,7 +27,18 @@ public class Message {
     private boolean deletedBySender = false;
     private boolean deletedByReceiver = false;
     private String typeWeb;
-    private List<Reaction> reactions = new ArrayList<>();;
+    private List<Reaction> reactions = new ArrayList<>();
+
+    private IceCandidate candidate;
+
+    @DynamoDbAttribute("candidate")
+    public IceCandidate getCandidate() {
+        return candidate;
+    }
+
+    public void setCandidate(IceCandidate candidate) {
+        this.candidate = candidate;
+    }
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("id")

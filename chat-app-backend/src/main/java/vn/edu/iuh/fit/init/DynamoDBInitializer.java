@@ -23,6 +23,7 @@ public class DynamoDBInitializer implements CommandLineRunner {
         createTableIfNotExists(AdminRole.class, "AdminRole");
         createTableIfNotExists(GroupAdmin.class, "GroupAdmin");
         createTableIfNotExists(UserGroup.class, "UserGroup");
+        createTableIfNotExists(UserFcmToken.class, "UserFcmToken");
         createTableIfNotExists(FriendList.class, "FriendList");
         createTableIfNotExists(Message.class, "Message");
         createTableIfNotExists(Media.class, "Media");

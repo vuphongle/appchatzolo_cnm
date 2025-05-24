@@ -57,6 +57,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2' // Đảm bảo phiên bản phù hợp với Jackson hiện tại
 
     implementation 'software.amazon.awssdk:http-client-spi:2.29.43'
+
+    implementation 'com.google.firebase:firebase-admin:9.1.1'
 }
 
 tasks.named('test') {

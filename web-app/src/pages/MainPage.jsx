@@ -17,6 +17,8 @@ import SockJS from 'sockjs-client';
 import axios from "axios";
 import UserInfoModal from "./UserInfoModal";
 import GroupMenuModal from "./GroupMenuModal";
+import { useLocation } from "react-router-dom";
+
 
 
 import S3Service from "../services/S3Service";
@@ -1701,24 +1703,70 @@ const MainPage = () => {
     const toggleSearchModalCall = () => {
         setIsVideoCallVisible((prev) => !prev);
     };
+
+    const location = useLocation();
+
     useEffect(() => {
-        const unsubscribe = onMessage((message) => {
-            if (message.type === "video_call_request" && message.to === MyUser?.my_user?.id) {
-                // Hiển thị modal cuộc gọi đến
-                const userResponse = window.confirm(`Cuộc gọi video đến từ ${message.from}, bạn có muốn nhận không?`);
-                if (userResponse) {
-                    // Chấp nhận cuộc gọi
-                    videoCallRef.current.startCall(message.from);
-                    setIsCalling(true);  // Đánh dấu người dùng đang gọi video
-                    setIsVideoCallVisible(true);  // Hiển thị modal cuộc gọi video
-                }
+        const params = new URLSearchParams(location.search);
+        const callerId = params.get("callerId");
+
+        if (callerId && friends.length > 0) {
+            const matchedFriend = friends.find(f => f.id === callerId);
+            if (matchedFriend) {
+                setSelectedChat({
+                    ...matchedFriend,
+                    isOnline: matchedFriend.online,
+                    username: matchedFriend.name,
+                    avatar: matchedFriend.avatar,
+                });
+                setActiveTab("chat");
+                setIsVideoCallVisible(true);
+            }
+        }
+    }, [location.search, friends]);
+
+    useEffect(() => {
+        const unsubscribe = onMessage(async (message) => {
+            console.log("Incoming message Call:", message);
+
+            if (message.to !== MyUser?.my_user?.id) return; // Bỏ qua nếu không gửi cho mình
+
+            switch (message.type) {
+                case "video_call_request":
+                    const userResponse = window.confirm(`Cuộc gọi video đến từ ${message.from}, bạn có muốn nhận không?`);
+                    if (userResponse) {
+                        videoCallRef.current.startCall(message.from);
+                        setIsCalling(true);
+                        setIsVideoCallVisible(true);
+                    }
+                    break;
+
+                case "offer":
+                    if (!videoCallRef.current) return;
+
+                    await videoCallRef.current.receiveOffer(message.offer, message.from); // Thêm hàm này trong class VideoCall
+                    break;
+
+                case "answer":
+                    if (!videoCallRef.current?.peerConnection) return;
+                    await videoCallRef.current.peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
+                    break;
+
+                case "candidate":
+                    if (!videoCallRef.current?.peerConnection) return;
+                    await videoCallRef.current.peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
+                    break;
+
+                default:
+                    break;
             }
         });
 
         return () => {
-            unsubscribe(); // Hủy đăng ký khi component unmount
+            unsubscribe();
         };
     }, [onMessage, MyUser?.my_user?.id]);
+
 
 
     const removeFile = (fileToRemove) => {

@@ -8,12 +8,28 @@ import RegisterPage from './pages/RegisterPage';
 import { useAuth } from './context/AuthContext';
 import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer và toast
 import 'react-toastify/dist/ReactToastify.css';
+import { useWebSocket } from './context/WebSocket';
+import { onMessage } from "firebase/messaging";
+import { messaging } from "../src/services/firebase_messaging"; // Import messaging từ firebase_messaging.js
 
 function App() {
     const navigate = useNavigate();
     const { MyUser } = useAuth();
     const location = useLocation();
     const [isLoading, setIsLoading] = useState(true);
+    const { sendMessage, onMessage } = useWebSocket();
+
+    // useEffect(() => {
+    //     onMessage(messaging, (payload) => {
+    //         console.log("Foreground message received: ", payload);
+
+    //         if (payload.data?.type === "video_call_request") {
+    //             const fromUserId = payload.data.fromUserId;
+    //             // Chuyển đến giao diện video call
+    //             navigate(`/main`);
+    //         }
+    //     });
+    // }, []);
 
     // Kiểm tra trạng thái đăng nhập
     useEffect(() => {
