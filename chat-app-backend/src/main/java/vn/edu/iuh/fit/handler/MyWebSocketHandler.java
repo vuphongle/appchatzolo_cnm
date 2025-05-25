@@ -261,7 +261,8 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 WebSocketSession session = sessions.get(userId);
                 if (session != null && session.isOpen()) {
                     Map<String, Object> payload = new HashMap<>();
-                    payload.put("type", "RECALL_MESSAGE");
+                    payload.put("type", "" +
+                            "");
                     payload.put("messageId", messageId);
                     payload.put("senderId", senderId);
                     String jsonPayload = objectMapper.writeValueAsString(payload);

@@ -29,7 +29,7 @@ const EditPersonalInfoScreen = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Mở thư viện ảnh và cho phép cắt ảnh
-  const pickImage = async () => {
+const pickImage = async () => {
     try {
       const image = await ImageCropPicker.openPicker({
         width: 300,
@@ -47,6 +47,7 @@ const EditPersonalInfoScreen = ({ navigation }) => {
       }
     }
   };
+  
 
   // Upload avatar lên S3 và trả về URL của ảnh
   const uploadAvatar = async () => {

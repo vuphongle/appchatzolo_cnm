@@ -35,7 +35,7 @@ import { useNavigation } from '@react-navigation/native';
 import UserService from '../../../../services/UserService';
 import Sound from 'react-native-sound';
 Sound.setCategory('Playback');
-const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
+const ChatScreenGroup = ({ receiverID, name, avatar,typechat }) => {
   const { user } = useContext(UserContext);
   const userId = user?.id;
   const { sendMessage, onMessage } = useContext(WebSocketContext);
@@ -107,6 +107,7 @@ const ChatScreenGroup = ({ receiverID, name, avatar,type }) => {
 
   const fetchMessages = async () => {
     if (!userId || !receiverID) return;
+
     
     try {
       let groupId = receiverID;
@@ -159,6 +160,16 @@ const formatDuration = (milliseconds) => {
 
       // Function to handle incoming WebSocket messages
       const handleWebSocketMessage = (message) => {
+        
+         if((message.type==='RECALL_MESSAGE'||message.type==='')&&message.senderId!=userId){
+        const duplicateMessages = localMessages.some(msg => msg.id=== message.messageId)
+        
+        if(duplicateMessages){
+         
+          fetchMessages();
+          return;
+        }
+      }
 
         if (message.senderID == receiverID || message.receiverID == receiverID ) {
           setLocalMessages(prev => {
@@ -662,6 +673,7 @@ const formatDuration = (milliseconds) => {
                       avatar={message?.avatar}
                       messageType={message.type || 'text'}
                       fileName={message.fileName}
+                      
                       isRead={index === lastMyMessageIndex ? message.isRead : undefined}
                       onDeleteMessage={() => {
                         
@@ -678,6 +690,7 @@ const formatDuration = (milliseconds) => {
                         messageId={message.id}
                         userId={userId}
                         receiverId={receiverID}
+                        typechat= {typechat}
                         messageType={message.type || 'text'}
                         fileName={message.fileName}
                         onDeleteMessage={() => {

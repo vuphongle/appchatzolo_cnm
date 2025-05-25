@@ -245,7 +245,7 @@ const Detail_infoChatGroup = ({ route, navigation }) => {
   const ProfileSection = () => (
     <View style={styles.profileSection}>
 
-      <TouchableOpacity style={styles.avatarContainer}    onPress={pickImage}     >
+      <TouchableOpacity style={styles.avatarContainer}   onPress={pickImage}    >
         <Image source={{ uri: infoGroup?.image }} style={styles.profileImage} />
         <View style={styles.editIconContainer}>
             <Ionicons name="camera-outline" size={20} color="#FFF" />

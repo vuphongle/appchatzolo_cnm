@@ -12,6 +12,7 @@ import Sound from 'react-native-sound';
 import moment from 'moment';
 import { useNavigation } from '@react-navigation/native';
 import MessageService from '../../../../services/MessageService';
+
 import { formatDate } from '../../../../utils/formatDate';
 import ForwardMessageModal from '../ForwardMessageModal';
 import RNFS from 'react-native-fs';
@@ -26,7 +27,7 @@ import { WebSocketContext } from '../../../../context/Websocket';
 import UserService from '../../../../services/UserService';
 
 
-function MessageItem({ avatar, time, message, messageId, userId, receiverId, messageInfo: initialMessageInfo, showForwardRecall = true }) {
+function MessageItem({ avatar, time, message, messageId, userId, receiverId, messageInfo: initialMessageInfo, showForwardRecall = true ,typechat}) {
   const { user, setIsChange } = React.useContext(UserContext);
   const navigation = useNavigation();
   const [emojiIndex, setEmojiIndex] = useState([]);
@@ -39,6 +40,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
   const [isDeleted, setIsDeleted] = useState(false);
   const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
   const [reactCount, setReactCount] = useState(messageInfo.reactions?.length);
+  const [avatarUser, setAvatarUser] = useState("");
   const messageTime = moment(time);
   const {sendMessage} = React.useContext(WebSocketContext);
   const displayTime = messageTime.isValid()
@@ -219,7 +221,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
 
   // Xác định loại tin nhắn
   const getMessageType = () => {
-    if (isRecalled) return 'unsend';
+    if (message==='Tin nhắn đã được thu hồi') return 'unsend';
     if (isImageMessage(message)) return 'image';
     if (isVideoMessage(message)) return 'video';
     if (isAudioMessage(message)) return 'audio';
@@ -236,6 +238,24 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
       image: message,
     });
   };
+  const hadlegetAvatar = async(userId)=>{
+    try {
+      if(typechat === 'GROUP') {
+
+      const userInfo = await UserService.getUserById(userId);
+      setAvatarUser(userInfo.avatar);
+      }
+    } catch (error) {
+      console.error('Lỗi khi lấy thông tin người dùng:', error);
+      return null; // Trả về null nếu có lỗi
+    }
+  }
+
+  useEffect(() => {
+  },[])
+    
+    // Kiểm tra xem tin nhắn đã được thu hồi hay chưa
+
 const handleNotifiMessageGroup = (mess) => {
        const ContentMessage = {
                 id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -296,6 +316,11 @@ const handleNotifiMessageGroup = (mess) => {
   };
 
   useEffect(() => {
+    if(messageInfo.type==='GROUP_CHAT' && typechat === 'GROUP'&& messageInfo.status === 'sent')
+      {
+        hadlegetAvatar(messageInfo.senderID);
+        
+      } 
     if (!messageInfo.reactions || messageInfo.reactions.length === 0) {
       setEmojiIndex([]);  // mảng rỗng khi không có reactions
     } else {
@@ -504,7 +529,9 @@ const handleNotifiMessageGroup = (mess) => {
           
         );
       case 'unsend':
-        return <Text style={styles.unsendText}>Tin nhắn đã thu hồi</Text>;
+        return <View style={styles.unsendMessage}>
+                      <Text style={styles.unsendText}>{message}</Text>
+                    </View>;
       default:
         return <View style={{backgroundColor:'#e0f7fa', borderRadius:15}}><Text style={styles.messageText}>{message}</Text></View>
     }
@@ -516,7 +543,7 @@ const handleNotifiMessageGroup = (mess) => {
     <>
       <View style={styles.container}>
         <View style={styles.avatarContainer}>
-          <Image style={styles.avatar} source={{ uri: avatar }} />
+          <Image style={styles.avatar} source={{ uri: avatarUser|| avatar }} />
         </View>
         <View style={styles.messageContainer}>
           <TouchableOpacity
@@ -540,7 +567,7 @@ const handleNotifiMessageGroup = (mess) => {
           <Text style={styles.time}>{displayTime}</Text>
 
           {/* Emoji phản ứng */}
-          {emojiIndex && emojiIndex.length > 0 && (
+          {emojiIndex && emojiIndex.length > 0 && type!='unsend'&& (
             <View style={styles.emojiContainer}>
               <Text style={styles.emoji}>{emojiIndex}</Text>
               <Text style={styles.count}>{reactCount}</Text>
@@ -718,12 +745,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
+   unsendMessage: {
+    backgroundColor: '#f5f5f5',
+    padding: 10,
+    borderRadius: 15,
+    marginBottom: 5,
+  },
   unsendText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#aaa',
     fontStyle: 'italic',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
   },
   time: {
     fontSize: 10,

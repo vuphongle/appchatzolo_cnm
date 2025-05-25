@@ -98,7 +98,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
         const sortedMessages = response.sort(
           (a, b) => new Date(a.sendDate) - new Date(b.sendDate)
         );
-        // console.log('Fetched messages:', sortedMessages);
+      
         setLocalMessages(sortedMessages);
       } else {
        
@@ -123,13 +123,28 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     
     // Function to handle incoming WebSocket messages
     const handleWebSocketMessage = (message) => {
+   
+      if(message.type==='RECALL_MESSAGE'&&message.senderId!=userId&&message.senderId===receiverID){
+        const duplicateMessages = localMessages.some(msg => msg.id=== message.messageId)
+        
+        if(duplicateMessages){
+         
+          fetchMessages();
+          return;
+        }
+      }
       // Check if message belongs to current conversation
       if ((message.senderID === userId && message.receiverID === receiverID) || 
           (message.senderID === receiverID && message.receiverID === userId)) {
+            
         setLocalMessages(prev => {
           // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg.id === message.id);
-          if (exists) return prev;
+          if (exists) 
+          {
+            
+           return  prev;
+          }
           
           // Add new message and sort by date
           const newMessages = [...prev, message].sort(
@@ -184,16 +199,34 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
     
     const requestPermissions = async () => {
       try {
+        // Kiểm tra quyền hiện tại trước
+         const hasPermission = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
+    );
+    
+
+    if (hasPermission) {
+      setHasPermission(true);
+      return true;
+    }
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
           {
             title: 'Quyền ghi âm',
             message: 'Ứng dụng cần quyền ghi âm để gửi tin nhắn âm thanh',
+            buttonNeutral: 'Hỏi lại sau',
+        buttonNegative: 'Từ chối',
+        buttonPositive: 'Đồng ý',
           }
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           setHasPermission(true);
-        }
+        return true;
+    } else {
+     
+      Alert.alert('Lỗi', 'Cần cấp quyền ghi âm để sử dụng tính năng này');
+      return false;
+    }
       } catch (err) {
         console.warn('Error requesting audio permission:', err);
       }
@@ -269,6 +302,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
       }
       
       const audioPath = await AudioRecord.stop();
+      
+
       setIsRecording(false);
       
       const file = {
@@ -290,7 +325,8 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   
   // Load audio for playback
   const loadAudioForPlayback = (audioPath) => {
-    const sound = new Sound(audioPath, '', (error) => {
+    // const sound = new Sound(audioPath, '', (error) => {
+      const sound = new Sound(`file://${audioPath}`, null, (error) => {
       if (error) {
         console.error('Failed to load sound', error);
         Alert.alert('Error', 'Failed to load audio for playback');

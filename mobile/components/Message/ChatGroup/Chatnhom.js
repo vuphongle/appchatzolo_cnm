@@ -18,7 +18,7 @@ function ChatGroup({ route }) {
       <HeaderGroup name={name} id={receiverid} image={avatar} />
 
       <View style={styles.chatContainer}>
-        <ChatScreenGroup receiverID={receiverid} name={name} avatar={avatar} />
+        <ChatScreenGroup receiverID={receiverid} name={name} avatar={avatar} typechat={"GROUP"} />
       </View>
     </SafeAreaView>
   );
