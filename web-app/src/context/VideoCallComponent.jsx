@@ -23,6 +23,31 @@ class VideoCall {
         this.isCalling = true;
         this.remoteUserId = remoteUserId;
 
+        // Biến lưu ICE candidates và hẹn thời gian gửi
+        let candidateBuffer = [];
+        let candidateTimer = null;
+
+        // Hàm gửi gộp các candidate
+        const sendBufferedCandidates = () => {
+            if (candidateBuffer.length === 0) return;
+
+            fetch("http://localhost:8080/calls/candidate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "candidates",
+                    candidate: candidateBuffer.map(c => JSON.stringify(c)),
+                    to: this.remoteUserId,
+                    from: this.userId,
+                }),
+            }).catch((err) => {
+                console.error("❌ Gửi candidate thất bại", err);
+            });
+
+            candidateBuffer = [];
+            candidateTimer = null;
+        };
+
         try {
             // Lấy stream video, audio
             this.localStream = await navigator.mediaDevices.getUserMedia({
@@ -47,15 +72,16 @@ class VideoCall {
                 }
             };
 
-            // Gửi ICE candidate qua WebSocket signaling
+            // Gửi ICE candidates gộp sau 100ms
             this.peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
-                    this.sendMessage({
-                        type: "candidate", // candidate giữ nguyên
-                        candidate: event.candidate,
-                        to: this.remoteUserId,
-                        from: this.userId,
-                    });
+                    candidateBuffer.push(event.candidate);
+
+                    if (!candidateTimer) {
+                        candidateTimer = setTimeout(() => {
+                            sendBufferedCandidates();
+                        }, 100); // gửi sau 100ms
+                    }
                 }
             };
 
@@ -63,18 +89,23 @@ class VideoCall {
             const offer = await this.peerConnection.createOffer();
             await this.peerConnection.setLocalDescription(offer);
 
-            // Gửi offer qua WebSocket với type chuẩn chữ thường
-            this.sendMessage({
-                type: "video_call_request", // sửa chữ thường
-                offer: offer,
-                to: this.remoteUserId,
-                from: this.userId,
+            // Gửi offer
+            await fetch("http://localhost:8080/calls/request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "video_call_request",
+                    offer: JSON.stringify(offer),
+                    to: this.remoteUserId,
+                    from: this.userId,
+                }),
             });
         } catch (err) {
             console.error("Error starting call:", err);
             this.isCalling = false;
         }
     }
+
 
     displayLocalStream() {
         const localVideoElement = document.getElementById("local-video");
@@ -90,12 +121,16 @@ class VideoCall {
         }
     }
 
-    // Nhận offer từ bên gọi và trả answer
     async receiveOffer(offer, fromUserId) {
         this.remoteUserId = fromUserId;
         this.isCalling = true;
 
         try {
+            // Nếu offer là chuỗi JSON, parse nó ra object
+            if (typeof offer === "string") {
+                offer = JSON.parse(offer);
+            }
+
             // Lấy stream local
             this.localStream = await navigator.mediaDevices.getUserMedia({
                 video: true,
@@ -103,8 +138,13 @@ class VideoCall {
             });
             this.displayLocalStream();
 
-            // Tạo peer connection
-            this.peerConnection = new RTCPeerConnection();
+            // Tạo cấu hình ICE servers (ví dụ Google STUN server)
+            const config = {
+                iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+            };
+
+            // Tạo peer connection với cấu hình
+            this.peerConnection = new RTCPeerConnection(config);
 
             // Thêm track local vào peer connection
             this.localStream.getTracks().forEach((track) => {
@@ -140,17 +180,23 @@ class VideoCall {
             const answer = await this.peerConnection.createAnswer();
             await this.peerConnection.setLocalDescription(answer);
 
-            // Gửi answer qua WebSocket
-            this.sendMessage({
-                type: "answer",
-                answer: answer,
-                to: fromUserId,
-                from: this.userId,
+            // Gửi answer qua WebSocket hoặc fetch API
+            await fetch("http://localhost:8080/calls/answer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "video_call_answer",   // Thay đổi type cho rõ ràng
+                    answer: answer,              // Gửi đúng answer (không stringify lại)
+                    to: fromUserId,
+                    from: this.userId,
+                }),
             });
+
         } catch (err) {
             console.error("Error receiving offer:", err);
         }
     }
+
 
     // Kết thúc cuộc gọi, dọn dẹp
     endCall() {
@@ -181,6 +227,7 @@ const VideoCallComponent = ({
     userId,
     isVideoCallVisible,
     setIsVideoCallVisible,
+    remoteUserId_Call
 }) => {
     const { sendMessage, onMessage } = useWebSocket();
     const videoCallRef = useRef(null);
@@ -239,19 +286,22 @@ const VideoCallComponent = ({
         if (!videoCallRef.current) return;
 
         await triggerCallStart(); // Gửi lên backend
-        await videoCallRef.current.startCall(remoteUserId);
+        await videoCallRef.current.startCall(remoteUserId); // Bắt đầu gọi video
         setIsCalling(true);
     };
 
     // Xử lý nhận message từ WebSocket
     useEffect(() => {
-        if (!videoCallRef.current) return;
+        // if (!videoCallRef.current) return;
 
         const handleMessage = async (message) => {
-            if (!videoCallRef.current) return;
-
+            console.log("✅ Received message:", message);
+            if (!videoCallRef.current) {
+                console.warn("❌ videoCallRef.current is null");
+                return;
+            }
             switch (message.type) {
-                case "Video_call_request":
+                case "video_call_request":
                     if (message.to === userId) {
                         await videoCallRef.current.receiveOffer(message.offer, message.from);
                         setIsCalling(true);
@@ -267,16 +317,16 @@ const VideoCallComponent = ({
                     }
                     break;
 
-                case "candidate":
-                    if (
-                        videoCallRef.current.peerConnection &&
-                        message.candidate
-                    ) {
-                        await videoCallRef.current.peerConnection.addIceCandidate(
-                            new RTCIceCandidate(message.candidate)
-                        );
-                    }
-                    break;
+                // case "candidates":
+                //     if (
+                //         videoCallRef.current.peerConnection &&
+                //         message.candidate
+                //     ) {
+                //         await videoCallRef.current.peerConnection.addIceCandidate(
+                //             new RTCIceCandidate(message.candidate)
+                //         );
+                //     }
+                //     break;
 
                 default:
                     break;

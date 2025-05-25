@@ -8,6 +8,7 @@ public class IceCandidate {
     private String candidate;
     private String sdpMid;
     private int sdpMLineIndex;
+    private String usernameFragment;
 
     @DynamoDbAttribute("candidate")
     public String getCandidate() {
@@ -34,6 +35,14 @@ public class IceCandidate {
 
     public void setSdpMLineIndex(int sdpMLineIndex) {
         this.sdpMLineIndex = sdpMLineIndex;
+    }
+
+    @DynamoDbAttribute("usernameFragment")
+    public String getUsernameFragment() {
+        return usernameFragment;
+    }
+    public void setUsernameFragment(String usernameFragment) {
+        this.usernameFragment = usernameFragment;
     }
 
 }

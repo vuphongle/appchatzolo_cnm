@@ -20,7 +20,6 @@ import GroupMenuModal from "./GroupMenuModal";
 import { useLocation } from "react-router-dom";
 
 
-
 import S3Service from "../services/S3Service";
 import { se } from "date-fns/locale";
 import CreateGroupModal from "./CreateGroupModal";
@@ -33,6 +32,8 @@ import VideoCallComponent from '../context/VideoCallComponent';  // Import Video
 import showToast from "../utils/AppUtils";
 
 import MessageReaction from "./MessageReaction";
+import { onMessageListener } from "../services/firebase_messaging"; // Import messaging từ firebase_messaging.js
+
 
 //thêm sự kiện onClick để cập nhật state selectedChat trong MainPage.
 const MessageItem = ({ groupName, unreadCount, img, onClick, chatMessages = [], onDeleteChat }) => (
@@ -1704,26 +1705,51 @@ const MainPage = () => {
         setIsVideoCallVisible((prev) => !prev);
     };
 
-    const location = useLocation();
+    // const location = useLocation();
+    // useEffect(() => {
+    //     const params = new URLSearchParams(location.search);
+    //     const callerId = params.get("callerId");
+    //     console.log("Caller ID from URL:", callerId);
+    //     console.log('params:', params);
 
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const callerId = params.get("callerId");
+    //     if (callerId && friends.length > 0) {
+    //         const matchedFriend = friends.find(f => f.id === callerId);
+    //         if (matchedFriend) {
+    //             setSelectedChat({
+    //                 ...matchedFriend,
+    //                 isOnline: matchedFriend.online,
+    //                 username: matchedFriend.name,
+    //                 avatar: matchedFriend.avatar,
+    //             });
+    //             setActiveTab("chat");
+    //             setIsVideoCallVisible(true);
+    //         }
 
-        if (callerId && friends.length > 0) {
-            const matchedFriend = friends.find(f => f.id === callerId);
-            if (matchedFriend) {
-                setSelectedChat({
-                    ...matchedFriend,
-                    isOnline: matchedFriend.online,
-                    username: matchedFriend.name,
-                    avatar: matchedFriend.avatar,
-                });
-                setActiveTab("chat");
-                setIsVideoCallVisible(true);
-            }
-        }
-    }, [location.search, friends]);
+    //         // ✅ Lắng nghe message từ WebSocket để nhận offer từ người gọi
+    //         const handleMessage = async (message) => {
+    //             console.log("📨 Nhận tin nhắn Vip:", message);
+    //             if (
+    //                 message.type === "video_call_request" &&
+    //                 message.from === callerId &&
+    //                 message.to === MyUser?.my_user?.id
+    //             ) {
+    //                 console.log("📞 Nhận video_call_request từ", callerId);
+
+    //                 if (videoCallRef.current) {
+    //                     await videoCallRef.current.receiveOffer(message.offer, message.from);
+    //                     console.log("✅ Đã xử lý offer từ", callerId);
+    //                 } else {
+    //                     console.warn("❌ videoCallRef.current chưa sẵn sàng");
+    //                 }
+    //             }
+    //         };
+
+    //         const unsubscribe = onMessage(handleMessage);
+
+    //         return () => unsubscribe();
+    //     }
+    // }, [location.search, friends, MyUser?.my_user?.id, onMessage]);
+
 
     useEffect(() => {
         const unsubscribe = onMessage(async (message) => {
@@ -1733,18 +1759,26 @@ const MainPage = () => {
 
             switch (message.type) {
                 case "video_call_request":
-                    const userResponse = window.confirm(`Cuộc gọi video đến từ ${message.from}, bạn có muốn nhận không?`);
-                    if (userResponse) {
-                        videoCallRef.current.startCall(message.from);
-                        setIsCalling(true);
-                        setIsVideoCallVisible(true);
+                    {
+                        const userResponse = window.confirm(`Cuộc gọi video đến từ ${message.from}, bạn có muốn nhận không?`);
+                        if (userResponse) {
+                            if (message.to === MyUser?.my_user?.id) {
+                                if (videoCallRef.current) {
+                                    await videoCallRef.current.receiveOffer(message.offer, message.from);
+                                    setIsCalling(true);
+                                    setIsVideoCallVisible(true);
+                                } else {
+                                    console.error("videoCallRef.current is null");
+                                }
+                            }
+                        }
                     }
                     break;
 
+
                 case "offer":
                     if (!videoCallRef.current) return;
-
-                    await videoCallRef.current.receiveOffer(message.offer, message.from); // Thêm hàm này trong class VideoCall
+                    await videoCallRef.current.receiveOffer(message.offer, message.from);
                     break;
 
                 case "answer":
@@ -1766,6 +1800,7 @@ const MainPage = () => {
             unsubscribe();
         };
     }, [onMessage, MyUser?.my_user?.id]);
+
 
 
 

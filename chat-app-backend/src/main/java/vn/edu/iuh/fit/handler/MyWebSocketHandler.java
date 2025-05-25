@@ -689,4 +689,69 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    // socket khi gọi giữa 2 user
+    public void sendVideoCallCandidate(String toUser, String fromUserId, List<String> candidate, String type) {
+        System.out.println("sendVideoCallCandidate: " + toUser);
+        WebSocketSession receiverSession = sessions.get(toUser);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", type);
+            payload.put("to", toUser);
+            payload.put("from", fromUserId);
+            payload.put("candidate", candidate);
+            String jsonPayload;
+            try {
+                jsonPayload = objectMapper.writeValueAsString(payload);
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent video call candidate to user: " + toUser);
+            } catch (IOException e) {
+                System.err.println("Error sending video call candidate: " + e.getMessage());
+            }
+        } else {
+            System.err.println("Receiver session is null or closed for user: " + toUser);
+        }
+    }
+
+    public void sendVideoCallRequest(String toUser, String fromUserId, String offer, String type) {
+        WebSocketSession receiverSession = sessions.get(toUser);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", type);
+            payload.put("to", toUser);
+            payload.put("from", fromUserId);
+            payload.put("offer", offer);
+            String jsonPayload;
+            try {
+                jsonPayload = objectMapper.writeValueAsString(payload);
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent video call offer to user: " + toUser);
+            } catch (IOException e) {
+                System.err.println("Error sending video call offer: " + e.getMessage());
+            }
+        } else {
+            System.err.println("Receiver session is null or closed for user: " + toUser);
+        }
+    }
+
+    public void sendVideoCallAnswer(String toUser, String fromUserId, String answer, String type) {
+        WebSocketSession receiverSession = sessions.get(toUser);
+        if (receiverSession != null && receiverSession.isOpen()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", type);
+            payload.put("to", toUser);
+            payload.put("from", fromUserId);
+            payload.put("answer", answer);
+            String jsonPayload;
+            try {
+                jsonPayload = objectMapper.writeValueAsString(payload);
+                receiverSession.sendMessage(new TextMessage(jsonPayload));
+                System.out.println("Sent video call answer to user: " + toUser);
+            } catch (IOException e) {
+                System.err.println("Error sending video call answer: " + e.getMessage());
+            }
+        } else {
+            System.err.println("Receiver session is null or closed for user: " + toUser);
+        }
+    }
 }
