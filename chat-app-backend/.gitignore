@@ -37,3 +37,4 @@ out/
 .vscode/
 
 .env
+chat-app-backend/src/main/resources/my-web-app-35fda-firebase-adminsdk-fbsvc-39517d88c0.json
