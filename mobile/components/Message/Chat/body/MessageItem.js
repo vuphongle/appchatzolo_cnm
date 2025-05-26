@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   View,
   StyleSheet,
+  PermissionsAndroid,
+  Platform,
 } from 'react-native';
 import Video from 'react-native-video';
 import Sound from 'react-native-sound';
 import moment from 'moment';
 import { useNavigation } from '@react-navigation/native';
 import MessageService from '../../../../services/MessageService';
+import { requestStoragePermissionWithFeedback,checkStoragePermission ,requestManageStoragePermission } from './permissions';
 
 import { formatDate } from '../../../../utils/formatDate';
 import ForwardMessageModal from '../ForwardMessageModal';
@@ -22,6 +25,8 @@ import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { IPV4 } from '@env';
 import { UserContext } from '../../../../context/UserContext';
+// Import thêm CameraRoll để lưu vào thư viện ảnh
+import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 
 import { WebSocketContext } from '../../../../context/Websocket';
 import UserService from '../../../../services/UserService';
@@ -41,6 +46,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
   const [messageInfo, setMessageInfo] = useState(initialMessageInfo);
   const [reactCount, setReactCount] = useState(messageInfo.reactions?.length);
   const [avatarUser, setAvatarUser] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
   const messageTime = moment(time);
   const {sendMessage} = React.useContext(WebSocketContext);
   const displayTime = messageTime.isValid()
@@ -68,21 +74,60 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
     return isDocumentFile(url) || isVideoMessage(url) || isAudioMessage(url) || isImageMessage(url);
   };
 
-//  useEffect(() => {
-//   console.log('MessageInfo:', messageInfo);
-//  }, []);
-
-  // Tải và mở file
-  const downloadAndOpenFile = async (fileUrl, openAfterDownload = false) => {
-    console.log('downloadAndOpenFile is called with:')
+  // Hàm yêu cầu quyền truy cập bộ nhớ
+  const requestStoragePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        ]);
+        
+        return (
+          granted['android.permission.WRITE_EXTERNAL_STORAGE'] === PermissionsAndroid.RESULTS.GRANTED &&
+          granted['android.permission.READ_EXTERNAL_STORAGE'] === PermissionsAndroid.RESULTS.GRANTED
+        );
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true; // iOS không cần xin quyền này
+  };
+const handleRequestAllPermissions = async () => {
+  // Bước 1: Xin quyền storage cơ bản
+  const hasBasicPermission = await requestStoragePermissionWithFeedback();
+  
+  // Bước 2: Xin quyền MANAGE_EXTERNAL_STORAGE nếu cần (Android 11+)
+  const hasManagePermission = await requestManageStoragePermission();
+  
+  if (hasBasicPermission && hasManagePermission) {
+    console.log('Đã có đầy đủ quyền truy cập bộ nhớ');
+    // Tiếp tục logic của ứng dụng
+  } else {
+    console.log('Chưa có đủ quyền truy cập');
+  }
+};
+  // Tải và lưu ảnh/video vào thư viện ảnh
+  const saveMediaToGallery = async (fileUrl) => {
     try {
       setIsDownloading(true);
+      
+      // Kiểm tra quyền truy cập
+      const hasPermission = await handleRequestAllPermissions();
+      if (!hasPermission) {
+        Alert.alert('Thông báo', 'Cần cấp quyền truy cập bộ nhớ để lưu file.');
+        setIsDownloading(false);
+        return;
+      }
+
       const fileName = fileUrl.split('/').pop();
-      const localFile = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-  
-      const options = {
+      const tempPath = `${RNFS.TemporaryDirectoryPath}/${fileName}`;
+
+      // Tải file về thư mục tạm
+      const downloadResult = await RNFS.downloadFile({
         fromUrl: fileUrl,
-        toFile: localFile,
+        toFile: tempPath,
         background: true,
         progressDivider: 10,
         begin: (res) => {
@@ -92,48 +137,139 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
           const progress = (res.bytesWritten / res.contentLength) * 100;
           console.log(`Đang tải: ${progress.toFixed(2)}%`);
         }
-      };
-  
-      // Tải file về
-      const download = await RNFS.downloadFile(options).promise;
-      console.log('File downloaded to:', localFile);
-      
-      setIsDownloading(false);
-  
-      // Hiển thị thông báo khi tải xong
-      Alert.alert('Thành công', `File "${fileName}" đã được tải về.`);
-  
-      // Mở file bằng app mặc định nếu được yêu cầu
-      // if (openAfterDownload) {
-      //   await FileViewer.open(localFile);
-      // }
-      
-      return localFile;
+      }).promise;
+
+      if (downloadResult.statusCode === 200) {
+        // Lưu vào thư viện ảnh
+        const result = await CameraRoll.save(tempPath, {
+          type: isImageMessage(fileUrl) ? 'photo' : 'video'
+        });
+        
+        // Xóa file tạm
+        await RNFS.unlink(tempPath);
+        
+        setIsDownloading(false);
+        Alert.alert(
+          'Thành công', 
+          `${isImageMessage(fileUrl) ? 'Ảnh' : 'Video'} đã được lưu vào thư viện.`
+        );
+        return result;
+      } else {
+        throw new Error('Download failed');
+      }
     } catch (error) {
       setIsDownloading(false);
-      console.error('Lỗi khi tải file:', error);
-      Alert.alert('Lỗi', 'Không thể tải hoặc mở file.');
+      console.error('Lỗi khi lưu vào thư viện:', error);
+      Alert.alert('Lỗi', 'Không thể lưu file vào thư viện.');
       return null;
     }
   };
-   const handlePinMessage = async () => {
-      try {
-        const response = await MessageService.PinMessageByUserId(messageId, userId);
-        console.log('Ghim tin nhắn:', response);
-        const user = await UserService.getUserById(userId);
-        setIsChange("PIN_MESSAGE");
-  
-        if (response.success) {
-          Alert.alert('Thành công', 'Tin nhắn đã được ghim thành công.');
-          handleNotifiMessageGroup(`${user.name} đã ghim tin nhắn "${message}"`);
-        } else {
-          Alert.alert('Thất bại', 'Không thể ghim tin nhắn này.');
-        }
-      } catch (error) {
-        console.error('Lỗi khi ghim tin nhắn:', error);
-        Alert.alert('Lỗi', 'Không thể ghim tin nhắn này. Vui lòng thử lại sau.');
+
+  // Tải và lưu file khác vào thư mục Downloads
+  const saveFileToDownloads = async (fileUrl) => {
+    try {
+      setIsDownloading(true);
+      
+      // Kiểm tra quyền truy cập
+      const hasPermission = await handleRequestAllPermissions();
+      if (!hasPermission) {
+        Alert.alert('Thông báo', 'Cần cấp quyền truy cập bộ nhớ để lưu file.');
+        setIsDownloading(false);
+        return;
       }
-    };
+
+      const fileName = fileUrl.split('/').pop();
+      // Sử dụng thư mục Downloads trên Android, Documents trên iOS
+      const downloadPath = Platform.OS === 'android' 
+        ? `${RNFS.DownloadDirectoryPath}/${fileName}`
+        : `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+      const downloadResult = await RNFS.downloadFile({
+        fromUrl: fileUrl,
+        toFile: downloadPath,
+        background: true,
+        progressDivider: 10,
+        begin: (res) => {
+          console.log('Bắt đầu tải file:', res);
+        },
+        progress: (res) => {
+          const progress = (res.bytesWritten / res.contentLength) * 100;
+          console.log(`Đang tải: ${progress.toFixed(2)}%`);
+        }
+      }).promise;
+
+      setIsDownloading(false);
+
+      if (downloadResult.statusCode === 200) {
+        Alert.alert(
+          'Thành công', 
+          `File "${fileName}" đã được lưu vào ${Platform.OS === 'android' ? 'thư mục Downloads' : 'thư mục Documents'}.`,
+          [
+            {
+              text: 'Đóng',
+              style: 'cancel'
+            },
+            {
+              text: 'Mở file',
+              onPress: () => openFile(downloadPath)
+            }
+          ]
+        );
+        return downloadPath;
+      } else {
+        throw new Error('Download failed');
+      }
+    } catch (error) {
+      setIsDownloading(false);
+      console.error('Lỗi khi tải file:', error);
+      Alert.alert('Lỗi', 'Không thể tải file.');
+      return null;
+    }
+  };
+
+  // Mở file bằng ứng dụng mặc định
+  const openFile = async (filePath) => {
+    try {
+      await FileViewer.open(filePath);
+    } catch (error) {
+      console.error('Lỗi khi mở file:', error);
+      Alert.alert('Lỗi', 'Không thể mở file này.');
+    }
+  };
+
+  // Hàm tải file chính - quyết định lưu ở đâu dựa trên loại file
+  const downloadAndOpenFile = async (fileUrl, openAfterDownload = false) => {
+    console.log('downloadAndOpenFile is called with:', fileUrl);
+    
+    if (isImageMessage(fileUrl) || isVideoMessage(fileUrl)) {
+      // Lưu ảnh/video vào thư viện ảnh
+      return await saveMediaToGallery(fileUrl);
+    } else {
+      // Lưu file khác vào thư mục Downloads/Documents
+      return await saveFileToDownloads(fileUrl);
+    }
+  };
+
+  const handlePinMessage = async () => {
+    try {
+      const response = await MessageService.PinMessageByUserId(messageId, userId);
+      console.log('Ghim tin nhắn:', response);
+      const user = await UserService.getUserById(userId);
+      
+      setIsChange("PIN_MESSAGE");
+
+      if (response.success) {
+        Alert.alert('Thành công', 'Tin nhắn đã được ghim thành công.');
+        handleNotifiMessageGroup(`${user.name} đã ghim tin nhắn "${message}"`);
+      } else {
+        Alert.alert('Thất bại', 'Không thể ghim tin nhắn này.');
+      }
+    } catch (error) {
+      console.error('Lỗi khi ghim tin nhắn:', error);
+      Alert.alert('Lỗi', 'Không thể ghim tin nhắn này. Vui lòng thử lại sau.');
+    }
+  };
+
   // Phát/dừng audio với react-native-sound
   const playAudio = async (audioUrl) => {
     try {
@@ -164,12 +300,16 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
         let audioFilePath = localFile;
         
         if (!fileExists) {
-          // Tải file về nếu chưa tồn tại
+          // Tải file về nếu chưa tồn tại (cho audio vẫn dùng cách cũ để phát)
           setIsDownloading(true);
-          audioFilePath = await downloadAndOpenFile(audioUrl, false);
+          const downloadResult = await RNFS.downloadFile({
+            fromUrl: audioUrl,
+            toFile: localFile,
+            background: true,
+          }).promise;
           setIsDownloading(false);
           
-          if (!audioFilePath) return;
+          if (downloadResult.statusCode !== 200) return;
         }
         
         // Tạo đối tượng Sound từ file đã tải
@@ -208,6 +348,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
       }
     };
   }, [sound]);
+
   // hàm xóa tin nhắn ở phía tôi
   const deleteMessageForMe = async () => {
     try {
@@ -238,12 +379,13 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
       image: message,
     });
   };
+
   const hadlegetAvatar = async(userId)=>{
     try {
       if(typechat === 'GROUP') {
-
-      const userInfo = await UserService.getUserById(userId);
-      setAvatarUser(userInfo.avatar);
+        const userInfo = await UserService.getUserById(userId);
+        setAvatarUser(userInfo.avatar);
+        setUserInfo(userInfo);
       }
     } catch (error) {
       console.error('Lỗi khi lấy thông tin người dùng:', error);
@@ -251,26 +393,28 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
     }
   }
 
-  useEffect(() => {
-  },[])
-    
-    // Kiểm tra xem tin nhắn đã được thu hồi hay chưa
+  // useEffect(() => {
+  //   // Tự động xin quyền khi component mount
+  //   requestStoragePermissionWithFeedback();
+  // }, []);
 
-const handleNotifiMessageGroup = (mess) => {
-       const ContentMessage = {
-                id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
-                senderID: userId,
-                receiverID: receiverId,
-                content: mess,
-                sendDate: new Date().toISOString(),
-                isRead: false,
-                type: 'PRIVATE_CHAT',
-                
-                status:'Notification',
-              };
-      sendMessage(ContentMessage);
-      console.log('sendMessage', ContentMessage);
-    }
+    
+  // Kiểm tra xem tin nhắn đã được thu hồi hay chưa
+  const handleNotifiMessageGroup = (mess) => {
+    const ContentMessage = {
+      id: `file_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+      senderID: userId,
+      receiverID: receiverId,
+      content: mess,
+      sendDate: new Date().toISOString(),
+      isRead: false,
+      type: 'PRIVATE_CHAT',
+      status:'Notification',
+    };
+    sendMessage(ContentMessage);
+    console.log('sendMessage', ContentMessage);
+  }
+
   // Hàm thu hồi tin nhắn
   const recallMessage = async () => {
     try {
@@ -371,7 +515,7 @@ const handleNotifiMessageGroup = (mess) => {
     const fileName = lastPart.includes('_') ? lastPart.split('_').pop() : lastPart; 
 
     return fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
-};
+  };
 
   // Lấy icon phù hợp cho loại file
   const getFileIcon = (url) => {
@@ -410,7 +554,7 @@ const handleNotifiMessageGroup = (mess) => {
               <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
             </TouchableOpacity>
             <TouchableOpacity 
-              onPress={forwardMessage} 
+              onPress={()=>forwardMessage('forward')} 
               style={styles.smallDownloadButtonContainer}
 
             >
@@ -449,7 +593,7 @@ const handleNotifiMessageGroup = (mess) => {
            <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
            </TouchableOpacity>
            <TouchableOpacity
-               onPress={forwardMessage}
+               onPress={()=>forwardMessage('forward')} 
 
                style={styles.smallDownloadButtonContainer}           
              >
@@ -487,7 +631,7 @@ const handleNotifiMessageGroup = (mess) => {
                <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
              </TouchableOpacity>
              <TouchableOpacity 
-               onPress={forwardMessage} 
+                onPress={()=>forwardMessage('forward')} 
                style={styles.smallDownloadButtonContainer}           
              >
                <Ionicons name="share-outline" size={20} color="#4a86e8"/>
@@ -510,14 +654,14 @@ const handleNotifiMessageGroup = (mess) => {
           </View>
            <View style={styles.iconHandlemedia}>
            <TouchableOpacity 
-               onPress={handleLongPress}
+               onPress={() => downloadAndOpenFile(message)}
                style={styles.smallDownloadButtonContainer}
                disabled={isDownloading}
              >
                <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
              </TouchableOpacity>
              <TouchableOpacity 
-               onPress={forwardMessage} 
+                onPress={()=>forwardMessage('forward')} 
                style={styles.smallDownloadButtonContainer}           
              >
                <Ionicons name="share-outline" size={20} color="#4a86e8"/>
@@ -546,12 +690,11 @@ const handleNotifiMessageGroup = (mess) => {
           <Image style={styles.avatar} source={{ uri: avatarUser|| avatar }} />
         </View>
         <View style={styles.messageContainer}>
+       {typechat === 'GROUP' && userInfo && (
+  <Text style={styles.senderName}>{userInfo.name}</Text>
+)}
           <TouchableOpacity
             onLongPress={handleLongPress}
-//            onPress={() => {
-//              if (type === 'image') handlePressImage();
-//              else if (type === 'audio') playAudio(message);
-//            }}
             style={[
               styles.messageBox, 
               type === 'image' && styles.imageMessage,
@@ -617,7 +760,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     // backgroundColor:''
   },
-  avatarContainer: {
+   avatarContainer: {
     justifyContent: 'flex-start',
     alignItems: 'center',
    margin:5
@@ -646,6 +789,13 @@ const styles = StyleSheet.create({
   mediaContent: {
     width: '100%',
   },
+  senderName: {
+  fontSize: 12,
+  color: '#666',
+  marginBottom: 5,
+  marginLeft: 5,
+  fontWeight: '500',
+},
   image: {
     width: 200, // Tăng kích thước ảnh
     height: 200,

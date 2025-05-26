@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Thư mục internal storage của app -->
+    <files-path name="internal_files" path="." />
+    
+    <!-- Thư mục cache của app -->
+    <cache-path name="cache_files" path="." />
+    
+    <!-- Thư mục external storage của app -->
+    <external-files-path name="external_files" path="." />
+    
+    <!-- Thư mục external cache của app -->
+    <external-cache-path name="external_cache" path="." />
+    
+    <!-- Thư mục external storage public -->
+    <external-path name="external_storage" path="." />
+    
+    <!-- Thư mục Documents -->
+    <external-files-path name="documents" path="Documents/" />
+    
+    <!-- Thư mục Downloads -->
+    <external-path name="downloads" path="Download/" />
+    
+    <!-- Thư mục Pictures -->
+    <external-path name="pictures" path="Pictures/" />
+    
+    <!-- Thư mục Movies -->
+    <external-path name="movies" path="Movies/" />
+    
+    <!-- Thư mục Music -->
+    <external-path name="music" path="Music/" />
+</paths>
