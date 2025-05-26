@@ -45,7 +45,7 @@ const RegistePage = () => {
             return;
         }
 
-        if (validateAge(dob) < 12) {
+        if (validateAge(dob) < 14) {
             setErrorMessage("Bạn phải ít nhất 12 tuổi để đăng ký.");
             return;
         }

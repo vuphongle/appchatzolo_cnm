@@ -190,7 +190,7 @@ const GroupItem = ({ img, groupName, member }) => {
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a className="dropdown-item text-danger">Rời nhóm</a>
+                            <a className="dropdown-item text-danger" style={{ cursor: "pointer" }}>Rời nhóm</a>
                         </li>
                     </ul>
                 </div>
@@ -416,27 +416,6 @@ function ContactsTab({ userId,
                 {/* Tab lời mời kết bạn */}
                 <div className="tab-pane fade" id="v-pills-friend" role="tabpanel" aria-labelledby="v-pills-messages-friend">
                     <FriendRequestsTab key={userId} userId={userId} friendRequests={friendRequests} onSelectChat={onSelectChat} /> {/* Gọi FriendRequestsTab */}
-                </div>
-
-                {/* Tab lời mời vào nhóm */}
-                <div className="tab-pane fade" id="v-pills-group" role="tabpanel" aria-labelledby="v-pills-group-tab">
-
-                    <div className="header d-flex align-items-center">
-                        <i className="fas fa-users me-3"></i>
-                        <h4 className="mb-0">Lời mời vào nhóm</h4>
-                    </div>
-                    <hr />
-                    <div className="text-center py-5 ">
-                        <div className="icon-placeholder mb-3">
-                            <i className="fas fa-file-alt fa-3x text-muted"></i>
-                        </div>
-                        <h5 className="text-muted">Không có lời mời vào nhóm</h5>
-                        <p className="text-muted">
-                            Khi nào tôi nhận được lời mời?{' '}
-                            <a href="#" className="text-decoration-none">Tìm hiểu thêm</a>
-                        </p>
-                    </div>
-
                 </div>
             </div>
         </div>

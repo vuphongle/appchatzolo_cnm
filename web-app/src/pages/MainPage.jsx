@@ -2848,20 +2848,6 @@ const MainPage = () => {
                                             <span className="badge">{invitationCount}</span>
                                         )}
                                     </button>
-                                    <button
-                                        className={`nav-link d-flex align-items-center fs-6 ${activeSubTab === "requestsGroup" ? "active text-white bg-primary" : "text-dark"}`}
-                                        id="v-pills-group-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-group"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-group"
-                                        aria-selected="false"
-                                        onClick={() => setActiveSubTab("requestsGroup")}
-                                    >
-                                        <i className="fas fa-users me-2"></i>
-                                        Lời mời vào nhóm
-                                    </button>
                                 </div>
                             </div>
                         </div>

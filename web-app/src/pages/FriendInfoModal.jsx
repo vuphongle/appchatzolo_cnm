@@ -97,7 +97,7 @@ const FriendInfoModal = ({
                                     {isFriendRequestSent ? 'Hủy lời mời' : 'Kết bạn'}
                                 </button>
                             )}
-                            <button className="message-button" onClick={handleMessageClick}>Nhắn tin</button>
+                            <button className="message-button">Nhắn tin</button>
                         </div>
 
                         {isFriendRequestModalOpen && (

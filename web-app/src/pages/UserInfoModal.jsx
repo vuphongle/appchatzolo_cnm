@@ -56,6 +56,16 @@ const UserInfoModal = ({ user: initialUser, onClose }) => {
 
             const userId = MyUser.my_user.id;
 
+            // Kiểm tra ngày sinh phải lớn hơn 15 tuổi
+            const today = new Date();
+            const birthDate = new Date(dob);
+            const age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (age < 14 || (age === 14 && monthDiff < 0)) {
+                showToast("Ngày sinh phải lớn hơn 14 tuổi!", "error");
+                return;
+            }
+
             // Gọi API cập nhật thông tin user
             await UserService.updateUserInfo(userId, { name, dob, gender });
 
