@@ -48,7 +48,6 @@ useEffect(() => {
 
       try {
         let response;
-        console.log('typeChat', typeChat);
         if(typeChat === 'GROUP_CHAT') {
            response  = await MessageService.fetchGroupMessages(receiverId)
         } else {
@@ -106,7 +105,7 @@ useEffect(() => {
       
       const response = await MessageService.UnpinMessageByUserId(messageId, userId);
       const user = await UserService.getUserById(userId);
-      setIsChange("UNPIN_MESSAGE");
+      setIsChange("UNPIN_MESSAGE" + new Date());
       
       if (response.success) {
         Alert.alert(

@@ -300,7 +300,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
       const response = await MessageService.PinMessageByUserId(messageId, userId);
       console.log('Ghim tin nhắn:', response);
       const user = await UserService.getUserById(userId);
-      setIsChange("PIN_MESSAGE");
+      setIsChange("PIN_MESSAGE" + new Date());
 
       if (response.success) {
         Alert.alert('Thành công', 'Tin nhắn đã được ghim thành công.');

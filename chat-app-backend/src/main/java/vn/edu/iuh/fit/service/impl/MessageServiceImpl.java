@@ -375,7 +375,7 @@ public class MessageServiceImpl implements MessageService {
             throw new GroupException("Tin nhắn đã được ghim trước đó");
         } else {
             List<Message> pinnedMessages = repository.findPinnedMessages(message.getSenderID(), message.getReceiverID());
-            if(pinnedMessages.size() >= 3) {
+            if(pinnedMessages.size() >= 2) {
                 throw new GroupException("Đã đạt giới hạn 3 tin nhắn ghim trong đoạn chat này");
             } else {
                 message.setPinned(true);

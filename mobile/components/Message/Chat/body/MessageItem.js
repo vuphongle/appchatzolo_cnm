@@ -256,7 +256,7 @@ const handleRequestAllPermissions = async () => {
       console.log('Ghim tin nhắn:', response);
       const user = await UserService.getUserById(userId);
       
-      setIsChange("PIN_MESSAGE");
+      setIsChange("PIN_MESSAGE" + new Date());
 
       if (response.success) {
         setMessageInfo(response.data);
@@ -267,8 +267,7 @@ const handleRequestAllPermissions = async () => {
         Alert.alert('Thất bại', 'Không thể ghim tin nhắn này.');
       }
     } catch (error) {
-      console.error('Lỗi khi ghim tin nhắn:', error);
-      Alert.alert('Lỗi', 'Không thể ghim tin nhắn này. Vui lòng thử lại sau.');
+      Alert.alert('Lỗi', error.error);
     }
   };
 
@@ -462,7 +461,7 @@ const handleRequestAllPermissions = async () => {
   };
 
   useEffect(() => {
-    if(messageInfo.type==='GROUP_CHAT' && typechat === 'GROUP'&& messageInfo.status === 'sent')
+    if((messageInfo.type==='group' || messageInfo.type === 'GROUP_CHAT') && typechat === 'GROUP'&& messageInfo.status === 'sent')
       {
         hadlegetAvatar(messageInfo.senderID);
         
