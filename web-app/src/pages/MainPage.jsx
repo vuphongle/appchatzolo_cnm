@@ -1946,6 +1946,7 @@ const MainPage = () => {
                                                                                         status: "Notification",
                                                                                     };
                                                                                     sendMessage(notificationMessage);
+                                                                                    setChatMessages((prev) => [...prev, notificationMessage]);
                                                                                 })
                                                                                 .catch((error) => {
                                                                                     console.error("Lỗi khi bỏ ghim tin nhắn:", error);
@@ -2132,7 +2133,7 @@ const MainPage = () => {
                                                                                         status: "Notification",
                                                                                     };
                                                                                     sendMessage(notificationMessage);
-
+                                                                                    setChatMessages((prev) => [...prev, notificationMessage]);
                                                                                 } catch (err) {
                                                                                     console.error("Lỗi khi ghim tin nhắn:", err);
                                                                                 }
