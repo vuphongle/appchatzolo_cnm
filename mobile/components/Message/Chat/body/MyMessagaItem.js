@@ -60,6 +60,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
     if (isVideoMessage(msg)) return 'video';
     if (isAudioMessage(msg)) return 'audio';
     if (isDocumentFile(msg)) return 'document';
+    if (msg === 'Tin nhắn đã được thu hồi') return 'unsend';
     return 'text';
   };
    const handleNotifiMessageGroup = (mess) => {
@@ -222,7 +223,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
   console.log('Thu hồi tin nhắn:', messageId);
     try {
       await MessageService.recallMessage(messageId, userId, receiverId);
-      setMessIndex('Tin nhắn đã thu hồi');
+      setMessIndex('Tin nhắn đã được thu hồi');
       setTypeIndex('unsend');
       setIsRecalled(true);
       setMessageOptionsVisible(false);
@@ -568,7 +569,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
           <Text style={styles.time}>{time}</Text>
 
           {/* Emoji */}
-          {emojiIndex && emojiIndex.length > 0 && (
+          {emojiIndex && emojiIndex.length > 0 &&typeIndex!='unsend' && (
             <View style={styles.emojiContainer}>
               <Text style={styles.emoji}>{emojiIndex}</Text>
               <Text style={styles.count}>{reactCount}</Text>
