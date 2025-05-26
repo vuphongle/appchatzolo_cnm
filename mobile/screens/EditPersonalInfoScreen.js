@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,19 +17,34 @@ import { UserContext } from '../context/UserContext';
 import { IPV4, AVATAR_URL_DEFAULT } from '@env';
 import { formatDOB } from '../utils/dateDobUtils';
 
+// Hàm tính tuổi từ Date object
+const calculateAge = (dob) => {
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const EditPersonalInfoScreen = ({ navigation }) => {
   const { user, setUser } = useContext(UserContext);
   const initialDob = user.dob ? new Date(user.dob) : new Date();
+
   const [name, setName] = useState(user.name || '');
   const [dob, setDob] = useState(initialDob);
-  // Khởi tạo giới tính với giá trị hiện tại (Nam hoặc Nữ)
   const [gender, setGender] = useState(user.gender || '');
   const [avatarUri, setAvatarUri] = useState(user.avatar || '');
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Mở thư viện ảnh và cho phép cắt ảnh
-const pickImage = async () => {
+  // Tính tuổi và kiểm tra >14
+  const age = useMemo(() => calculateAge(dob), [dob]);
+  const isOldEnough = age >= 14;
+
+  // Chọn ảnh và cắt
+  const pickImage = async () => {
     try {
       const image = await ImageCropPicker.openPicker({
         width: 300,
@@ -37,9 +52,7 @@ const pickImage = async () => {
         cropping: true,
         compressImageQuality: 0.7,
       });
-      if (image) {
-        setAvatarUri(image.path);
-      }
+      if (image) setAvatarUri(image.path);
     } catch (error) {
       if (error.code !== 'E_PICKER_CANCELLED') {
         Alert.alert('Lỗi', 'Không thể chọn ảnh');
@@ -47,20 +60,12 @@ const pickImage = async () => {
       }
     }
   };
-  
 
-  // Upload avatar lên S3 và trả về URL của ảnh
+  // Upload avatar lên S3
   const uploadAvatar = async () => {
-    // Nếu không có avatar được chọn (avatarUri rỗng), trả về URL mặc định
-    if (!avatarUri) {
-      return '';
-    }
-    // Nếu avatarUri đã là URL (đã upload) thì trả về luôn
-    if (avatarUri.startsWith('http')) {
-      return avatarUri;
-    }
+    if (!avatarUri) return '';
+    if (avatarUri.startsWith('http')) return avatarUri;
 
-    // Nếu avatarUri là đường dẫn từ thư viện ảnh, thực hiện upload
     const formData = new FormData();
     formData.append('file', {
       uri: avatarUri,
@@ -73,35 +78,34 @@ const pickImage = async () => {
       const response = await fetch(`${IPV4}/s3/avatar`, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       const data = await response.json();
-      if (data.url) {
-        return data.url;
-      } else {
-        Alert.alert('Lỗi', data.error || 'Upload avatar thất bại');
-        return null;
-      }
+      if (data.url) return data.url;
+      Alert.alert('Lỗi', data.error || 'Upload avatar thất bại');
+      return null;
     } catch (error) {
-      console.error('mUpload avatar error:', error);
+      console.error('Upload avatar error:', error);
       Alert.alert('Lỗi', 'Upload avatar thất bại');
       return null;
     }
   };
 
-  // Lưu thay đổi thông tin cá nhân
+  // Lưu thay đổi
   const handleSave = async () => {
+    if (!isOldEnough) {
+      Alert.alert('Lỗi', 'Bạn phải trên 14 tuổi để cập nhật thông tin.');
+      return;
+    }
     setLoading(true);
     const avatarUrl = await uploadAvatar();
     if (avatarUrl === null) {
       setLoading(false);
       return;
     }
+
     const payload = {
       name,
-      // Gửi ngày sinh dưới dạng ISO string để đảm bảo parse đúng
       dob: dob.toISOString(),
       gender,
       avatar: avatarUrl,
@@ -133,8 +137,18 @@ const pickImage = async () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Chỉnh sửa thông tin cá nhân</Text>
- {/* onPress={pickImage}  */}
-      <TouchableOpacity style={styles.avatarContainer} onPress={pickImage} >
+
+      {!isOldEnough && (
+        <Text style={styles.errorText}>
+          Bạn phải trên 14 tuổi mới được phép chỉnh sửa thông tin.
+        </Text>
+      )}
+
+      <TouchableOpacity
+        style={[styles.avatarContainer, !isOldEnough && styles.disabled]}
+        onPress={() => isOldEnough && pickImage()}
+        disabled={!isOldEnough}
+      >
         <Image
           source={{ uri: avatarUri || AVATAR_URL_DEFAULT }}
           style={styles.avatar}
@@ -147,17 +161,21 @@ const pickImage = async () => {
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Tên Zolo</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, !isOldEnough && styles.disabled]}
           value={name}
           onChangeText={setName}
           placeholder="Nhập tên"
+          editable={isOldEnough}
         />
       </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Ngày sinh</Text>
         <TouchableOpacity
-          style={[styles.input, { justifyContent: 'center' }]}
+          style={[
+            styles.input,
+            { justifyContent: 'center' }
+          ]}
           onPress={() => setShowDatePicker(true)}
         >
           <Text style={styles.dateText}>{formatDOB(dob)}</Text>
@@ -169,57 +187,46 @@ const pickImage = async () => {
             display="default"
             onChange={(event, selectedDate) => {
               setShowDatePicker(false);
-              if (selectedDate) {
-                setDob(selectedDate);
-              }
+              if (selectedDate) setDob(selectedDate);
             }}
           />
         )}
       </View>
 
-      {/* Chỉnh sửa phần chọn giới tính chỉ với 2 lựa chọn: Nam và Nữ */}
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Giới tính</Text>
         <View style={styles.genderContainer}>
-          <TouchableOpacity
-            style={[
-              styles.genderOption,
-              gender === 'Nam' && styles.genderOptionSelected,
-            ]}
-            onPress={() => setGender('Nam')}
-          >
-            <Text
+          {['Nam', 'Nữ'].map((option) => (
+            <TouchableOpacity
+              key={option}
               style={[
-                styles.genderText,
-                gender === 'Nam' && styles.genderTextSelected,
+                styles.genderOption,
+                gender === option && styles.genderOptionSelected,
+                !isOldEnough && styles.disabled,
               ]}
+              onPress={() => isOldEnough && setGender(option)}
+              disabled={!isOldEnough}
             >
-              Nam
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.genderOption,
-              gender === 'Nữ' && styles.genderOptionSelected,
-            ]}
-            onPress={() => setGender('Nữ')}
-          >
-            <Text
-              style={[
-                styles.genderText,
-                gender === 'Nữ' && styles.genderTextSelected,
-              ]}
-            >
-              Nữ
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.genderText,
+                  gender === option && styles.genderTextSelected,
+                ]}
+              >
+                {option}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
       <TouchableOpacity
-        style={styles.saveButton}
+        style={[
+          styles.saveButton,
+          (!isOldEnough || loading) && styles.saveButtonDisabled,
+        ]}
         onPress={handleSave}
-        disabled={loading}
+        disabled={loading || !isOldEnough}
       >
         {loading ? (
           <ActivityIndicator color="#FFF" />
@@ -245,6 +252,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 20,
     color: '#333',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   avatarContainer: {
     position: 'relative',
@@ -321,9 +333,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  saveButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
+  saveButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  disabled: {
+    opacity: 0.6,
   },
 });
