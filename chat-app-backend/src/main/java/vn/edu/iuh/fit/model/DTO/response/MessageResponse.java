@@ -32,4 +32,5 @@ public class MessageResponse {
 
     //phần react tin nhắn
     private List<Reaction> reactions;
+    private boolean pinned = false;
 }

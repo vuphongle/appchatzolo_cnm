@@ -273,6 +273,7 @@ public class MessageServiceImpl implements MessageService {
                     .deletedBySender(message.isDeletedBySender())
                     .deletedByReceiver(message.isDeletedByReceiver())
                     .typeWeb(message.getTypeWeb())
+                    .pinned(message.isPinned())
                     .reactions(message.getReactions())
                     .name(sender != null ? sender.getName() : "Unknown")  // Lấy tên người gửi
                     .avatar(sender != null ? sender.getAvatar() : "")  // Lấy avatar người gửi
