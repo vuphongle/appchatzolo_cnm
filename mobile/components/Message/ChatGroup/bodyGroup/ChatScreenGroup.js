@@ -597,11 +597,7 @@ const formatDuration = (milliseconds) => {
   const todayFormatted = formatMessageDate(new Date());
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <View    style={styles.container}  >
        < PinnedMessagesComponent  userId={userId}
         receiverId={receiverID}
         messageshistory={localMessages}
@@ -807,6 +803,7 @@ const formatDuration = (milliseconds) => {
             value={messageText}
             onChangeText={setMessageText}
             style={styles.inputMessage}
+             
             placeholder="Nhập tin nhắn..."
             placeholderTextColor="#999"
             onSubmitEditing={handleSendMessage}
@@ -874,7 +871,7 @@ const formatDuration = (milliseconds) => {
           />
         </View>
       )}
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 

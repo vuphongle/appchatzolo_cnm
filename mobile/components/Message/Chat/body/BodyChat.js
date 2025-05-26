@@ -615,11 +615,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
   const todayFormatted = formatMessageDate(new Date());
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+   <View style={styles.container}>
       < PinnedMessagesComponent  userId={userId}
   receiverId={receiverID}
   messageshistory={localMessages}
@@ -830,6 +826,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
             style={styles.inputMessage}
             placeholder="Nhập tin nhắn..."
             placeholderTextColor="#999"
+           
             onSubmitEditing={handleSendMessage}
           />
         </View>
@@ -896,7 +893,7 @@ const ChatScreen = ({ receiverID, name, avatar }) => {
           />
         </View>
       )}
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
