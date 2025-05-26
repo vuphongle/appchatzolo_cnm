@@ -9,8 +9,10 @@ import vn.edu.iuh.fit.enums.ReactType;
 import vn.edu.iuh.fit.exception.GroupException;
 import vn.edu.iuh.fit.handler.MyWebSocketHandler;
 import vn.edu.iuh.fit.model.DTO.UnreadMessagesCountDTO;
+import vn.edu.iuh.fit.model.DTO.response.MessageResponse;
 import vn.edu.iuh.fit.model.Message;
 import vn.edu.iuh.fit.model.Reaction;
+import vn.edu.iuh.fit.model.User;
 import vn.edu.iuh.fit.repository.GroupRepository;
 import vn.edu.iuh.fit.repository.MessageRepository;
 import vn.edu.iuh.fit.repository.UserRepository;
@@ -249,11 +251,36 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public List<Message> getMessagesInGroup(String groupId) {
+    public List<MessageResponse> getMessagesInGroup(String groupId) {
         // Truy vấn tất cả tin nhắn trong nhóm từ DynamoDB (dựa vào receiverID là groupId)
         List<Message> messages = repository.findMessagesInGroup(groupId);
+        List<MessageResponse> messageResponses = new ArrayList<>();
+        for (Message message : messages) {
+            // Lấy thông tin người gửi từ bảng User
+            User sender = userRepository.findById(message.getSenderID());
 
-        return messages;
+            // Tạo MessageResponse từ Message
+            MessageResponse response = MessageResponse.builder()
+                    .id(message.getId())
+                    .content(message.getContent())
+                    .sendDate(message.getSendDate())
+                    .senderID(message.getSenderID())
+                    .receiverID(message.getReceiverID())
+                    .isRead(message.getIsRead())
+                    .media(message.getMedia())
+                    .status(message.getStatus())
+                    .type("group")
+                    .deletedBySender(message.isDeletedBySender())
+                    .deletedByReceiver(message.isDeletedByReceiver())
+                    .typeWeb(message.getTypeWeb())
+                    .reactions(message.getReactions())
+                    .name(sender != null ? sender.getName() : "Unknown")  // Lấy tên người gửi
+                    .avatar(sender != null ? sender.getAvatar() : "")  // Lấy avatar người gửi
+                    .build();
+
+            messageResponses.add(response);
+        }
+        return messageResponses;
     }
 
     //thêm react vào tin nhắn
