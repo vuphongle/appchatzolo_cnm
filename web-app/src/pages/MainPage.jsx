@@ -98,7 +98,7 @@ const MessageOptionsMenu = ({ onRecall, onForward, onDeleteForMe, onPinMessage, 
             // Lấy vị trí của menu so với cửa sổ
             const menuRect = menuRef.current.getBoundingClientRect();
             const windowHeight = window.innerHeight;
-            if (menuRect.top < windowHeight / 3) {
+            if (menuRect.top < windowHeight / 4) {
                 setMenuDirection('open-down');
             } else {
                 setMenuDirection('open-up');
@@ -792,7 +792,6 @@ const MainPage = () => {
             // pin message and unpin message chung luôn
             if (incomingMessage.type === "PIN_MESSAGE") {
                 const pinnedMessageId = incomingMessage.messageId;
-                // Giả sử chatMessages được lưu ở state, bạn cập nhật trạng thái pin cho tin nhắn
                 setChatMessages((prevMessages) =>
                     prevMessages.map((msg) =>
                         msg.id === pinnedMessageId ? { ...msg, pinned: !msg.pinned } : msg
@@ -1936,22 +1935,23 @@ const MainPage = () => {
                                                                                             m.id === msg.id ? { ...m, pinned: false } : m
                                                                                         )
                                                                                     );
+                                                                                    const notificationMessage = {
+                                                                                        id: uuidv4(),
+                                                                                        senderID: selectedChat?.type === 'group' ? selectedChat.id : MyUser?.my_user?.id,
+                                                                                        receiverID: selectedChat.id,
+                                                                                        content: `${MyUser?.my_user?.name} đã bỏ ghim một tin nhắn`,
+                                                                                        sendDate: new Date().toISOString(),
+                                                                                        isRead: false,
+                                                                                        type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
+                                                                                        status: "Notification",
+                                                                                    };
+                                                                                    sendMessage(notificationMessage);
                                                                                 })
                                                                                 .catch((error) => {
                                                                                     console.error("Lỗi khi bỏ ghim tin nhắn:", error);
                                                                                 });
 
-                                                                            const notificationMessage = {
-                                                                                id: uuidv4(),
-                                                                                senderID: selectedChat.id,
-                                                                                receiverID: selectedChat.id,
-                                                                                content: `${MyUser?.my_user?.name} đã bỏ ghim một tin nhắn`,
-                                                                                sendDate: new Date().toISOString(),
-                                                                                isRead: false,
-                                                                                type: selectedChat?.type === 'group' ? 'GROUP_CHAT' : 'PRIVATE_CHAT',
-                                                                                status: "Notification",
-                                                                            };
-                                                                            sendMessage(notificationMessage);
+
                                                                         }}
                                                                     >
                                                                         <i>Bỏ ghim</i>
@@ -2123,7 +2123,7 @@ const MainPage = () => {
                                                                                     ));
                                                                                     const notificationMessage = {
                                                                                         id: uuidv4(),
-                                                                                        senderID: selectedChat.id,
+                                                                                        senderID: selectedChat?.type === 'group' ? selectedChat.id : MyUser?.my_user?.id,
                                                                                         receiverID: selectedChat.id,
                                                                                         content: `${MyUser?.my_user?.name} đã ghim một tin nhắn`,
                                                                                         sendDate: new Date().toISOString(),
@@ -2132,6 +2132,7 @@ const MainPage = () => {
                                                                                         status: "Notification",
                                                                                     };
                                                                                     sendMessage(notificationMessage);
+
                                                                                 } catch (err) {
                                                                                     console.error("Lỗi khi ghim tin nhắn:", err);
                                                                                 }
