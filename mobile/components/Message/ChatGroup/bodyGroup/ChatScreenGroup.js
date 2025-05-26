@@ -599,6 +599,7 @@ const formatDuration = (milliseconds) => {
   return (
     <View    style={styles.container}  >
        < PinnedMessagesComponent  userId={userId}
+        typeChat={'GROUP_CHAT'}
         receiverId={receiverID}
         messageshistory={localMessages}
         receiverName={name}

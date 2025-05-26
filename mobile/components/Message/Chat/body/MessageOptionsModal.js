@@ -19,9 +19,7 @@ const MessageOptionsModal = ({ visible, onClose, userId, onForward, type, onReca
           ? [{ icon: '↩️', text: 'Thu hồi', onPress: () => onRecall() }]
           : []),
     { icon: '📋', text: 'Sao chép', onPress: () => onForward('copy') },
-    ...(message.pinned
-        ? [{ icon: '📌', text: 'Ghim', onPress: () => onPin() }]
-        : []),
+    { icon: '📌', text: 'Ghim', onPress: () => onPin() },
     { icon: 'ℹ️', text: 'Chi tiết', onPress: () => onForward('details') },
     { icon: '🗑️', text: 'Xóa', onPress: onDelete },
     // Xóa cảm xúc chỉ hiển thị nếu có ID của người dùng trong reactions
@@ -30,10 +28,6 @@ const MessageOptionsModal = ({ visible, onClose, userId, onForward, type, onReca
       : [])
   ];
 
-    useEffect(() => {
-        console.log('MessageOptionsModal mounted with message:', message);
-    }, [message]);
-    
 
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>

@@ -304,13 +304,13 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
 
       if (response.success) {
         Alert.alert('Thành công', 'Tin nhắn đã được ghim thành công.');
+        setMessageOptionsVisible(false);
         handleNotifiMessageGroup(`${user.name} đã ghim tin nhắn "${message}"`);
       } else {
         Alert.alert('Thất bại', 'Không thể ghim tin nhắn này.');
       }
     } catch (error) {
-      console.error('Lỗi khi ghim tin nhắn:', error);
-      Alert.alert('Lỗi', `Không thể ghim tin nhắn này.${response.error}`);
+      Alert.alert('Lỗi', error.error);
     }
   };
     // Xóa reaction

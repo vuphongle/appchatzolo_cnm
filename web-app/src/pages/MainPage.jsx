@@ -2027,8 +2027,7 @@ const MainPage = () => {
                                                             ) : (
                                                                 <div className={`chat-message ${isSentByMe ? "sent" : "received"}`}>
                                                                     {/* Nếu là tin nhắn nhóm, hiển thị tên và avatar người gửi */}
-
-                                                                    {msg.type === 'group' && (
+                                                                    {msg.type === "group" && (
                                                                         <div style={{ display: "flex", alignItems: "center" }}>
                                                                             <img
                                                                                 src={msg.senderAvatar || "/default-avatar.jpg"}

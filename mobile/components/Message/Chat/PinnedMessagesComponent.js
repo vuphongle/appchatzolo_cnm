@@ -20,6 +20,7 @@ const PinnedMessagesComponent = ({
   receiverId,
   messageshistory,
   receiverName,
+  typeChat,
   
 }) => {
     
@@ -44,11 +45,17 @@ useEffect(() => {
  
   const fetchMessages = async () => {
       if (!userId || !receiverId) return;
-      
+
       try {
-        const response = await MessageService.get(
-          `/messages/messages?senderID=${userId}&receiverID=${receiverId}`
-        );
+        let response;
+        console.log('typeChat', typeChat);
+        if(typeChat === 'GROUP_CHAT') {
+           response  = await MessageService.fetchGroupMessages(receiverId)
+        } else {
+           response = await MessageService.get(
+                      `/messages/messages?senderID=${userId}&receiverID=${receiverId}`
+                    );
+        }
         
         if (response && Array.isArray(response)) {
         

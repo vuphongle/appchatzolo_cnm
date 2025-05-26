@@ -97,7 +97,7 @@ function MessageItem({ avatar, time, message, messageId, userId, receiverId, mes
 const handleRequestAllPermissions = async () => {
   // Bước 1: Xin quyền storage cơ bản
   const hasBasicPermission = await requestStoragePermissionWithFeedback();
-  
+
   // Bước 2: Xin quyền MANAGE_EXTERNAL_STORAGE nếu cần (Android 11+)
   const hasManagePermission = await requestManageStoragePermission();
   
@@ -259,6 +259,8 @@ const handleRequestAllPermissions = async () => {
       setIsChange("PIN_MESSAGE");
 
       if (response.success) {
+        setMessageInfo(response.data);
+        setMessageOptionsVisible(false);
         Alert.alert('Thành công', 'Tin nhắn đã được ghim thành công.');
         handleNotifiMessageGroup(`${user.name} đã ghim tin nhắn "${message}"`);
       } else {

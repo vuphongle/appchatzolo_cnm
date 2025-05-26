@@ -130,7 +130,6 @@ fetchGroupMessages: async (groupId) => {
       const response = await axios.put(`${IPV4}/messages/${messageId}/pin/${userId}`);
       return response.data;
     } catch (error) {
-      console.error('Error pinning message:', error);
       throw error.response ? error.response.data : error;
     }
   },
