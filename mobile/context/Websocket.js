@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, createContext, useContext } from 'react';
 import { UserContext } from './UserContext';
 import { SOCKET } from '@env';
 
-const SOCKET_URL = SOCKET + '/socket.io?userId=';
+const SOCKET_URL = SOCKET + '/ws?userId=';
 
 // Create context
 export const WebSocketContext = createContext(null);
@@ -19,7 +19,9 @@ export const WebSocketProvider = ({ children }) => {
     // Kết nối WebSocket
     socketRef.current = new WebSocket(
         `${SOCKET_URL}${userId}`
+
     );
+    console.log("Connecting to WebSocket:", `${SOCKET_URL}${userId}`);
 
     socketRef.current.onopen = () => {
         console.log("WebSocket is connected");
