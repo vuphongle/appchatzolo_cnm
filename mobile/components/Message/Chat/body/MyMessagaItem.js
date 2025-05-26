@@ -388,7 +388,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
                         <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
                       </TouchableOpacity>
                       <TouchableOpacity 
-                        onPress={forwardMessage} 
+                        onPress={()=>forwardMessage("forward")} 
                         style={styles.smallDownloadButtonContainer}           
                       >
                         <Ionicons name="share-outline" size={20} color="#4a86e8"/>
@@ -419,7 +419,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
              <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
            </TouchableOpacity>
            <TouchableOpacity 
-             onPress={forwardMessage} 
+             onPress={()=>forwardMessage("forward")} 
              style={styles.smallDownloadButtonContainer}           
            >
              <Ionicons name="share-outline" size={20} color="#4a86e8"/>
@@ -461,7 +461,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
               <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
             </TouchableOpacity>
             <TouchableOpacity 
-              onPress={forwardMessage} 
+              onPress={()=>forwardMessage("forward")} 
               style={styles.smallDownloadButtonContainer}           
             >
               <Ionicons name="share-outline" size={20} color="#4a86e8"/>
@@ -500,7 +500,7 @@ function MyMessageItem({ messageId, avatar, userId, receiverId, time, message, m
               <Ionicons name="download-outline" size={20} color="#4a86e8" loading={isDownloading}/>
             </TouchableOpacity>
             <TouchableOpacity 
-              onPress={forwardMessage} 
+              onPress={()=>forwardMessage("forward")} 
               style={styles.smallDownloadButtonContainer}           
             >
               <Ionicons name="share-outline" size={20} color="#4a86e8"/>
